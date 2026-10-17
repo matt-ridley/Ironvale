@@ -1,6 +1,7 @@
-// The one game state every scene shares: the hero and where they are. Saving (M6) will write this object.
+// The one game state every scene shares: the hero, where they are, and quest progress. save.js writes it out.
 import { createCharacter, rest } from "../rules/character.js";
 import { OVERWORLD } from "../world/overworld.js";
+import { saveGame, loadGame } from "./save.js";
 
 export const state = {};
 
@@ -23,6 +24,18 @@ export function faint() {
   state.facing = "down";
   state.stepsSinceFight = 0;
   return { goldLost: lost };
+}
+
+/* Writes the current state to the save slot. Quietly does nothing where storage isn't available. */
+export const autosave = () => saveGame(state);
+
+/* Replaces the state with the saved game, if there is one. */
+export function restoreSave() {
+  const saved = loadGame();
+  if (!saved) return false;
+  for (const k of Object.keys(state)) delete state[k];
+  Object.assign(state, saved);
+  return true;
 }
 
 newGame();

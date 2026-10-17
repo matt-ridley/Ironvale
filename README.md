@@ -33,6 +33,11 @@ Node 20 or later is needed only for these dev tools.
 - **Inventory:** the BAG button or I. Tap an item to see what it does and how it changes your AC, to-hit and damage, then equip it, take it off or drink it.
 - **Battles:** tap a monster to target it, then ATTACK, DEFEND (+2 AC until your next turn), POTION, 2ND WIND (heal 1d10 + level as a bonus action, once per rest) or FLEE (DEX check, DC 10).
 
+## Saving
+The game saves itself to the browser's local storage: after every step, when a menu, conversation or battle ends, and when the app goes into the background (phones can close a home-screen app at any time). There is no save button. The title screen offers CONTINUE, and NEW GAME asks before replacing a saved hero.
+
+Saves carry a format number. Loading drops anything the game no longer knows (an item removed in an update) and puts you back in the village if your saved spot is now a wall, rather than failing. A save lives in one browser on one device; clearing site data deletes it.
+
 ## How it plays
 - Wild areas start a fight now and then after a step (half as often on paths, and never right after a fight).
 - Walking into Oakhollow is a full rest: HP and Second Wind come back.
@@ -48,7 +53,7 @@ index.html, css/, manifest.webmanifest, sw.js   page shell, install and offline 
 src/rules/    the d20 rules: dice, checks, character, items, combat. No Phaser, so they are unit tested.
 src/data/     items and monsters
 src/world/    tile maps (one character per tile), grid movement and random encounters. No Phaser, so they are unit tested.
-src/state/    the shared game state: the hero and where they are
+src/state/    the shared game state (hero, position, quest flags) and saving it to localStorage
 src/art/      placeholder pixel art and terrain tiles drawn in code, until real sprite sheets arrive
 src/scenes/   Phaser screens: Boot, Title, World, Battle, Inventory, Blacksmith, Dialogue
 src/story/    the conversation engine and the scripts (quests, NPCs, events). No Phaser, so they are unit tested.
@@ -60,7 +65,7 @@ tools/        icon generator
 Every release bumps `VERSION` in both `src/config.js` and `sw.js` (a test checks they match). Every new file under `src/` goes into `APP_FILES` in `sw.js` (a test checks that too).
 
 ## Status
-Early prototype.
+Playable prototype: the first quest can be played start to finish, and progress is saved.
 
 - [x] M0 Skeleton: Phaser title screen, installable PWA, offline support, GitHub Pages
 - [x] M1 Rules engine: dice, ability checks, AC, attacks, levelling, equipment, blacksmith upgrades, turn-based combat
@@ -68,7 +73,7 @@ Early prototype.
 - [x] M3 Battle screen and random encounters in the Whispering Wood and Goblin Rocks
 - [x] M4 Inventory, blacksmith (upgrade, buy, sell) and loot drops
 - [x] M5 Story: Elder Maren's quest, dialogue, the fallen-oak skill check, the Goblin Chief
-- [ ] M6 Save/load and polish
+- [x] M6 Save/load, a real title screen (Continue / New Game), and polish
 
 ## Credits
 Rules: this work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC, available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.

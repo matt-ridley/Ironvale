@@ -1,0 +1,66 @@
+// Saving and loading the game state in the browser's localStorage. The game saves itself (after each step, when a
+// menu or battle ends, and when the app is hidden), so there is no save button.
+// Loading is careful: anything unknown (an item removed in an update, a position that is now a wall) is dropped or
+// reset rather than breaking the game.
+import { VERSION } from "../config.js";
+import { ITEMS } from "../data/items.js";
+import { SLOTS } from "../rules/items.js";
+import { createMap, isWalkable } from "../world/map.js";
+import { OVERWORLD } from "../world/overworld.js";
+
+export const SAVE_KEY = "ironvale-save";
+export const SAVE_FORMAT = 1;
+const WORLD = createMap(OVERWORLD);
+const DIR_NAMES = ["up", "down", "left", "right"];
+
+export function serialize(state) {
+  return JSON.stringify({ format: SAVE_FORMAT, version: VERSION, savedAt: Date.now(), state });
+}
+
+const isInt = n => Number.isInteger(n);
+const knownItem = i => i && typeof i === "object" && ITEMS[i.base] && isInt(i.upgrade) && typeof i.uid === "string";
+
+/* Parses a save. Returns the game state, or null if it isn't a save this game can use. */
+export function deserialize(json) {
+  let data;
+  try { data = JSON.parse(json); } catch { return null; }
+  if (!data || data.format !== SAVE_FORMAT || !data.state?.hero) return null;
+  const s = data.state, h = s.hero;
+  if (!h.abilities || !["STR", "DEX", "CON"].every(a => isInt(h.abilities[a]))) return null;
+  for (const k of ["level", "xp", "gold", "maxHp", "hp"]) if (!isInt(h[k])) return null;
+
+  const hero = {
+    ...h,
+    hp: Math.min(Math.max(h.hp, 1), h.maxHp), // never load into a fight-ending 0
+    secondWind: h.secondWind !== false,
+    equipment: Object.fromEntries(SLOTS.map(slot => {
+      const item = h.equipment?.[slot];
+      return [slot, knownItem(item) && ITEMS[item.base].type === slot ? item : null];
+    })),
+    inventory: Array.isArray(h.inventory) ? h.inventory.filter(knownItem) : [],
+  };
+  const posOk = s.pos && isInt(s.pos.x) && isInt(s.pos.y) && isWalkable(WORLD, s.pos.x, s.pos.y, s.flags || {});
+  return {
+    hero,
+    map: OVERWORLD.name,
+    pos: posOk ? { x: s.pos.x, y: s.pos.y } : { ...OVERWORLD.spawn },
+    facing: DIR_NAMES.includes(s.facing) ? s.facing : "down",
+    stepsSinceFight: isInt(s.stepsSinceFight) ? s.stepsSinceFight : 0,
+    flags: s.flags && typeof s.flags === "object" ? { ...s.flags } : {},
+  };
+}
+
+/* localStorage can be missing or throw (private browsing, storage full, blocked), so every call is guarded. */
+const defaultStorage = () => { try { return globalThis.localStorage || null; } catch { return null; } };
+
+export function saveGame(state, storage = defaultStorage()) {
+  try { storage?.setItem(SAVE_KEY, serialize(state)); return !!storage; } catch { return false; }
+}
+
+export function loadGame(storage = defaultStorage()) {
+  try { const json = storage?.getItem(SAVE_KEY); return json ? deserialize(json) : null; } catch { return null; }
+}
+
+export function deleteSave(storage = defaultStorage()) {
+  try { storage?.removeItem(SAVE_KEY); } catch { /* nothing to delete */ }
+}
