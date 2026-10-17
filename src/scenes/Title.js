@@ -74,8 +74,10 @@ export class Title extends Phaser.Scene {
     this.knight.setAlpha(dead ? 0.35 : 1).setAngle(dead ? 90 : 0);
   }
 
+  /* Shows the newest lines that fit the panel. Long lines wrap, so count rows after wrapping. */
   showLines(lines, color = COLORS.text) {
-    this.logText.setColor(color).setText(lines.slice(-4).join("\n"));
+    const rows = this.logText.setColor(color).getWrappedText(lines.join("\n"));
+    this.logText.setText(rows.slice(-4));
   }
 
   rollCheck() {
