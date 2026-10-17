@@ -27,11 +27,17 @@ Node 20 or later is needed only for these dev tools.
 | `npm run icons` | Redraws the app icons in `icons/` |
 
 ## Controls
-- **Move:** arrow keys or WASD. On phones, use the on-screen D-pad (add `?touch` to the URL to show it on a desktop).
+- **Move:** 8 directions. On phones, touch anywhere on the left of the screen and a joystick appears under your thumb: push a little to walk, all the way to run. On a computer, use the arrow keys or WASD (two at once for diagonals, Shift to run). Add `?touch` to the URL to show the joystick hint on a desktop.
 - **Menu:** the MENU button or Esc.
+- **Sound:** the SND button mutes or unmutes music and effects (remembered on this device).
 - **Talk:** walk into a person (or press Enter/Space while facing them). Pick answers by tapping, with up/down and Enter, or with number keys.
 - **Inventory:** the BAG button or I. Tap an item to see what it does and how it changes your AC, to-hit and damage, then equip it, take it off or drink it.
 - **Battles:** tap a monster to target it, then ATTACK, DEFEND (+2 AC until your next turn), POTION, 2ND WIND (heal 1d10 + level as a bonus action, once per rest) or FLEE (DEX check, DC 10).
+
+## Look and sound
+The art is in a 16-bit RPG style, drawn in code: every art pixel is a 2x2 block lit from the top left (highlights on upper edges, shadows below), with tinted rather than black outlines. The canvas is 960 x 540; menus are laid out on a 480 x 270 grid and drawn at 2x, so text stays crisp. The world camera sits at 1.5x, about 20 x 11 tiles on screen.
+
+Music and effects are synthesised with Web Audio in an SNES-like style (a filtered lead with echo, soft bass, simple drums). Tracks are written as notes in `src/audio/tracks.js`: the village, the wild, battle and the boss, plus victory, level-up and defeat jingles. Browsers only allow sound after the first tap or key press.
 
 ## Saving
 The game saves itself to the browser's local storage: after every step, when a menu, conversation or battle ends, and when the app goes into the background (phones can close a home-screen app at any time). There is no save button. The title screen offers CONTINUE, and NEW GAME asks before replacing a saved hero.
@@ -52,12 +58,13 @@ Saves carry a format number. Loading drops anything the game no longer knows (an
 index.html, css/, manifest.webmanifest, sw.js   page shell, install and offline support
 src/rules/    the d20 rules: dice, checks, character, items, combat. No Phaser, so they are unit tested.
 src/data/     items and monsters
-src/world/    tile maps (one character per tile), grid movement and random encounters. No Phaser, so they are unit tested.
+src/world/    tile maps (one character per tile), 8-direction movement with collisions, and random encounters. No Phaser, so they are unit tested.
 src/state/    the shared game state (hero, position, quest flags) and saving it to localStorage
-src/art/      placeholder pixel art and terrain tiles drawn in code, until real sprite sheets arrive
-src/scenes/   Phaser screens: Boot, Title, World, Battle, Inventory, Blacksmith, Dialogue
+src/art/      16-bit style pixel art drawn in code: the hero's walk cycles, monsters, people and 32px terrain tiles
+src/scenes/   Phaser screens: Boot, Title, World (+ Hud on top), Battle, Inventory, Blacksmith, Dialogue
 src/story/    the conversation engine and the scripts (quests, NPCs, events). No Phaser, so they are unit tested.
-src/ui/       on-screen controls and menu widgets (buttons, paged lists)
+src/ui/       the joystick and menu widgets (buttons, paged lists)
+src/audio/    synthesised music (tracks written as notes) and sound effects, no audio files
 tests/        node --test suites
 tools/        icon generator
 ```
@@ -74,6 +81,7 @@ Playable prototype: the first quest can be played start to finish, and progress 
 - [x] M4 Inventory, blacksmith (upgrade, buy, sell) and loot drops
 - [x] M5 Story: Elder Maren's quest, dialogue, the fallen-oak skill check, the Goblin Chief
 - [x] M6 Save/load, a real title screen (Continue / New Game), and polish
+- [x] M7 16-bit art, bigger hero, 8-direction movement with a joystick, smoother animation, music and sound
 
 ## Credits
 Rules: this work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC, available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.

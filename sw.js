@@ -2,19 +2,20 @@
    - Game files (this site): network first, so a new version shows up as soon as there is signal,
      falling back to the saved copy after a few seconds or when offline.
    - Phaser and the pixel font: saved copy first. Phaser's URL includes its version, so it never changes. */
-const VERSION = "0.6.0"; // keep the same as src/config.js (a test checks)
+const VERSION = "0.7.0"; // keep the same as src/config.js (a test checks)
 const SHELL = `ironvale-shell-${VERSION}`;
 const STATIC = "ironvale-static-v1";
 const PHASER = "https://cdnjs.cloudflare.com/ajax/libs/phaser/3.90.0/phaser.min.js";
 const APP_FILES = [
   "./", "index.html", "manifest.webmanifest", "css/app.css",
   "src/main.js", "src/config.js",
-  "src/art/pixels.js", "src/art/sprites.js", "src/art/tiles.js",
+  "src/art/pixels.js", "src/art/sprites.js", "src/art/tiles.js", "src/art/hero.js",
+  "src/audio/sound.js", "src/audio/tracks.js",
   "src/data/items.js", "src/data/monsters.js",
   "src/rules/character.js", "src/rules/checks.js", "src/rules/combat.js", "src/rules/dice.js", "src/rules/items.js", "src/rules/gear.js",
-  "src/scenes/Boot.js", "src/scenes/Title.js", "src/scenes/World.js", "src/scenes/Battle.js", "src/scenes/Inventory.js", "src/scenes/Blacksmith.js", "src/scenes/Dialogue.js",
+  "src/scenes/Boot.js", "src/scenes/Title.js", "src/scenes/World.js", "src/scenes/Battle.js", "src/scenes/Inventory.js", "src/scenes/Blacksmith.js", "src/scenes/Dialogue.js", "src/scenes/Hud.js",
   "src/story/dialogue.js", "src/story/scripts.js",
-  "src/state/game.js", "src/state/save.js", "src/ui/dpad.js", "src/ui/widgets.js", "src/world/map.js", "src/world/overworld.js", "src/world/encounters.js",
+  "src/state/game.js", "src/state/save.js", "src/ui/joystick.js", "src/ui/widgets.js", "src/world/map.js", "src/world/overworld.js", "src/world/encounters.js", "src/world/movement.js",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png",
 ];
 const NETWORK_WAIT_MS = 3500;
@@ -48,7 +49,8 @@ self.addEventListener("fetch", e => {
 
 async function networkFirst(req) {
   const shell = await caches.open(SHELL);
-  const fromNetwork = fetch(req).then(res => {
+  // "no-cache" asks the server whether the file changed (cheap when it hasn't), so new versions arrive at once.
+  const fromNetwork = fetch(req, { cache: "no-cache" }).then(res => {
     if (res.ok) shell.put(req, res.clone());
     return res;
   });

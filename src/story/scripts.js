@@ -1,5 +1,6 @@
 // The conversations in the game so far: Elder Maren's quest, a villager, the fallen oak, and the goblin cave.
 import { gainXp } from "../rules/character.js";
+import { tileOf, feetAt } from "../world/movement.js";
 
 export const QUEST_REWARD = { gold: 100, xp: 300 };
 export const LOG_CHECKS = { shove: { ability: "STR", dc: 12 }, climb: { ability: "DEX", dc: 14 } };
@@ -95,7 +96,7 @@ export const SCRIPTS = {
           if (!r.success) return ctx.goto("hurt");
           // Land on the far side: as far past the oak as you stand in front of it.
           const o = ctx.object;
-          if (o) s.pos = { x: 2 * o.x - s.pos.x, y: 2 * o.y - s.pos.y };
+          if (o) { const t = tileOf(s.pos); s.pos = feetAt(2 * o.x - t.x, 2 * o.y - t.y); }
           ctx.goto("climbed");
         },
       },

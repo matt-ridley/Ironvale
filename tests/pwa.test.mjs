@@ -5,6 +5,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { VERSION } from "../src/config.js";
 import { SPRITES, PALETTE } from "../src/art/sprites.js";
+import { HERO_FRAMES, HERO_COLOURS, HERO_W, HERO_H } from "../src/art/hero.js";
 
 const sw = readFileSync("sw.js", "utf8");
 const listFiles = dir => readdirSync(dir, { withFileTypes: true })
@@ -30,5 +31,18 @@ test("every sprite is a rectangle that only uses palette colours", () => {
       assert.equal(row.length, rows[0].length, `${key} has an uneven row`);
       for (const ch of row) assert.ok(ch === "." || PALETTE[ch], `${key} uses unknown colour "${ch}"`);
     }
+  }
+});
+
+test("every hero frame is 16 x 24 and only uses hero colours", () => {
+  for (const [facing, frames] of Object.entries(HERO_FRAMES)) {
+    assert.equal(frames.length, 4, facing);
+    frames.forEach((rows, i) => {
+      assert.equal(rows.length, HERO_H, `${facing} ${i}`);
+      for (const row of rows) {
+        assert.equal(row.length, HERO_W, `${facing} ${i}: ${row}`);
+        for (const ch of row) assert.ok(ch === "." || HERO_COLOURS[ch], `${facing} ${i} uses "${ch}"`);
+      }
+    });
   }
 });

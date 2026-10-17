@@ -1,5 +1,5 @@
 // Starts the game. Phaser is loaded as a plain script in index.html, so it is the global `Phaser` here.
-import { WIDTH, HEIGHT, FONT, COLORS } from "./config.js";
+import { WIDTH, HEIGHT, ZOOM, FONT, COLORS } from "./config.js";
 import { Boot } from "./scenes/Boot.js";
 import { Title } from "./scenes/Title.js";
 import { World } from "./scenes/World.js";
@@ -7,6 +7,8 @@ import { Battle } from "./scenes/Battle.js";
 import { Inventory } from "./scenes/Inventory.js";
 import { Blacksmith } from "./scenes/Blacksmith.js";
 import { Dialogue } from "./scenes/Dialogue.js";
+import { Hud } from "./scenes/Hud.js";
+import { unlockAudio } from "./audio/sound.js";
 import { restoreSave, autosave } from "./state/game.js";
 
 // Text is drawn onto canvases, so the pixel font must be loaded first. Don't wait forever if it can't load (offline).
@@ -22,13 +24,16 @@ restoreSave(); // pick up where you left off; the title screen offers CONTINUE
 window.game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: "game",
-  width: WIDTH,
-  height: HEIGHT,
+  width: WIDTH * ZOOM,
+  height: HEIGHT * ZOOM,
   backgroundColor: COLORS.bg,
   pixelArt: true,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [Boot, Title, World, Battle, Inventory, Blacksmith, Dialogue],
+  scene: [Boot, Title, World, Hud, Battle, Inventory, Blacksmith, Dialogue], // later ones draw on top
 });
+
+// Browsers only allow sound after a tap or key press.
+for (const ev of ["pointerdown", "keydown", "touchend"]) document.addEventListener(ev, unlockAudio, { passive: true });
 
 // Phones can close a home-screen app at any moment once it's in the background, so save on the way out.
 // (Not from the title screen, so just opening the game never creates a save.)
