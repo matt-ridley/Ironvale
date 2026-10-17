@@ -1,0 +1,23 @@
+// Ability checks and saving throws: d20 + ability modifier (+ proficiency if trained) against a DC.
+// Unlike attacks, a natural 20 or 1 has no special effect on a check (as in 5e).
+import { d20 } from "./dice.js";
+import { mod, proficiencyBonus } from "./character.js";
+
+// Rough difficulty names, for writing events.
+export const DC = { veryEasy: 5, easy: 10, medium: 15, hard: 20, veryHard: 25 };
+
+export function abilityCheck(char, ability, dc, rng = Math.random, { proficient = false, advantage = false, disadvantage = false } = {}) {
+  const { rolls, natural } = d20({ advantage, disadvantage }, rng);
+  const bonus = mod(char, ability) + (proficient ? proficiencyBonus(char.level) : 0);
+  const total = natural + bonus;
+  return { ability, dc, rolls, natural, bonus, total, success: total >= dc };
+}
+
+export const savingThrow = abilityCheck;
+
+/* "STR check (DC 12): rolled 14 + 2 = 16. Success." */
+export function describeCheck(r) {
+  const sign = r.bonus < 0 ? "-" : "+";
+  const rolled = r.rolls.length > 1 ? `${r.rolls.join(" / ")} -> ${r.natural}` : `${r.natural}`;
+  return `${r.ability} check (DC ${r.dc}): rolled ${rolled} ${sign} ${Math.abs(r.bonus)} = ${r.total}. ${r.success ? "Success" : "Failure"}.`;
+}
