@@ -26,13 +26,20 @@ Node 20 or later is needed only for these dev tools.
 | `npm test` | Runs the rules engine and offline-install tests |
 | `npm run icons` | Redraws the app icons in `icons/` |
 
+## Controls
+- **Move:** arrow keys or WASD. On phones, use the on-screen D-pad (add `?touch` to the URL to show it on a desktop).
+- **Menu:** the MENU button or Esc.
+
 ## Layout
 ```
 index.html, css/, manifest.webmanifest, sw.js   page shell, install and offline support
 src/rules/    the d20 rules: dice, checks, character, items, combat. No Phaser, so they are unit tested.
 src/data/     items and monsters
-src/art/      placeholder pixel art drawn from text, until real sprite sheets arrive
-src/scenes/   Phaser screens
+src/world/    tile maps (one character per tile) and grid movement. No Phaser, so they are unit tested.
+src/state/    the shared game state: the hero and where they are
+src/art/      placeholder pixel art and terrain tiles drawn in code, until real sprite sheets arrive
+src/scenes/   Phaser screens: Boot, Title, World
+src/ui/       on-screen controls
 tests/        node --test suites
 tools/        icon generator
 ```
@@ -44,7 +51,7 @@ Early prototype.
 
 - [x] M0 Skeleton: Phaser title screen, installable PWA, offline support, GitHub Pages
 - [x] M1 Rules engine: dice, ability checks, AC, attacks, levelling, equipment, blacksmith upgrades, turn-based combat
-- [ ] M2 World: tile map, walking, collisions, camera, touch controls
+- [x] M2 World: tile map, walking, collisions, camera, touch controls
 - [ ] M3 Combat screen wired to the rules engine
 - [ ] M4 Inventory and blacksmith screens
 - [ ] M5 Story: village elder quest, dialogue, skill-check events, Goblin Chief

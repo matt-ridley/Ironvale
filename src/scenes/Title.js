@@ -1,9 +1,10 @@
-// Title screen. For now it also shows off the rules engine: roll a check, run a test fight, rest.
+// Title screen: PLAY enters the world. It also shows off the rules engine: roll a check, run a test fight, rest.
 import { TITLE, VERSION, WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
-import { createCharacter, armourClass, weaponAttack, xpToNextLevel } from "../rules/character.js";
+import { armourClass, weaponAttack, xpToNextLevel } from "../rules/character.js";
 import { abilityCheck, describeCheck } from "../rules/checks.js";
 import { createBattle, playerAction } from "../rules/combat.js";
 import { itemName } from "../rules/items.js";
+import { state, newGame } from "../state/game.js";
 
 const CHECKS = [
   { ability: "STR", dc: 12, what: "Shove the fallen log" },
@@ -16,8 +17,9 @@ const LINE_MS = 450;
 export class Title extends Phaser.Scene {
   constructor() { super("Title"); }
 
+  get hero() { return state.hero; }
+
   create() {
-    this.hero = createCharacter();
     this.busy = false;
 
     this.drawBackdrop();
@@ -30,9 +32,10 @@ export class Title extends Phaser.Scene {
 
     this.sheet = this.add.text(WIDTH / 2, 58, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.text, align: "center", lineSpacing: 6 }).setOrigin(0.5, 0);
 
-    this.button(WIDTH / 2 - 130, 182, "ROLL CHECK", () => this.rollCheck());
-    this.button(WIDTH / 2, 182, "TEST FIGHT", () => this.testFight());
-    this.restButton = this.button(WIDTH / 2 + 130, 182, "REST", () => this.rest());
+    this.button(WIDTH / 2 - 174, 182, "PLAY", () => this.play());
+    this.button(WIDTH / 2 - 58, 182, "ROLL CHECK", () => this.rollCheck());
+    this.button(WIDTH / 2 + 58, 182, "TEST FIGHT", () => this.testFight());
+    this.restButton = this.button(WIDTH / 2 + 174, 182, "REST", () => this.rest());
 
     this.add.rectangle(WIDTH / 2, 228, WIDTH - 16, 54, COLORS.panel).setStrokeStyle(1, COLORS.panelEdge);
     this.logText = this.add.text(16, 205, "Tap a button to roll some dice.", {
@@ -52,7 +55,7 @@ export class Title extends Phaser.Scene {
   }
 
   button(x, y, label, onTap) {
-    const bg = this.add.rectangle(x, y, 118, 22, COLORS.panel).setStrokeStyle(1, COLORS.panelEdge).setInteractive({ useHandCursor: true });
+    const bg = this.add.rectangle(x, y, 110, 22, COLORS.panel).setStrokeStyle(1, COLORS.panelEdge).setInteractive({ useHandCursor: true });
     const text = this.add.text(x, y, label, { fontFamily: FONT, fontSize: "8px", color: COLORS.text }).setOrigin(0.5);
     bg.on("pointerover", () => bg.setFillStyle(COLORS.panelEdge));
     bg.on("pointerout", () => bg.setFillStyle(COLORS.panel));
@@ -78,6 +81,11 @@ export class Title extends Phaser.Scene {
   showLines(lines, color = COLORS.text) {
     const rows = this.logText.setColor(color).getWrappedText(lines.join("\n"));
     this.logText.setText(rows.slice(-4));
+  }
+
+  play() {
+    if (this.hero.hp <= 0) return this.showLines(["You can't set out while knocked out. Tap NEW HERO."], COLORS.bad);
+    this.scene.start("World");
   }
 
   rollCheck() {
@@ -113,7 +121,7 @@ export class Title extends Phaser.Scene {
 
   rest() {
     if (this.hero.hp <= 0) {
-      this.hero = createCharacter();
+      newGame();
       this.showLines(["A new hero sets out from the village."]);
     } else {
       this.hero.hp = this.hero.maxHp;

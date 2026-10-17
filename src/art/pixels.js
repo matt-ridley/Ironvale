@@ -1,5 +1,7 @@
 // Turns the text pixel art in sprites.js into Phaser textures.
 import { PALETTE, SPRITES } from "./sprites.js";
+import { drawTileset, TILE } from "./tiles.js";
+import { FRAMES } from "../world/map.js";
 
 export function makeTexture(scene, key, rows, palette = PALETTE) {
   const w = rows[0].length, h = rows.length;
@@ -16,6 +18,13 @@ export function makeTexture(scene, key, rows, palette = PALETTE) {
   tex.refresh();
 }
 
+export function makeTileset(scene, key = "tiles") {
+  const tex = scene.textures.createCanvas(key, FRAMES.length * TILE, TILE);
+  drawTileset(tex.getContext());
+  tex.refresh();
+}
+
 export function makeAllTextures(scene) {
   for (const [key, rows] of Object.entries(SPRITES)) makeTexture(scene, key, rows);
+  makeTileset(scene);
 }
