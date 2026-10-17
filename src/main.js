@@ -4,6 +4,8 @@ import { Boot } from "./scenes/Boot.js";
 import { Title } from "./scenes/Title.js";
 import { World } from "./scenes/World.js";
 import { Battle } from "./scenes/Battle.js";
+import { Inventory } from "./scenes/Inventory.js";
+import { Blacksmith } from "./scenes/Blacksmith.js";
 
 // Text is drawn onto canvases, so the pixel font must be loaded first. Don't wait forever if it can't load (offline).
 async function fontReady() {
@@ -22,7 +24,7 @@ window.game = new Phaser.Game({
   backgroundColor: COLORS.bg,
   pixelArt: true,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [Boot, Title, World, Battle],
+  scene: [Boot, Title, World, Battle, Inventory, Blacksmith],
 });
 
 // Re-fit whenever the page area changes size (phone rotation, toolbars, a window that started out hidden).

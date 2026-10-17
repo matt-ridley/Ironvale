@@ -1,5 +1,5 @@
 // Game-wide settings. Bump VERSION with every change, and keep sw.js's VERSION the same (a test checks).
-export const VERSION = "0.3.0";
+export const VERSION = "0.4.0";
 export const TITLE = "Ironvale"; // placeholder name
 
 // The game draws at this size and is scaled up to fit the screen, which keeps the pixels crisp.

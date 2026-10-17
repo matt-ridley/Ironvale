@@ -13,11 +13,12 @@ export const TILES = {
   "R": { name: "roof", solid: true },
   "H": { name: "wall", solid: true },
   "D": { name: "door", solid: true }, // doors open in a later milestone
+  "B": { name: "smithy", solid: true, place: "blacksmith" }, // walk into it to go inside
   "f": { name: "fence", solid: true },
 };
 
 // Order of the tiles in the tileset image. "grass2" is a second look for grass so fields don't look stamped.
-export const FRAMES = ["grass", "grass2", "flowers", "path", "bridge", "cave", "tree", "water", "rock", "roof", "wall", "door", "fence"];
+export const FRAMES = ["grass", "grass2", "flowers", "path", "bridge", "cave", "tree", "water", "rock", "roof", "wall", "door", "fence", "smithy"];
 
 export const DIRS = {
   up: { dx: 0, dy: -1 },
@@ -44,6 +45,12 @@ export function step(map, pos, dir) {
   const d = DIRS[dir];
   const x = pos.x + d.dx, y = pos.y + d.dy;
   return isWalkable(map, x, y) ? { x, y, moved: true } : { x: pos.x, y: pos.y, moved: false };
+}
+
+/* The place (a shop, later a house) on the tile you'd walk into, if any. */
+export function placeAhead(map, pos, dir) {
+  const d = DIRS[dir];
+  return tileAt(map, pos.x + d.dx, pos.y + d.dy)?.place || null;
 }
 
 export const zoneAt = (map, x, y) => map.zones.find(z => x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1) || null;

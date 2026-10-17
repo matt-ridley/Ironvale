@@ -5,7 +5,7 @@
 import { d20, roll } from "./dice.js";
 import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND } from "./character.js";
 import { abilityCheck } from "./checks.js";
-import { baseOf } from "./items.js";
+import { baseOf, makeItem, itemName, isPotion, useItem } from "./items.js";
 import { MONSTERS } from "../data/monsters.js";
 
 export const DEFEND_AC_BONUS = 2;
@@ -72,12 +72,10 @@ export function playerAction(battle, action, rng = Math.random) {
     battle.defending = true;
     say(battle, "defend", `You raise your guard (+${DEFEND_AC_BONUS} AC until your next turn).`);
   } else if (action.type === "potion") {
-    const potion = p.inventory.find(i => baseOf(i).type === "consumable" && baseOf(i).heal);
+    const potion = p.inventory.find(isPotion);
     if (!potion) return { ok: false, reason: "You have no potions." };
     if (p.hp >= p.maxHp) return { ok: false, reason: "You're already at full health." };
-    p.inventory = p.inventory.filter(i => i !== potion);
-    const r = roll(baseOf(potion).heal, rng);
-    const healed = heal(p, r.total);
+    const { healed } = useItem(p, potion.uid, rng);
     say(battle, "potion", `You drink a ${baseOf(potion).name} and recover ${healed} HP (${p.hp}/${p.maxHp}).`, { heal: healed });
   } else if (action.type === "secondWind") {
     if (!p.secondWind) return { ok: false, reason: "You've used your Second Wind. Rest to get it back." };
@@ -119,6 +117,13 @@ function runMonsterTurns(battle, rng) {
   if (battle.state === "active") battle.defending = false; // the guard lasts until the start of the player's turn
 }
 
+/* Each monster's loot table is rolled separately. */
+export function rollLoot(monsters, rng = Math.random) {
+  const found = [];
+  for (const m of monsters) for (const l of MONSTERS[m.id].loot || []) if (rng() < l.chance) found.push(makeItem(l.base, { upgrade: l.upgrade || 0 }));
+  return found;
+}
+
 function nextTurn(battle) {
   battle.turn++;
   if (battle.turn >= battle.order.length) { battle.turn = 0; battle.round++; }
@@ -135,9 +140,12 @@ function checkEnd(battle, rng) {
     const xp = battle.monsters.reduce((s, m) => s + m.xp, 0);
     const gold = battle.monsters.reduce((s, m) => s + roll(m.gold, rng).total, 0);
     battle.player.gold += gold;
+    const loot = rollLoot(battle.monsters, rng);
+    battle.player.inventory.push(...loot);
     const { levelUps } = gainXp(battle.player, xp, rng);
-    battle.rewards = { xp, gold, levelUps };
+    battle.rewards = { xp, gold, levelUps, loot: loot.map(itemName) };
     say(battle, "won", `Victory! You gain ${xp} XP and ${gold} gold.`);
+    for (const name of battle.rewards.loot) say(battle, "loot", `You find a ${name}.`);
     for (const l of levelUps) say(battle, "level-up", `You reach level ${l.level}! +${l.hpGain} max HP.`, { level: l.level });
     return true;
   }

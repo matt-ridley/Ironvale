@@ -1,5 +1,6 @@
 // Item instances, equipping, and blacksmith upgrades. Functions change the character in place and return what happened.
 import { ITEMS, MAX_UPGRADE } from "../data/items.js";
+import { roll } from "./dice.js";
 
 export const SLOTS = ["weapon", "shield", "armour"];
 
@@ -12,6 +13,45 @@ export function makeItem(base, { upgrade = 0 } = {}) {
 export const baseOf = item => ITEMS[item.base];
 export const itemName = item => baseOf(item).name + (item.upgrade ? ` +${item.upgrade}` : "");
 export const isTwoHanded = item => !!item && (baseOf(item).properties || []).includes("two-handed");
+export const isPotion = item => baseOf(item).type === "consumable" && !!baseOf(item).heal;
+
+/* One line about what an item does, e.g. "1d8 damage, finesse. +1 to hit and damage." */
+export function describeItem(item) {
+  const b = baseOf(item), up = item.upgrade ? ` +${item.upgrade}` : "";
+  const props = b.properties?.length ? `, ${b.properties.join(", ")}` : "";
+  if (b.type === "weapon") return `${b.damage} damage${props}.${up && ` ${up.trim()} to hit and damage.`}`;
+  if (b.type === "shield") return `+${b.ac} AC.${up && ` ${up.trim()} more AC.`}`;
+  if (b.type === "armour") {
+    const dex = b.category === "light" ? " + DEX" : b.category === "medium" ? " + DEX (max 2)" : "";
+    return `${b.category[0].toUpperCase()}${b.category.slice(1)} armour: AC ${b.baseAc}${dex}.${up && ` ${up.trim()} AC.`}`;
+  }
+  if (b.heal) return `Drink to heal ${b.heal} HP.`;
+  return "";
+}
+
+/* Pack items stacked by kind and upgrade, for lists: [{ item, items, count, name }] in pack order. */
+export function groupPack(inventory) {
+  const groups = new Map();
+  for (const item of inventory) {
+    const key = `${item.base}+${item.upgrade}`;
+    if (!groups.has(key)) groups.set(key, { item, items: [], count: 0, name: itemName(item) });
+    const g = groups.get(key);
+    g.items.push(item);
+    g.count++;
+  }
+  return [...groups.values()];
+}
+
+/* Drinks a potion from the pack. */
+export function useItem(char, uid, rng = Math.random) {
+  const item = char.inventory.find(i => i.uid === uid);
+  if (!item || !isPotion(item)) return { ok: false, reason: "You can't use that." };
+  if (char.hp >= char.maxHp) return { ok: false, reason: "You're already at full health." };
+  char.inventory = char.inventory.filter(i => i !== item);
+  const before = char.hp;
+  char.hp = Math.min(char.maxHp, char.hp + roll(baseOf(item).heal, rng).total);
+  return { ok: true, item, healed: char.hp - before };
+}
 
 /* Moves an item from the pack into its slot; whatever was there goes back to the pack. */
 export function equip(char, uid) {

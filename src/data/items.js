@@ -8,6 +8,7 @@ export const ITEMS = {
   mace:        { name: "Mace",        type: "weapon", damage: "1d6",  properties: [], cost: 5 },
   longsword:   { name: "Longsword",   type: "weapon", damage: "1d8",  properties: [], cost: 15 },
   rapier:      { name: "Rapier",      type: "weapon", damage: "1d8",  properties: ["finesse"], cost: 25 },
+  scimitar:    { name: "Scimitar",    type: "weapon", damage: "1d6",  properties: ["finesse", "light"], cost: 25 },
   greataxe:    { name: "Greataxe",    type: "weapon", damage: "1d12", properties: ["two-handed"], cost: 30 },
   greatsword:  { name: "Greatsword",  type: "weapon", damage: "2d6",  properties: ["two-handed"], cost: 50 },
 
@@ -24,3 +25,7 @@ export const ITEMS = {
 };
 
 export const MAX_UPGRADE = 3;
+
+// What the Oakhollow blacksmith sells, in shop order.
+export const STOCK = ["dagger", "shortsword", "mace", "scimitar", "longsword", "rapier", "greataxe", "greatsword",
+  "leather", "hide", "chainShirt", "chainMail", "shield", "potionHealing"];

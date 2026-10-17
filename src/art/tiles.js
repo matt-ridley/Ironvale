@@ -105,6 +105,11 @@ const DRAW = {
     ctx.fillStyle = C.wood; ctx.fillRect(5, 4, 6, 12);
     ctx.fillStyle = C.flowerY; ctx.fillRect(9, 10, 1, 1);
   },
+  smithy(ctx) {
+    DRAW.door(ctx);
+    ctx.fillStyle = C.beam; ctx.fillRect(3, 0, 10, 3); // sign board
+    ctx.fillStyle = "#2c2c3a"; ctx.fillRect(5, 1, 6, 1); ctx.fillRect(7, 2, 2, 1); // anvil
+  },
   fence(ctx, rng) {
     grass(ctx, rng);
     ctx.fillStyle = C.woodDark; ctx.fillRect(0, 5, TILE, 2); ctx.fillRect(0, 10, TILE, 2);

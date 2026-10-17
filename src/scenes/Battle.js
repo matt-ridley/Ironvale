@@ -154,7 +154,7 @@ export class Battle extends Phaser.Scene {
   }
 
   showEvent(e) {
-    const good = ["won", "level-up", "potion", "second-wind"].includes(e.type);
+    const good = ["won", "level-up", "potion", "second-wind", "loot"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -234,6 +234,7 @@ export class Battle extends Phaser.Scene {
       title = "VICTORY!"; color = COLORS.gold;
       lines.push(`+${b.rewards.xp} XP   +${b.rewards.gold} gold`);
       for (const l of b.rewards.levelUps) lines.push(`Level ${l.level}! +${l.hpGain} max HP`);
+      if (b.rewards.loot.length) lines.push(`Found: ${b.rewards.loot.join(", ")}`);
     } else if (b.state === "lost") {
       title = "DEFEATED"; color = COLORS.bad;
       const { goldLost } = faint();

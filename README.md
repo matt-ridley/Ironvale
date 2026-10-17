@@ -29,12 +29,15 @@ Node 20 or later is needed only for these dev tools.
 ## Controls
 - **Move:** arrow keys or WASD. On phones, use the on-screen D-pad (add `?touch` to the URL to show it on a desktop).
 - **Menu:** the MENU button or Esc.
+- **Inventory:** the BAG button or I. Tap an item to see what it does and how it changes your AC, to-hit and damage, then equip it, take it off or drink it.
 - **Battles:** tap a monster to target it, then ATTACK, DEFEND (+2 AC until your next turn), POTION, 2ND WIND (heal 1d10 + level as a bonus action, once per rest) or FLEE (DEX check, DC 10).
 
 ## How it plays
 - Wild areas start a fight now and then after a step (half as often on paths, and never right after a fight).
 - Walking into Oakhollow is a full rest: HP and Second Wind come back.
 - Losing a fight isn't the end. You wake in Oakhollow, rested, but half your gold is gone.
+- Goblins sometimes drop a scimitar or a potion.
+- The blacksmith (the house with the anvil sign, west of the crossroads) upgrades gear up to +3 (50, 100, 150 gold), sells weapons, armour, shields and potions at SRD prices, and buys things back for half of what they cost, upgrades included. Walk into the door to go in.
 
 ## Layout
 ```
@@ -44,8 +47,8 @@ src/data/     items and monsters
 src/world/    tile maps (one character per tile), grid movement and random encounters. No Phaser, so they are unit tested.
 src/state/    the shared game state: the hero and where they are
 src/art/      placeholder pixel art and terrain tiles drawn in code, until real sprite sheets arrive
-src/scenes/   Phaser screens: Boot, Title, World, Battle
-src/ui/       on-screen controls
+src/scenes/   Phaser screens: Boot, Title, World, Battle, Inventory, Blacksmith
+src/ui/       on-screen controls and menu widgets (buttons, paged lists)
 tests/        node --test suites
 tools/        icon generator
 ```
@@ -59,7 +62,7 @@ Early prototype.
 - [x] M1 Rules engine: dice, ability checks, AC, attacks, levelling, equipment, blacksmith upgrades, turn-based combat
 - [x] M2 World: tile map, walking, collisions, camera, touch controls
 - [x] M3 Battle screen and random encounters in the Whispering Wood and Goblin Rocks
-- [ ] M4 Inventory and blacksmith screens
+- [x] M4 Inventory, blacksmith (upgrade, buy, sell) and loot drops
 - [ ] M5 Story: village elder quest, dialogue, skill-check events, Goblin Chief
 - [ ] M6 Save/load and polish
 
