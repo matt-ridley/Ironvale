@@ -13,6 +13,11 @@ export const PALETTE = {
   G: "#3d6b1c", // dark green
   e: "#f4d03f", // eyes
   t: "#f5f5f0", // teeth
+  n: "#6e6e78", // wolf fur
+  N: "#a3a3ad", // light fur
+  m: "#8b6b4a", // rat fur
+  M: "#6b4f34", // dark rat fur
+  p: "#e89aa0", // pink
 };
 
 export const SPRITES = {
@@ -51,5 +56,41 @@ export const SPRITES = {
     "....kgk.kgk.....",
     "...kGGk.kGGk....",
     "...kkkk.kkkk....",
+  ],
+  wolf: [
+    "................",
+    "................",
+    "................",
+    "............k.k.",
+    "...........knkn.",
+    "..........knnnnk",
+    "k.........knenNk",
+    "nk..kkkkkknnnNNk",
+    ".nkknnnnnnnnnkkt",
+    "..knnnnnnnnnnk..",
+    "..kNNNNNNNNnnk..",
+    "...knnkkkknnk...",
+    "...kn.k..kn.k...",
+    "...kn.k..kn.k...",
+    "...kk.kk.kk.kk..",
+    "................",
+  ],
+  giantRat: [
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "..........pp....",
+    ".........kmmk...",
+    "....kkkkkmmemk..",
+    "...kmmmmmmmmmmkp",
+    "pp.kmmMMMMmmmk..",
+    ".pkmmmmmmmmmk...",
+    "..ppkkmkkkmkk...",
+    "......p...p.....",
+    "................",
   ],
 };

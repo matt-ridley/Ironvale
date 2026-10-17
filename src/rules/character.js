@@ -4,6 +4,7 @@ import { baseOf, makeItem } from "./items.js";
 
 export const ABILITIES = ["STR", "DEX", "CON"];
 export const HIT_DIE = "1d10"; // a fighter's hit die
+export const SECOND_WIND = "1d10"; // + level, once per rest
 export const MAX_LEVEL = 20;
 
 // XP needed to reach each level (index = level), from the 5e table.
@@ -23,12 +24,13 @@ export function levelForXp(xp) {
 export function createCharacter({
   name = "Hero",
   abilities = { STR: 15, DEX: 13, CON: 14 },
-  weapon = "longsword", shield = "shield", armour = "leather",
+  weapon = "longsword", shield = "shield", armour = "chainMail", // a 5e fighter's starting kit
   gold = 25, potions = 2,
 } = {}) {
   const char = {
     name, level: 1, xp: 0, gold, abilities: { ...abilities },
     maxHp: 0, hp: 0,
+    secondWind: true, // used up until the next rest
     equipment: { weapon: null, shield: null, armour: null },
     inventory: [],
   };
@@ -82,6 +84,12 @@ export function gainXp(char, amount, rng = Math.random) {
     levelUps.push({ level: char.level, hpGain, proficiency: proficiencyBonus(char.level) });
   }
   return { xp: char.xp, levelUps };
+}
+
+/* A long rest: full HP and Second Wind back. */
+export function rest(char) {
+  char.hp = char.maxHp;
+  char.secondWind = true;
 }
 
 export function heal(char, amount) {

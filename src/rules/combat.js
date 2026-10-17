@@ -1,8 +1,9 @@
-// Turn-based combat: initiative, attack rolls against AC, and the player's actions (attack, defend, potion, flee).
+// Turn-based combat: initiative, attack rolls against AC, and the player's actions (attack, defend, potion, flee,
+// and Second Wind, a bonus action that heals without using up the turn).
 // A battle is a plain object. The player acts with playerAction(); monsters then take their turns until it is the
 // player's turn again or the battle is over. Every step is written to battle.log for the screen to show.
 import { d20, roll } from "./dice.js";
-import { armourClass, weaponAttack, mod, gainXp, heal } from "./character.js";
+import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND } from "./character.js";
 import { abilityCheck } from "./checks.js";
 import { baseOf } from "./items.js";
 import { MONSTERS } from "../data/monsters.js";
@@ -52,7 +53,7 @@ export function createBattle(player, monsterIds, rng = Math.random) {
 
 export const isPlayerTurn = battle => battle.state === "active" && battle.order[battle.turn].who === "player";
 
-/* action: { type: "attack", target } | { type: "defend" } | { type: "potion" } | { type: "flee" } */
+/* action: { type: "attack", target } | { type: "defend" } | { type: "potion" } | { type: "flee" } | { type: "secondWind" } */
 export function playerAction(battle, action, rng = Math.random) {
   if (!isPlayerTurn(battle)) return { ok: false, reason: "It isn't your turn." };
   const start = battle.log.length;
@@ -64,8 +65,9 @@ export function playerAction(battle, action, rng = Math.random) {
     const atk = weaponAttack(p);
     const r = resolveAttack(atk, target.ac, rng);
     target.hp = Math.max(0, target.hp - r.damage);
-    say(battle, "attack", `You swing your ${atk.name} at the ${target.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, r);
-    if (target.hp === 0) say(battle, "defeat", `The ${target.name} falls.`);
+    const t = battle.monsters.indexOf(target);
+    say(battle, "attack", `You swing your ${atk.name} at the ${target.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, target: t });
+    if (target.hp === 0) say(battle, "defeat", `The ${target.name} falls.`, { target: t });
   } else if (action.type === "defend") {
     battle.defending = true;
     say(battle, "defend", `You raise your guard (+${DEFEND_AC_BONUS} AC until your next turn).`);
@@ -76,7 +78,14 @@ export function playerAction(battle, action, rng = Math.random) {
     p.inventory = p.inventory.filter(i => i !== potion);
     const r = roll(baseOf(potion).heal, rng);
     const healed = heal(p, r.total);
-    say(battle, "potion", `You drink a ${baseOf(potion).name} and recover ${healed} HP (${p.hp}/${p.maxHp}).`);
+    say(battle, "potion", `You drink a ${baseOf(potion).name} and recover ${healed} HP (${p.hp}/${p.maxHp}).`, { heal: healed });
+  } else if (action.type === "secondWind") {
+    if (!p.secondWind) return { ok: false, reason: "You've used your Second Wind. Rest to get it back." };
+    if (p.hp >= p.maxHp) return { ok: false, reason: "You're already at full health." };
+    p.secondWind = false;
+    const healed = heal(p, roll(SECOND_WIND, rng).total + p.level);
+    say(battle, "second-wind", `You catch your Second Wind and recover ${healed} HP (${p.hp}/${p.maxHp}). You can still act.`, { heal: healed });
+    return { ok: true, events: battle.log.slice(start) }; // a bonus action: still your turn
   } else if (action.type === "flee") {
     const c = abilityCheck(p, "DEX", FLEE_DC, rng);
     if (c.success) {
@@ -102,7 +111,7 @@ function runMonsterTurns(battle, rng) {
     if (m.hp > 0) {
       const r = resolveAttack(m.attack, playerAc(battle), rng);
       battle.player.hp = Math.max(0, battle.player.hp - r.damage);
-      say(battle, "monster-attack", `The ${m.name} attacks with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r, true)}`, r);
+      say(battle, "monster-attack", `The ${m.name} attacks with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r, true)}`, { roll: r, actor: battle.monsters.indexOf(m) });
       if (checkEnd(battle, rng)) return;
     }
     nextTurn(battle);
@@ -129,14 +138,17 @@ function checkEnd(battle, rng) {
     const { levelUps } = gainXp(battle.player, xp, rng);
     battle.rewards = { xp, gold, levelUps };
     say(battle, "won", `Victory! You gain ${xp} XP and ${gold} gold.`);
-    for (const l of levelUps) say(battle, "level-up", `You reach level ${l.level}! +${l.hpGain} max HP.`);
+    for (const l of levelUps) say(battle, "level-up", `You reach level ${l.level}! +${l.hpGain} max HP.`, { level: l.level });
     return true;
   }
   return false;
 }
 
-function say(battle, type, text, rolled) {
-  battle.log.push({ round: battle.round, type, text, ...(rolled ? { roll: rolled } : {}) });
+/* Each log entry carries everyone's HP right after it happened, so a screen can play the fight back step by step.
+   extra: roll (an attack roll), target / actor (monster index), heal (HP recovered). */
+function say(battle, type, text, extra = {}) {
+  const hp = { player: battle.player.hp, monsters: battle.monsters.map(m => m.hp) };
+  battle.log.push({ round: battle.round, type, text, hp, level: battle.player.level, ...extra });
 }
 
 const rollText = (r, bonus) => `${r.natural} ${bonus < 0 ? "-" : "+"} ${Math.abs(bonus)} = ${r.total} vs AC ${r.targetAc}.`;
