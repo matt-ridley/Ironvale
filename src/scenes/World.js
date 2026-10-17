@@ -1,7 +1,7 @@
 // The overworld: walk tile by tile with the arrow keys, WASD or the on-screen D-pad. The camera follows the hero.
 // Wild areas can start a fight after any step; Oakhollow heals you.
 import { WIDTH, FONT, COLORS } from "../config.js";
-import { createMap, frameGrid, step, zoneAt, tileAt } from "../world/map.js";
+import { createMap, frameGrid, step, zoneAt, tileAt, placeAhead } from "../world/map.js";
 import { OVERWORLD } from "../world/overworld.js";
 import { TILE } from "../art/tiles.js";
 import { state } from "../state/game.js";
@@ -35,7 +35,12 @@ export class World extends Phaser.Scene {
     this.tapped = null;
     for (const [dir, keys] of Object.entries(this.keys)) for (const k of keys) k.on("down", () => { this.tapped = dir; });
     this.input.keyboard.on("keydown-ESC", () => this.scene.start("Title"));
+    this.input.keyboard.on("keydown-I", () => this.openOverlay("Inventory"));
     this.dpad = wantsTouchControls(this) ? new DPad(this, 48, 222, dir => { this.tapped = dir; }) : null;
+    this.bumped = false; // already walked into the door in front of you (so holding a key doesn't reopen the shop)
+    // Scene events outlive a restart, so swap the listener rather than adding another.
+    this.events.off("resume", this.onResume, this);
+    this.events.on("resume", this.onResume, this);
 
     this.drawHud();
     this.arrived();
@@ -48,6 +53,9 @@ export class World extends Phaser.Scene {
     const menu = fixed(this.add.rectangle(WIDTH - 4, 4, 52, 18, COLORS.panel, 0.85).setOrigin(1, 0).setStrokeStyle(1, COLORS.panelEdge).setInteractive({ useHandCursor: true }));
     fixed(this.add.text(WIDTH - 30, 13, "MENU", { fontFamily: FONT, fontSize: "8px", color: COLORS.text }).setOrigin(0.5));
     menu.on("pointerup", () => this.scene.start("Title"));
+    const bag = fixed(this.add.rectangle(WIDTH - 60, 4, 44, 18, COLORS.panel, 0.85).setOrigin(1, 0).setStrokeStyle(1, COLORS.panelEdge).setInteractive({ useHandCursor: true }));
+    fixed(this.add.text(WIDTH - 82, 13, "BAG", { fontFamily: FONT, fontSize: "8px", color: COLORS.text }).setOrigin(0.5));
+    bag.on("pointerup", () => this.openOverlay("Inventory"));
     this.banner = fixed(this.add.text(WIDTH / 2, 34, "", { fontFamily: FONT, fontSize: "10px", color: COLORS.gold, stroke: "#000000", strokeThickness: 3 }).setOrigin(0.5).setAlpha(0));
     this.note = fixed(this.add.text(WIDTH / 2, 250, "", {
       fontFamily: FONT, fontSize: "8px", color: COLORS.text, backgroundColor: "#000000aa", padding: { x: 6, y: 4 }, align: "center", wordWrap: { width: 300 },
@@ -71,14 +79,38 @@ export class World extends Phaser.Scene {
     if (dir === "right") this.player.setFlipX(false);
   }
 
+  /* Opens a menu screen over the world and pauses walking until it closes. */
+  openOverlay(key) {
+    if (this.moving) return;
+    this.tapped = null;
+    if (this.dpad) this.dpad.dir = null;
+    this.scene.launch(key);
+    this.scene.pause();
+  }
+
+  onResume() {
+    this.tapped = null;
+    this.input.keyboard.resetKeys(); // keys let go while a menu was open would otherwise still read as held
+    this.refreshHud();
+  }
+
   update() {
     if (this.moving) return;
+    const fresh = !!this.tapped;
     const dir = this.heldDir() || this.tapped;
     this.tapped = null;
     if (!dir) return;
     this.face(dir);
     const next = step(this.map, state.pos, dir);
-    if (!next.moved) return;
+    if (!next.moved) {
+      const place = placeAhead(this.map, state.pos, dir);
+      if (place && (fresh || !this.bumped)) {
+        this.bumped = true;
+        if (place === "blacksmith") this.openOverlay("Blacksmith");
+      }
+      return;
+    }
+    this.bumped = false;
     this.moving = true;
     state.pos = { x: next.x, y: next.y };
     this.tweens.add({
@@ -104,6 +136,7 @@ export class World extends Phaser.Scene {
         this.flash(this.note, "You rest in Oakhollow. HP and Second Wind restored.", 2200);
       }
     }
+    if (placeAhead(this.map, state.pos, "up") === "blacksmith") this.flash(this.note, "The blacksmith's forge. Walk into the door to go in.", 2200);
     if (tile.name === "cave") this.flash(this.note, "Cold air drifts from the cave. Something moves inside... (coming soon)", 2500);
     if (!stepped) return;
     state.stepsSinceFight++;

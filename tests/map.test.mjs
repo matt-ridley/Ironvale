@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createMap, tileAt, isWalkable, step, zoneAt, reachable, frameGrid, FRAMES, TILES } from "../src/world/map.js";
+import { createMap, tileAt, isWalkable, step, zoneAt, reachable, frameGrid, placeAhead, FRAMES, TILES } from "../src/world/map.js";
 import { OVERWORLD } from "../src/world/overworld.js";
 
 const world = createMap(OVERWORLD);
@@ -46,7 +46,17 @@ test("the bridge, the forest and the cave mouth can all be reached from the star
 });
 
 test("every door has open ground in front of it", () => {
-  for (const d of find("D")) assert.ok(isWalkable(world, d.x, d.y + 1), `door at ${d.x},${d.y} is blocked`);
+  for (const d of [...find("D"), ...find("B")]) assert.ok(isWalkable(world, d.x, d.y + 1), `door at ${d.x},${d.y} is blocked`);
+});
+
+test("the blacksmith's door is in the village and reachable", () => {
+  const [smithy] = find("B");
+  assert.ok(smithy, "map has a blacksmith");
+  assert.equal(zoneAt(world, smithy.x, smithy.y).id, "village");
+  const front = { x: smithy.x, y: smithy.y + 1 };
+  assert.ok(reachable(world, world.spawn).has(`${front.x},${front.y}`));
+  assert.equal(placeAhead(world, front, "up"), "blacksmith");
+  assert.equal(placeAhead(world, front, "down"), null);
 });
 
 test("walking stops at solid tiles and the map edge", () => {

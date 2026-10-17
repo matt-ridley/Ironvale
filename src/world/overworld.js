@@ -28,7 +28,7 @@ export const OVERWORLD = {
   "TT.............=..............~~.TTT.T=TT..TT.T=...TT.T.TTT.TTTT",
   "TT...,RRRRR....=..RRRRRR......~~.T...T=.TTTTT.T=TTT.T..T....TTTT",
   "TT....RRRRR....=..RRRRRR......~~TTTTTT=TTT..T..=TTTT.TTT.T.TTTTT",
-  "TT....HHDHH....=..HHHDHH......~~.TTT..=TTT.T.TT=T.TTTT.T..TT.TTT",
+  "TT....HHBHH....=..HHHDHH......~~.TTT..=TTT.T.TT=T.TTTT.T..TT.TTT",
   "TT......=......=.....=...,...T~~TT.TT.=T.TT..T.=TTTTTTTTTTTTTTTT",
   "TT..........,..=....,.........~~.TTTTT=..T.T.TT========.T...TTTT",
   "TT.............=..............~~TT.T.T=TT.T..TTTT.T...=T....TTTT",
