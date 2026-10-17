@@ -2,17 +2,18 @@
    - Game files (this site): network first, so a new version shows up as soon as there is signal,
      falling back to the saved copy after a few seconds or when offline.
    - Phaser and the pixel font: saved copy first. Phaser's URL includes its version, so it never changes. */
-const VERSION = "0.1.1"; // keep the same as src/config.js (a test checks)
+const VERSION = "0.2.0"; // keep the same as src/config.js (a test checks)
 const SHELL = `ironvale-shell-${VERSION}`;
 const STATIC = "ironvale-static-v1";
 const PHASER = "https://cdnjs.cloudflare.com/ajax/libs/phaser/3.90.0/phaser.min.js";
 const APP_FILES = [
   "./", "index.html", "manifest.webmanifest", "css/app.css",
   "src/main.js", "src/config.js",
-  "src/art/pixels.js", "src/art/sprites.js",
+  "src/art/pixels.js", "src/art/sprites.js", "src/art/tiles.js",
   "src/data/items.js", "src/data/monsters.js",
   "src/rules/character.js", "src/rules/checks.js", "src/rules/combat.js", "src/rules/dice.js", "src/rules/items.js",
-  "src/scenes/Boot.js", "src/scenes/Title.js",
+  "src/scenes/Boot.js", "src/scenes/Title.js", "src/scenes/World.js",
+  "src/state/game.js", "src/ui/dpad.js", "src/world/map.js", "src/world/overworld.js",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png",
 ];
 const NETWORK_WAIT_MS = 3500;
