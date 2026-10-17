@@ -7,7 +7,7 @@ import { SCRIPTS } from "../story/scripts.js";
 import { startConversation, view, choose, takeEvents } from "../story/dialogue.js";
 import { text, panel } from "../ui/widgets.js";
 
-const BOX_Y = 132;
+const BOX_BOTTOM = HEIGHT - 6; // the box grows upwards from here to fit what it says
 const ROW_H = 16;
 
 export class Dialogue extends Phaser.Scene {
@@ -19,9 +19,11 @@ export class Dialogue extends Phaser.Scene {
     this.events_ = [];
     this.done = false; // Phaser reuses this scene object, so reset it every time
     this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x000000, 0.35).setOrigin(0);
-    panel(this, 6, BOX_Y, WIDTH - 12, HEIGHT - BOX_Y - 6);
-    this.speaker = text(this, 14, BOX_Y + 7, "", { color: COLORS.gold });
-    this.body = text(this, 14, BOX_Y + 22, "", { wordWrap: { width: WIDTH - 32 }, lineSpacing: 4 });
+    // With a single option ("Continue" or "Close"), tapping anywhere on the box picks it; easier on a phone.
+    this.box = panel(this, 6, 0, WIDTH - 12, 10).setInteractive()
+      .on("pointerup", () => { if (this.rows.length === 1) this.pick(0); });
+    this.speaker = text(this, 14, 0, "", { color: COLORS.gold });
+    this.body = text(this, 14, 0, "", { wordWrap: { width: WIDTH - 32 }, lineSpacing: 4 });
     this.rows = [];
     this.selected = 0;
 
@@ -42,7 +44,14 @@ export class Dialogue extends Phaser.Scene {
     if (!v) return this.finish();
     for (const r of this.rows) { r.bg.destroy(); r.label.destroy(); }
     this.speaker.setText(v.speaker);
-    this.body.setY(BOX_Y + (v.speaker ? 22 : 10)).setText(v.text);
+    this.body.setText(v.text);
+    // Size the box to the text and choices, sitting on the bottom of the screen.
+    const height = (v.speaker ? 22 : 10) + this.body.height + 8 + v.choices.length * ROW_H + 6;
+    const boxY = BOX_BOTTOM - height;
+    this.box.setY(boxY).setSize(WIDTH - 12, height);
+    this.box.input.hitArea.setSize(WIDTH - 12, height);
+    this.speaker.setY(boxY + 7);
+    this.body.setY(boxY + (v.speaker ? 22 : 10));
     const top = this.body.y + this.body.height + 8;
     this.rows = v.choices.map((c, i) => {
       const y = top + i * ROW_H;

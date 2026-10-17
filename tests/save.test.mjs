@@ -1,0 +1,96 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { serialize, deserialize, saveGame, loadGame, deleteSave, SAVE_KEY } from "../src/state/save.js";
+import { state, newGame } from "../src/state/game.js";
+import { makeItem } from "../src/rules/items.js";
+import { gainXp } from "../src/rules/character.js";
+import { OVERWORLD } from "../src/world/overworld.js";
+
+class MemoryStorage {
+  constructor() { this.data = {}; }
+  getItem(k) { return k in this.data ? this.data[k] : null; }
+  setItem(k, v) { this.data[k] = String(v); }
+  removeItem(k) { delete this.data[k]; }
+}
+
+const played = () => {
+  newGame();
+  gainXp(state.hero, 900, () => 0.5);
+  state.hero.gold = 123;
+  state.hero.hp = 9;
+  state.hero.secondWind = false;
+  state.hero.equipment.weapon.upgrade = 2;
+  state.hero.inventory.push(makeItem("scimitar", { upgrade: 1 }));
+  state.pos = { x: 40, y: 12 };
+  state.facing = "left";
+  state.flags = { questStarted: true, logCleared: true };
+  return structuredClone(state);
+};
+
+test("a save loads back exactly", () => {
+  const before = played();
+  const store = new MemoryStorage();
+  assert.equal(saveGame(state, store), true);
+  newGame(); // wipe the live state
+  assert.deepEqual(loadGame(store), before);
+});
+
+test("no save, or a broken one, loads as nothing", () => {
+  const store = new MemoryStorage();
+  assert.equal(loadGame(store), null);
+  store.setItem(SAVE_KEY, "{not json");
+  assert.equal(loadGame(store), null);
+  store.setItem(SAVE_KEY, JSON.stringify({ format: 99, state: {} }));
+  assert.equal(loadGame(store), null);
+  assert.equal(deserialize(JSON.stringify({ format: 1, state: { hero: { abilities: {} } } })), null);
+});
+
+test("items the game no longer knows are dropped, not fatal", () => {
+  played();
+  const data = JSON.parse(serialize(state));
+  data.state.hero.inventory.push({ uid: "x", base: "laserSword", upgrade: 0 });
+  data.state.hero.equipment.shield = { uid: "y", base: "longsword", upgrade: 0 }; // a sword in the shield slot
+  const s = deserialize(JSON.stringify(data));
+  assert.ok(!s.hero.inventory.some(i => i.base === "laserSword"));
+  assert.equal(s.hero.equipment.shield, null);
+  assert.equal(s.hero.equipment.weapon.upgrade, 2);
+});
+
+test("a position that is now a wall (or off the map) goes back to the village", () => {
+  played();
+  for (const pos of [{ x: 0, y: 0 }, { x: 999, y: 3 }, null]) {
+    const data = JSON.parse(serialize(state));
+    data.state.pos = pos;
+    assert.deepEqual(deserialize(JSON.stringify(data)).pos, OVERWORLD.spawn);
+  }
+});
+
+test("standing where the oak was only loads if it was cleared", () => {
+  played();
+  const data = JSON.parse(serialize(state));
+  data.state.pos = { x: 54, y: 24 };
+  assert.deepEqual(deserialize(JSON.stringify(data)).pos, { x: 54, y: 24 });
+  data.state.flags = {};
+  assert.deepEqual(deserialize(JSON.stringify(data)).pos, OVERWORLD.spawn);
+});
+
+test("you never load in at 0 HP", () => {
+  played();
+  state.hero.hp = 0;
+  assert.equal(deserialize(serialize(state)).hero.hp, 1);
+});
+
+test("storage that throws (private browsing, full) doesn't crash", () => {
+  const broken = { getItem() { throw new Error("no"); }, setItem() { throw new Error("no"); }, removeItem() { throw new Error("no"); } };
+  assert.equal(saveGame(state, broken), false);
+  assert.equal(loadGame(broken), null);
+  deleteSave(broken);
+  assert.equal(saveGame(state, null), false);
+});
+
+test("deleteSave removes it", () => {
+  const store = new MemoryStorage();
+  saveGame(state, store);
+  deleteSave(store);
+  assert.equal(loadGame(store), null);
+});

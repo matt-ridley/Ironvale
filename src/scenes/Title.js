@@ -1,49 +1,43 @@
-// Title screen: PLAY enters the world. It also shows off the rules engine: roll a check, run a test fight, rest.
+// Title screen: CONTINUE your saved hero, or start a NEW GAME (with a check first if that would replace a save).
 import { TITLE, VERSION, WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
-import { armourClass, weaponAttack, xpToNextLevel, rest } from "../rules/character.js";
-import { abilityCheck, describeCheck } from "../rules/checks.js";
-import { createBattle, playerAction } from "../rules/combat.js";
-import { itemName } from "../rules/items.js";
-import { state, newGame } from "../state/game.js";
-
-const CHECKS = [
-  { ability: "STR", dc: 12, what: "Shove the fallen log" },
-  { ability: "DEX", dc: 14, what: "Climb the cave wall" },
-  { ability: "CON", dc: 10, what: "Drink the swamp water" },
-];
-const FOES = [["giantRat"], ["goblin"], ["wolf"], ["goblin", "giantRat"]];
-const LINE_MS = 450;
+import { armourClass } from "../rules/character.js";
+import { state, newGame, autosave } from "../state/game.js";
+import { loadGame, deleteSave } from "../state/save.js";
+import { objective } from "../story/scripts.js";
+import { text, panel, button } from "../ui/widgets.js";
 
 export class Title extends Phaser.Scene {
   constructor() { super("Title"); }
 
-  get hero() { return state.hero; }
-
   create() {
-    this.busy = false;
-
+    this.confirming = null;
     this.drawBackdrop();
-    this.add.text(WIDTH / 2, 12, TITLE.toUpperCase(), { fontFamily: FONT, fontSize: "24px", color: COLORS.gold }).setOrigin(0.5, 0);
-    this.add.text(WIDTH / 2, 40, "A d20 pixel adventure", { fontFamily: FONT, fontSize: "8px", color: COLORS.dim }).setOrigin(0.5, 0);
+    this.add.text(WIDTH / 2, 18, TITLE.toUpperCase(), { fontFamily: FONT, fontSize: "24px", color: COLORS.gold }).setOrigin(0.5, 0);
+    text(this, WIDTH / 2, 48, "A d20 pixel adventure", { color: COLORS.dim }).setOrigin(0.5, 0);
 
-    this.knight = this.add.image(120, 126, "knight").setScale(3);
-    this.goblin = this.add.image(360, 126, "goblin").setScale(3).setFlipX(true);
-    this.tweens.add({ targets: [this.knight, this.goblin], y: "-=3", duration: 600, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+    const knight = this.add.image(120, 126, "knight").setScale(3);
+    const goblin = this.add.image(360, 126, "goblin").setScale(3).setFlipX(true);
+    this.tweens.add({ targets: [knight, goblin], y: "-=3", duration: 600, yoyo: true, repeat: -1, ease: "Sine.inOut" });
 
-    this.sheet = this.add.text(WIDTH / 2, 58, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.text, align: "center", lineSpacing: 6 }).setOrigin(0.5, 0);
+    // The live state is the saved game (restored at start-up, and saved as you play).
+    const saved = loadGame() !== null;
+    const h = state.hero;
+    const goal = objective(state.flags);
+    text(this, WIDTH / 2, 72, saved
+      ? `${h.name.toUpperCase()}  LV ${h.level}  HP ${h.hp}/${h.maxHp}  AC ${armourClass(h)}  ${h.gold} GOLD\n${goal ? `QUEST: ${goal}` : "QUEST COMPLETE. The wood is yours to explore."}`
+      : "Goblins are raiding Oakhollow.\nThe village needs a hero.", { align: "center", lineSpacing: 6 }).setOrigin(0.5, 0);
 
-    this.button(WIDTH / 2 - 174, 182, "PLAY", () => this.play());
-    this.button(WIDTH / 2 - 58, 182, "ROLL CHECK", () => this.rollCheck());
-    this.button(WIDTH / 2 + 58, 182, "TEST FIGHT", () => this.testFight());
-    this.restButton = this.button(WIDTH / 2 + 174, 182, "REST", () => this.rest());
+    if (saved) {
+      this.primary = button(this, WIDTH / 2 - 64, 186, 116, 24, "CONTINUE", () => this.play());
+      button(this, WIDTH / 2 + 64, 186, 116, 24, "NEW GAME", () => this.confirmNew());
+    } else {
+      this.primary = button(this, WIDTH / 2, 186, 140, 24, "NEW GAME", () => this.startNew());
+    }
+    this.input.keyboard.on("keydown-ENTER", () => { if (!this.confirming) this.primary.bg.emit("pointerup"); });
 
-    this.add.rectangle(WIDTH / 2, 228, WIDTH - 16, 54, COLORS.panel).setStrokeStyle(1, COLORS.panelEdge);
-    this.logText = this.add.text(16, 205, "Tap a button to roll some dice.", {
-      fontFamily: FONT, fontSize: "8px", color: COLORS.text, lineSpacing: 5, wordWrap: { width: WIDTH - 32 },
-    });
-
-    this.add.text(WIDTH - 6, HEIGHT - 2, `v${VERSION}`, { fontFamily: FONT, fontSize: "8px", color: COLORS.dim }).setOrigin(1, 1);
-    this.refreshSheet();
+    text(this, WIDTH / 2, 214, "Your progress saves automatically.", { color: COLORS.dim }).setOrigin(0.5, 0);
+    text(this, 6, HEIGHT - 2, "Rules: SRD 5.1, CC-BY-4.0", { color: COLORS.dim }).setOrigin(0, 1);
+    text(this, WIDTH - 6, HEIGHT - 2, `v${VERSION}`, { color: COLORS.dim }).setOrigin(1, 1);
   }
 
   drawBackdrop() {
@@ -54,79 +48,31 @@ export class Title extends Phaser.Scene {
     for (let x = 0; x < WIDTH; x += 16) g.fillRect(x + ((x / 16) % 2) * 8, 144 + ((x / 16) % 3) * 7, 4, 2);
   }
 
-  button(x, y, label, onTap) {
-    const bg = this.add.rectangle(x, y, 110, 22, COLORS.panel).setStrokeStyle(1, COLORS.panelEdge).setInteractive({ useHandCursor: true });
-    const text = this.add.text(x, y, label, { fontFamily: FONT, fontSize: "8px", color: COLORS.text }).setOrigin(0.5);
-    bg.on("pointerover", () => bg.setFillStyle(COLORS.panelEdge));
-    bg.on("pointerout", () => bg.setFillStyle(COLORS.panel));
-    bg.on("pointerup", () => { if (!this.busy) onTap(); });
-    return { bg, text };
-  }
-
-  refreshSheet() {
-    const h = this.hero, atk = weaponAttack(h), dead = h.hp <= 0;
-    const dmg = atk.damageBonus ? `${atk.damage}${atk.damageBonus > 0 ? "+" : ""}${atk.damageBonus}` : atk.damage;
-    const potions = h.inventory.filter(i => i.base === "potionHealing").length;
-    this.sheet.setText([
-      `${h.name}  LV ${h.level}  HP ${h.hp}/${h.maxHp}  AC ${armourClass(h)}`,
-      `${itemName(h.equipment.weapon)} +${atk.bonus} (${dmg})  ${h.gold} gold  ${potions} potions`,
-      `XP ${h.xp}  (${xpToNextLevel(h)} to next level)`,
-    ].join("\n"));
-    this.sheet.setColor(dead ? COLORS.bad : COLORS.text);
-    this.restButton.text.setText(dead ? "NEW HERO" : "REST");
-    this.knight.setAlpha(dead ? 0.35 : 1).setAngle(dead ? 90 : 0);
-  }
-
-  /* Shows the newest lines that fit the panel. Long lines wrap, so count rows after wrapping. */
-  showLines(lines, color = COLORS.text) {
-    const rows = this.logText.setColor(color).getWrappedText(lines.join("\n"));
-    this.logText.setText(rows.slice(-4));
-  }
-
   play() {
-    if (this.hero.hp <= 0) return this.showLines(["You can't set out while knocked out. Tap NEW HERO."], COLORS.bad);
-    this.scene.start("World");
+    this.cameras.main.fadeOut(200);
+    this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("World"));
   }
 
-  rollCheck() {
-    if (this.hero.hp <= 0) return this.showLines(["You can't do much while knocked out. Tap NEW HERO."], COLORS.bad);
-    const c = Phaser.Utils.Array.GetRandom(CHECKS);
-    const r = abilityCheck(this.hero, c.ability, c.dc);
-    this.showLines([`${c.what}...`, describeCheck(r)], r.success ? COLORS.good : COLORS.bad);
+  startNew() {
+    deleteSave();
+    newGame();
+    autosave();
+    this.play();
   }
 
-  /* Plays a whole fight with a simple autopilot, then reveals the log a line at a time. */
-  testFight() {
-    if (this.hero.hp <= 0) return this.showLines(["You can't fight while knocked out. Tap NEW HERO."], COLORS.bad);
-    const battle = createBattle(this.hero, Phaser.Utils.Array.GetRandom(FOES));
-    for (let i = 0; i < 100 && battle.state === "active"; i++) {
-      const h = this.hero, hasPotion = h.inventory.some(it => it.base === "potionHealing");
-      playerAction(battle, h.hp <= h.maxHp / 3 && hasPotion ? { type: "potion" } : { type: "attack" });
-    }
-    this.busy = true;
-    const shown = [];
-    battle.log.forEach((entry, i) => this.time.delayedCall(i * LINE_MS, () => {
-      shown.push(entry.text);
-      const color = entry.type === "won" || entry.type === "level-up" ? COLORS.good : entry.type === "lost" ? COLORS.bad : COLORS.text;
-      this.showLines(shown, color);
-      if (entry.roll?.hit) this.flash(entry.type === "monster-attack" ? this.knight : this.goblin);
-    }));
-    this.time.delayedCall(battle.log.length * LINE_MS, () => { this.busy = false; this.refreshSheet(); });
-  }
-
-  flash(target) {
-    target.setTintFill(0xffffff);
-    this.time.delayedCall(90, () => target.clearTint());
-  }
-
-  rest() {
-    if (this.hero.hp <= 0) {
-      newGame();
-      this.showLines(["A new hero sets out from the village."]);
-    } else {
-      rest(this.hero);
-      this.showLines(["You rest by the fire and recover all your HP."], COLORS.good);
-    }
-    this.refreshSheet();
+  /* Starting over would replace the saved hero, so ask first. */
+  confirmNew() {
+    if (this.confirming) return;
+    const parts = [
+      this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x000000, 0.6).setOrigin(0).setInteractive(),
+      panel(this, WIDTH / 2 - 150, 80, 300, 100),
+      text(this, WIDTH / 2, 96, "Start a new game?\nYour saved hero will be lost.", { align: "center", lineSpacing: 6 }).setOrigin(0.5, 0),
+    ];
+    const close = () => { for (const p of [...parts, ...yes, ...no]) p.destroy(); this.confirming = null; };
+    const y = button(this, WIDTH / 2 - 60, 156, 100, 22, "START OVER", () => { close(); this.startNew(); });
+    const n = button(this, WIDTH / 2 + 60, 156, 100, 22, "KEEP HERO", close);
+    const yes = [y.bg, y.text], no = [n.bg, n.text];
+    this.confirming = close;
+    this.input.keyboard.once("keydown-ESC", () => this.confirming?.());
   }
 }

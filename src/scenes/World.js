@@ -5,7 +5,7 @@ import { createMap, frameGrid, step, zoneAt, tileAt, placeAhead, objectAhead, ac
 import { objective } from "../story/scripts.js";
 import { OVERWORLD } from "../world/overworld.js";
 import { TILE } from "../art/tiles.js";
-import { state } from "../state/game.js";
+import { state, autosave } from "../state/game.js";
 import { rollEncounter } from "../world/encounters.js";
 import { rest } from "../rules/character.js";
 import { DPad, wantsTouchControls } from "../ui/dpad.js";
@@ -22,6 +22,7 @@ export class World extends Phaser.Scene {
   create(data = {}) {
     this.map = MAPS[state.map];
     this.moving = false;
+    this.lastGoal = null;
     this.zoneId = data.quiet ? zoneAt(this.map, state.pos.x, state.pos.y)?.id ?? null : null;
 
     const tilemap = this.make.tilemap({ data: frameGrid(this.map), tileWidth: TILE, tileHeight: TILE });
@@ -49,11 +50,12 @@ export class World extends Phaser.Scene {
 
     this.drawHud();
     this.arrived();
+    autosave();
   }
 
   drawHud() {
     const fixed = o => o.setScrollFactor(0).setDepth(100);
-    fixed(this.add.rectangle(4, 4, 112, 18, COLORS.panel, 0.85).setOrigin(0).setStrokeStyle(1, COLORS.panelEdge));
+    fixed(this.add.rectangle(4, 4, 160, 18, COLORS.panel, 0.85).setOrigin(0).setStrokeStyle(1, COLORS.panelEdge));
     this.hud = fixed(this.add.text(10, 9, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.text }));
     this.quest = fixed(this.add.text(6, 27, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.gold, stroke: "#000000", strokeThickness: 3 }));
     const menu = fixed(this.add.rectangle(WIDTH - 4, 4, 52, 18, COLORS.panel, 0.85).setOrigin(1, 0).setStrokeStyle(1, COLORS.panelEdge).setInteractive({ useHandCursor: true }));
@@ -71,9 +73,12 @@ export class World extends Phaser.Scene {
 
   refreshHud() {
     const h = state.hero;
-    this.hud.setText(`LV ${h.level} HP ${h.hp}/${h.maxHp}`);
+    this.hud.setText(`LV ${h.level} HP ${h.hp}/${h.maxHp} ${h.gold}G`);
     const goal = objective(state.flags);
     this.quest.setText(goal ? `QUEST: ${goal}` : "");
+    // The quest line just went blank: the Elder has paid up.
+    if (this.lastGoal && !goal) this.flash(this.banner, "QUEST COMPLETE!", 2500);
+    this.lastGoal = goal;
   }
 
   heldDir() {
@@ -103,6 +108,7 @@ export class World extends Phaser.Scene {
     this.player.setPosition(centre(state.pos.x), centre(state.pos.y));
     this.syncObjects();
     this.refreshHud();
+    autosave();
   }
 
   /* Hides objects that the quest flags have removed. */
@@ -168,8 +174,9 @@ export class World extends Phaser.Scene {
     }
     if (placeAhead(this.map, state.pos, "up") === "blacksmith") this.flash(this.note, "The blacksmith's forge. Walk into the door to go in.", 2200);
     if (!stepped) return;
-    if (tile.name === "cave") return this.openOverlay("Dialogue", { script: "cave" });
     state.stepsSinceFight++;
+    autosave();
+    if (tile.name === "cave") return this.openOverlay("Dialogue", { script: "cave" });
     const foes = rollEncounter(zone?.id, tile.name, state.stepsSinceFight);
     if (foes) this.startBattle(foes, zone.id);
   }

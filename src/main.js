@@ -7,6 +7,7 @@ import { Battle } from "./scenes/Battle.js";
 import { Inventory } from "./scenes/Inventory.js";
 import { Blacksmith } from "./scenes/Blacksmith.js";
 import { Dialogue } from "./scenes/Dialogue.js";
+import { restoreSave, autosave } from "./state/game.js";
 
 // Text is drawn onto canvases, so the pixel font must be loaded first. Don't wait forever if it can't load (offline).
 async function fontReady() {
@@ -16,6 +17,7 @@ async function fontReady() {
 }
 
 await fontReady();
+restoreSave(); // pick up where you left off; the title screen offers CONTINUE
 
 window.game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -27,6 +29,12 @@ window.game = new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [Boot, Title, World, Battle, Inventory, Blacksmith, Dialogue],
 });
+
+// Phones can close a home-screen app at any moment once it's in the background, so save on the way out.
+// (Not from the title screen, so just opening the game never creates a save.)
+const saveIfPlaying = () => { if (!window.game.scene.isActive("Title")) autosave(); };
+document.addEventListener("visibilitychange", () => { if (document.hidden) saveIfPlaying(); });
+window.addEventListener("pagehide", saveIfPlaying);
 
 // Re-fit whenever the page area changes size (phone rotation, toolbars, a window that started out hidden).
 new ResizeObserver(() => window.game.scale.refresh()).observe(document.getElementById("game"));

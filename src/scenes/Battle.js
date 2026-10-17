@@ -4,7 +4,7 @@
 import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { createBattle, playerAction, isPlayerTurn } from "../rules/combat.js";
 import { armourClass } from "../rules/character.js";
-import { state, faint } from "../state/game.js";
+import { state, faint, autosave } from "../state/game.js";
 
 const LINE_MS = 700;
 const GROUND_Y = 124;
@@ -246,6 +246,7 @@ export class Battle extends Phaser.Scene {
       title = "ESCAPED"; color = COLORS.text;
       lines.push("You live to fight another day.");
     }
+    autosave(); // rewards, or waking up in the village, are kept even if the app closes on this screen
     this.marker.setVisible(false);
     this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x000000, 0.55).setOrigin(0).setDepth(30);
     this.add.rectangle(WIDTH / 2, 100, 280, 110, COLORS.panel).setStrokeStyle(2, COLORS.panelEdge).setDepth(31);
