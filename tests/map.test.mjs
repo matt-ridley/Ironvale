@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createMap, tileAt, isWalkable, step, zoneAt, reachable, frameGrid, placeAhead, FRAMES, TILES } from "../src/world/map.js";
+import { createMap, tileAt, isWalkable, step, zoneAt, reachable, frameGrid, placeAhead, objectAt, objectAhead, activeObjects, FRAMES, TILES } from "../src/world/map.js";
 import { OVERWORLD } from "../src/world/overworld.js";
 
 const world = createMap(OVERWORLD);
@@ -36,8 +36,29 @@ test("you start on open ground in the village", () => {
   assert.equal(zoneAt(world, world.spawn.x, world.spawn.y).id, "village");
 });
 
-test("the bridge, the forest and the cave mouth can all be reached from the start", () => {
-  const seen = reachable(world, world.spawn);
+test("the fallen oak is the only way to the cave", () => {
+  const [cave] = find("C");
+  assert.ok(!reachable(world, world.spawn).has(`${cave.x},${cave.y}`), "cave reachable with the oak in place");
+  const log = world.objects.find(o => o.id === "fallenLog");
+  for (const [dx, dy] of [[0, -1], [0, 1]]) assert.ok(isWalkable(world, log.x + dx, log.y + dy), "you can stand on both sides of the oak");
+});
+
+test("people and the oak block the way until the oak is cleared", () => {
+  const elder = world.objects.find(o => o.id === "elder");
+  assert.equal(isWalkable(world, elder.x, elder.y), false);
+  assert.equal(objectAhead(world, { x: elder.x, y: elder.y + 1 }, "up").id, "elder");
+  const log = world.objects.find(o => o.id === "fallenLog");
+  assert.equal(objectAt(world, log.x, log.y).id, "fallenLog");
+  assert.equal(objectAt(world, log.x, log.y, { logCleared: true }), null);
+  assert.equal(activeObjects(world, { logCleared: true }).length, world.objects.length - 1);
+});
+
+test("objects can't be placed on solid tiles", () => {
+  assert.throws(() => createMap({ name: "bad", zones: [], rows: ["T."], objects: [{ id: "x", x: 0, y: 0 }] }), /solid/);
+});
+
+test("the bridge, the forest and the cave mouth can all be reached from the start (once the oak is moved)", () => {
+  const seen = reachable(world, world.spawn, { logCleared: true });
   const [cave] = find("C");
   assert.ok(cave, "map has a cave mouth");
   assert.ok(seen.has(`${cave.x},${cave.y}`), "cave mouth is reachable");
