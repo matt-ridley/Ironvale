@@ -15,6 +15,7 @@ const BAR_W = 40;
 const SKY = {
   forest: { sky: 0x1d2b3a, far: 0x1f3a26, ground: 0x3e6a31, groundDark: 0x34592a },
   rocks: { sky: 0x2a2633, far: 0x45424f, ground: 0x6b6b72, groundDark: 0x5a5a61 },
+  cave: { sky: 0x0f0d14, far: 0x26222e, ground: 0x3a3440, groundDark: 0x2e2934 },
 };
 
 const hpColour = (hp, max) => (hp > max / 2 ? 0x7bc96f : hp > max / 4 ? 0xe8b923 : 0xe0645c);
@@ -24,6 +25,7 @@ export class Battle extends Phaser.Scene {
 
   init(data) {
     this.foes = data.foes;
+    this.winFlag = data.winFlag || null; // a quest flag to set if you win (the boss fight)
     this.zone = SKY[data.zone] ? data.zone : "forest";
   }
 
@@ -231,6 +233,7 @@ export class Battle extends Phaser.Scene {
     const b = this.battle, lines = [];
     let title, color;
     if (b.state === "won") {
+      if (this.winFlag) state.flags[this.winFlag] = true;
       title = "VICTORY!"; color = COLORS.gold;
       lines.push(`+${b.rewards.xp} XP   +${b.rewards.gold} gold`);
       for (const l of b.rewards.levelUps) lines.push(`Level ${l.level}! +${l.hpGain} max HP`);

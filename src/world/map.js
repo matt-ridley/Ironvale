@@ -33,18 +33,32 @@ export function createMap(def) {
     if (row.length !== width) throw new Error(`Map ${def.name}: row ${y} is ${row.length} wide, expected ${width}`);
     for (const ch of row) if (!TILES[ch]) throw new Error(`Map ${def.name}: unknown tile "${ch}" in row ${y}`);
   });
-  return { ...def, width, height };
+  const map = { objects: [], ...def, width, height };
+  for (const o of map.objects) {
+    if (tileAt(map, o.x, o.y)?.solid !== false) throw new Error(`Map ${def.name}: ${o.id} stands on a solid tile`);
+  }
+  return map;
 }
+
+/* Objects still on the map, given the quest flags. */
+export const activeObjects = (map, flags = {}) => map.objects.filter(o => !(o.goneWhen && flags[o.goneWhen]));
+export const objectAt = (map, x, y, flags = {}) => activeObjects(map, flags).find(o => o.x === x && o.y === y) || null;
 
 export const inBounds = (map, x, y) => x >= 0 && y >= 0 && x < map.width && y < map.height;
 export const tileAt = (map, x, y) => (inBounds(map, x, y) ? TILES[map.rows[y][x]] : null);
-export const isWalkable = (map, x, y) => { const t = tileAt(map, x, y); return !!t && !t.solid; };
+export const isWalkable = (map, x, y, flags = {}) => { const t = tileAt(map, x, y); return !!t && !t.solid && !objectAt(map, x, y, flags); };
 
 /* One step in a direction. Blocked steps stay put. */
-export function step(map, pos, dir) {
+export function step(map, pos, dir, flags = {}) {
   const d = DIRS[dir];
   const x = pos.x + d.dx, y = pos.y + d.dy;
-  return isWalkable(map, x, y) ? { x, y, moved: true } : { x: pos.x, y: pos.y, moved: false };
+  return isWalkable(map, x, y, flags) ? { x, y, moved: true } : { x: pos.x, y: pos.y, moved: false };
+}
+
+/* The object you'd walk into, if any. */
+export function objectAhead(map, pos, dir, flags = {}) {
+  const d = DIRS[dir];
+  return objectAt(map, pos.x + d.dx, pos.y + d.dy, flags);
 }
 
 /* The place (a shop, later a house) on the tile you'd walk into, if any. */
@@ -56,13 +70,13 @@ export function placeAhead(map, pos, dir) {
 export const zoneAt = (map, x, y) => map.zones.find(z => x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1) || null;
 
 /* Every tile you can walk to from `from`, as "x,y" strings. */
-export function reachable(map, from) {
+export function reachable(map, from, flags = {}) {
   const seen = new Set([`${from.x},${from.y}`]);
   const queue = [from];
   while (queue.length) {
     const p = queue.shift();
     for (const dir of Object.keys(DIRS)) {
-      const n = step(map, p, dir);
+      const n = step(map, p, dir, flags);
       const key = `${n.x},${n.y}`;
       if (n.moved && !seen.has(key)) { seen.add(key); queue.push(n); }
     }

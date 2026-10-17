@@ -10,6 +10,7 @@ export function newGame() {
   state.pos = { ...OVERWORLD.spawn };
   state.facing = "down";
   state.stepsSinceFight = 0;
+  state.flags = {}; // quest progress, e.g. questStarted, logCleared, chiefDefeated, questRewarded
 }
 
 /* Losing a fight isn't the end: you wake in the village, rested, but half your gold is gone. */
