@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { resolveAttack, createBattle, playerAction, isPlayerTurn, spawnMonster, DEFEND_AC_BONUS } from "../src/rules/combat.js";
-import { createCharacter, armourClass } from "../src/rules/character.js";
+import { createCharacter, armourClass, rest } from "../src/rules/character.js";
 import { seededRng } from "../src/rules/dice.js";
 import { faces } from "./helpers.mjs";
 
@@ -107,6 +107,40 @@ test("a potion heals and is used up; none left means the action is refused", () 
     return;
   }
   assert.fail("no usable seed");
+});
+
+test("Second Wind heals 1d10 + level, keeps your turn, and works once per rest", () => {
+  for (let seed = 1; seed <= 50; seed++) {
+    const rng = seededRng(seed);
+    const hero = createCharacter();
+    const b = createBattle(hero, ["goblin"], rng);
+    if (!isPlayerTurn(b)) continue;
+    hero.hp = 2;
+    const before = b.log.length;
+    const r = playerAction(b, { type: "secondWind" }, faces("6/10"));
+    assert.equal(r.ok, true);
+    assert.equal(hero.hp, 2 + 6 + 1);
+    assert.equal(b.log.length, before + 1); // the goblin didn't get a turn
+    assert.equal(isPlayerTurn(b), true);
+    assert.match(playerAction(b, { type: "secondWind" }, rng).reason, /used your Second Wind/);
+    rest(hero);
+    assert.equal(hero.secondWind, true);
+    return;
+  }
+  assert.fail("no seed gave the player the first turn");
+});
+
+test("every log entry records everyone's HP at that moment", () => {
+  const rng = seededRng(11);
+  const b = autoplay(createBattle(createCharacter(), ["goblin", "giantRat"], rng), rng);
+  for (const e of b.log) {
+    assert.equal(typeof e.hp.player, "number");
+    assert.equal(e.hp.monsters.length, 2);
+  }
+  const last = b.log.at(-1).hp;
+  assert.equal(last.player, b.player.hp);
+  assert.deepEqual(last.monsters, b.monsters.map(m => m.hp));
+  for (const e of b.log.filter(e => e.type === "attack" || e.type === "defeat")) assert.ok(e.target >= 0);
 });
 
 test("you can't act on a monster's turn or after the battle ends", () => {

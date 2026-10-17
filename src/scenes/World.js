@@ -1,9 +1,12 @@
 // The overworld: walk tile by tile with the arrow keys, WASD or the on-screen D-pad. The camera follows the hero.
+// Wild areas can start a fight after any step; Oakhollow heals you.
 import { WIDTH, FONT, COLORS } from "../config.js";
 import { createMap, frameGrid, step, zoneAt, tileAt } from "../world/map.js";
 import { OVERWORLD } from "../world/overworld.js";
 import { TILE } from "../art/tiles.js";
 import { state } from "../state/game.js";
+import { rollEncounter } from "../world/encounters.js";
+import { rest } from "../rules/character.js";
 import { DPad, wantsTouchControls } from "../ui/dpad.js";
 
 const STEP_MS = 150;
@@ -14,10 +17,11 @@ const centre = n => n * TILE + TILE / 2;
 export class World extends Phaser.Scene {
   constructor() { super("World"); }
 
-  create() {
+  /* data.quiet: coming back from a fight where you started it, so don't announce the area again. */
+  create(data = {}) {
     this.map = MAPS[state.map];
     this.moving = false;
-    this.zoneId = null;
+    this.zoneId = data.quiet ? zoneAt(this.map, state.pos.x, state.pos.y)?.id ?? null : null;
 
     const tilemap = this.make.tilemap({ data: frameGrid(this.map), tileWidth: TILE, tileHeight: TILE });
     tilemap.createLayer(0, tilemap.addTilesetImage("tiles"), 0, 0);
@@ -79,20 +83,44 @@ export class World extends Phaser.Scene {
     state.pos = { x: next.x, y: next.y };
     this.tweens.add({
       targets: this.player, x: centre(next.x), y: centre(next.y), duration: STEP_MS,
-      onComplete: () => { this.moving = false; this.arrived(); },
+      onComplete: () => { this.moving = false; this.arrived(true); },
     });
     this.tweens.add({ targets: this.player, scaleY: 0.88, duration: STEP_MS / 2, yoyo: true });
   }
 
-  /* Runs after each step (and on entering the scene): area names and things underfoot. */
-  arrived() {
+  /* Runs after each step (stepped = true) and on entering the scene: area names, resting, fights, things underfoot. */
+  arrived(stepped = false) {
     const { x, y } = state.pos;
     const zone = zoneAt(this.map, x, y);
+    const tile = tileAt(this.map, x, y);
     if (zone && zone.id !== this.zoneId) {
       this.zoneId = zone.id;
       this.flash(this.banner, zone.name, 1800);
+      // Until the inn opens, coming home to the village is a full rest.
+      const h = state.hero;
+      if (zone.id === "village" && (h.hp < h.maxHp || !h.secondWind)) {
+        rest(h);
+        this.refreshHud();
+        this.flash(this.note, "You rest in Oakhollow. HP and Second Wind restored.", 2200);
+      }
     }
-    if (tileAt(this.map, x, y).name === "cave") this.flash(this.note, "Cold air drifts from the cave. Something moves inside... (coming soon)", 2500);
+    if (tile.name === "cave") this.flash(this.note, "Cold air drifts from the cave. Something moves inside... (coming soon)", 2500);
+    if (!stepped) return;
+    state.stepsSinceFight++;
+    const foes = rollEncounter(zone?.id, tile.name, state.stepsSinceFight);
+    if (foes) this.startBattle(foes, zone.id);
+  }
+
+  startBattle(foes, zoneId) {
+    this.moving = true; // freeze walking
+    state.stepsSinceFight = 0;
+    const alert = this.add.text(this.player.x, this.player.y - 14, "!", { fontFamily: FONT, fontSize: "10px", color: COLORS.gold, stroke: "#000000", strokeThickness: 3 }).setOrigin(0.5, 1).setDepth(20);
+    this.tweens.add({ targets: alert, y: alert.y - 4, duration: 120, yoyo: true });
+    this.cameras.main.shake(250, 0.004);
+    this.time.delayedCall(450, () => {
+      this.cameras.main.fadeOut(250);
+      this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("Battle", { foes, zone: zoneId }));
+    });
   }
 
   flash(text, message, ms) {

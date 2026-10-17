@@ -1,6 +1,6 @@
 // Title screen: PLAY enters the world. It also shows off the rules engine: roll a check, run a test fight, rest.
 import { TITLE, VERSION, WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
-import { armourClass, weaponAttack, xpToNextLevel } from "../rules/character.js";
+import { armourClass, weaponAttack, xpToNextLevel, rest } from "../rules/character.js";
 import { abilityCheck, describeCheck } from "../rules/checks.js";
 import { createBattle, playerAction } from "../rules/combat.js";
 import { itemName } from "../rules/items.js";
@@ -124,7 +124,7 @@ export class Title extends Phaser.Scene {
       newGame();
       this.showLines(["A new hero sets out from the village."]);
     } else {
-      this.hero.hp = this.hero.maxHp;
+      rest(this.hero);
       this.showLines(["You rest by the fire and recover all your HP."], COLORS.good);
     }
     this.refreshSheet();
