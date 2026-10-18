@@ -5,7 +5,9 @@ import { state } from "../state/game.js";
 import { armourClass, weaponAttack } from "../rules/character.js";
 import { equip, unequip, useItem, describeItem, itemName, groupPack, baseOf, isPotion, SLOTS } from "../rules/items.js";
 import { compareEquip, compareUnequip, averageDamage } from "../rules/gear.js";
-import { text, panel, button, ListView } from "../ui/widgets.js";
+import { text, panel, button, ListView, uiCamera } from "../ui/widgets.js";
+import { heroFrame } from "../art/pixels.js";
+import { sfx } from "../audio/sound.js";
 
 const SLOT_TAG = { weapon: "WPN", shield: "SHD", armour: "ARM" };
 
@@ -24,6 +26,7 @@ export class Inventory extends Phaser.Scene {
   constructor() { super("Inventory"); }
 
   create() {
+    uiCamera(this);
     this.current = null;
     this.add.rectangle(0, 0, WIDTH, HEIGHT, COLORS.bg).setOrigin(0);
     text(this, 10, 9, "INVENTORY", { color: COLORS.gold });
@@ -33,7 +36,7 @@ export class Inventory extends Phaser.Scene {
     this.input.keyboard.on("keydown-I", () => this.close());
 
     panel(this, 6, 26, 192, 166);
-    this.add.image(36, 68, "knight").setScale(3);
+    this.add.image(36, 68, "hero", heroFrame("down"));
     this.stats = text(this, 72, 36, "", { lineSpacing: 5 });
     text(this, 12, 110, "WORN", { color: COLORS.dim });
     this.worn = new ListView(this, 10, 122, 184, 3, row => this.pick(row, this.pack));
@@ -142,6 +145,7 @@ export class Inventory extends Phaser.Scene {
     this.showDetail();
     this.desc.setText("");
     this.msg.setText(msg).setColor(ok ? COLORS.good : COLORS.bad);
+    sfx(!ok ? "back" : isPotion(row.item) && row.kind !== "worn" ? "heal" : "clang");
   }
 
   close() {

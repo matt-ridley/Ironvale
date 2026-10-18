@@ -5,6 +5,7 @@ import { MONSTERS } from "../src/data/monsters.js";
 import { seededRng } from "../src/rules/dice.js";
 import { state, newGame, faint } from "../src/state/game.js";
 import { OVERWORLD } from "../src/world/overworld.js";
+import { feetAt } from "../src/world/movement.js";
 
 const always = () => 0; // a roll of 0 is under any chance
 const never = () => 0.999;
@@ -55,5 +56,5 @@ test("fainting sends you home rested, minus half your gold", () => {
   assert.equal(state.hero.gold, 26);
   assert.equal(state.hero.hp, state.hero.maxHp);
   assert.equal(state.hero.secondWind, true);
-  assert.deepEqual(state.pos, OVERWORLD.spawn);
+  assert.deepEqual(state.pos, feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y));
 });

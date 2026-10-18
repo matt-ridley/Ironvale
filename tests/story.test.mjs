@@ -4,8 +4,9 @@ import { startConversation, view, choose, takeEvents } from "../src/story/dialog
 import { SCRIPTS, QUEST_REWARD, BOSS_FIGHT, objective } from "../src/story/scripts.js";
 import { createCharacter } from "../src/rules/character.js";
 import { faces } from "./helpers.mjs";
+import { feetAt } from "../src/world/movement.js";
 
-const fresh = (flags = {}) => ({ hero: createCharacter(), flags: { ...flags }, pos: { x: 54, y: 23 } });
+const fresh = (flags = {}) => ({ hero: createCharacter(), flags: { ...flags }, pos: feetAt(54, 23) });
 const labels = c => view(c).choices.map(x => x.label);
 const pick = (c, label) => choose(c, labels(c).indexOf(label));
 
@@ -60,7 +61,7 @@ test("climbing the log: success puts you on the far side, and the log stays", ()
   const s = fresh();
   const c = startConversation(SCRIPTS.log, s, { rng: faces("13/20"), object: { x: 54, y: 24 } }); // 13 + DEX 1 = 14
   pick(c, "Climb over (DEX, DC 14)");
-  assert.deepEqual(s.pos, { x: 54, y: 25 });
+  assert.deepEqual(s.pos, feetAt(54, 25));
   assert.equal(s.flags.logCleared, undefined);
   assert.match(view(c).text, /other side/);
 });

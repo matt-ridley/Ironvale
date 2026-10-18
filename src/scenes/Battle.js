@@ -5,6 +5,9 @@ import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { createBattle, playerAction, isPlayerTurn } from "../rules/combat.js";
 import { armourClass } from "../rules/character.js";
 import { state, faint, autosave } from "../state/game.js";
+import { uiCamera } from "../ui/widgets.js";
+import { heroFrame } from "../art/pixels.js";
+import { playMusic, playJingle, sfx } from "../audio/sound.js";
 
 const LINE_MS = 700;
 const GROUND_Y = 124;
@@ -30,6 +33,7 @@ export class Battle extends Phaser.Scene {
   }
 
   create() {
+    uiCamera(this);
     this.battle = createBattle(state.hero, this.foes);
     // Phaser reuses this scene object for every fight, so reset everything here.
     this.busy = false;
@@ -39,14 +43,14 @@ export class Battle extends Phaser.Scene {
 
     this.drawBackdrop();
     this.add.ellipse(110, GROUND_Y, 40, 8, 0x000000, 0.3);
-    this.heroSprite = this.add.image(110, GROUND_Y, "knight").setOrigin(0.5, 1).setScale(3);
+    this.heroSprite = this.add.image(110, GROUND_Y, "hero", heroFrame("side")).setOrigin(0.5, 1).setScale(1.5);
 
     const xs = this.battle.monsters.length === 1 ? [360] : [320, 410];
     this.foeViews = this.battle.monsters.map((m, i) => {
       const x = xs[i];
       this.add.ellipse(x, GROUND_Y, 40, 8, 0x000000, 0.3);
       const sprite = this.add.image(x, GROUND_Y, this.textures.exists(m.id) ? m.id : "goblin")
-        .setOrigin(0.5, 1).setScale(3).setFlipX(true).setInteractive({ useHandCursor: true });
+        .setOrigin(0.5, 1).setScale(1.5).setFlipX(true).setInteractive({ useHandCursor: true });
       sprite.on("pointerup", () => this.select(i));
       const name = this.add.text(x, GROUND_Y - 66, m.name, { fontFamily: FONT, fontSize: "8px", color: COLORS.text, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
       const barBg = this.add.rectangle(x - BAR_W / 2, GROUND_Y - 56, BAR_W, 4, 0x000000, 0.6).setOrigin(0, 0.5);
@@ -56,10 +60,15 @@ export class Battle extends Phaser.Scene {
     this.marker = this.add.triangle(0, 0, 0, 0, 10, 0, 5, 6, 0xe8b923);
     this.tweens.add({ targets: this.marker, y: "+=3", duration: 400, yoyo: true, repeat: -1 });
 
+    // Everyone breathes a little while waiting, out of step with each other.
+    [this.heroSprite, ...this.foeViews.map(v => v.sprite)].forEach((s, i) =>
+      this.tweens.add({ targets: s, scaleY: s.scaleY * 0.97, duration: 700 + i * 130, yoyo: true, repeat: -1, ease: "Sine.inOut" }));
+
     this.drawPanel();
     this.applyHp(this.battle.log[0].hp);
     this.placeMarker();
     this.cameras.main.fadeIn(250);
+    playMusic(this.winFlag ? "boss" : "battle");
     this.play(this.battle.log); // the opening line, plus any attacks from monsters that act first
   }
 
@@ -163,14 +172,19 @@ export class Battle extends Phaser.Scene {
     switch (e.type) {
       case "attack":
         this.lunge(this.heroSprite, 1);
-        if (e.roll.hit) this.hit(foe, e.roll.damage, e.roll.crit); else this.float(foe, "MISS", COLORS.dim);
+        sfx("sword");
+        if (e.roll.hit) { this.slash(foe, e.roll.crit); this.hit(foe, e.roll.damage, e.roll.crit); this.time.delayedCall(90, () => sfx(e.roll.crit ? "crit" : "hit")); }
+        else { this.float(foe, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
         break;
       case "monster-attack": {
         this.lunge(this.foeViews[e.actor].sprite, -1);
-        if (e.roll.hit) { this.hit(this.heroSprite, e.roll.damage, e.roll.crit); this.cameras.main.shake(120, 0.006); }
-        else this.float(this.heroSprite, "MISS", COLORS.dim);
+        if (e.roll.hit) { this.hit(this.heroSprite, e.roll.damage, e.roll.crit); this.cameras.main.shake(120, 0.006); this.time.delayedCall(90, () => sfx("hurt")); }
+        else { this.float(this.heroSprite, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
         break;
       }
+      case "loot":
+        sfx("coin");
+        break;
       case "defeat": {
         const v = this.foeViews[e.target];
         this.tweens.add({ targets: [v.sprite, v.name, v.bar, v.barBg], alpha: 0, duration: 400 });
@@ -178,6 +192,7 @@ export class Battle extends Phaser.Scene {
       }
       case "potion":
       case "second-wind":
+        sfx("heal");
         this.float(this.heroSprite, `+${e.heal}`, COLORS.good);
         break;
       case "defend":
@@ -216,7 +231,18 @@ export class Battle extends Phaser.Scene {
     this.tweens.add({ targets: sprite, x: sprite.x + dir * 14, duration: 90, yoyo: true });
   }
 
+  /* A quick white sword arc across the target. */
+  slash(sprite, crit) {
+    const g = this.add.graphics({ x: sprite.x, y: sprite.y - 26 }).setDepth(25);
+    g.lineStyle(crit ? 4 : 3, crit ? 0xffe28a : 0xffffff, 1);
+    g.beginPath(); g.arc(0, 0, 22, Phaser.Math.DegToRad(200), Phaser.Math.DegToRad(330)); g.strokePath();
+    g.setScale(0.6).setAngle(-20);
+    this.tweens.add({ targets: g, scale: 1.1, angle: 25, alpha: 0, duration: 260, ease: "Quad.out", onComplete: () => g.destroy() });
+  }
+
   hit(sprite, damage, crit) {
+    // Knocked back a little, then settle.
+    this.tweens.add({ targets: sprite, x: sprite.x + (sprite === this.heroSprite ? -6 : 6), duration: 70, yoyo: true, delay: 90, ease: "Quad.out" });
     this.time.delayedCall(90, () => {
       sprite.setTintFill(0xffffff);
       this.time.delayedCall(80, () => sprite.clearTint());
@@ -235,11 +261,13 @@ export class Battle extends Phaser.Scene {
     if (b.state === "won") {
       if (this.winFlag) state.flags[this.winFlag] = true;
       title = "VICTORY!"; color = COLORS.gold;
+      playJingle(b.rewards.levelUps.length ? "levelUp" : "victory");
       lines.push(`+${b.rewards.xp} XP   +${b.rewards.gold} gold`);
       for (const l of b.rewards.levelUps) lines.push(`Level ${l.level}! +${l.hpGain} max HP`);
       if (b.rewards.loot.length) lines.push(`Found: ${b.rewards.loot.join(", ")}`);
     } else if (b.state === "lost") {
       title = "DEFEATED"; color = COLORS.bad;
+      playJingle("defeat");
       const { goldLost } = faint();
       lines.push("You wake up in Oakhollow,", `rested but ${goldLost} gold poorer.`);
     } else {

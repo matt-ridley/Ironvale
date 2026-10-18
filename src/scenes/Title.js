@@ -4,26 +4,29 @@ import { armourClass } from "../rules/character.js";
 import { state, newGame, autosave } from "../state/game.js";
 import { loadGame, deleteSave } from "../state/save.js";
 import { objective } from "../story/scripts.js";
-import { text, panel, button } from "../ui/widgets.js";
+import { text, panel, button, uiCamera } from "../ui/widgets.js";
+import { heroFrame } from "../art/pixels.js";
+import { playMusic, isMuted, toggleMuted, sfx } from "../audio/sound.js";
 
 export class Title extends Phaser.Scene {
   constructor() { super("Title"); }
 
   create() {
+    uiCamera(this);
     this.confirming = null;
     this.drawBackdrop();
     this.add.text(WIDTH / 2, 18, TITLE.toUpperCase(), { fontFamily: FONT, fontSize: "24px", color: COLORS.gold }).setOrigin(0.5, 0);
-    text(this, WIDTH / 2, 48, "A d20 pixel adventure", { color: COLORS.dim }).setOrigin(0.5, 0);
+    text(this, WIDTH / 2, 45, "A d20 pixel adventure", { color: COLORS.dim }).setOrigin(0.5, 0);
 
-    const knight = this.add.image(120, 126, "knight").setScale(3);
-    const goblin = this.add.image(360, 126, "goblin").setScale(3).setFlipX(true);
+    const knight = this.add.image(120, 152, "hero", heroFrame("side")).setOrigin(0.5, 1).setScale(1.5);
+    const goblin = this.add.image(360, 152, "goblin").setOrigin(0.5, 1).setScale(1.5).setFlipX(true);
     this.tweens.add({ targets: [knight, goblin], y: "-=3", duration: 600, yoyo: true, repeat: -1, ease: "Sine.inOut" });
 
     // The live state is the saved game (restored at start-up, and saved as you play).
     const saved = loadGame() !== null;
     const h = state.hero;
     const goal = objective(state.flags);
-    text(this, WIDTH / 2, 72, saved
+    text(this, WIDTH / 2, 58, saved
       ? `${h.name.toUpperCase()}  LV ${h.level}  HP ${h.hp}/${h.maxHp}  AC ${armourClass(h)}  ${h.gold} GOLD\n${goal ? `QUEST: ${goal}` : "QUEST COMPLETE. The wood is yours to explore."}`
       : "Goblins are raiding Oakhollow.\nThe village needs a hero.", { align: "center", lineSpacing: 6 }).setOrigin(0.5, 0);
 
@@ -38,6 +41,8 @@ export class Title extends Phaser.Scene {
     text(this, WIDTH / 2, 214, "Your progress saves automatically.", { color: COLORS.dim }).setOrigin(0.5, 0);
     text(this, 6, HEIGHT - 2, "Rules: SRD 5.1, CC-BY-4.0", { color: COLORS.dim }).setOrigin(0, 1);
     text(this, WIDTH - 6, HEIGHT - 2, `v${VERSION}`, { color: COLORS.dim }).setOrigin(1, 1);
+    const snd = button(this, WIDTH - 30, 14, 48, 18, isMuted() ? "MUTE" : "SND", () => { toggleMuted(); snd.setLabel(isMuted() ? "MUTE" : "SND"); sfx("select"); });
+    playMusic("village"); // starts on the first tap or key press
   }
 
   drawBackdrop() {

@@ -2,7 +2,7 @@
 // These get swapped for real sprite sheets later; until then the game needs no image files.
 
 export const PALETTE = {
-  k: "#1a1a2e", // outline
+  k: "#2b1d2e", // outline (tinted, not black: the 16-bit look)
   s: "#9aa5b1", // steel
   S: "#d4dbe2", // light steel
   v: "#2c2c3a", // visor

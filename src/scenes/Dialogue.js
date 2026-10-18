@@ -5,7 +5,8 @@ import { WIDTH, HEIGHT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
 import { SCRIPTS } from "../story/scripts.js";
 import { startConversation, view, choose, takeEvents } from "../story/dialogue.js";
-import { text, panel } from "../ui/widgets.js";
+import { text, panel, uiCamera } from "../ui/widgets.js";
+import { sfx } from "../audio/sound.js";
 
 const BOX_BOTTOM = HEIGHT - 6; // the box grows upwards from here to fit what it says
 const ROW_H = 16;
@@ -15,6 +16,7 @@ export class Dialogue extends Phaser.Scene {
 
   /* data: { script: name in SCRIPTS, object: the map object being talked to, if any } */
   create(data) {
+    uiCamera(this);
     this.convo = startConversation(SCRIPTS[data.script], state, { object: data.object || null });
     this.events_ = [];
     this.done = false; // Phaser reuses this scene object, so reset it every time
@@ -75,6 +77,7 @@ export class Dialogue extends Phaser.Scene {
 
   pick(i) {
     if (!this.rows[i] || this.done) return;
+    sfx("select");
     choose(this.convo, i);
     this.events_.push(...takeEvents(this.convo));
     this.show();

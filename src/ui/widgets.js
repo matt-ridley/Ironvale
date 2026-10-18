@@ -1,5 +1,10 @@
 // Small UI pieces for menu screens: buttons and a paged, tappable list.
-import { FONT, COLORS } from "../config.js";
+import { FONT, COLORS, WIDTH, HEIGHT, ZOOM } from "../config.js";
+
+/* Menu scenes are laid out on the 480 x 270 grid; this zooms their camera to fill the double-size canvas. */
+export function uiCamera(scene) {
+  scene.cameras.main.setZoom(ZOOM).centerOn(WIDTH / 2, HEIGHT / 2);
+}
 
 export const text = (scene, x, y, str, opts = {}) =>
   scene.add.text(x, y, str, { fontFamily: FONT, fontSize: "8px", color: COLORS.text, ...opts });

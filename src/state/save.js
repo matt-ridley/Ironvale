@@ -5,11 +5,13 @@
 import { VERSION } from "../config.js";
 import { ITEMS } from "../data/items.js";
 import { SLOTS } from "../rules/items.js";
-import { createMap, isWalkable } from "../world/map.js";
+import { createMap } from "../world/map.js";
+import { blockedAt, feetAt } from "../world/movement.js";
 import { OVERWORLD } from "../world/overworld.js";
 
 export const SAVE_KEY = "ironvale-save";
-export const SAVE_FORMAT = 1;
+export const SAVE_FORMAT = 2;
+// Format 1 (before 0.7.0) saved whole tiles; format 2 saves the hero's feet in fractions of a tile.
 const WORLD = createMap(OVERWORLD);
 const DIR_NAMES = ["up", "down", "left", "right"];
 
@@ -24,7 +26,7 @@ const knownItem = i => i && typeof i === "object" && ITEMS[i.base] && isInt(i.up
 export function deserialize(json) {
   let data;
   try { data = JSON.parse(json); } catch { return null; }
-  if (!data || data.format !== SAVE_FORMAT || !data.state?.hero) return null;
+  if (!data || ![1, SAVE_FORMAT].includes(data.format) || !data.state?.hero) return null;
   const s = data.state, h = s.hero;
   if (!h.abilities || !["STR", "DEX", "CON"].every(a => isInt(h.abilities[a]))) return null;
   for (const k of ["level", "xp", "gold", "maxHp", "hp"]) if (!isInt(h[k])) return null;
@@ -39,14 +41,17 @@ export function deserialize(json) {
     })),
     inventory: Array.isArray(h.inventory) ? h.inventory.filter(knownItem) : [],
   };
-  const posOk = s.pos && isInt(s.pos.x) && isInt(s.pos.y) && isWalkable(WORLD, s.pos.x, s.pos.y, s.flags || {});
+  const flags = s.flags && typeof s.flags === "object" ? { ...s.flags } : {};
+  let pos = s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y) ? { x: s.pos.x, y: s.pos.y } : null;
+  if (pos && data.format === 1) pos = feetAt(pos.x, pos.y);
+  if (!pos || blockedAt(WORLD, pos.x, pos.y, flags)) pos = feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y);
   return {
     hero,
     map: OVERWORLD.name,
-    pos: posOk ? { x: s.pos.x, y: s.pos.y } : { ...OVERWORLD.spawn },
+    pos,
     facing: DIR_NAMES.includes(s.facing) ? s.facing : "down",
     stepsSinceFight: isInt(s.stepsSinceFight) ? s.stepsSinceFight : 0,
-    flags: s.flags && typeof s.flags === "object" ? { ...s.flags } : {},
+    flags,
   };
 }
 

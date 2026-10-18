@@ -4,7 +4,9 @@ import { state } from "../state/game.js";
 import { ITEMS, STOCK, MAX_UPGRADE } from "../data/items.js";
 import { upgradeItem, upgradeCost, describeItem, itemName, groupPack, makeItem, baseOf, SLOTS } from "../rules/items.js";
 import { buyItem, sellItem, sellPrice } from "../rules/gear.js";
-import { text, panel, button, ListView } from "../ui/widgets.js";
+import { text, panel, button, ListView, uiCamera } from "../ui/widgets.js";
+import { heroFrame } from "../art/pixels.js";
+import { sfx } from "../audio/sound.js";
 
 const TABS = ["upgrade", "buy", "sell"];
 const GREETING = "Steel's hot. What'll it be?";
@@ -14,6 +16,7 @@ export class Blacksmith extends Phaser.Scene {
   constructor() { super("Blacksmith"); }
 
   create() {
+    uiCamera(this);
     this.tab = "upgrade";
     this.current = null;
     this.add.rectangle(0, 0, WIDTH, HEIGHT, COLORS.bg).setOrigin(0);
@@ -32,7 +35,7 @@ export class Blacksmith extends Phaser.Scene {
     this.action = button(this, 393, 176, 140, 22, "", () => this.doAction());
 
     panel(this, 6, 198, 468, 66);
-    this.add.image(28, 230, "knight").setScale(2).setTint(0xc8a27a); // the smith, until they get a sprite of their own
+    this.add.image(28, 230, "hero", heroFrame("down")).setTint(0xc8a27a); // the smith, until they get a sprite of their own
     this.say = text(this, 50, 208, GREETING, { wordWrap: { width: 410 }, lineSpacing: 5 });
 
     this.showTab("upgrade");
@@ -117,6 +120,7 @@ export class Blacksmith extends Phaser.Scene {
       line = r.ok ? `I'll give you ${r.price} gold for the ${r.name}. Done.` : r.reason;
     }
     this.say.setText(line).setColor(r.ok ? COLORS.text : COLORS.bad);
+    sfx(!r.ok ? "back" : this.tab === "upgrade" ? "clang" : "coin");
     const keep = this.list.selected;
     this.refresh();
     // Stay on the same row so you can upgrade again, or buy/sell another, with one more tap.

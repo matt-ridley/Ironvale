@@ -2,13 +2,14 @@
 import { createCharacter, rest } from "../rules/character.js";
 import { OVERWORLD } from "../world/overworld.js";
 import { saveGame, loadGame } from "./save.js";
+import { feetAt } from "../world/movement.js";
 
 export const state = {};
 
 export function newGame() {
   state.hero = createCharacter();
   state.map = OVERWORLD.name;
-  state.pos = { ...OVERWORLD.spawn };
+  state.pos = feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y); // in tiles, at the hero's feet
   state.facing = "down";
   state.stepsSinceFight = 0;
   state.flags = {}; // quest progress, e.g. questStarted, logCleared, chiefDefeated, questRewarded
@@ -20,7 +21,7 @@ export function faint() {
   state.hero.gold -= lost;
   rest(state.hero);
   state.map = OVERWORLD.name;
-  state.pos = { ...OVERWORLD.spawn };
+  state.pos = feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y);
   state.facing = "down";
   state.stepsSinceFight = 0;
   return { goldLost: lost };

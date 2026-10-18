@@ -5,6 +5,9 @@ import { state, newGame } from "../src/state/game.js";
 import { makeItem } from "../src/rules/items.js";
 import { gainXp } from "../src/rules/character.js";
 import { OVERWORLD } from "../src/world/overworld.js";
+import { feetAt } from "../src/world/movement.js";
+
+const SPAWN = feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y);
 
 class MemoryStorage {
   constructor() { this.data = {}; }
@@ -21,7 +24,7 @@ const played = () => {
   state.hero.secondWind = false;
   state.hero.equipment.weapon.upgrade = 2;
   state.hero.inventory.push(makeItem("scimitar", { upgrade: 1 }));
-  state.pos = { x: 40, y: 12 };
+  state.pos = { x: 40.37, y: 12.6 }; // feet, in tiles
   state.facing = "left";
   state.flags = { questStarted: true, logCleared: true };
   return structuredClone(state);
@@ -61,17 +64,25 @@ test("a position that is now a wall (or off the map) goes back to the village", 
   for (const pos of [{ x: 0, y: 0 }, { x: 999, y: 3 }, null]) {
     const data = JSON.parse(serialize(state));
     data.state.pos = pos;
-    assert.deepEqual(deserialize(JSON.stringify(data)).pos, OVERWORLD.spawn);
+    assert.deepEqual(deserialize(JSON.stringify(data)).pos, SPAWN);
   }
 });
 
 test("standing where the oak was only loads if it was cleared", () => {
   played();
   const data = JSON.parse(serialize(state));
-  data.state.pos = { x: 54, y: 24 };
-  assert.deepEqual(deserialize(JSON.stringify(data)).pos, { x: 54, y: 24 });
+  data.state.pos = feetAt(54, 24);
+  assert.deepEqual(deserialize(JSON.stringify(data)).pos, feetAt(54, 24));
   data.state.flags = {};
-  assert.deepEqual(deserialize(JSON.stringify(data)).pos, OVERWORLD.spawn);
+  assert.deepEqual(deserialize(JSON.stringify(data)).pos, SPAWN);
+});
+
+test("saves from before 0.7.0 (whole tiles) load with the hero standing in that tile", () => {
+  played();
+  const data = JSON.parse(serialize(state));
+  data.format = 1;
+  data.state.pos = { x: 17, y: 19 };
+  assert.deepEqual(deserialize(JSON.stringify(data)).pos, feetAt(17, 19));
 });
 
 test("you never load in at 0 HP", () => {
