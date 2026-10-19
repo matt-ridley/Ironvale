@@ -3,13 +3,14 @@
 import { WIDTH, HEIGHT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
 import { ITEMS, SHOPS, MAX_UPGRADE } from "../data/items.js";
-import { upgradeItem, upgradeCost, describeItem, itemName, groupPack, makeItem, baseOf, SLOTS } from "../rules/items.js";
+import { upgradeItem, upgradeCost, describeItem, itemName, groupPack, makeItem, baseOf, isUpgradable, SLOTS } from "../rules/items.js";
+import { companionGear, COMPANIONS } from "../rules/party.js";
 import { buyItem, sellItem, sellPrice } from "../rules/gear.js";
 import { text, panel, button, ListView, uiCamera } from "../ui/widgets.js";
 import { heroFrame } from "../art/pixels.js";
 import { sfx } from "../audio/sound.js";
 
-const UPGRADE_HELP = { weapon: "+1 to hit and damage", shield: "+1 AC", armour: "+1 AC" };
+const UPGRADE_HELP = { weapon: "+1 to hit and damage", bow: "+1 to hit and damage", shield: "+1 AC", armour: "+1 AC" };
 
 export class Shop extends Phaser.Scene {
   constructor() { super("Shop"); }
@@ -53,10 +54,11 @@ export class Shop extends Phaser.Scene {
     const h = state.hero, gold = h.gold;
     if (this.tab === "upgrade") {
       const worn = SLOTS.map(s => h.equipment[s]).filter(Boolean);
-      const carried = h.inventory.filter(i => SLOTS.includes(baseOf(i).type));
-      return [...worn, ...carried].map(item => {
+      const friend = companionGear(h);
+      const carried = h.inventory.filter(isUpgradable);
+      return [...worn, ...friend, ...carried].map(item => {
         const cost = upgradeCost(item);
-        return { item, worn: worn.includes(item), label: itemName(item), right: cost === null ? "MAX" : `${cost}g`, color: cost !== null && cost > gold ? COLORS.dim : COLORS.text };
+        return { item, worn: worn.includes(item), friend: friend.includes(item), label: itemName(item), right: cost === null ? "MAX" : `${cost}g`, color: cost !== null && cost > gold ? COLORS.dim : COLORS.text };
       });
     }
     if (this.tab === "buy") {
@@ -80,7 +82,7 @@ export class Shop extends Phaser.Scene {
   }
 
   showDetail() {
-    const row = this.current;
+    const row = this.current, h = state.hero;
     if (!row) {
       this.name.setText("");
       this.desc.setText(this.tab === "upgrade" ? "Pick something to improve." : this.tab === "buy" ? "Pick something to buy." : "Pick something to sell. Take gear off to sell it.");
@@ -93,7 +95,8 @@ export class Shop extends Phaser.Scene {
     if (this.tab === "upgrade") {
       const cost = upgradeCost(row.item), type = baseOf(row.item).type;
       const next = cost === null ? `Already +${MAX_UPGRADE}, as good as it gets.` : `Next: +${row.item.upgrade + 1}, ${UPGRADE_HELP[type]}.`;
-      this.desc.setText(`${describeItem(row.item)}\n${row.worn ? "(worn)\n" : ""}${next}`);
+      const who = row.worn ? "(worn)\n" : row.friend ? `(${COMPANIONS[h.companion.id].name}'s)\n` : "";
+      this.desc.setText(`${describeItem(row.item)}\n${who}${next}`);
       this.action.setLabel(cost === null ? "MAXED" : `UPGRADE ${cost}g`).setEnabled(cost !== null && cost <= gold);
     } else if (this.tab === "buy") {
       const cost = ITEMS[row.base].cost;

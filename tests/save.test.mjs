@@ -149,8 +149,13 @@ test("banked gold is saved, and saves from before the bank load with an empty on
 
 test("a companion is saved with their wounds; an unknown one is dropped", () => {
   played();
-  state.hero.companion = { id: "megan", hurt: 3 };
-  assert.deepEqual(deserialize(serialize(state)).hero.companion, { id: "megan", hurt: 3 });
+  state.hero.companion = { id: "megan", hurt: 3, gear: { bow: makeItem("longbow", { upgrade: 2 }), armour: null } };
+  assert.deepEqual(deserialize(serialize(state)).hero.companion, state.hero.companion);
+  // Saves from 0.10.0 (no gear) get the starting gear; gear that doesn't fit is dropped.
+  state.hero.companion = { id: "megan", hurt: 0 };
+  assert.deepEqual(Object.values(deserialize(serialize(state)).hero.companion.gear).map(i => i.base), ["shortbow", "leather"]);
+  state.hero.companion = { id: "megan", hurt: 0, gear: { bow: makeItem("longsword"), armour: makeItem("chainMail") } };
+  assert.deepEqual(deserialize(serialize(state)).hero.companion.gear, { bow: null, armour: null });
   state.hero.companion = { id: "dragon", hurt: 0 };
   assert.equal("companion" in deserialize(serialize(state)).hero, false);
 });

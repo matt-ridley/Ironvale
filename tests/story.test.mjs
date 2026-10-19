@@ -190,7 +190,9 @@ test("Megan's quest: she asks for her bow, you find it, and she joins your party
   assert.match(sideObjective(s.flags), /Bring the bow/);
   const w = startConversation(SCRIPTS.megan, s);
   pick(w, "Yes! Join my party.");
-  assert.deepEqual(s.hero.companion, { id: "megan", hurt: 0 });
+  assert.equal(s.hero.companion.id, "megan");
+  assert.equal(s.hero.companion.hurt, 0);
+  assert.deepEqual(Object.values(s.hero.companion.gear).map(i => i.base), ["shortbow", "leather"]);
   assert.equal(s.flags.meganJoined, true);
   choose(w);
   assert.match(view(w).text, /joined your party/);
