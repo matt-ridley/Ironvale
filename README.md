@@ -67,7 +67,7 @@ src/rules/    the d20 rules: dice, checks, character, items, combat, the bank, p
 src/data/     items, shops and monsters
 src/world/    tile maps (one character per tile: overworld.js, cave.js, all listed in maps.js), 8-direction movement with collisions, and random encounters. No Phaser, so they are unit tested.
 src/state/    the shared game state (hero, position, quest flags) and saving it to localStorage
-src/art/      16-bit style pixel art drawn in code: the hero's walk cycles, monsters, people and 32px terrain tiles
+src/art/      16-bit style pixel art drawn in code: the hero's and Megan's walk cycles, monsters, people and 32px terrain tiles
 src/scenes/   Phaser screens: Boot, Title, World (+ Hud on top), Battle, Inventory, Shop (the blacksmith and the apothecary), Bank, Dialogue
 src/story/    the conversation engine and the scripts (quests, NPCs, events). No Phaser, so they are unit tested.
 src/ui/       the joystick and menu widgets (buttons, paged lists)

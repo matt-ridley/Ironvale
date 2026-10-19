@@ -13,8 +13,20 @@ export function panel(scene, x, y, w, h, fill = COLORS.panel) {
   return scene.add.rectangle(x, y, w, h, fill).setOrigin(0).setStrokeStyle(1, COLORS.panelEdge);
 }
 
+/* Taps only count when the finger went down on this screen. Walking into a chest or a person opens a box while your
+   thumb is still on the joystick; without this, lifting it pressed whatever was under it (usually Close).
+   trackTaps(scene) starts watching (call it in create); freshTap(scene, pointer) says whether a tap counts. */
+export function trackTaps(scene) {
+  if (scene.downs) return;
+  scene.downs = new Set();
+  scene.input.on("pointerdown", p => scene.downs.add(p.id));
+  scene.events.once("shutdown", () => { scene.downs = null; });
+}
+export const freshTap = (scene, pointer) => !scene.downs || !pointer || scene.downs.has(pointer.id);
+
 /* A button centred on x, y. setEnabled(false) greys it out and ignores taps. */
 export function button(scene, x, y, w, h, label, onTap) {
+  trackTaps(scene);
   const bg = scene.add.rectangle(x, y, w, h, COLORS.bg).setStrokeStyle(1, COLORS.panelEdge).setInteractive({ useHandCursor: true });
   const t = text(scene, x, y, label).setOrigin(0.5);
   const b = {
@@ -26,7 +38,7 @@ export function button(scene, x, y, w, h, label, onTap) {
   };
   bg.on("pointerover", () => { if (b.enabled && !b.active) bg.setFillStyle(COLORS.panel); });
   bg.on("pointerout", () => { if (!b.active) bg.setFillStyle(COLORS.bg); });
-  bg.on("pointerup", () => { if (b.enabled) onTap(); });
+  bg.on("pointerup", p => { if (b.enabled && freshTap(scene, p)) onTap(); });
   return b;
 }
 

@@ -68,8 +68,8 @@ export class Inventory extends Phaser.Scene {
   showWho(who) {
     this.who = who;
     if (this.tabs) for (const [k, b] of Object.entries(this.tabs)) b.setActive(k === who);
-    if (who === "friend") this.portrait.setTexture(state.hero.companion.id).setScale(1.5);
-    else this.portrait.setTexture("hero", heroFrame("down")).setScale(1);
+    if (who === "friend") this.portrait.setTexture(state.hero.companion.id, heroFrame("down"));
+    else this.portrait.setTexture("hero", heroFrame("down"));
     this.current = null;
     this.worn.clearSelection();
     this.pack.clearSelection();

@@ -6,7 +6,7 @@ import { state } from "../state/game.js";
 import { feetAt } from "../world/movement.js";
 import { SCRIPTS } from "../story/scripts.js";
 import { startConversation, view, choose, takeEvents } from "../story/dialogue.js";
-import { text, panel, uiCamera } from "../ui/widgets.js";
+import { text, panel, uiCamera, trackTaps, freshTap } from "../ui/widgets.js";
 import { sfx } from "../audio/sound.js";
 
 const BOX_BOTTOM = HEIGHT - 6; // the box grows upwards from here to fit what it says
@@ -21,10 +21,11 @@ export class Dialogue extends Phaser.Scene {
     this.convo = startConversation(SCRIPTS[data.script], state, { object: data.object || null });
     this.events_ = [];
     this.done = false; // Phaser reuses this scene object, so reset it every time
+    trackTaps(this); // a thumb still on the joystick when this opens doesn't pick anything when it lets go
     this.add.rectangle(0, 0, WIDTH, HEIGHT, 0x000000, 0.35).setOrigin(0);
     // With a single option ("Continue" or "Close"), tapping anywhere on the box picks it; easier on a phone.
     this.box = panel(this, 6, 0, WIDTH - 12, 10).setInteractive()
-      .on("pointerup", () => { if (this.rows.length === 1) this.pick(0); });
+      .on("pointerup", p => { if (this.rows.length === 1 && freshTap(this, p)) this.pick(0); });
     this.speaker = text(this, 14, 0, "", { color: COLORS.gold });
     this.body = text(this, 14, 0, "", { wordWrap: { width: WIDTH - 32 }, lineSpacing: 4 });
     this.rows = [];
@@ -61,7 +62,7 @@ export class Dialogue extends Phaser.Scene {
       const bg = this.add.rectangle(10, y, WIDTH - 20, ROW_H - 2, COLORS.panelEdge).setOrigin(0).setAlpha(0).setInteractive({ useHandCursor: true });
       const label = text(this, 18, y + 3, `${v.choices.length > 1 ? `${i + 1}. ` : ""}${c.label}`, { color: COLORS.text });
       bg.on("pointerover", () => this.highlight(i));
-      bg.on("pointerup", () => this.pick(i));
+      bg.on("pointerup", p => { if (freshTap(this, p)) this.pick(i); });
       return { bg, label };
     });
     this.highlight(0);

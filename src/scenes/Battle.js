@@ -56,7 +56,8 @@ export class Battle extends Phaser.Scene {
     const ally = this.battle.ally;
     if (ally) {
       this.add.ellipse(50, GROUND_Y, 32, 7, 0x000000, 0.3);
-      const sprite = this.add.image(50, GROUND_Y, ally.id).setOrigin(0.5, 1).setScale(2);
+      // Drawn on the hero's grid and scale, so the two match.
+      const sprite = this.add.image(50, GROUND_Y, ally.id, heroFrame("side")).setOrigin(0.5, 1).setScale(1.5);
       const top = GROUND_Y - sprite.displayHeight;
       const name = this.add.text(50, top - 18, ally.name, { fontFamily: FONT, fontSize: "8px", color: COLORS.good, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
       this.add.rectangle(50 - BAR_W / 2, top - 8, BAR_W, 4, 0x000000, 0.6).setOrigin(0, 0.5);

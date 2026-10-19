@@ -3,6 +3,7 @@
 // edge is a touch darker. Outlines stay flat.
 import { PALETTE, SPRITES } from "./sprites.js";
 import { HERO_COLOURS, HERO_FRAMES, FACINGS, HERO_W, HERO_H } from "./hero.js";
+import { MEGAN_COLOURS, MEGAN_FRAMES } from "./megan.js";
 import { drawTileset } from "./tiles.js";
 import { TILE } from "../config.js";
 import { FRAMES } from "../world/map.js";
@@ -46,23 +47,26 @@ export function makeTexture(scene, key, rows, colours = PALETTE, outline = "k") 
   tex.refresh();
 }
 
-/* The hero sheet: 12 frames of 32 x 48 (down 0-3, up 4-7, side 8-11), plus walk and idle animations. */
+/* People drawn on the hero's grid: a sheet of 12 frames of 32 x 48 each (down 0-3, up 4-7, side 8-11), plus walk
+   and idle animations (the hero's are "walk-side" and so on; anyone else's are prefixed, like "megan-walk-side"). */
+const SHEETS = { hero: [HERO_FRAMES, HERO_COLOURS], megan: [MEGAN_FRAMES, MEGAN_COLOURS] };
 export const heroFrame = (facing, i = 0) => FACINGS.indexOf(facing) * 4 + i;
+export const animKey = (key, kind, facing) => `${key === "hero" ? "" : `${key}-`}${kind}-${facing}`;
 
-export function makeHero(scene) {
+function makeSheet(scene, key, frames, colours) {
   const fw = HERO_W * R, fh = HERO_H * R;
-  const tex = scene.textures.createCanvas("hero", fw * 12, fh);
+  const tex = scene.textures.createCanvas(key, fw * 12, fh);
   const ctx = tex.getContext();
-  FACINGS.forEach((facing, f) => HERO_FRAMES[facing].forEach((rows, i) => {
+  FACINGS.forEach((facing, f) => frames[facing].forEach((rows, i) => {
     const n = f * 4 + i;
-    drawPixels(ctx, rows, HERO_COLOURS, { x: n * fw, outline: "o" });
+    drawPixels(ctx, rows, colours, { x: n * fw, outline: "o" });
     tex.add(n, 0, n * fw, 0, fw, fh);
   }));
   tex.refresh();
   for (const facing of FACINGS) {
     const start = heroFrame(facing);
-    scene.anims.create({ key: `walk-${facing}`, frames: [0, 1, 2, 3].map(i => ({ key: "hero", frame: start + i })), frameRate: 8, repeat: -1 });
-    scene.anims.create({ key: `idle-${facing}`, frames: [{ key: "hero", frame: start }], frameRate: 1 });
+    scene.anims.create({ key: animKey(key, "walk", facing), frames: [0, 1, 2, 3].map(i => ({ key, frame: start + i })), frameRate: 8, repeat: -1 });
+    scene.anims.create({ key: animKey(key, "idle", facing), frames: [{ key, frame: start }], frameRate: 1 });
   }
 }
 
@@ -74,6 +78,6 @@ export function makeTileset(scene, key = "tiles") {
 
 export function makeAllTextures(scene) {
   for (const [key, rows] of Object.entries(SPRITES)) makeTexture(scene, key, rows);
-  makeHero(scene);
+  for (const [key, [frames, colours]] of Object.entries(SHEETS)) makeSheet(scene, key, frames, colours);
   makeTileset(scene);
 }

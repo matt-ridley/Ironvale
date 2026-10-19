@@ -15,13 +15,14 @@ export const OVERWORLD = {
   ],
   // Things standing on the map. They block walking; walk into one to talk to it or deal with it.
   // `goneWhen` names a quest flag that removes the object (the oak, once shoved aside; a chest, once opened).
-  // `still` objects don't bob up and down. A chest's `loot` is what's inside.
+  // `still` objects don't bob up and down. A chest's `loot` is what's inside. `frame` picks one frame of a sheet
+  // (Megan is drawn on a walking sheet like the hero's; frame 0 is her facing you).
   objects: [
     { id: "elder", x: 17, y: 18, sprite: "elder", script: "elder" },
     { id: "pip", x: 10, y: 29, sprite: "villager", script: "villager" },
     { id: "fallenLog", x: 54, y: 24, sprite: "log", script: "log", goneWhen: "logCleared", still: true },
     { id: "tom", x: 23, y: 47, sprite: "fisher", script: "fisher" },
-    { id: "megan", x: 12, y: 58, sprite: "megan", script: "megan", goneWhen: "meganJoined" },
+    { id: "megan", x: 12, y: 58, sprite: "megan", frame: 0, script: "megan", goneWhen: "meganJoined" },
     { id: "lostBow", x: 58, y: 21, sprite: "bow", script: "lostBow", goneWhen: "bowFound", still: true },
     { id: "isleChest", x: 33, y: 49, sprite: "chest", script: "chest", goneWhen: "isleChestOpened", still: true, loot: { gold: 40, items: ["potionSpeed", "potionHealing"] } },
     { id: "gardenChest", x: 7, y: 52, sprite: "chest", script: "chest", goneWhen: "gardenChestOpened", still: true, loot: { gold: 25, items: ["potionHealing", "potionHealing"] } },
