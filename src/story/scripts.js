@@ -261,7 +261,9 @@ export const SCRIPTS = {
           const items = loot.items.map(base => makeItem(base));
           s.hero.inventory.push(...items);
           if (o) s.flags[o.goneWhen] = true;
-          ctx.remember("found", [loot.gold ? `${loot.gold} gold` : "", ...items.map(itemName)].filter(Boolean));
+          const found = [loot.gold ? `${loot.gold} gold` : "", ...items.map(itemName)].filter(Boolean);
+          ctx.remember("found", found);
+          ctx.emit({ type: "loot", found }); // the meeting screen shows each thing coming out of the chest
         },
         text: (s, ctx) => `You open the chest and find: ${ctx.recall("found").join(", ")}!`,
       },

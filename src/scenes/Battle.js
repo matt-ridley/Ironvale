@@ -7,23 +7,12 @@ import { createBattle, playerAction, isPlayerTurn } from "../rules/combat.js";
 import { armourClass } from "../rules/character.js";
 import { state, faint, autosave } from "../state/game.js";
 import { uiCamera } from "../ui/widgets.js";
-import { heroFrame } from "../art/pixels.js";
+import { GROUND_Y, PANEL_Y, ALLY_X, stageZone, drawBackdrop, standParty, stand, breathe } from "../ui/stage.js";
 import { playMusic, playJingle, sfx } from "../audio/sound.js";
 
 const LINE_MS = 700;
-const GROUND_Y = 124;
-const PANEL_Y = 152;
 const LOG_ROWS = 6;
 const BAR_W = 40;
-
-const SKY = {
-  forest: { sky: 0x1d2b3a, far: 0x1f3a26, ground: 0x3e6a31, groundDark: 0x34592a },
-  rocks: { sky: 0x2a2633, far: 0x45424f, ground: 0x6b6b72, groundDark: 0x5a5a61 },
-  cave: { sky: 0x0f0d14, far: 0x26222e, ground: 0x3a3440, groundDark: 0x2e2934 },
-  meadow: { sky: 0x3a5a8a, far: 0x3f6b3a, ground: 0x5aa04a, groundDark: 0x4a8a3c },
-};
-SKY.warrens = SKY.cave;
-SKY.throne = SKY.cave;
 
 // The potions a fight can use, in button order.
 const BATTLE_POTIONS = [{ base: "potionHealing", label: "HEAL" }, { base: "potionDexterity", label: "DEX" }];
@@ -36,7 +25,7 @@ export class Battle extends Phaser.Scene {
   init(data) {
     this.foes = data.foes;
     this.winFlag = data.winFlag || null; // a quest flag to set if you win (the boss fight)
-    this.zone = SKY[data.zone] ? data.zone : "forest";
+    this.zone = stageZone(data.zone);
   }
 
   create() {
@@ -49,28 +38,23 @@ export class Battle extends Phaser.Scene {
     this.lines = [];
     this.potionMenu = false;
 
-    this.drawBackdrop();
-    this.add.ellipse(110, GROUND_Y, 40, 8, 0x000000, 0.3);
-    this.heroSprite = this.add.image(110, GROUND_Y, "hero", heroFrame("side")).setOrigin(0.5, 1).setScale(1.5);
-    // Your companion stands behind you, with their own name and HP bar.
+    drawBackdrop(this, this.zone);
     const ally = this.battle.ally;
+    const party = standParty(this, ally?.id);
+    this.heroSprite = party.hero;
+    // Your companion stands behind you, with their own name and HP bar.
     if (ally) {
-      this.add.ellipse(50, GROUND_Y, 32, 7, 0x000000, 0.3);
-      // Drawn on the hero's grid and scale, so the two match.
-      const sprite = this.add.image(50, GROUND_Y, ally.id, heroFrame("side")).setOrigin(0.5, 1).setScale(1.5);
-      const top = GROUND_Y - sprite.displayHeight;
-      const name = this.add.text(50, top - 18, ally.name, { fontFamily: FONT, fontSize: "8px", color: COLORS.good, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
-      this.add.rectangle(50 - BAR_W / 2, top - 8, BAR_W, 4, 0x000000, 0.6).setOrigin(0, 0.5);
-      const bar = this.add.rectangle(50 - BAR_W / 2, top - 8, BAR_W, 4, 0x7bc96f).setOrigin(0, 0.5);
+      const sprite = party.ally, top = GROUND_Y - sprite.displayHeight;
+      const name = this.add.text(ALLY_X, top - 18, ally.name, { fontFamily: FONT, fontSize: "8px", color: COLORS.good, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
+      this.add.rectangle(ALLY_X - BAR_W / 2, top - 8, BAR_W, 4, 0x000000, 0.6).setOrigin(0, 0.5);
+      const bar = this.add.rectangle(ALLY_X - BAR_W / 2, top - 8, BAR_W, 4, 0x7bc96f).setOrigin(0, 0.5);
       this.allyView = { sprite, name, bar, max: ally.maxHp };
     } else this.allyView = null;
 
     const xs = this.battle.monsters.length === 1 ? [360] : [320, 410];
     this.foeViews = this.battle.monsters.map((m, i) => {
       const x = xs[i];
-      this.add.ellipse(x, GROUND_Y, 40, 8, 0x000000, 0.3);
-      const sprite = this.add.image(x, GROUND_Y, this.textures.exists(m.id) ? m.id : "goblin")
-        .setOrigin(0.5, 1).setScale(1.5).setFlipX(true).setInteractive({ useHandCursor: true });
+      const sprite = stand(this, x, this.textures.exists(m.id) ? m.id : "goblin").setFlipX(true).setInteractive({ useHandCursor: true });
       sprite.on("pointerup", () => this.select(i));
       const top = GROUND_Y - sprite.displayHeight; // the Goblin King is taller than the rest
       const name = this.add.text(x, top - 18, m.name, { fontFamily: FONT, fontSize: "8px", color: COLORS.text, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
@@ -81,9 +65,7 @@ export class Battle extends Phaser.Scene {
     this.marker = this.add.triangle(0, 0, 0, 0, 10, 0, 5, 6, 0xe8b923);
     this.tweens.add({ targets: this.marker, y: "+=3", duration: 400, yoyo: true, repeat: -1 });
 
-    // Everyone breathes a little while waiting, out of step with each other.
-    [this.heroSprite, ...(this.allyView ? [this.allyView.sprite] : []), ...this.foeViews.map(v => v.sprite)].forEach((s, i) =>
-      this.tweens.add({ targets: s, scaleY: s.scaleY * 0.97, duration: 700 + i * 130, yoyo: true, repeat: -1, ease: "Sine.inOut" }));
+    breathe(this, [this.heroSprite, ...(this.allyView ? [this.allyView.sprite] : []), ...this.foeViews.map(v => v.sprite)]);
 
     this.drawPanel();
     this.applyHp(this.battle.log[0].hp);
@@ -91,23 +73,6 @@ export class Battle extends Phaser.Scene {
     this.cameras.main.fadeIn(250);
     playMusic(this.winFlag ? "boss" : "battle");
     this.play(this.battle.log); // the opening line, plus any attacks from monsters that act first
-  }
-
-  drawBackdrop() {
-    const c = SKY[this.zone], g = this.add.graphics();
-    g.fillStyle(c.sky).fillRect(0, 0, WIDTH, PANEL_Y);
-    g.fillStyle(c.far);
-    if (this.zone === "forest") {
-      for (let x = -10; x < WIDTH + 20; x += 26) {
-        const h = 40 + ((x * 37) % 23);
-        g.fillTriangle(x, 100, x + 14, 100 - h, x + 28, 100);
-      }
-    } else {
-      for (let x = -20; x < WIDTH + 40; x += 60) g.fillEllipse(x + ((x * 13) % 20), 100, 80, 50 + ((x * 7) % 30));
-    }
-    g.fillStyle(c.ground).fillRect(0, 96, WIDTH, PANEL_Y - 96);
-    g.fillStyle(c.groundDark);
-    for (let x = 0; x < WIDTH; x += 12) g.fillRect(x + ((x * 7) % 9), 100 + ((x * 5) % 48), 3, 2);
   }
 
   drawPanel() {

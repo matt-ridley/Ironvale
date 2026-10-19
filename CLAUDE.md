@@ -8,7 +8,7 @@ Everything must be doable through commits, pull requests and merges. Never hand 
 
 ## When a change is done, merge it
 
-Open a pull request and merge it yourself once the tests pass and you've checked the change. Don't wait to be asked. Merging into `main` deploys the game through GitHub Pages ("pages build and deployment"). Check that run is green before saying a change is live.
+Open a pull request and merge it yourself once the tests pass and you've checked the change. Don't wait to be asked. Before merging, check that the pull request's head commit is the one you pushed (a push that didn't land once merged a PR without its main change). After merging, check `VERSION` on `main` is the new one. Merging into `main` deploys the game through GitHub Pages ("pages build and deployment"). Check that run is green before saying a change is live.
 
 ## Conventions
 
