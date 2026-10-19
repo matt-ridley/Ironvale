@@ -1,5 +1,5 @@
-// The side-on stage that battles and meetings share: a sky, far hills or trees, and ground for people to stand on,
-// above a panel for text and buttons. Your party stands on the left; whoever you face stands on the right.
+// The side-on stage that battles and meetings share: a sky, far hills or trees, and ground for people to stand on
+// (or, indoors, a panelled wall and floorboards), above a panel for text and buttons. Your party stands on the left; whoever you face stands on the right.
 import { WIDTH } from "../config.js";
 import { heroFrame } from "../art/pixels.js";
 
@@ -13,6 +13,7 @@ const SKY = {
   cave: { sky: 0x0f0d14, far: 0x26222e, ground: 0x3a3440, groundDark: 0x2e2934 },
   meadow: { sky: 0x3a5a8a, far: 0x3f6b3a, ground: 0x5aa04a, groundDark: 0x4a8a3c },
   village: { sky: 0x4a6a9a, far: 0x4f7a3f, ground: 0x6aa84f, groundDark: 0x5a9043 },
+  indoors: { sky: 0x6b4f34, far: 0x4a3420, ground: 0xb07e4c, groundDark: 0x8a5e36 },
 };
 SKY.warrens = SKY.cave;
 SKY.throne = SKY.cave;
@@ -24,6 +25,14 @@ export function drawBackdrop(scene, zone) {
   const c = SKY[zone], g = scene.add.graphics();
   g.fillStyle(c.sky).fillRect(0, 0, WIDTH, PANEL_Y);
   g.fillStyle(c.far);
+  if (zone === "indoors") {
+    for (let x = 20; x < WIDTH; x += 90) g.fillRect(x, 0, 8, 96); // posts
+    g.fillRect(0, 14, WIDTH, 6); // a beam
+    g.fillStyle(c.ground).fillRect(0, 96, WIDTH, PANEL_Y - 96);
+    g.fillStyle(c.groundDark);
+    for (let y = 96; y < PANEL_Y; y += 9) g.fillRect(0, y, WIDTH, 1); // floorboards
+    return;
+  }
   if (zone === "forest") {
     for (let x = -10; x < WIDTH + 20; x += 26) {
       const h = 40 + ((x * 37) % 23);

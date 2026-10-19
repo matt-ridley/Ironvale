@@ -12,7 +12,7 @@ export const TILES = {
   "^": { name: "rock", solid: true },
   "R": { name: "roof", solid: true },
   "H": { name: "wall", solid: true },
-  "D": { name: "door", solid: true }, // doors open in a later milestone
+  "D": { name: "door", solid: true }, // a house door: the map's `doors` say where it leads
   "B": { name: "smithy", solid: true, place: "blacksmith" }, // walk into it to go inside
   "A": { name: "apothecary", solid: true, place: "apothecary" },
   "$": { name: "bank", solid: true, place: "bank" },
@@ -22,11 +22,21 @@ export const TILES = {
   "%": { name: "cavewall", solid: true },
   "t": { name: "cavetorch", solid: true },
   "O": { name: "caveexit", solid: false },
+  // Inside houses
+  "w": { name: "floorboards", solid: false },
+  "|": { name: "backwall", solid: true },
+  "x": { name: "dark", solid: true },
+  "m": { name: "doormat", solid: false }, // the way out: an exit on the map takes you back outside
+  "h": { name: "hearth", solid: true },
+  "s": { name: "shelf", solid: true },
+  "k": { name: "table", solid: true },
+  "u": { name: "barrel", solid: true },
 };
 
 // Order of the tiles in the tileset image. "grass2" is a second look for grass so fields don't look stamped.
 export const FRAMES = ["grass", "grass2", "flowers", "path", "bridge", "cave", "tree", "water", "rock", "roof", "wall", "door", "fence", "smithy",
-  "apothecary", "cavefloor", "cavewall", "cavetorch", "caveexit", "bank"];
+  "apothecary", "cavefloor", "cavewall", "cavetorch", "caveexit", "bank",
+  "floorboards", "backwall", "dark", "doormat", "hearth", "shelf", "table", "barrel"];
 
 export const DIRS = {
   up: { dx: 0, dy: -1 },
@@ -41,9 +51,12 @@ export function createMap(def) {
     if (row.length !== width) throw new Error(`Map ${def.name}: row ${y} is ${row.length} wide, expected ${width}`);
     for (const ch of row) if (!TILES[ch]) throw new Error(`Map ${def.name}: unknown tile "${ch}" in row ${y}`);
   });
-  const map = { objects: [], exits: [], ...def, width, height };
+  const map = { objects: [], exits: [], doors: [], ...def, width, height };
   for (const o of map.objects) {
     if (tileAt(map, o.x, o.y)?.solid !== false) throw new Error(`Map ${def.name}: ${o.id} stands on a solid tile`);
+  }
+  for (const d of map.doors) {
+    if (tileAt(map, d.x, d.y)?.name !== "door") throw new Error(`Map ${def.name}: the door to ${d.to} isn't on a door tile`);
   }
   return map;
 }
@@ -69,13 +82,16 @@ export function objectAhead(map, pos, dir, flags = {}) {
   return objectAt(map, pos.x + d.dx, pos.y + d.dy, flags);
 }
 
-/* The place (a shop, later a house) on the tile you'd walk into, if any. */
+/* The place (a shop or the bank) on the tile you'd walk into, if any. */
 export function placeAhead(map, pos, dir) {
   const d = DIRS[dir];
   return tileAt(map, pos.x + d.dx, pos.y + d.dy)?.place || null;
 }
 
 export const exitAt = (map, x, y) => map.exits.find(e => e.x === x && e.y === y) || null;
+
+/* The house door on a tile, if any: { x, y, to, name }. Walk into it to go inside the map `to`. */
+export const doorAt = (map, x, y) => map.doors.find(d => d.x === x && d.y === y) || null;
 
 export const zoneAt = (map, x, y) => map.zones.find(z => x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1) || null;
 
