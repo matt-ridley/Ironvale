@@ -32,7 +32,7 @@ Node 20 or later is needed only for these dev tools.
 - **Sound:** the SND button mutes or unmutes music and effects (remembered on this device).
 - **Talk:** walk into a person (or press Enter/Space while facing them). Pick answers by tapping, with up/down and Enter, or with number keys.
 - **Inventory:** the BAG button or I. Tap an item to see what it does and how it changes your AC, to-hit and damage, then equip it, take it off or drink it.
-- **Battles:** tap a monster to target it, then ATTACK, DEFEND (+2 AC until your next turn), POTION (then HEAL or DEX), 2ND WIND (heal 1d10 + level as a bonus action, once per rest) or FLEE (DEX check, DC 10).
+- **Battles:** tap a monster to target it, then ATTACK, DEFEND (+2 AC until your next turn), POTION (then HEAL or DEX for you, or your companion's name to give them a Potion of Healing, which also gets them back up if they've been knocked down), 2ND WIND (heal 1d10 + level as a bonus action, once per rest) or FLEE (DEX check, DC 10).
 
 ## Look and sound
 The art is in a 16-bit RPG style, drawn in code: every art pixel is a 2x2 block lit from the top left (highlights on upper edges, shadows below), with tinted rather than black outlines. The canvas is 960 x 540; menus are laid out on a 480 x 270 grid and drawn at 2x, so text stays crisp. The world camera sits at 1.5x, about 20 x 11 tiles on screen.

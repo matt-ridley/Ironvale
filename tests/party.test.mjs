@@ -144,3 +144,23 @@ test("Megan can drink a Potion of Healing from your pack, but not the other poti
   assert.equal(companionDrink(h, h.inventory.at(-1).uid, () => 0.99).healed, 2); // never past full
   assert.equal(h.companion.hurt, 0);
 });
+
+test("in battle you can give Megan a Potion of Healing, which gets her back up if she's down", () => {
+  for (let seed = 1; seed < 300; seed++) {
+    const rng = seededRng(seed);
+    const h = withMegan();
+    const b = createBattle(h, ["giantRat"], rng);
+    if (!isPlayerTurn(b) || b.ally.hp <= 0) continue;
+    const potions = h.inventory.filter(i => i.base === "potionHealing").length;
+    assert.match(playerAction(b, { type: "allyPotion" }, rng).reason, /full health/);
+    b.ally.hp = 0; // knocked down
+    const r = playerAction(b, { type: "allyPotion" }, rng);
+    assert.equal(r.ok, true);
+    const e = r.events.find(ev => ev.type === "ally-potion");
+    assert.ok(e.heal >= 4 && e.revived);
+    assert.ok(e.hp.ally === e.heal);
+    assert.equal(h.inventory.filter(i => i.base === "potionHealing").length, potions - 1);
+    return;
+  }
+  assert.fail("no seed gave you the first turn");
+});
