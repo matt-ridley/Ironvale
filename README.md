@@ -26,6 +26,8 @@ Node 20 or later is needed only for these dev tools.
 | `npm test` | Runs the rules engine and offline-install tests |
 | `npm run icons` | Redraws the app icons in `icons/` |
 
+GitHub Actions runs `npm test` on every pull request and every push to `main`, so a pull request shows a green check before it's merged.
+
 ## Controls
 - **Move:** 8 directions. On phones, touch anywhere on the left of the screen and a joystick appears under your thumb: push a little to walk, all the way to run. On a computer, use the arrow keys or WASD (two at once for diagonals, Shift to run). Add `?touch` to the URL to show the joystick hint on a desktop.
 - **Menu:** the MENU button or Esc.
@@ -93,6 +95,9 @@ Playable prototype: both quests can be played start to finish, and progress is s
 - [x] 0.9.0 The bank; fainting costs at most 50 gold
 - [x] 0.10.0 Megan's side quest, and a companion who joins your party and fights beside you
 - [x] 0.11.0 Megan's own gear (bows and light armour) and level, shown in the bag
+- [x] 0.11.1 Megan redrawn to match the hero; she can drink Potions of Healing (from the bag or in battle) and rests in Oakhollow; a thumb held on the joystick no longer taps Close
+- [x] 0.13.0 The meeting screen for people and things, and chests that open on screen
+- [x] 0.13.1 The HUD's gold and HP update straight after the bank, shops and the bag
 
 ## Credits
 Rules: this work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC, available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.

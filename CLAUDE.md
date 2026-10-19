@@ -15,3 +15,4 @@ Open a pull request and merge it yourself once the tests pass and you've checked
 - Bump `VERSION` in both `src/config.js` and `sw.js` for game changes (minor for a feature, patch for a fix; a test checks they match). Docs-only changes don't need a bump.
 - A new file under `src/` goes in `APP_FILES` in `sw.js`, or the game won't have it offline (a test checks).
 - Run `npm test` before pushing.
+- The "Tests" workflow (`.github/workflows/test.yml`) runs `npm test` on every pull request. Wait for it to pass before merging.
