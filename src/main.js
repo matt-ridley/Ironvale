@@ -5,7 +5,7 @@ import { Title } from "./scenes/Title.js";
 import { World } from "./scenes/World.js";
 import { Battle } from "./scenes/Battle.js";
 import { Inventory } from "./scenes/Inventory.js";
-import { Blacksmith } from "./scenes/Blacksmith.js";
+import { Shop } from "./scenes/Shop.js";
 import { Dialogue } from "./scenes/Dialogue.js";
 import { Hud } from "./scenes/Hud.js";
 import { unlockAudio } from "./audio/sound.js";
@@ -29,7 +29,7 @@ window.game = new Phaser.Game({
   backgroundColor: COLORS.bg,
   pixelArt: true,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [Boot, Title, World, Hud, Battle, Inventory, Blacksmith, Dialogue], // later ones draw on top
+  scene: [Boot, Title, World, Hud, Battle, Inventory, Shop, Dialogue], // later ones draw on top
 });
 
 // Browsers only allow sound after a tap or key press.

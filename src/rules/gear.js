@@ -29,8 +29,8 @@ export function averageDamage(attack) {
   return d.count * (d.sides + 1) / 2 + d.bonus + attack.damageBonus;
 }
 
-export function buyItem(char, base) {
-  if (!STOCK.includes(base)) return { ok: false, reason: "The blacksmith doesn't sell that." };
+export function buyItem(char, base, stock = STOCK) {
+  if (!stock.includes(base)) return { ok: false, reason: "The shop doesn't sell that." };
   const cost = ITEMS[base].cost;
   if (char.gold < cost) return { ok: false, reason: `That costs ${cost} gold. You have ${char.gold}.` };
   char.gold -= cost;

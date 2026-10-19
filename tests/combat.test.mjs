@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { resolveAttack, createBattle, playerAction, isPlayerTurn, spawnMonster, DEFEND_AC_BONUS } from "../src/rules/combat.js";
 import { createCharacter, armourClass, rest } from "../src/rules/character.js";
 import { seededRng } from "../src/rules/dice.js";
+import { makeItem } from "../src/rules/items.js";
 import { faces } from "./helpers.mjs";
 
 const sword = { name: "Longsword", bonus: 4, damage: "1d8", damageBonus: 2 };
@@ -147,4 +148,55 @@ test("you can't act on a monster's turn or after the battle ends", () => {
   const rng = seededRng(7);
   const b = autoplay(createBattle(createCharacter(), ["goblin"], rng), rng);
   assert.equal(playerAction(b, { type: "attack" }, rng).ok, false);
+});
+
+/* The first seed where the player acts first against `foes`, or a failure. */
+function playerFirst(hero, foes) {
+  for (let seed = 1; seed <= 100; seed++) {
+    const rng = seededRng(seed);
+    const b = createBattle(hero(), foes, rng);
+    if (isPlayerTurn(b)) return { b, rng };
+  }
+  assert.fail("no seed gave the player the first turn");
+}
+
+test("a Potion of Dexterity drunk before a fight means two attacks a turn, and is used up by that fight", () => {
+  const { b } = playerFirst(() => { const h = createCharacter(); h.effects.dexterity = true; return h; }, ["goblinKing"]);
+  assert.equal(b.quick, true);
+  assert.equal(b.player.effects.dexterity, false);
+  assert.ok(b.log.some(e => e.type === "quick"));
+  const r = playerAction(b, { type: "attack" }, faces("2/20", "2/20", ...Array(40).fill("1/20")));
+  assert.equal(r.events.filter(e => e.type === "attack").length, 2);
+});
+
+test("without the potion it's one attack a turn", () => {
+  const { b } = playerFirst(() => createCharacter(), ["goblinKing"]);
+  assert.equal(b.quick, false);
+  const r = playerAction(b, { type: "attack" }, faces("2/20", ...Array(40).fill("1/20")));
+  assert.equal(r.events.filter(e => e.type === "attack").length, 1);
+});
+
+test("drinking a Potion of Dexterity in a fight uses your turn, then you attack twice", () => {
+  const { b, rng } = playerFirst(() => { const h = createCharacter({ potions: 0 }); h.inventory.push(makeItem("potionDexterity")); return h; }, ["goblinKing"]);
+  const r = playerAction(b, { type: "potion", base: "potionDexterity" }, rng);
+  assert.equal(r.ok, true);
+  assert.equal(b.quick, true);
+  assert.equal(b.player.inventory.length, 0);
+  assert.equal(r.events.filter(e => e.type === "attack").length, 0);
+});
+
+test("the second attack moves on to the next monster when the first one falls", () => {
+  const { b } = playerFirst(() => { const h = createCharacter(); h.effects.dexterity = true; return h; }, ["giantRat", "giantRat"]);
+  b.monsters[0].hp = 1;
+  const r = playerAction(b, { type: "attack", target: 0 }, faces("19/20", "4/8", "19/20", "4/8", ...Array(40).fill("1/20")));
+  const attacks = r.events.filter(e => e.type === "attack");
+  assert.deepEqual(attacks.map(e => e.target), [0, 1]);
+});
+
+test("a Potion of Speed can't be drunk in a fight", () => {
+  const { b, rng } = playerFirst(() => { const h = createCharacter({ potions: 0 }); h.inventory.push(makeItem("potionSpeed")); return h; }, ["goblin"]);
+  const r = playerAction(b, { type: "potion", base: "potionSpeed" }, rng);
+  assert.equal(r.ok, false);
+  assert.match(r.reason, /travelling/);
+  assert.equal(b.player.inventory.length, 1);
 });

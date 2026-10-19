@@ -1,12 +1,14 @@
 // Turn-based combat: initiative, attack rolls against AC, and the player's actions (attack, defend, potion, flee,
-// and Second Wind, a bonus action that heals without using up the turn).
+// and Second Wind, a bonus action that heals without using up the turn). A Potion of Dexterity, drunk before or
+// during the fight, makes every ATTACK two attacks.
 // A battle is a plain object. The player acts with playerAction(); monsters then take their turns until it is the
 // player's turn again or the battle is over. Every step is written to battle.log for the screen to show.
 import { d20, roll } from "./dice.js";
 import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND } from "./character.js";
 import { abilityCheck } from "./checks.js";
-import { baseOf, makeItem, itemName, isPotion, useItem } from "./items.js";
+import { baseOf, makeItem, itemName, useItem, cantDrink } from "./items.js";
 import { MONSTERS } from "../data/monsters.js";
+import { ITEMS } from "../data/items.js";
 
 export const DEFEND_AC_BONUS = 2;
 export const FLEE_DC = 10;
@@ -44,39 +46,60 @@ export function createBattle(player, monsterIds, rng = Math.random) {
     ...monsters.map((m, i) => ({ who: i, init: d20({}, rng).natural + m.dexMod, dex: m.dexMod, tie: 0 })),
   ];
   entries.sort((a, b) => b.init - a.init || b.dex - a.dex || b.tie - a.tie);
-  const battle = { player, monsters, order: entries, turn: 0, round: 1, defending: false, state: "active", log: [], rewards: null };
+  // A Potion of Dexterity drunk before the fight is used up by it.
+  const quick = !!player.effects?.dexterity;
+  if (quick) player.effects = { ...player.effects, dexterity: false };
+  const battle = { player, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null };
   const names = entries.map(e => (e.who === "player" ? "You" : monsters[e.who].name) + ` (${e.init})`);
   say(battle, "start", `${monsters.map(m => m.name).join(", ")} ${monsters.length > 1 ? "appear" : "appears"}! Initiative: ${names.join(", ")}.`);
+  if (quick) say(battle, "quick", "Your Potion of Dexterity makes you quick: you attack twice each turn.");
   runMonsterTurns(battle, rng);
   return battle;
 }
 
 export const isPlayerTurn = battle => battle.state === "active" && battle.order[battle.turn].who === "player";
 
-/* action: { type: "attack", target } | { type: "defend" } | { type: "potion" } | { type: "flee" } | { type: "secondWind" } */
+/* action: { type: "attack", target } | { type: "defend" } | { type: "potion", base } | { type: "flee" } | { type: "secondWind" }
+   A potion's base defaults to the Potion of Healing. */
 export function playerAction(battle, action, rng = Math.random) {
   if (!isPlayerTurn(battle)) return { ok: false, reason: "It isn't your turn." };
   const start = battle.log.length;
   const p = battle.player;
 
   if (action.type === "attack") {
-    const target = battle.monsters[action.target ?? battle.monsters.indexOf(living(battle)[0])];
+    let target = battle.monsters[action.target ?? battle.monsters.indexOf(living(battle)[0])];
     if (!target || target.hp <= 0) return { ok: false, reason: "Pick a monster that's still standing." };
     const atk = weaponAttack(p);
-    const r = resolveAttack(atk, target.ac, rng);
-    target.hp = Math.max(0, target.hp - r.damage);
-    const t = battle.monsters.indexOf(target);
-    say(battle, "attack", `You swing your ${atk.name} at the ${target.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, target: t });
-    if (target.hp === 0) say(battle, "defeat", `The ${target.name} falls.`, { target: t });
+    for (let n = 0; n < (battle.quick ? 2 : 1) && target; n++) {
+      const r = resolveAttack(atk, target.ac, rng);
+      target.hp = Math.max(0, target.hp - r.damage);
+      const t = battle.monsters.indexOf(target);
+      say(battle, "attack", `${n ? "Again! You swing" : "You swing"} your ${atk.name} at the ${target.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, target: t });
+      if (target.hp === 0) {
+        say(battle, "defeat", `The ${target.name} falls.`, { target: t });
+        target = living(battle)[0]; // the second attack goes to the next monster
+      }
+    }
   } else if (action.type === "defend") {
     battle.defending = true;
     say(battle, "defend", `You raise your guard (+${DEFEND_AC_BONUS} AC until your next turn).`);
   } else if (action.type === "potion") {
-    const potion = p.inventory.find(isPotion);
-    if (!potion) return { ok: false, reason: "You have no potions." };
-    if (p.hp >= p.maxHp) return { ok: false, reason: "You're already at full health." };
-    const { healed } = useItem(p, potion.uid, rng);
-    say(battle, "potion", `You drink a ${baseOf(potion).name} and recover ${healed} HP (${p.hp}/${p.maxHp}).`, { heal: healed });
+    const base = action.base || "potionHealing";
+    const potion = p.inventory.find(i => i.base === base);
+    if (!potion) return { ok: false, reason: base === "potionHealing" ? "You have no potions." : `You have no ${ITEMS[base]?.name ?? "potion like that"}.` };
+    const b = baseOf(potion);
+    if (b.effect === "speed") return { ok: false, reason: "A Potion of Speed is for travelling. Drink it from your bag." };
+    if (b.effect === "dexterity" && battle.quick) return { ok: false, reason: "You're already as quick as you can be." };
+    const reason = cantDrink(p, potion);
+    if (reason) return { ok: false, reason };
+    const r = useItem(p, potion.uid, rng);
+    if (r.effect === "dexterity") {
+      p.effects = { ...p.effects, dexterity: false }; // used up by this fight
+      battle.quick = true;
+      say(battle, "quick", "You gulp down a Potion of Dexterity. From your next turn, you attack twice!");
+    } else {
+      say(battle, "potion", `You drink a ${b.name} and recover ${r.healed} HP (${p.hp}/${p.maxHp}).`, { heal: r.healed });
+    }
   } else if (action.type === "secondWind") {
     if (!p.secondWind) return { ok: false, reason: "You've used your Second Wind. Rest to get it back." };
     if (p.hp >= p.maxHp) return { ok: false, reason: "You're already at full health." };

@@ -5,14 +5,13 @@
 import { VERSION } from "../config.js";
 import { ITEMS } from "../data/items.js";
 import { SLOTS } from "../rules/items.js";
-import { createMap } from "../world/map.js";
+import { MAPS } from "../world/maps.js";
 import { blockedAt, feetAt } from "../world/movement.js";
 import { OVERWORLD } from "../world/overworld.js";
 
 export const SAVE_KEY = "ironvale-save";
 export const SAVE_FORMAT = 2;
 // Format 1 (before 0.7.0) saved whole tiles; format 2 saves the hero's feet in fractions of a tile.
-const WORLD = createMap(OVERWORLD);
 const DIR_NAMES = ["up", "down", "left", "right"];
 
 export function serialize(state) {
@@ -40,14 +39,20 @@ export function deserialize(json) {
       return [slot, knownItem(item) && ITEMS[item.base].type === slot ? item : null];
     })),
     inventory: Array.isArray(h.inventory) ? h.inventory.filter(knownItem) : [],
+    effects: { // saves from before 0.8.0 have none
+      speed: isInt(h.effects?.speed) && h.effects.speed > 0 ? h.effects.speed : 0,
+      dexterity: h.effects?.dexterity === true,
+    },
   };
   const flags = s.flags && typeof s.flags === "object" ? { ...s.flags } : {};
-  let pos = s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y) ? { x: s.pos.x, y: s.pos.y } : null;
+  // Saves from before 0.8.0 have no map: they're on the overworld. A map this game doesn't know means start over.
+  let map = s.map === undefined ? OVERWORLD.name : MAPS[s.map] ? s.map : null;
+  let pos = map && s.pos && Number.isFinite(s.pos.x) && Number.isFinite(s.pos.y) ? { x: s.pos.x, y: s.pos.y } : null;
   if (pos && data.format === 1) pos = feetAt(pos.x, pos.y);
-  if (!pos || blockedAt(WORLD, pos.x, pos.y, flags)) pos = feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y);
+  if (!pos || blockedAt(MAPS[map], pos.x, pos.y, flags)) { map = OVERWORLD.name; pos = feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y); }
   return {
     hero,
-    map: OVERWORLD.name,
+    map,
     pos,
     facing: DIR_NAMES.includes(s.facing) ? s.facing : "down",
     stepsSinceFight: isInt(s.stepsSinceFight) ? s.stepsSinceFight : 0,

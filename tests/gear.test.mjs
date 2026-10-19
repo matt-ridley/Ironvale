@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { compareEquip, buyItem, sellItem, sellPrice } from "../src/rules/gear.js";
-import { makeItem, describeItem, useItem, itemName, groupPack } from "../src/rules/items.js";
+import { makeItem, describeItem, useItem, itemName, groupPack, cantDrink, drinkText } from "../src/rules/items.js";
 import { rollLoot, spawnMonster } from "../src/rules/combat.js";
 import { createCharacter } from "../src/rules/character.js";
-import { STOCK, ITEMS } from "../src/data/items.js";
+import { STOCK, ITEMS, SHOPS } from "../src/data/items.js";
 import { MONSTERS } from "../src/data/monsters.js";
 import { faces } from "./helpers.mjs";
 
@@ -96,4 +96,38 @@ test("the pack groups identical items", () => {
   carry(c, "dagger", { upgrade: 1 });
   const g = groupPack(c.inventory);
   assert.deepEqual(g.map(x => [x.name, x.count]), [["Potion of Healing", 2], ["Dagger", 1], ["Dagger +1", 1]]);
+});
+
+test("a Potion of Healing costs 20 gold, and the apothecary sells all three potions", () => {
+  assert.equal(ITEMS.potionHealing.cost, 20);
+  assert.deepEqual(SHOPS.apothecary.stock, ["potionHealing", "potionSpeed", "potionDexterity"]);
+  for (const shop of Object.values(SHOPS)) for (const base of shop.stock) assert.ok(ITEMS[base], base);
+  const c = createCharacter({ gold: 30, potions: 0 });
+  assert.equal(buyItem(c, "potionSpeed", SHOPS.apothecary.stock).ok, true);
+  assert.equal(c.gold, 0);
+  assert.equal(buyItem(createCharacter({ gold: 999 }), "potionDexterity").ok, false); // not at the blacksmith
+});
+
+test("a Potion of Speed works at full health and counts down in steps", () => {
+  const c = createCharacter({ potions: 0 });
+  const r = useItem(c, carry(c, "potionSpeed").uid);
+  assert.equal(r.ok, true);
+  assert.equal(c.effects.speed, ITEMS.potionSpeed.steps);
+  assert.equal(c.inventory.length, 0);
+  assert.match(drinkText(r), /light on your feet/);
+});
+
+test("a Potion of Dexterity waits for the next fight, and only one at a time", () => {
+  const c = createCharacter({ potions: 0 });
+  assert.equal(useItem(c, carry(c, "potionDexterity").uid).ok, true);
+  assert.equal(c.effects.dexterity, true);
+  const second = carry(c, "potionDexterity");
+  assert.match(cantDrink(c, second), /already/);
+  assert.equal(useItem(c, second.uid).ok, false);
+  assert.equal(c.inventory.length, 1);
+});
+
+test("potion descriptions", () => {
+  assert.match(describeItem(makeItem("potionSpeed")), /faster.*150 steps/);
+  assert.match(describeItem(makeItem("potionDexterity")), /twice/);
 });

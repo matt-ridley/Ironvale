@@ -33,6 +33,7 @@ export function createCharacter({
     secondWind: true, // used up until the next rest
     equipment: { weapon: null, shield: null, armour: null },
     inventory: [],
+    effects: { speed: 0, dexterity: false }, // from potions: speed (steps left), dexterity (until the next fight)
   };
   char.maxHp = Math.max(1, 10 + mod(char, "CON")); // level 1: the hit die's maximum + CON
   char.hp = char.maxHp;

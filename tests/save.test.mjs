@@ -105,3 +105,35 @@ test("deleteSave removes it", () => {
   deleteSave(store);
   assert.equal(loadGame(store), null);
 });
+
+test("potion effects and the Deep Warrens are saved", () => {
+  played();
+  state.hero.effects = { speed: 42, dexterity: true };
+  state.map = "deepCave";
+  state.pos = feetAt(20, 25);
+  const s = deserialize(serialize(state));
+  assert.deepEqual(s.hero.effects, { speed: 42, dexterity: true });
+  assert.equal(s.map, "deepCave");
+  assert.deepEqual(s.pos, feetAt(20, 25));
+});
+
+test("a spot that's a wall in the Deep Warrens, or an unknown map, goes back to the village", () => {
+  played();
+  for (const [map, pos] of [["deepCave", feetAt(0, 0)], ["moon", feetAt(20, 25)]]) {
+    const data = JSON.parse(serialize(state));
+    Object.assign(data.state, { map, pos });
+    const s = deserialize(JSON.stringify(data));
+    assert.equal(s.map, OVERWORLD.name);
+    assert.deepEqual(s.pos, SPAWN);
+  }
+});
+
+test("saves from before 0.8.0 (no potion effects) load with none", () => {
+  played();
+  const data = JSON.parse(serialize(state));
+  delete data.state.hero.effects;
+  delete data.state.map;
+  const s = deserialize(JSON.stringify(data));
+  assert.deepEqual(s.hero.effects, { speed: 0, dexterity: false });
+  assert.equal(s.map, OVERWORLD.name);
+});

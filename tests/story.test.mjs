@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { startConversation, view, choose, takeEvents } from "../src/story/dialogue.js";
-import { SCRIPTS, QUEST_REWARD, BOSS_FIGHT, objective } from "../src/story/scripts.js";
+import { SCRIPTS, QUEST_REWARD, KING_REWARD, BOSS_FIGHT, KING_FIGHT, GATE_CHECKS, objective, questsDone } from "../src/story/scripts.js";
+import { DEEP_CAVE } from "../src/world/cave.js";
 import { createCharacter } from "../src/rules/character.js";
 import { faces } from "./helpers.mjs";
 import { feetAt } from "../src/world/movement.js";
@@ -33,7 +34,10 @@ test("turning the elder down leaves the quest open", () => {
 
 test("the elder's line follows the quest", () => {
   assert.equal(startConversation(SCRIPTS.elder, fresh({ questStarted: true })).node, "reminder");
-  assert.equal(startConversation(SCRIPTS.elder, fresh({ questStarted: true, chiefDefeated: true, questRewarded: true })).node, "after");
+  const paid = { questStarted: true, chiefDefeated: true, questRewarded: true };
+  assert.equal(startConversation(SCRIPTS.elder, fresh(paid)).node, "kingIntro");
+  assert.equal(startConversation(SCRIPTS.elder, fresh({ ...paid, kingQuestStarted: true })).node, "kingReminder");
+  assert.equal(startConversation(SCRIPTS.elder, fresh({ ...paid, kingQuestStarted: true, kingDefeated: true, kingRewarded: true })).node, "afterAll");
 });
 
 test("the reward is paid once, even if you beat the chief before taking the quest", () => {
@@ -45,8 +49,28 @@ test("the reward is paid once, even if you beat the chief before taking the ques
   assert.equal(s.hero.gold, gold + QUEST_REWARD.gold);
   assert.equal(s.hero.xp, QUEST_REWARD.xp);
   assert.equal(s.flags.questRewarded, true);
-  assert.equal(startConversation(SCRIPTS.elder, s).node, "after");
+  choose(c); // Continue: she tells you about the Goblin King
+  assert.match(view(c).text, /Goblin King/);
+  assert.equal(startConversation(SCRIPTS.elder, s).node, "kingIntro");
   assert.equal(s.hero.gold, gold + QUEST_REWARD.gold);
+});
+
+test("the second quest: the elder sends you after the Goblin King and pays once he's beaten", () => {
+  const s = fresh({ questStarted: true, chiefDefeated: true, questRewarded: true });
+  const c = startConversation(SCRIPTS.elder, s);
+  pick(c, "I'll find the King.");
+  assert.equal(s.flags.kingQuestStarted, true);
+  assert.match(objective(s.flags), /Goblin King/);
+  s.flags.kingDefeated = true;
+  assert.match(objective(s.flags), /Return/);
+  const gold = s.hero.gold;
+  const k = startConversation(SCRIPTS.elder, s, { rng: faces("5/10", "5/10", "5/10") });
+  assert.equal(k.node, "kingThanks");
+  assert.equal(s.hero.gold, gold + KING_REWARD.gold);
+  assert.equal(s.flags.kingRewarded, true);
+  assert.equal(objective(s.flags), "");
+  assert.equal(questsDone(s.flags), 2);
+  assert.equal(startConversation(SCRIPTS.elder, s).node, "afterAll");
 });
 
 test("shoving the log: success clears it for good", () => {
@@ -87,11 +111,60 @@ test("the cave starts the boss fight once, then goes quiet", () => {
   assert.equal(startConversation(SCRIPTS.cave, fresh({ chiefDefeated: true })).node, "quiet");
 });
 
+test("once the chief is beaten, the cave leads down into the Deep Warrens", () => {
+  const c = startConversation(SCRIPTS.cave, fresh({ chiefDefeated: true }));
+  pick(c, "Go down the tunnel");
+  assert.equal(view(c), null);
+  assert.deepEqual(takeEvents(c), [{ type: "travel", map: DEEP_CAVE.name, at: DEEP_CAVE.spawn }]);
+});
+
+test("the Goblin King starts the final fight", () => {
+  const c = startConversation(SCRIPTS.king, fresh());
+  pick(c, "Fight the Goblin King!");
+  assert.deepEqual(takeEvents(c), [{ type: "battle", foes: KING_FIGHT, zone: "cave", winFlag: "kingDefeated" }]);
+});
+
+test("the iron gate: lifting it opens it for good, squeezing through puts you on the far side", () => {
+  const s = fresh();
+  const c = startConversation(SCRIPTS.gate, s, { rng: faces("11/20") }); // 11 + STR 2 = 13
+  pick(c, `Lift the gate (STR, DC ${GATE_CHECKS.shove.dc})`);
+  assert.equal(s.flags.gateOpened, true);
+  assert.match(view(c).text, /way is open/);
+  const t = fresh();
+  t.pos = feetAt(41, 8);
+  const d = startConversation(SCRIPTS.gate, t, { rng: faces("14/20"), object: { x: 41, y: 7 } }); // 14 + DEX 1 = 15
+  pick(d, `Squeeze through the bars (DEX, DC ${GATE_CHECKS.climb.dc})`);
+  assert.deepEqual(t.pos, feetAt(41, 6));
+  assert.equal(t.flags.gateOpened, undefined);
+});
+
+test("a chest gives its gold and items once and marks itself opened", () => {
+  const s = fresh();
+  const gold = s.hero.gold, items = s.hero.inventory.length;
+  const chest = { id: "testChest", goneWhen: "testChestOpened", loot: { gold: 40, items: ["potionSpeed", "potionHealing"] } };
+  const c = startConversation(SCRIPTS.chest, s, { object: chest });
+  assert.match(view(c).text, /40 gold, Potion of Speed, Potion of Healing/);
+  assert.equal(s.hero.gold, gold + 40);
+  assert.equal(s.hero.inventory.length, items + 2);
+  assert.equal(s.flags.testChestOpened, true);
+});
+
+test("Old Tom gives you one Potion of Speed", () => {
+  const s = fresh();
+  const c = startConversation(SCRIPTS.fisher, s);
+  choose(c);
+  assert.match(view(c).text, /Potion of Speed/);
+  assert.equal(s.hero.inventory.filter(i => i.base === "potionSpeed").length, 1);
+  assert.equal(startConversation(SCRIPTS.fisher, s).node, "again");
+  assert.equal(s.hero.inventory.filter(i => i.base === "potionSpeed").length, 1);
+});
+
 test("the quest objective follows the flags", () => {
   assert.match(objective({}), /Elder Maren/);
   assert.match(objective({ questStarted: true }), /goblin chief/);
   assert.match(objective({ chiefDefeated: true }), /Return/);
-  assert.equal(objective({ questRewarded: true }), "");
+  assert.match(objective({ questRewarded: true }), /Elder Maren/);
+  assert.equal(objective({ questRewarded: true, kingQuestStarted: true, kingDefeated: true, kingRewarded: true }), "");
 });
 
 test("every choice in every script leads somewhere real", () => {

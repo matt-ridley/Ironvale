@@ -1,8 +1,9 @@
 // The talking box, opened over the world. Shows a conversation from story/scripts.js one node at a time.
 // Tap a choice, or use up/down and Enter (number keys work too). When the conversation ends it either goes
-// back to the world or, if the script asked for one, starts a battle.
+// back to the world or, if the script asked for one, starts a battle or takes you to another map.
 import { WIDTH, HEIGHT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
+import { feetAt } from "../world/movement.js";
 import { SCRIPTS } from "../story/scripts.js";
 import { startConversation, view, choose, takeEvents } from "../story/dialogue.js";
 import { text, panel, uiCamera } from "../ui/widgets.js";
@@ -87,9 +88,16 @@ export class Dialogue extends Phaser.Scene {
     if (this.done) return;
     this.done = true;
     const battle = this.events_.find(e => e.type === "battle");
+    const travel = this.events_.find(e => e.type === "travel");
     if (battle) {
       this.scene.stop("World");
       this.scene.start("Battle", battle);
+    } else if (travel) {
+      state.map = travel.map;
+      state.pos = feetAt(travel.at.x, travel.at.y);
+      state.stepsSinceFight = 0;
+      this.scene.stop("World");
+      this.scene.start("World");
     } else {
       this.scene.stop();
       this.scene.resume("World");

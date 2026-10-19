@@ -9,6 +9,7 @@ export const HITBOX = { hw: 0.3, h: 0.3 }; // half width, and height above the f
 export const NUDGE = 0.45;
 export const WALK_SPEED = 3.2; // tiles per second
 export const RUN_SPEED = 5.2;
+export const SPEED_POTION_BOOST = 1.5; // a Potion of Speed makes walking and running this much faster
 const EPS = 1e-6;
 
 /* Where the feet go when standing in the middle of a tile. */
