@@ -253,10 +253,10 @@ export class World extends Phaser.Scene {
       this.say("banner", zone.name, 1800);
       // Until the inn opens, coming home to the village is a full rest.
       const h = state.hero;
-      if (zone.id === "village" && (h.hp < h.maxHp || !h.secondWind)) {
+      if (zone.id === "village" && (h.hp < h.maxHp || !h.secondWind || h.companion?.hurt)) {
         rest(h);
         this.hud?.refresh();
-        this.say("note", "You rest in Oakhollow. HP and Second Wind restored.", 2200);
+        this.say("note", h.companion ? "You rest in Oakhollow. Everyone's HP and your Second Wind restored." : "You rest in Oakhollow. HP and Second Wind restored.", 2200);
       }
     }
     playMusic(this.zoneId === "village" || !this.zoneId ? "village" : "wild");

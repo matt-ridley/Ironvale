@@ -3,7 +3,8 @@
 // rest only has to set it to 0). If a companion falls in a fight they sit out the rest of it and get up afterwards.
 // A companion has their own gear: a bow and light armour, which you swap from your pack and the blacksmith upgrades.
 import { proficiencyBonus } from "./character.js";
-import { makeItem, baseOf } from "./items.js";
+import { makeItem, baseOf, isPotion } from "./items.js";
+import { roll } from "./dice.js";
 
 export const COMPANIONS = {
   // Megan, a young ranger from Willowmere: light armour, a bow and quick hands.
@@ -47,6 +48,29 @@ export function joinParty(hero, id) {
 /* After a fight: keep the companion's wounds (at least 1 HP left; a fallen friend gets back up). */
 export function afterBattle(hero, ally) {
   if (hero.companion && ally) hero.companion.hurt = ally.maxHp - Math.max(1, ally.hp);
+}
+
+/* Why your companion can't drink this potion now, or null if they can. Only healing works on them (the other
+   potions' effects are yours). */
+export function companionCantDrink(hero, item) {
+  const s = companionStats(hero);
+  if (!s) return "No one is in your party.";
+  if (!baseOf(item).heal) return `Only you can use a ${baseOf(item).name}.`;
+  if (s.hp >= s.maxHp) return `${s.name} is already at full health.`;
+  return null;
+}
+
+/* Your companion drinks a healing potion from your pack: { ok, item, healed, name } or { ok: false, reason }. */
+export function companionDrink(hero, uid, rng = Math.random) {
+  const item = hero.inventory.find(i => i.uid === uid);
+  if (!item || !isPotion(item)) return { ok: false, reason: "You can't use that." };
+  const reason = companionCantDrink(hero, item);
+  if (reason) return { ok: false, reason };
+  hero.inventory = hero.inventory.filter(i => i !== item);
+  const before = companionStats(hero).hp;
+  hero.companion.hurt = Math.max(0, (hero.companion.hurt || 0) - roll(baseOf(item).heal, rng).total);
+  const s = companionStats(hero);
+  return { ok: true, item, healed: s.hp - before, name: s.name };
 }
 
 /* Which of the companion's slots an item goes in, or why it can't. */

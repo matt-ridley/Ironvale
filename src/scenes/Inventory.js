@@ -6,7 +6,7 @@ import { state } from "../state/game.js";
 import { armourClass, weaponAttack } from "../rules/character.js";
 import { equip, unequip, useItem, cantDrink, drinkText, describeItem, itemName, groupPack, baseOf, isPotion, SLOTS } from "../rules/items.js";
 import { compareEquip, compareUnequip, averageDamage } from "../rules/gear.js";
-import { companionStats, equipCompanion, unequipCompanion, compareCompanionEquip, compareCompanionUnequip, COMPANION_SLOTS } from "../rules/party.js";
+import { companionStats, companionCantDrink, companionDrink, equipCompanion, unequipCompanion, compareCompanionEquip, compareCompanionUnequip, COMPANION_SLOTS } from "../rules/party.js";
 import { text, panel, button, ListView, uiCamera } from "../ui/widgets.js";
 import { heroFrame } from "../art/pixels.js";
 import { sfx } from "../audio/sound.js";
@@ -130,7 +130,7 @@ export class Inventory extends Phaser.Scene {
       this.action.setLabel("TAKE OFF").setEnabled(true);
       this.showCompare(friend ? compareCompanionUnequip(h, row.slot) : compareUnequip(h, row.slot));
     } else if (isPotion(row.item)) {
-      const reason = cantDrink(h, row.item);
+      const reason = friend ? companionCantDrink(h, row.item) : cantDrink(h, row.item);
       this.action.setLabel("DRINK").setEnabled(!reason);
       if (reason) this.msg.setText(reason).setColor(COLORS.dim);
     } else {
@@ -160,9 +160,9 @@ export class Inventory extends Phaser.Scene {
       if (friend) unequipCompanion(h, row.slot); else unequip(h, row.slot);
       msg = `${name} ${friend ? "takes" : "take"} off the ${itemName(row.item)}.`;
     } else if (isPotion(row.item)) {
-      const r = useItem(h, row.item.uid);
+      const r = friend ? companionDrink(h, row.item.uid) : useItem(h, row.item.uid);
       ok = r.ok;
-      msg = r.ok ? drinkText(r) : r.reason;
+      msg = !r.ok ? r.reason : friend ? `${r.name} drinks the potion and recovers ${r.healed} HP.` : drinkText(r);
     } else {
       const r = friend ? equipCompanion(h, row.item.uid) : equip(h, row.item.uid);
       ok = r.ok;
