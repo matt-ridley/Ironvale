@@ -3,7 +3,7 @@
 import { WIDTH, HEIGHT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
 import { armourClass, weaponAttack } from "../rules/character.js";
-import { equip, unequip, useItem, describeItem, itemName, groupPack, baseOf, isPotion, SLOTS } from "../rules/items.js";
+import { equip, unequip, useItem, cantDrink, drinkText, describeItem, itemName, groupPack, baseOf, isPotion, SLOTS } from "../rules/items.js";
 import { compareEquip, compareUnequip, averageDamage } from "../rules/gear.js";
 import { text, panel, button, ListView, uiCamera } from "../ui/widgets.js";
 import { heroFrame } from "../art/pixels.js";
@@ -100,9 +100,9 @@ export class Inventory extends Phaser.Scene {
       this.action.setLabel("TAKE OFF").setEnabled(true);
       this.showCompare(compareUnequip(h, row.slot));
     } else if (isPotion(row.item)) {
-      const full = h.hp >= h.maxHp;
-      this.action.setLabel("DRINK").setEnabled(!full);
-      if (full) this.msg.setText("You're at full health.").setColor(COLORS.dim);
+      const reason = cantDrink(h, row.item);
+      this.action.setLabel("DRINK").setEnabled(!reason);
+      if (reason) this.msg.setText(reason).setColor(COLORS.dim);
     } else {
       const c = compareEquip(h, row.item.uid);
       this.action.setLabel("EQUIP").setEnabled(c.ok);
@@ -131,7 +131,7 @@ export class Inventory extends Phaser.Scene {
     } else if (isPotion(row.item)) {
       const r = useItem(h, row.item.uid);
       ok = r.ok;
-      msg = r.ok ? `You drink the potion and recover ${r.healed} HP.` : r.reason;
+      msg = r.ok ? drinkText(r) : r.reason;
     } else {
       const r = equip(h, row.item.uid);
       ok = r.ok;

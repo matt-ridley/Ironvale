@@ -1,21 +1,26 @@
-// The overworld. Move in 8 directions with the joystick (touch), arrow keys or WASD (hold Shift to run); the camera
-// glides after the hero. Walk into people, the fallen oak or the smithy door (or press Enter/Space facing them) to
-// interact. Wild areas can start a fight as you walk; Oakhollow heals you. The HUD lives in the Hud scene on top.
+// The world: whichever map state.map names (the overworld or the Deep Warrens). Move in 8 directions with the joystick
+// (touch), arrow keys or WASD (hold Shift to run); the camera glides after the hero. Walk into people, things or shop
+// doors (or press Enter/Space facing them) to interact, and onto an exit to go to another map. Wild areas can start
+// a fight as you walk; Oakhollow heals you. A Potion of Speed makes you faster and fights rarer for a number of
+// steps. The HUD lives in the Hud scene on top.
 import { TILE, WORLD_ZOOM, FONT, COLORS } from "../config.js";
-import { createMap, frameGrid, zoneAt, tileAt, objectAt, activeObjects } from "../world/map.js";
-import { moveBody, velocity, facingFor, tileOf, tileAhead, WALK_SPEED } from "../world/movement.js";
-import { OVERWORLD } from "../world/overworld.js";
+import { frameGrid, zoneAt, tileAt, objectAt, activeObjects, exitAt } from "../world/map.js";
+import { moveBody, velocity, facingFor, tileOf, tileAhead, feetAt, WALK_SPEED, SPEED_POTION_BOOST } from "../world/movement.js";
+import { MAPS } from "../world/maps.js";
 import { state, autosave } from "../state/game.js";
 import { rollEncounter } from "../world/encounters.js";
 import { rest } from "../rules/character.js";
 import { stick } from "../ui/joystick.js";
 import { playMusic, sfx } from "../audio/sound.js";
 
-const MAPS = { [OVERWORLD.name]: createMap(OVERWORLD) };
 const KEYS = { up: ["UP", "W"], down: ["DOWN", "S"], left: ["LEFT", "A"], right: ["RIGHT", "D"] };
 const sheetFacing = f => (f === "left" || f === "right" ? "side" : f);
 const px = n => Math.round(n * TILE);
 const key = t => `${t.x},${t.y}`;
+const PLACE_NOTES = {
+  blacksmith: "The blacksmith's forge. Walk into the door to go in.",
+  apothecary: "The apothecary: potions! Walk into the door to go in.",
+};
 
 export class World extends Phaser.Scene {
   constructor() { super("World"); }
@@ -36,7 +41,7 @@ export class World extends Phaser.Scene {
     // People and things stand on their tile's bottom edge; everything is drawn in order of where its feet are.
     this.objectSprites = Object.fromEntries(this.map.objects.map(o => {
       const s = this.add.image(px(o.x + 0.5), px(o.y + 1) - 2, o.sprite).setOrigin(0.5, 1).setDepth(px(o.y + 1));
-      if (o.id !== "fallenLog") this.tweens.add({ targets: s, y: s.y - 2, duration: 900 + (o.x % 3) * 120, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+      if (!o.still) this.tweens.add({ targets: s, y: s.y - 2, duration: 900 + (o.x % 3) * 120, yoyo: true, repeat: -1, ease: "Sine.inOut" });
       return [o.id, s];
     }));
     this.syncObjects();
@@ -46,6 +51,7 @@ export class World extends Phaser.Scene {
     this.placePlayer();
     this.player.play(`idle-${sheetFacing(state.facing)}`);
     this.player.setFlipX(state.facing === "left");
+    this.cameras.main.setBackgroundColor(this.map.name === "overworld" ? COLORS.bg : 0x0f0d14);
     this.cameras.main.setZoom(WORLD_ZOOM).setBounds(0, 0, this.map.width * TILE, this.map.height * TILE)
       .startFollow(this.player, true, 0.14, 0.14, 0, TILE * 0.75);
     this.cameras.main.fadeIn(250);
@@ -122,7 +128,7 @@ export class World extends Phaser.Scene {
 
   interactWith(thing) {
     if (thing.obj) { sfx("select"); this.openOverlay("Dialogue", { script: thing.obj.script, object: thing.obj }); }
-    else if (thing.place === "blacksmith") { sfx("door"); this.openOverlay("Blacksmith"); }
+    else if (thing.place) { sfx("door"); this.openOverlay("Shop", { shop: thing.place }); }
   }
 
   /* Enter or Space: talk to whoever you're facing. */
@@ -136,11 +142,13 @@ export class World extends Phaser.Scene {
   readInput() {
     const held = dir => this.keys[dir].some(k => k.isDown);
     const kx = (held("right") ? 1 : 0) - (held("left") ? 1 : 0), ky = (held("down") ? 1 : 0) - (held("up") ? 1 : 0);
+    let v;
     if (kx || ky) {
       const len = Math.hypot(kx, ky);
-      return velocity((kx / len) * 0.9, (ky / len) * 0.9, { run: this.shift.isDown });
-    }
-    return velocity(stick.x, stick.y);
+      v = velocity((kx / len) * 0.9, (ky / len) * 0.9, { run: this.shift.isDown });
+    } else v = velocity(stick.x, stick.y);
+    if (state.hero.effects?.speed > 0) for (const k of ["vx", "vy", "speed"]) v[k] *= SPEED_POTION_BOOST;
+    return v;
   }
 
   update(time, delta) {
@@ -182,10 +190,17 @@ export class World extends Phaser.Scene {
   /* Every tile's worth of walking: count it for encounters, save, and maybe start a fight. */
   onStep() {
     state.stepsSinceFight++;
+    const fx = state.hero.effects;
+    const fast = fx?.speed > 0;
+    if (fast) {
+      fx.speed--;
+      if (!fx.speed) this.say("note", "Your Potion of Speed wears off.", 2200);
+      this.hud?.refresh();
+    }
     autosave();
     const t = tileOf(state.pos);
     const zone = zoneAt(this.map, t.x, t.y);
-    const foes = rollEncounter(zone?.id, tileAt(this.map, t.x, t.y).name, state.stepsSinceFight);
+    const foes = rollEncounter(zone?.id, tileAt(this.map, t.x, t.y).name, state.stepsSinceFight, Math.random, { fast });
     if (foes) this.startBattle(foes, zone.id);
   }
 
@@ -206,8 +221,25 @@ export class World extends Phaser.Scene {
     }
     playMusic(this.zoneId === "village" || !this.zoneId ? "village" : "wild");
     const above = tileAt(this.map, t.x, t.y - 1);
-    if (above?.place === "blacksmith") this.say("note", "The blacksmith's forge. Walk into the door to go in.", 2200);
-    if (moved && tileAt(this.map, t.x, t.y).name === "cave") this.openOverlay("Dialogue", { script: "cave" });
+    if (PLACE_NOTES[above?.place]) this.say("note", PLACE_NOTES[above.place], 2200);
+    if (!moved) return;
+    if (tileAt(this.map, t.x, t.y).name === "cave") this.openOverlay("Dialogue", { script: "cave" });
+    const exit = exitAt(this.map, t.x, t.y);
+    if (exit) this.travel(exit.to, exit.at);
+  }
+
+  /* Goes to another map, standing in tile `at`. */
+  travel(mapName, at) {
+    this.frozen = true;
+    this.player.play(`idle-${sheetFacing(state.facing)}`);
+    sfx("door");
+    this.cameras.main.fadeOut(250);
+    this.cameras.main.once("camerafadeoutcomplete", () => {
+      state.map = mapName;
+      state.pos = feetAt(at.x, at.y);
+      state.stepsSinceFight = 0;
+      this.scene.restart();
+    });
   }
 
   startBattle(foes, zoneId) {

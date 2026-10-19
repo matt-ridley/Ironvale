@@ -17,6 +17,8 @@ const C = {
   wall: "#e2d4ae", wallDark: "#c4b48a", beam: "#6b4226", glass: "#3d5a73", glassLight: "#8fb4d0",
   flowerY: "#f4d03f", flowerW: "#f5f5f0", flowerR: "#e0645c", flowerB: "#8fa8ff",
   cave: "#0f0d14", caveEdge: "#2a2633", shadow: "rgba(0, 0, 0, 0.22)",
+  floor: "#3a3440", floorDark: "#2e2934", floorLight: "#4a4352", stone: "#55505e", stoneDark: "#2a2633", stoneLight: "#6e6878",
+  flame: "#f4a23f", flameLight: "#ffe28a", bottle: "#7bc96f", bottleLight: "#c8f0b8",
 };
 
 const box = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
@@ -126,6 +128,36 @@ const DRAW = {
     DRAW.door(ctx);
     box(ctx, C.beam, 5, 0, 22, 6); box(ctx, C.woodLight, 5, 0, 22, 1); // sign board
     box(ctx, "#2c2c3a", 10, 2, 12, 2); box(ctx, "#2c2c3a", 14, 4, 4, 1); box(ctx, "#5c5c6e", 10, 2, 12, 1); // anvil
+  },
+  apothecary(ctx) {
+    DRAW.door(ctx);
+    box(ctx, C.beam, 5, 0, 22, 6); box(ctx, C.woodLight, 5, 0, 22, 1); // sign board
+    box(ctx, C.bottle, 13, 2, 6, 4); box(ctx, C.bottleLight, 14, 2, 2, 1); box(ctx, C.wallDark, 15, 0, 2, 2); // a green bottle
+  },
+  cavefloor(ctx, rng) {
+    box(ctx, C.floor, 0, 0, T, T);
+    speckle(ctx, rng, C.floorDark, 22, 2, 1);
+    speckle(ctx, rng, C.floorLight, 10);
+    for (let i = 0; i < 2; i++) { // pebbles
+      const x = Math.floor(rng() * 28), y = Math.floor(rng() * 29);
+      box(ctx, C.floorDark, x, y + 1, 3, 2); box(ctx, C.floorLight, x, y, 2, 1);
+    }
+  },
+  cavewall(ctx, rng) {
+    box(ctx, C.stoneDark, 0, 0, T, T);
+    for (const [x, y, w, h] of [[1, 1, 14, 9], [17, 2, 14, 8], [0, 12, 9, 9], [11, 11, 13, 10], [26, 12, 6, 9], [2, 23, 12, 8], [16, 23, 15, 8]]) {
+      box(ctx, C.stone, x, y, w, h); box(ctx, C.stoneLight, x, y, w, 1); box(ctx, C.stoneLight, x, y, 1, h);
+    }
+    speckle(ctx, rng, C.stoneDark, 6, 2, 1);
+  },
+  cavetorch(ctx, rng) {
+    DRAW.cavewall(ctx, rng);
+    box(ctx, C.woodDark, 14, 14, 4, 12); box(ctx, C.wood, 15, 14, 2, 12); // the handle
+    box(ctx, C.flame, 12, 6, 8, 9); box(ctx, C.flameLight, 14, 8, 4, 6); box(ctx, C.flame, 15, 3, 2, 3);
+  },
+  caveexit(ctx, rng) {
+    DRAW.cavefloor(ctx, rng);
+    for (let i = 0; i < 6; i++) box(ctx, `rgba(255, 240, 200, ${0.08 + i * 0.05})`, 4 + i, 4 * i + 4, T - 8 - 2 * i, 4); // daylight
   },
   fence(ctx, rng) {
     grass(ctx, rng);

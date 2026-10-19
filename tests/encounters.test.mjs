@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { rollEncounter, pickWeighted, ENCOUNTERS, QUIET_STEPS } from "../src/world/encounters.js";
+import { rollEncounter, pickWeighted, ENCOUNTERS, QUIET_STEPS, SPEED_ENCOUNTERS } from "../src/world/encounters.js";
 import { MONSTERS } from "../src/data/monsters.js";
 import { seededRng } from "../src/rules/dice.js";
 import { state, newGame, faint } from "../src/state/game.js";
@@ -57,4 +57,27 @@ test("fainting sends you home rested, minus half your gold", () => {
   assert.equal(state.hero.hp, state.hero.maxHp);
   assert.equal(state.hero.secondWind, true);
   assert.deepEqual(state.pos, feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y));
+});
+
+test("a Potion of Speed makes fights rarer", () => {
+  const chance = ENCOUNTERS.forest.chance;
+  const roll = () => chance * SPEED_ENCOUNTERS * 1.5;
+  assert.ok(rollEncounter("forest", "grass", 99, roll));
+  assert.equal(rollEncounter("forest", "grass", 99, roll, { fast: true }), null);
+  assert.ok(rollEncounter("forest", "grass", 99, always, { fast: true }));
+});
+
+test("Willowmere and the Deep Warrens have monsters; the King's hall and the cave's way out don't", () => {
+  assert.ok(rollEncounter("meadow", "grass", 99, always));
+  assert.ok(rollEncounter("warrens", "cavefloor", 99, always));
+  assert.equal(rollEncounter("throne", "cavefloor", 99, always), null);
+  assert.equal(rollEncounter("warrens", "caveexit", 99, always), null);
+});
+
+test("fainting in the Deep Warrens sends you home to Oakhollow", () => {
+  newGame();
+  state.map = "deepCave";
+  state.pos = feetAt(20, 25);
+  faint();
+  assert.equal(state.map, OVERWORLD.name);
 });

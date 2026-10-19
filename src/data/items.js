@@ -21,11 +21,25 @@ export const ITEMS = {
 
   shield:      { name: "Shield", type: "shield", ac: 2, cost: 10 },
 
-  potionHealing: { name: "Potion of Healing", type: "consumable", heal: "2d4+2", cost: 50 },
+  // Potions. Healing works any time you're hurt. Speed lasts a number of steps in the world: you move faster and
+  // run into fewer monsters. Dexterity lasts one fight: you attack twice each turn.
+  potionHealing:   { name: "Potion of Healing",   type: "consumable", heal: "2d4+2", cost: 20 },
+  potionSpeed:     { name: "Potion of Speed",     type: "consumable", effect: "speed", steps: 150, cost: 30 },
+  potionDexterity: { name: "Potion of Dexterity", type: "consumable", effect: "dexterity", cost: 40 },
 };
 
 export const MAX_UPGRADE = 3;
 
-// What the Oakhollow blacksmith sells, in shop order.
-export const STOCK = ["dagger", "shortsword", "mace", "scimitar", "longsword", "rapier", "greataxe", "greatsword",
-  "leather", "hide", "chainShirt", "chainMail", "shield", "potionHealing"];
+// Oakhollow's shops: what each sells, in shop order, and which tabs it has (only the blacksmith upgrades).
+export const SHOPS = {
+  blacksmith: {
+    title: "BLACKSMITH", tabs: ["upgrade", "buy", "sell"], greeting: "Steel's hot. What'll it be?", tint: 0xc8a27a,
+    stock: ["dagger", "shortsword", "mace", "scimitar", "longsword", "rapier", "greataxe", "greatsword",
+      "leather", "hide", "chainShirt", "chainMail", "shield", "potionHealing"],
+  },
+  apothecary: {
+    title: "APOTHECARY", tabs: ["buy", "sell"], greeting: "Bubble, bubble! Fresh potions, brewed this morning.", tint: 0x9fd18b,
+    stock: ["potionHealing", "potionSpeed", "potionDexterity"],
+  },
+};
+export const STOCK = SHOPS.blacksmith.stock;

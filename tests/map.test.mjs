@@ -2,6 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createMap, tileAt, isWalkable, step, zoneAt, reachable, frameGrid, placeAhead, objectAt, objectAhead, activeObjects, FRAMES, TILES } from "../src/world/map.js";
 import { OVERWORLD } from "../src/world/overworld.js";
+import { DEEP_CAVE } from "../src/world/cave.js";
+import { MAPS } from "../src/world/maps.js";
+import { exitAt } from "../src/world/map.js";
 
 const world = createMap(OVERWORLD);
 const find = ch => {
@@ -10,9 +13,9 @@ const find = ch => {
   return out;
 };
 
-test("the overworld is a 64 x 40 rectangle of known tiles", () => {
+test("the overworld is a 64 x 62 rectangle of known tiles", () => {
   assert.equal(world.width, 64);
-  assert.equal(world.height, 40);
+  assert.equal(world.height, 62);
 });
 
 test("createMap rejects uneven rows and unknown tiles", () => {
@@ -20,14 +23,16 @@ test("createMap rejects uneven rows and unknown tiles", () => {
   assert.throws(() => createMap({ name: "bad", rows: ["..?"], zones: [] }), /unknown tile/);
 });
 
-test("the edge of the world is solid all the way round", () => {
-  for (let x = 0; x < world.width; x++) {
-    assert.ok(!isWalkable(world, x, 0), `top edge open at ${x}`);
-    assert.ok(!isWalkable(world, x, world.height - 1), `bottom edge open at ${x}`);
-  }
-  for (let y = 0; y < world.height; y++) {
-    assert.ok(!isWalkable(world, 0, y), `left edge open at ${y}`);
-    assert.ok(!isWalkable(world, world.width - 1, y), `right edge open at ${y}`);
+test("the edge of every map is solid all the way round", () => {
+  for (const m of Object.values(MAPS)) {
+    for (let x = 0; x < m.width; x++) {
+      assert.ok(!isWalkable(m, x, 0), `${m.name}: top edge open at ${x}`);
+      assert.ok(!isWalkable(m, x, m.height - 1), `${m.name}: bottom edge open at ${x}`);
+    }
+    for (let y = 0; y < m.height; y++) {
+      assert.ok(!isWalkable(m, 0, y), `${m.name}: left edge open at ${y}`);
+      assert.ok(!isWalkable(m, m.width - 1, y), `${m.name}: right edge open at ${y}`);
+    }
   }
 });
 
@@ -67,17 +72,20 @@ test("the bridge, the forest and the cave mouth can all be reached from the star
 });
 
 test("every door has open ground in front of it", () => {
-  for (const d of [...find("D"), ...find("B")]) assert.ok(isWalkable(world, d.x, d.y + 1), `door at ${d.x},${d.y} is blocked`);
+  for (const d of [...find("D"), ...find("B"), ...find("A")]) assert.ok(isWalkable(world, d.x, d.y + 1), `door at ${d.x},${d.y} is blocked`);
 });
 
-test("the blacksmith's door is in the village and reachable", () => {
-  const [smithy] = find("B");
-  assert.ok(smithy, "map has a blacksmith");
-  assert.equal(zoneAt(world, smithy.x, smithy.y).id, "village");
-  const front = { x: smithy.x, y: smithy.y + 1 };
-  assert.ok(reachable(world, world.spawn).has(`${front.x},${front.y}`));
-  assert.equal(placeAhead(world, front, "up"), "blacksmith");
-  assert.equal(placeAhead(world, front, "down"), null);
+test("the blacksmith's and apothecary's doors are in the village and reachable", () => {
+  for (const [ch, place] of [["B", "blacksmith"], ["A", "apothecary"]]) {
+    const doors = find(ch);
+    assert.equal(doors.length, 1, `map has one ${place}`);
+    const [door] = doors;
+    assert.equal(zoneAt(world, door.x, door.y).id, "village");
+    const front = { x: door.x, y: door.y + 1 };
+    assert.ok(reachable(world, world.spawn).has(`${front.x},${front.y}`));
+    assert.equal(placeAhead(world, front, "up"), place);
+    assert.equal(placeAhead(world, front, "down"), null);
+  }
 });
 
 test("walking stops at solid tiles and the map edge", () => {
@@ -91,5 +99,59 @@ test("walking stops at solid tiles and the map edge", () => {
 
 test("every tile has a tileset frame", () => {
   for (const t of Object.values(TILES)) assert.ok(FRAMES.includes(t.name), `${t.name} has no frame`);
-  for (const row of frameGrid(world)) for (const f of row) assert.ok(f >= 0);
+  for (const m of Object.values(MAPS)) for (const row of frameGrid(m)) for (const f of row) assert.ok(f >= 0);
+});
+
+const key = (x, y) => `${x},${y}`;
+
+test("Willowmere, south of the village, can be explored, and every chest there can be reached", () => {
+  const seen = reachable(world, world.spawn);
+  const meadow = [...seen].filter(k => zoneAt(world, ...k.split(",").map(Number))?.id === "meadow");
+  assert.ok(meadow.length > 500, `only ${meadow.length} meadow tiles reachable`);
+  const chests = world.objects.filter(o => o.sprite === "chest");
+  assert.equal(chests.length, 3);
+  for (const c of chests) {
+    assert.equal(zoneAt(world, c.x, c.y).id, "meadow", c.id);
+    assert.ok([[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => seen.has(key(c.x + dx, c.y + dy))), `${c.id} can't be reached`);
+    assert.ok(c.goneWhen && c.loot, c.id);
+  }
+  const tom = world.objects.find(o => o.id === "tom");
+  assert.ok(seen.has(key(tom.x, tom.y + 1)) || seen.has(key(tom.x + 1, tom.y)), "Old Tom can be reached");
+});
+
+test("the Deep Warrens: every room, chest and the king can be reached from the entrance once the gate is open", () => {
+  const cave = MAPS[DEEP_CAVE.name];
+  assert.ok(isWalkable(cave, cave.spawn.x, cave.spawn.y));
+  const gate = cave.objects.find(o => o.id === "ironGate"), king = cave.objects.find(o => o.id === "goblinKing");
+  const near = (seen, o) => [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => seen.has(key(o.x + dx, o.y + dy)));
+  const closed = reachable(cave, cave.spawn);
+  assert.ok(!near(closed, king), "the king can be reached without passing the gate");
+  assert.ok(near(closed, gate));
+  for (const [dx, dy] of [[0, -1], [0, 1]]) assert.ok(isWalkable(cave, gate.x + dx, gate.y + dy), "you can stand on both sides of the gate");
+  const open = reachable(cave, cave.spawn, { gateOpened: true });
+  assert.ok(near(open, king), "the king can be reached once the gate is open");
+  for (const c of cave.objects.filter(o => o.sprite === "chest")) assert.ok(near(closed, c), `${c.id} can't be reached`);
+  // Every floor tile is part of the cave you can walk.
+  cave.rows.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (isWalkable(cave, x, y, { gateOpened: true })) assert.ok(open.has(key(x, y)), `floor at ${x},${y} is cut off`);
+  }));
+});
+
+test("the cave's way out leads back to just outside the goblin cave", () => {
+  const cave = MAPS[DEEP_CAVE.name];
+  assert.equal(cave.exits.length, 1);
+  const [exit] = cave.exits;
+  assert.ok(reachable(cave, cave.spawn).has(key(exit.x, exit.y)));
+  assert.equal(exitAt(cave, exit.x, exit.y), exit);
+  assert.equal(exitAt(cave, exit.x, exit.y - 1), null);
+  const out = MAPS[exit.to];
+  assert.ok(isWalkable(out, exit.at.x, exit.at.y));
+  assert.equal(tileAt(out, exit.at.x, exit.at.y - 1).name, "cave", "you come out right below the cave mouth");
+});
+
+test("map object ids are unique across the game (their flags are shared)", () => {
+  const ids = Object.values(MAPS).flatMap(m => m.objects.map(o => o.id));
+  assert.equal(new Set(ids).size, ids.length);
+  const flags = Object.values(MAPS).flatMap(m => m.objects.filter(o => o.sprite === "chest").map(o => o.goneWhen));
+  assert.equal(new Set(flags).size, flags.length);
 });

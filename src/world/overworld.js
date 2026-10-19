@@ -1,5 +1,6 @@
-// The first overworld: Oakhollow village, the river, the Whispering Wood, and the rocks around the goblin cave.
-// One character per 16x16 tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 64 wide).
+// The overworld: Oakhollow village, the river, the Whispering Wood, the rocks around the goblin cave, and
+// Willowmere to the south (a lake with an island, a fisher's hut, an old garden and a bramble grove).
+// One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 64 wide).
 // When real art arrives this moves to a Tiled map.
 
 export const OVERWORLD = {
@@ -10,13 +11,19 @@ export const OVERWORLD = {
     { id: "village", name: "Oakhollow", x0: 2, y0: 2, x1: 28, y1: 37 },
     { id: "forest", name: "Whispering Wood", x0: 33, y0: 2, x1: 61, y1: 24 },
     { id: "rocks", name: "Goblin Rocks", x0: 33, y0: 25, x1: 61, y1: 37 },
+    { id: "meadow", name: "Willowmere", x0: 2, y0: 38, x1: 61, y1: 59 },
   ],
   // Things standing on the map. They block walking; walk into one to talk to it or deal with it.
-  // `goneWhen` names a quest flag that removes the object (the oak, once shoved aside).
+  // `goneWhen` names a quest flag that removes the object (the oak, once shoved aside; a chest, once opened).
+  // `still` objects don't bob up and down. A chest's `loot` is what's inside.
   objects: [
     { id: "elder", x: 17, y: 18, sprite: "elder", script: "elder" },
     { id: "pip", x: 10, y: 29, sprite: "villager", script: "villager" },
-    { id: "fallenLog", x: 54, y: 24, sprite: "log", script: "log", goneWhen: "logCleared" },
+    { id: "fallenLog", x: 54, y: 24, sprite: "log", script: "log", goneWhen: "logCleared", still: true },
+    { id: "tom", x: 23, y: 47, sprite: "fisher", script: "fisher" },
+    { id: "isleChest", x: 33, y: 49, sprite: "chest", script: "chest", goneWhen: "isleChestOpened", still: true, loot: { gold: 40, items: ["potionSpeed", "potionHealing"] } },
+    { id: "gardenChest", x: 7, y: 52, sprite: "chest", script: "chest", goneWhen: "gardenChestOpened", still: true, loot: { gold: 25, items: ["potionHealing", "potionHealing"] } },
+    { id: "groveChest", x: 57, y: 43, sprite: "chest", script: "chest", goneWhen: "groveChestOpened", still: true, loot: { gold: 60, items: ["potionDexterity"] } },
   ],
   rows: [
   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
@@ -35,7 +42,7 @@ export const OVERWORLD = {
   "TT.............=..............~~.TTT.T=TT..TT.T=...TT.T.TTT.TTTT",
   "TT...,RRRRR....=..RRRRRR......~~.T...T=.TTTTT.T=TTT.T..T....TTTT",
   "TT....RRRRR....=..RRRRRR......~~TTTTTT=TTT..T..=TTTT.TTT.T.TTTTT",
-  "TT....HHBHH....=..HHHDHH......~~.TTT..=TTT.T.TT=T.TTTT.T..TT.TTT",
+  "TT....HHBHH....=..HHHAHH......~~.TTT..=TTT.T.TT=T.TTTT.T..TT.TTT",
   "TT......=......=.....=...,...T~~TT.TT.=T.TT..T.=TTTTTTTTTTTTTTTT",
   "TT..........,..=....,.........~~.TTTTT=..T.T.TT========.T...TTTT",
   "TT.............=..............~~TT.T.T=TT.T..TTTT.T...=T....TTTT",
@@ -54,9 +61,31 @@ export const OVERWORLD = {
   "TT..f,..,...f..=.,............~~.^^^.^...^...^..........^^.^^^TT",
   "TT.,f...,...f..=.,............~~.^^^.......^.....^.........^^^TT",
   "TT..f.,.....f,.=.............T~~.^^^..^......^...^^^.......^^^TT",
-  "TT..fffffffff.......,.....,..T~~.^^^.................^.....^^^TT",
-  "TT....................,..,....~~T^^^^^^^^^^^^^^^^^^^^^^^^^^^^^TT",
-  "TT...........................T~~.^^^^^^^^^^^^^^^^^^^^^^^^^^^^^TT",
+  "TT..fffffffff..=....,.....,..T~~.^^^.................^.....^^^TT",
+  "TT.............=......,..,....~~T^^^^^^^^^^^^^^^^^^^^^^^^^^^^^TT",
+  "TT.............=.............T~~.^^^^^^^^^^^^^^^^^^^^^^^^^^^^^TT",
+  "TTTTTTTTTTTTTT.=.TTTTTTTTTTTTT~~TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+  "TTTTTTTTTTTTTT.=.TTTTTTTTTTTTT~~TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+  "TT.............=.....,..,.,...~~....,.T....T.,.......TTTTTTTTTTT",
+  "TT......,......=..RRRRR.......~~...T......T...T.....TT......TTTT",
+  "TT........T....=..RRRRR.T.T..,~~.......,T......,...T.T......TTTT",
+  "TT...T..T...,..=..HHDHH.......~~..................=..T......TTTT",
+  "TT....T........=....=.........~~~~~~~.............=..T......TTTT",
+  "TT.............======......~~~~~~~~~~~~~.........,=..T......TTTT",
+  "TT.T.......T...=..T..,.,T.~~~~~~~~~~~~~~~...T...,.=..TTT.TTTT.TT",
+  "TT.........T...=.........~~~~~~~~~~~~~~~~~,.T.T...=...........TT",
+  "TT.T..........,=........~~~~~~~~~~,,,~~~~~~.....T.=.....T.....TT",
+  "TT.,...........=...,....~~~~~~~~~,,,,,#####========......T....TT",
+  "TT..fff.fff.T..=..T..,..~~~~~~~~~~,,,~~~~~~.....T.=.......,...TT",
+  "TT..f,,,,,f....=.........~~~~~~~~~~~~~~~~~..TT.T..=...T....T..TT",
+  "TT..f,,,,,f....=.T........~~~~~~~~~~~~~~~......,..=....T......TT",
+  "TT..f,,,,,f....=......T....~~~~~~~~~~~~~.,..T..T..=...........TT",
+  "TTT,f,,,,,f....=..........T...~~~~~~~.....,.......=..T....T...TT",
+  "TTT.fffffff..T.=.........,.........,..............=,T...T.....TT",
+  "TT.........,.T.====================================...........TT",
+  "TT...,....................,,.,...............................TTT",
+  "TT,...............T.T...T.....T...........T...................TT",
+  "TT....,..,T.........,..................,.............T........TT",
   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
   ],

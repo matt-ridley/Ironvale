@@ -13,7 +13,8 @@ export function makeItem(base, { upgrade = 0 } = {}) {
 export const baseOf = item => ITEMS[item.base];
 export const itemName = item => baseOf(item).name + (item.upgrade ? ` +${item.upgrade}` : "");
 export const isTwoHanded = item => !!item && (baseOf(item).properties || []).includes("two-handed");
-export const isPotion = item => baseOf(item).type === "consumable" && !!baseOf(item).heal;
+export const isPotion = item => baseOf(item).type === "consumable";
+export const isHealing = item => isPotion(item) && !!baseOf(item).heal;
 
 /* One line about what an item does, e.g. "1d8 damage, finesse. +1 to hit and damage." */
 export function describeItem(item) {
@@ -26,6 +27,8 @@ export function describeItem(item) {
     return `${b.category[0].toUpperCase()}${b.category.slice(1)} armour: AC ${b.baseAc}${dex}.${up && ` ${up.trim()} AC.`}`;
   }
   if (b.heal) return `Drink to heal ${b.heal} HP.`;
+  if (b.effect === "speed") return `Move faster and meet fewer monsters for ${b.steps} steps.`;
+  if (b.effect === "dexterity") return "Attack twice each turn for one fight. Drink it before or during a battle.";
   return "";
 }
 
@@ -42,15 +45,37 @@ export function groupPack(inventory) {
   return [...groups.values()];
 }
 
-/* Drinks a potion from the pack. */
+/* Why a potion can't be drunk right now, or null if it can. */
+export function cantDrink(char, item) {
+  const b = baseOf(item);
+  if (b.heal && char.hp >= char.maxHp) return "You're already at full health.";
+  if (b.effect === "dexterity" && char.effects?.dexterity) return "You've already drunk one. It lasts until your next fight.";
+  return null;
+}
+
+/* Drinks a potion from the pack. Healing heals now; the others set an effect in char.effects:
+   speed (steps left) or dexterity (true until the next fight starts). */
 export function useItem(char, uid, rng = Math.random) {
   const item = char.inventory.find(i => i.uid === uid);
   if (!item || !isPotion(item)) return { ok: false, reason: "You can't use that." };
-  if (char.hp >= char.maxHp) return { ok: false, reason: "You're already at full health." };
+  const reason = cantDrink(char, item);
+  if (reason) return { ok: false, reason };
   char.inventory = char.inventory.filter(i => i !== item);
-  const before = char.hp;
-  char.hp = Math.min(char.maxHp, char.hp + roll(baseOf(item).heal, rng).total);
-  return { ok: true, item, healed: char.hp - before };
+  const b = baseOf(item);
+  if (b.heal) {
+    const before = char.hp;
+    char.hp = Math.min(char.maxHp, char.hp + roll(b.heal, rng).total);
+    return { ok: true, item, healed: char.hp - before };
+  }
+  char.effects = { ...char.effects, [b.effect]: b.effect === "speed" ? b.steps : true };
+  return { ok: true, item, effect: b.effect };
+}
+
+/* What drinking a potion did, in a sentence. */
+export function drinkText(r) {
+  if (r.effect === "speed") return "You feel light on your feet! Fewer monsters can catch you.";
+  if (r.effect === "dexterity") return "Your hands feel quick! You'll attack twice each turn in your next fight.";
+  return `You drink the potion and recover ${r.healed} HP.`;
 }
 
 /* Moves an item from the pack into its slot; whatever was there goes back to the pack. */

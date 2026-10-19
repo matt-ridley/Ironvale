@@ -2,7 +2,7 @@
 // and the joystick. It runs alongside World and is drawn on the menu grid, so it stays crisp while the camera moves.
 import { WIDTH, FONT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
-import { objective } from "../story/scripts.js";
+import { objective, questsDone } from "../story/scripts.js";
 import { uiCamera, button } from "../ui/widgets.js";
 import { Joystick } from "../ui/joystick.js";
 import { isMuted, toggleMuted, sfx } from "../audio/sound.js";
@@ -15,12 +15,13 @@ export class Hud extends Phaser.Scene {
 
   create() {
     uiCamera(this);
-    this.lastGoal = null;
+    this.lastDone = questsDone(state.flags);
     const world = () => this.scene.get("World");
 
     this.add.rectangle(4, 4, 160, 18, COLORS.panel, 0.85).setOrigin(0).setStrokeStyle(1, COLORS.panelEdge);
     this.stats = this.add.text(10, 9, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.text });
     this.quest = this.add.text(6, 27, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.gold, stroke: "#000000", strokeThickness: 3 });
+    this.effects = this.add.text(6, 40, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.good, stroke: "#000000", strokeThickness: 3 });
 
     button(this, WIDTH - 30, 13, 52, 18, "MENU", () => world().toTitle());
     button(this, WIDTH - 84, 13, 48, 18, "BAG", () => world().openOverlay("Inventory"));
@@ -44,9 +45,12 @@ export class Hud extends Phaser.Scene {
     this.stats.setText(`LV ${h.level} HP ${h.hp}/${h.maxHp} ${h.gold}G`);
     const goal = objective(state.flags);
     this.quest.setText(goal ? `QUEST: ${goal}` : "");
-    // The quest line just went blank: the Elder has paid up.
-    if (this.lastGoal && !goal) this.banner("QUEST COMPLETE!", 2500);
-    this.lastGoal = goal;
+    const fx = h.effects || {};
+    this.effects.setText([fx.speed > 0 ? `SPEED ${fx.speed}` : "", fx.dexterity ? "DEX READY" : ""].filter(Boolean).join("  "));
+    // The Elder has just paid for a quest.
+    const done = questsDone(state.flags);
+    if (done > this.lastDone) this.banner("QUEST COMPLETE!", 2500);
+    this.lastDone = done;
   }
 
   banner(message, ms = 1800) { this.flash(this.bannerText, message, ms); }

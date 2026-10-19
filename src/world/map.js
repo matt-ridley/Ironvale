@@ -14,11 +14,18 @@ export const TILES = {
   "H": { name: "wall", solid: true },
   "D": { name: "door", solid: true }, // doors open in a later milestone
   "B": { name: "smithy", solid: true, place: "blacksmith" }, // walk into it to go inside
+  "A": { name: "apothecary", solid: true, place: "apothecary" },
   "f": { name: "fence", solid: true },
+  // The Deep Warrens
+  "_": { name: "cavefloor", solid: false },
+  "%": { name: "cavewall", solid: true },
+  "t": { name: "cavetorch", solid: true },
+  "O": { name: "caveexit", solid: false },
 };
 
 // Order of the tiles in the tileset image. "grass2" is a second look for grass so fields don't look stamped.
-export const FRAMES = ["grass", "grass2", "flowers", "path", "bridge", "cave", "tree", "water", "rock", "roof", "wall", "door", "fence", "smithy"];
+export const FRAMES = ["grass", "grass2", "flowers", "path", "bridge", "cave", "tree", "water", "rock", "roof", "wall", "door", "fence", "smithy",
+  "apothecary", "cavefloor", "cavewall", "cavetorch", "caveexit"];
 
 export const DIRS = {
   up: { dx: 0, dy: -1 },
@@ -33,7 +40,7 @@ export function createMap(def) {
     if (row.length !== width) throw new Error(`Map ${def.name}: row ${y} is ${row.length} wide, expected ${width}`);
     for (const ch of row) if (!TILES[ch]) throw new Error(`Map ${def.name}: unknown tile "${ch}" in row ${y}`);
   });
-  const map = { objects: [], ...def, width, height };
+  const map = { objects: [], exits: [], ...def, width, height };
   for (const o of map.objects) {
     if (tileAt(map, o.x, o.y)?.solid !== false) throw new Error(`Map ${def.name}: ${o.id} stands on a solid tile`);
   }
@@ -66,6 +73,8 @@ export function placeAhead(map, pos, dir) {
   const d = DIRS[dir];
   return tileAt(map, pos.x + d.dx, pos.y + d.dy)?.place || null;
 }
+
+export const exitAt = (map, x, y) => map.exits.find(e => e.x === x && e.y === y) || null;
 
 export const zoneAt = (map, x, y) => map.zones.find(z => x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1) || null;
 

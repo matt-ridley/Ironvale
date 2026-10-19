@@ -1,6 +1,7 @@
 // The battle screen: the hero on the left, monsters on the right, actions bottom right.
 // The rules engine decides everything; this scene plays its log back one line at a time, using the HP each
-// log entry recorded, so the bars drain in step with the story.
+// log entry recorded, so the bars drain in step with the story. POTION opens a second set of buttons, one per kind
+// of potion you can drink in a fight.
 import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { createBattle, playerAction, isPlayerTurn } from "../rules/combat.js";
 import { armourClass } from "../rules/character.js";
@@ -19,7 +20,13 @@ const SKY = {
   forest: { sky: 0x1d2b3a, far: 0x1f3a26, ground: 0x3e6a31, groundDark: 0x34592a },
   rocks: { sky: 0x2a2633, far: 0x45424f, ground: 0x6b6b72, groundDark: 0x5a5a61 },
   cave: { sky: 0x0f0d14, far: 0x26222e, ground: 0x3a3440, groundDark: 0x2e2934 },
+  meadow: { sky: 0x3a5a8a, far: 0x3f6b3a, ground: 0x5aa04a, groundDark: 0x4a8a3c },
 };
+SKY.warrens = SKY.cave;
+SKY.throne = SKY.cave;
+
+// The potions a fight can use, in button order.
+const BATTLE_POTIONS = [{ base: "potionHealing", label: "HEAL" }, { base: "potionDexterity", label: "DEX" }];
 
 const hpColour = (hp, max) => (hp > max / 2 ? 0x7bc96f : hp > max / 4 ? 0xe8b923 : 0xe0645c);
 
@@ -40,6 +47,7 @@ export class Battle extends Phaser.Scene {
     this.leaving = false;
     this.target = 0;
     this.lines = [];
+    this.potionMenu = false;
 
     this.drawBackdrop();
     this.add.ellipse(110, GROUND_Y, 40, 8, 0x000000, 0.3);
@@ -52,10 +60,11 @@ export class Battle extends Phaser.Scene {
       const sprite = this.add.image(x, GROUND_Y, this.textures.exists(m.id) ? m.id : "goblin")
         .setOrigin(0.5, 1).setScale(1.5).setFlipX(true).setInteractive({ useHandCursor: true });
       sprite.on("pointerup", () => this.select(i));
-      const name = this.add.text(x, GROUND_Y - 66, m.name, { fontFamily: FONT, fontSize: "8px", color: COLORS.text, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
-      const barBg = this.add.rectangle(x - BAR_W / 2, GROUND_Y - 56, BAR_W, 4, 0x000000, 0.6).setOrigin(0, 0.5);
-      const bar = this.add.rectangle(x - BAR_W / 2, GROUND_Y - 56, BAR_W, 4, 0x7bc96f).setOrigin(0, 0.5);
-      return { sprite, name, barBg, bar, x, max: m.maxHp };
+      const top = GROUND_Y - sprite.displayHeight; // the Goblin King is taller than the rest
+      const name = this.add.text(x, top - 18, m.name, { fontFamily: FONT, fontSize: "8px", color: COLORS.text, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
+      const barBg = this.add.rectangle(x - BAR_W / 2, top - 8, BAR_W, 4, 0x000000, 0.6).setOrigin(0, 0.5);
+      const bar = this.add.rectangle(x - BAR_W / 2, top - 8, BAR_W, 4, 0x7bc96f).setOrigin(0, 0.5);
+      return { sprite, name, barBg, bar, x, top, max: m.maxHp };
     });
     this.marker = this.add.triangle(0, 0, 0, 0, 10, 0, 5, 6, 0xe8b923);
     this.tweens.add({ targets: this.marker, y: "+=3", duration: 400, yoyo: true, repeat: -1 });
@@ -103,10 +112,22 @@ export class Battle extends Phaser.Scene {
     this.buttons = {
       attack: this.button(cols[0], rows[0], "ATTACK", () => this.act({ type: "attack" })),
       defend: this.button(cols[1], rows[0], "DEFEND", () => this.act({ type: "defend" })),
-      potion: this.button(cols[0], rows[1], "POTION", () => this.act({ type: "potion" })),
+      potion: this.button(cols[0], rows[1], "POTION", () => this.showPotions(true)),
       secondWind: this.button(cols[1], rows[1], "2ND WIND", () => this.act({ type: "secondWind" })),
       flee: this.button(cols[0], rows[2], "FLEE", () => this.act({ type: "flee" })),
     };
+    this.potionButtons = BATTLE_POTIONS.map((p, i) => ({ ...p, ...this.button(cols[i], rows[0], p.label, () => this.act({ type: "potion", base: p.base })) }));
+    this.backButton = this.button(cols[0], rows[1], "BACK", () => this.showPotions(false));
+    this.showPotions(false);
+  }
+
+  /* Swaps the action buttons for the potion buttons (on = true) and back. */
+  showPotions(on) {
+    if (on && (this.busy || !isPlayerTurn(this.battle))) return;
+    this.potionMenu = on;
+    for (const b of Object.values(this.buttons)) { b.bg.setVisible(!on); b.text.setVisible(!on); }
+    for (const b of [...this.potionButtons, this.backButton]) { b.bg.setVisible(on); b.text.setVisible(on); }
+    this.refreshButtons();
   }
 
   button(x, y, label, onTap) {
@@ -116,7 +137,7 @@ export class Battle extends Phaser.Scene {
     return { bg, text };
   }
 
-  potions() { return state.hero.inventory.filter(i => i.base === "potionHealing").length; }
+  potions(base) { return state.hero.inventory.filter(i => (base ? i.base === base : BATTLE_POTIONS.some(p => p.base === i.base))).length; }
 
   refreshButtons() {
     const ready = !this.busy && isPlayerTurn(this.battle);
@@ -126,7 +147,13 @@ export class Battle extends Phaser.Scene {
     enable(this.buttons.defend, ready);
     enable(this.buttons.flee, ready);
     const hurt = state.hero.hp < state.hero.maxHp;
-    enable(this.buttons.potion, ready && hurt && this.potions() > 0);
+    enable(this.buttons.potion, ready && this.potions() > 0);
+    for (const b of this.potionButtons) {
+      b.text.setText(`${b.label} x${this.potions(b.base)}`);
+      const usable = b.base === "potionHealing" ? hurt : !this.battle.quick;
+      enable(b, ready && usable && this.potions(b.base) > 0);
+    }
+    enable(this.backButton, ready);
     enable(this.buttons.secondWind, ready && hurt && state.hero.secondWind);
     this.marker.setVisible(ready && this.battle.monsters.filter(m => m.hp > 0).length > 1);
   }
@@ -139,7 +166,7 @@ export class Battle extends Phaser.Scene {
 
   placeMarker() {
     const v = this.foeViews[this.target];
-    this.marker.setPosition(v.x, GROUND_Y - 80);
+    this.marker.setPosition(v.x, v.top - 32);
   }
 
   act(action) {
@@ -147,6 +174,7 @@ export class Battle extends Phaser.Scene {
     if (action.type === "attack") action.target = this.target;
     const r = playerAction(this.battle, action);
     if (!r.ok) return this.addLine(r.reason, COLORS.bad);
+    if (this.potionMenu) this.showPotions(false);
     this.play(r.events);
   }
 
@@ -165,7 +193,7 @@ export class Battle extends Phaser.Scene {
   }
 
   showEvent(e) {
-    const good = ["won", "level-up", "potion", "second-wind", "loot"].includes(e.type);
+    const good = ["won", "level-up", "potion", "second-wind", "loot", "quick"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -194,6 +222,10 @@ export class Battle extends Phaser.Scene {
       case "second-wind":
         sfx("heal");
         this.float(this.heroSprite, `+${e.heal}`, COLORS.good);
+        break;
+      case "quick":
+        sfx("heal");
+        this.float(this.heroSprite, "QUICK!", COLORS.gold);
         break;
       case "defend":
         this.float(this.heroSprite, "GUARD", COLORS.text);
