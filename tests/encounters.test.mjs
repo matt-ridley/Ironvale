@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { rollEncounter, pickWeighted, ENCOUNTERS, QUIET_STEPS, SPEED_ENCOUNTERS } from "../src/world/encounters.js";
 import { MONSTERS } from "../src/data/monsters.js";
 import { seededRng } from "../src/rules/dice.js";
-import { state, newGame, faint } from "../src/state/game.js";
+import { state, newGame, faint, FAINT_MAX_LOSS } from "../src/state/game.js";
 import { OVERWORLD } from "../src/world/overworld.js";
 import { feetAt } from "../src/world/movement.js";
 
@@ -80,4 +80,14 @@ test("fainting in the Deep Warrens sends you home to Oakhollow", () => {
   state.pos = feetAt(20, 25);
   faint();
   assert.equal(state.map, OVERWORLD.name);
+});
+
+test("fainting never costs more than 50 gold, and banked gold is safe", () => {
+  newGame();
+  state.hero.gold = 500;
+  state.hero.bank = 300;
+  assert.deepEqual(faint(), { goldLost: FAINT_MAX_LOSS });
+  assert.equal(FAINT_MAX_LOSS, 50);
+  assert.equal(state.hero.gold, 450);
+  assert.equal(state.hero.bank, 300);
 });

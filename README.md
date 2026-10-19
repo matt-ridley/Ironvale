@@ -47,7 +47,7 @@ Saves carry a format number. Loading drops anything the game no longer knows (an
 ## How it plays
 - Wild areas start a fight now and then after a step (half as often on paths, and never right after a fight).
 - Walking into Oakhollow is a full rest: HP and Second Wind come back.
-- Losing a fight isn't the end. You wake in Oakhollow, rested, but half your gold is gone.
+- Losing a fight isn't the end. You wake in Oakhollow, rested, but half the gold you carry is gone (never more than 50). Gold in the bank is safe.
 - Goblins sometimes drop a scimitar or a potion.
 - **Quest 1, the Goblin Chief:** Elder Maren, by the Oakhollow crossroads, asks you to drive the Goblin Chief out of the cave past Goblin Rocks. A fallen oak blocks the only path. Shove it aside (STR DC 12, clears it for good) or climb over (DEX DC 14). A failed try costs 1d4 HP but never knocks you out. The chief and a goblin wait in the cave. Beat them, then go back to the Elder for 100 gold and 300 XP. It's an open world: you can beat the chief before you ever speak to her.
 - **How tough is the chief?** In 3,000 simulated fights the hero won about 31% at level 1, 72% at level 2 with a +1 sword, and 79-88% at level 3.
@@ -57,16 +57,17 @@ Saves carry a format number. Loading drops anything the game no longer knows (an
 - **Potions:** Healing (2d4+2 HP, 20 gold), Speed (150 steps of moving half as fast again with about a third of the fights, 30 gold; drink it from the bag) and Dexterity (attack twice each turn for one fight, 40 gold; drink it before a fight or during one, which uses that turn). The HUD shows SPEED and the steps left, or DEX READY.
 - The blacksmith (the house with the anvil sign, west of the crossroads) upgrades gear up to +3 (50, 100, 150 gold), sells weapons, armour and shields at SRD prices and Potions of Healing, and buys things back for half of what they cost, upgrades included. Walk into the door to go in.
 - The apothecary (the house with the green bottle sign, east of the crossroads) sells all three potions and buys things back the same way.
+- The bank (the house with the gold coin sign, south-east of the crossroads) keeps your gold safe. Put in or take out 10, 50 or all of it at a time.
 
 ## Layout
 ```
 index.html, css/, manifest.webmanifest, sw.js   page shell, install and offline support
-src/rules/    the d20 rules: dice, checks, character, items, combat. No Phaser, so they are unit tested.
+src/rules/    the d20 rules: dice, checks, character, items, combat, the bank. No Phaser, so they are unit tested.
 src/data/     items, shops and monsters
 src/world/    tile maps (one character per tile: overworld.js, cave.js, all listed in maps.js), 8-direction movement with collisions, and random encounters. No Phaser, so they are unit tested.
 src/state/    the shared game state (hero, position, quest flags) and saving it to localStorage
 src/art/      16-bit style pixel art drawn in code: the hero's walk cycles, monsters, people and 32px terrain tiles
-src/scenes/   Phaser screens: Boot, Title, World (+ Hud on top), Battle, Inventory, Shop (the blacksmith and the apothecary), Dialogue
+src/scenes/   Phaser screens: Boot, Title, World (+ Hud on top), Battle, Inventory, Shop (the blacksmith and the apothecary), Bank, Dialogue
 src/story/    the conversation engine and the scripts (quests, NPCs, events). No Phaser, so they are unit tested.
 src/ui/       the joystick and menu widgets (buttons, paged lists)
 src/audio/    synthesised music (tracks written as notes) and sound effects, no audio files
@@ -88,6 +89,7 @@ Playable prototype: both quests can be played start to finish, and progress is s
 - [x] M6 Save/load, a real title screen (Continue / New Game), and polish
 - [x] M7 16-bit art, bigger hero, 8-direction movement with a joystick, smoother animation, music and sound
 - [x] M8 (0.8.0) Potions of Speed and Dexterity, cheaper healing (20 gold), the apothecary, Willowmere, the Deep Warrens and the Goblin King
+- [x] 0.9.0 The bank; fainting costs at most 50 gold
 
 ## Credits
 Rules: this work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC, available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.

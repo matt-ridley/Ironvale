@@ -134,6 +134,11 @@ const DRAW = {
     box(ctx, C.beam, 5, 0, 22, 6); box(ctx, C.woodLight, 5, 0, 22, 1); // sign board
     box(ctx, C.bottle, 13, 2, 6, 4); box(ctx, C.bottleLight, 14, 2, 2, 1); box(ctx, C.wallDark, 15, 0, 2, 2); // a green bottle
   },
+  bank(ctx) {
+    DRAW.door(ctx);
+    box(ctx, C.beam, 5, 0, 22, 6); box(ctx, C.woodLight, 5, 0, 22, 1); // sign board
+    box(ctx, C.flowerY, 13, 1, 6, 4); box(ctx, "#fff3b0", 14, 1, 2, 1); box(ctx, "#a8801a", 15, 2, 2, 2); // a gold coin
+  },
   cavefloor(ctx, rng) {
     box(ctx, C.floor, 0, 0, T, T);
     speckle(ctx, rng, C.floorDark, 22, 2, 1);

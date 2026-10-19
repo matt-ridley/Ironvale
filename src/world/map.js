@@ -15,6 +15,7 @@ export const TILES = {
   "D": { name: "door", solid: true }, // doors open in a later milestone
   "B": { name: "smithy", solid: true, place: "blacksmith" }, // walk into it to go inside
   "A": { name: "apothecary", solid: true, place: "apothecary" },
+  "$": { name: "bank", solid: true, place: "bank" },
   "f": { name: "fence", solid: true },
   // The Deep Warrens
   "_": { name: "cavefloor", solid: false },
@@ -25,7 +26,7 @@ export const TILES = {
 
 // Order of the tiles in the tileset image. "grass2" is a second look for grass so fields don't look stamped.
 export const FRAMES = ["grass", "grass2", "flowers", "path", "bridge", "cave", "tree", "water", "rock", "roof", "wall", "door", "fence", "smithy",
-  "apothecary", "cavefloor", "cavewall", "cavetorch", "caveexit"];
+  "apothecary", "cavefloor", "cavewall", "cavetorch", "caveexit", "bank"];
 
 export const DIRS = {
   up: { dx: 0, dy: -1 },
