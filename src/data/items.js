@@ -12,9 +12,14 @@ export const ITEMS = {
   greataxe:    { name: "Greataxe",    type: "weapon", damage: "1d12", properties: ["two-handed"], cost: 30 },
   greatsword:  { name: "Greatsword",  type: "weapon", damage: "2d6",  properties: ["two-handed"], cost: 50 },
 
+  // Bows, for a companion in your party (Megan): damage die. The hero fights up close.
+  shortbow:    { name: "Shortbow", type: "bow", damage: "1d6", cost: 25 },
+  longbow:     { name: "Longbow",  type: "bow", damage: "1d8", cost: 50 },
+
   // Armour: light = base + DEX, medium = base + DEX (max +2), heavy = base only.
   padded:      { name: "Padded Armour",  type: "armour", category: "light",  baseAc: 11, cost: 5 },
   leather:     { name: "Leather Armour", type: "armour", category: "light",  baseAc: 11, cost: 10 },
+  studded:     { name: "Studded Leather", type: "armour", category: "light", baseAc: 12, cost: 45 },
   hide:        { name: "Hide Armour",    type: "armour", category: "medium", baseAc: 12, cost: 10 },
   chainShirt:  { name: "Chain Shirt",    type: "armour", category: "medium", baseAc: 13, cost: 50 },
   chainMail:   { name: "Chain Mail",     type: "armour", category: "heavy",  baseAc: 16, cost: 75 },
@@ -35,7 +40,7 @@ export const SHOPS = {
   blacksmith: {
     title: "BLACKSMITH", tabs: ["upgrade", "buy", "sell"], greeting: "Steel's hot. What'll it be?", tint: 0xc8a27a,
     stock: ["dagger", "shortsword", "mace", "scimitar", "longsword", "rapier", "greataxe", "greatsword",
-      "leather", "hide", "chainShirt", "chainMail", "shield", "potionHealing"],
+      "leather", "studded", "hide", "chainShirt", "chainMail", "shield", "shortbow", "longbow", "potionHealing"],
   },
   apothecary: {
     title: "APOTHECARY", tabs: ["buy", "sell"], greeting: "Bubble, bubble! Fresh potions, brewed this morning.", tint: 0x9fd18b,

@@ -202,7 +202,10 @@ function checkEnd(battle, rng) {
     battle.rewards = { xp, gold, levelUps, loot: loot.map(itemName) };
     say(battle, "won", `Victory! You gain ${xp} XP and ${gold} gold.`);
     for (const name of battle.rewards.loot) say(battle, "loot", `You find a ${name}.`);
-    for (const l of levelUps) say(battle, "level-up", `You reach level ${l.level}! +${l.hpGain} max HP.`, { level: l.level });
+    for (const l of levelUps) {
+      say(battle, "level-up", `You reach level ${l.level}! +${l.hpGain} max HP.`, { level: l.level });
+      if (battle.ally) say(battle, "ally-level-up", `${battle.ally.name} reaches level ${l.level} too!`);
+    }
     return true;
   }
   return false;

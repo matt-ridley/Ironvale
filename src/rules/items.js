@@ -3,6 +3,8 @@ import { ITEMS, MAX_UPGRADE } from "../data/items.js";
 import { roll } from "./dice.js";
 
 export const SLOTS = ["weapon", "shield", "armour"];
+// What the blacksmith can upgrade: your gear, and bows (for a companion).
+export const isUpgradable = item => [...SLOTS, "bow"].includes(baseOf(item).type);
 
 let nextUid = 1;
 export function makeItem(base, { upgrade = 0 } = {}) {
@@ -21,6 +23,7 @@ export function describeItem(item) {
   const b = baseOf(item), up = item.upgrade ? ` +${item.upgrade}` : "";
   const props = b.properties?.length ? `, ${b.properties.join(", ")}` : "";
   if (b.type === "weapon") return `${b.damage} damage${props}.${up && ` ${up.trim()} to hit and damage.`}`;
+  if (b.type === "bow") return `${b.damage} damage, for a friend in your party.${up && ` ${up.trim()} to hit and damage.`}`;
   if (b.type === "shield") return `+${b.ac} AC.${up && ` ${up.trim()} more AC.`}`;
   if (b.type === "armour") {
     const dex = b.category === "light" ? " + DEX" : b.category === "medium" ? " + DEX (max 2)" : "";
@@ -83,6 +86,7 @@ export function equip(char, uid) {
   const item = char.inventory.find(i => i.uid === uid);
   if (!item) return { ok: false, reason: "That item isn't in your pack." };
   const slot = baseOf(item).type;
+  if (slot === "bow") return { ok: false, reason: "You fight up close. Give the bow to a friend in your party." };
   if (!SLOTS.includes(slot)) return { ok: false, reason: `${itemName(item)} can't be equipped.` };
   if (slot === "shield" && isTwoHanded(char.equipment.weapon)) {
     return { ok: false, reason: `You need both hands for your ${itemName(char.equipment.weapon)}.` };
@@ -113,11 +117,13 @@ export function upgradeCost(item) {
   return item.upgrade >= MAX_UPGRADE ? null : 50 * (item.upgrade + 1);
 }
 
-/* The blacksmith. Works on equipped or carried items. Each tier is +1 to hit and damage (weapons) or +1 AC. */
+/* The blacksmith. Works on equipped or carried items, and your companion's gear. Each tier is +1 to hit and damage
+   (weapons and bows) or +1 AC. */
 export function upgradeItem(char, uid) {
-  const item = [...Object.values(char.equipment), ...char.inventory].find(i => i && i.uid === uid);
+  const companion = Object.values(char.companion?.gear || {});
+  const item = [...Object.values(char.equipment), ...char.inventory, ...companion].find(i => i && i.uid === uid);
   if (!item) return { ok: false, reason: "You don't have that item." };
-  if (!SLOTS.includes(baseOf(item).type)) return { ok: false, reason: `${itemName(item)} can't be upgraded.` };
+  if (!isUpgradable(item)) return { ok: false, reason: `${itemName(item)} can't be upgraded.` };
   const cost = upgradeCost(item);
   if (cost === null) return { ok: false, reason: `${itemName(item)} can't be improved further.` };
   if (char.gold < cost) return { ok: false, reason: `That costs ${cost} gold. You have ${char.gold}.` };

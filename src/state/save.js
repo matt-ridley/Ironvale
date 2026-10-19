@@ -5,7 +5,7 @@
 import { VERSION } from "../config.js";
 import { ITEMS } from "../data/items.js";
 import { SLOTS } from "../rules/items.js";
-import { COMPANIONS } from "../rules/party.js";
+import { COMPANIONS, COMPANION_SLOTS, startingGear } from "../rules/party.js";
 import { MAPS } from "../world/maps.js";
 import { blockedAt, feetAt } from "../world/movement.js";
 import { OVERWORLD } from "../world/overworld.js";
@@ -22,6 +22,16 @@ export function serialize(state) {
 const isInt = n => Number.isInteger(n);
 const knownItem = i => i && typeof i === "object" && ITEMS[i.base] && isInt(i.upgrade) && typeof i.uid === "string";
 
+/* A companion the game no longer knows is dropped. Saves from 0.10.0 have no gear: they get the starting gear. */
+function loadCompanion(c) {
+  if (!COMPANIONS[c?.id]) return undefined;
+  const fits = { bow: b => b.type === "bow", armour: b => b.type === "armour" && b.category === "light" };
+  const gear = c.gear && typeof c.gear === "object"
+    ? Object.fromEntries(COMPANION_SLOTS.map(s => { const i = c.gear[s]; return [s, knownItem(i) && fits[s](ITEMS[i.base]) ? i : null]; }))
+    : startingGear(c.id);
+  return { id: c.id, hurt: isInt(c.hurt) && c.hurt > 0 ? c.hurt : 0, gear };
+}
+
 /* Parses a save. Returns the game state, or null if it isn't a save this game can use. */
 export function deserialize(json) {
   let data;
@@ -35,8 +45,7 @@ export function deserialize(json) {
     ...h,
     hp: Math.min(Math.max(h.hp, 1), h.maxHp), // never load into a fight-ending 0
     bank: isInt(h.bank) && h.bank > 0 ? h.bank : 0, // saves from before 0.9.0 have no bank
-    // A companion the game no longer knows is dropped.
-    companion: COMPANIONS[h.companion?.id] ? { id: h.companion.id, hurt: isInt(h.companion.hurt) && h.companion.hurt > 0 ? h.companion.hurt : 0 } : undefined,
+    companion: loadCompanion(h.companion),
     secondWind: h.secondWind !== false,
     equipment: Object.fromEntries(SLOTS.map(slot => {
       const item = h.equipment?.[slot];

@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { companionStats, companionMaxHp, joinParty, COMPANIONS } from "../src/rules/party.js";
+import { companionStats, companionMaxHp, joinParty, equipCompanion, unequipCompanion, compareCompanionEquip, COMPANIONS } from "../src/rules/party.js";
+import { makeItem, equip, upgradeItem, itemName } from "../src/rules/items.js";
 import { createBattle, playerAction, isPlayerTurn } from "../src/rules/combat.js";
 import { createCharacter, gainXp, rest } from "../src/rules/character.js";
 import { seededRng } from "../src/rules/dice.js";
@@ -19,7 +20,65 @@ test("Megan grows with your level", () => {
   gainXp(h, 900, () => 0.5); // level 3
   const s = companionStats(h);
   assert.equal(s.maxHp, companionMaxHp("megan", 3));
-  assert.equal(s.attack.bonus, COMPANIONS.megan.attack.ability + 2);
+  assert.equal(s.level, 3);
+  assert.equal(s.attack.bonus, COMPANIONS.megan.dexMod + 2);
+});
+
+test("Megan starts with a shortbow and leather armour: AC 13, 1d6+2", () => {
+  const s = companionStats(withMegan());
+  assert.equal(s.ac, 13);
+  assert.deepEqual([s.attack.name, s.attack.damage, s.attack.damageBonus], ["Shortbow", "1d6", 2]);
+});
+
+test("giving Megan a longbow and studded leather from your pack", () => {
+  const h = withMegan();
+  const bow = makeItem("longbow"), armour = makeItem("studded");
+  h.inventory.push(bow, armour);
+  const c = compareCompanionEquip(h, bow.uid);
+  assert.equal(c.ok, true);
+  assert.equal(c.after.damage, "1d8");
+  assert.equal(equipCompanion(h, bow.uid).unequipped[0].base, "shortbow"); // the old bow goes back in your pack
+  assert.equal(equipCompanion(h, armour.uid).ok, true);
+  const s = companionStats(h);
+  assert.equal(s.ac, 14);
+  assert.equal(s.attack.damage, "1d8");
+  assert.deepEqual(h.inventory.map(i => i.base).sort(), ["leather", "potionHealing", "potionHealing", "shortbow"]);
+  assert.equal(unequipCompanion(h, "bow").ok, true);
+  assert.equal(companionStats(h).attack.name, "Fist");
+});
+
+test("Megan only wears light armour and only uses bows; the hero can't use bows", () => {
+  const h = withMegan();
+  const mail = makeItem("chainMail"), sword = makeItem("longsword"), bow = makeItem("longbow");
+  h.inventory.push(mail, sword, bow);
+  assert.match(equipCompanion(h, mail.uid).reason, /light armour/);
+  assert.match(equipCompanion(h, sword.uid).reason, /bows/);
+  assert.match(equip(h, bow.uid).reason, /friend/);
+});
+
+test("the blacksmith upgrades Megan's bow", () => {
+  const h = withMegan();
+  h.gold = 100;
+  const bow = h.companion.gear.bow;
+  assert.equal(upgradeItem(h, bow.uid).ok, true);
+  assert.equal(itemName(bow), "Shortbow +1");
+  const s = companionStats(h);
+  assert.equal(s.attack.damageBonus, 3);
+  assert.equal(s.attack.bonus, COMPANIONS.megan.dexMod + 2 + 1);
+});
+
+test("when you level up in a fight with Megan, she levels up too", () => {
+  for (let seed = 1; seed <= 100; seed++) {
+    const rng = seededRng(seed);
+    const h = withMegan();
+    h.xp = 299; h.maxHp = h.hp = 999;
+    const b = createBattle(h, ["giantRat"], rng);
+    for (let i = 0; i < 100 && b.state === "active"; i++) if (isPlayerTurn(b)) playerAction(b, { type: "attack" }, rng);
+    if (b.state !== "won") continue;
+    assert.ok(b.log.some(e => e.type === "ally-level-up" && /Megan reaches level 2/.test(e.text)));
+    return;
+  }
+  assert.fail("no win");
 });
 
 test("Megan takes turns in battle and shoots at the monster you attacked", () => {

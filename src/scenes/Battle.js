@@ -204,7 +204,7 @@ export class Battle extends Phaser.Scene {
   }
 
   showEvent(e) {
-    const good = ["won", "level-up", "potion", "second-wind", "loot", "quick"].includes(e.type);
+    const good = ["won", "level-up", "ally-level-up", "potion", "second-wind", "loot", "quick"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -227,6 +227,9 @@ export class Battle extends Phaser.Scene {
         sfx("sword");
         if (e.roll.hit) { this.slash(foe, e.roll.crit); this.hit(foe, e.roll.damage, e.roll.crit); this.time.delayedCall(90, () => sfx(e.roll.crit ? "crit" : "hit")); }
         else { this.float(foe, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
+        break;
+      case "ally-level-up":
+        this.float(this.allyView.sprite, "LEVEL UP!", COLORS.gold);
         break;
       case "ally-down":
         this.tweens.add({ targets: [this.allyView.sprite, this.allyView.name], alpha: 0.35, duration: 400 });
