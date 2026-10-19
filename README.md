@@ -51,7 +51,7 @@ The game saves itself to the browser's local storage: after every step, when a m
 Saves carry a format number. Loading drops anything the game no longer knows (an item removed in an update) and puts you back in the village if your saved spot is now a wall, rather than failing. A save lives in one browser on one device; clearing site data deletes it.
 
 ## How it plays
-- Wild areas start a fight now and then after a step (half as often on paths, and never right after a fight).
+- Wild areas start a fight now and then after a step: on average about every 30 steps off the path and every 50 on it, and never in the first 12 steps after a fight.
 - Walking into Oakhollow is a full rest: HP and Second Wind come back.
 - Losing a fight isn't the end. You wake in Oakhollow, rested, but half the gold you carry is gone (never more than 50). Gold in the bank is safe.
 - Goblins sometimes drop a scimitar or a potion.

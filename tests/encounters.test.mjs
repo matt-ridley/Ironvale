@@ -91,3 +91,20 @@ test("fainting never costs more than 50 gold, and banked gold is safe", () => {
   assert.equal(state.hero.gold, 450);
   assert.equal(state.hero.bank, 300);
 });
+
+test("fights come about every 30 steps off the path and every 50 on it", () => {
+  // Walk a long way through each wild area and count the fights.
+  for (const zone of ["forest", "rocks", "meadow", "warrens"]) {
+    for (const [tile, lo, hi] of [["grass", 25, 38], ["path", 40, 65]]) {
+      const rng = seededRng(7);
+      let since = 0, fights = 0;
+      const steps = 200000;
+      for (let i = 0; i < steps; i++) {
+        since++;
+        if (rollEncounter(zone, tile, since, rng)) { fights++; since = 0; }
+      }
+      const every = steps / fights;
+      assert.ok(every > lo && every < hi, `${zone} ${tile}: a fight every ${every.toFixed(1)} steps`);
+    }
+  }
+});
