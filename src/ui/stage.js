@@ -1,0 +1,56 @@
+// The side-on stage that battles and meetings share: a sky, far hills or trees, and ground for people to stand on,
+// above a panel for text and buttons. Your party stands on the left; whoever you face stands on the right.
+import { WIDTH } from "../config.js";
+import { heroFrame } from "../art/pixels.js";
+
+export const GROUND_Y = 124;
+export const PANEL_Y = 152;
+export const HERO_X = 110, ALLY_X = 50;
+
+const SKY = {
+  forest: { sky: 0x1d2b3a, far: 0x1f3a26, ground: 0x3e6a31, groundDark: 0x34592a },
+  rocks: { sky: 0x2a2633, far: 0x45424f, ground: 0x6b6b72, groundDark: 0x5a5a61 },
+  cave: { sky: 0x0f0d14, far: 0x26222e, ground: 0x3a3440, groundDark: 0x2e2934 },
+  meadow: { sky: 0x3a5a8a, far: 0x3f6b3a, ground: 0x5aa04a, groundDark: 0x4a8a3c },
+  village: { sky: 0x4a6a9a, far: 0x4f7a3f, ground: 0x6aa84f, groundDark: 0x5a9043 },
+};
+SKY.warrens = SKY.cave;
+SKY.throne = SKY.cave;
+
+/* A zone id the stage knows, or `fallback`. */
+export const stageZone = (zone, fallback = "forest") => (SKY[zone] ? zone : fallback);
+
+export function drawBackdrop(scene, zone) {
+  const c = SKY[zone], g = scene.add.graphics();
+  g.fillStyle(c.sky).fillRect(0, 0, WIDTH, PANEL_Y);
+  g.fillStyle(c.far);
+  if (zone === "forest") {
+    for (let x = -10; x < WIDTH + 20; x += 26) {
+      const h = 40 + ((x * 37) % 23);
+      g.fillTriangle(x, 100, x + 14, 100 - h, x + 28, 100);
+    }
+  } else {
+    for (let x = -20; x < WIDTH + 40; x += 60) g.fillEllipse(x + ((x * 13) % 20), 100, 80, 50 + ((x * 7) % 30));
+  }
+  g.fillStyle(c.ground).fillRect(0, 96, WIDTH, PANEL_Y - 96);
+  g.fillStyle(c.groundDark);
+  for (let x = 0; x < WIDTH; x += 12) g.fillRect(x + ((x * 7) % 9), 100 + ((x * 5) % 48), 3, 2);
+}
+
+/* Something standing on the ground at x, with a shadow under it (on the hero's grid and scale). */
+export function stand(scene, x, key, frame, { scale = 1.5, shadow = 40 } = {}) {
+  scene.add.ellipse(x, GROUND_Y, shadow, 8, 0x000000, 0.3);
+  return scene.add.image(x, GROUND_Y, key, frame).setOrigin(0.5, 1).setScale(scale);
+}
+
+/* The hero, and the companion behind them (allyId, if you have one): { hero, ally } sprites, ally null without one. */
+export function standParty(scene, allyId) {
+  const hero = stand(scene, HERO_X, "hero", heroFrame("side"));
+  return { hero, ally: allyId ? stand(scene, ALLY_X, allyId, heroFrame("side"), { shadow: 32 }) : null };
+}
+
+/* Everyone breathes a little while waiting, out of step with each other. */
+export function breathe(scene, sprites) {
+  sprites.forEach((s, i) =>
+    scene.tweens.add({ targets: s, scaleY: s.scaleY * 0.97, duration: 700 + i * 130, yoyo: true, repeat: -1, ease: "Sine.inOut" }));
+}

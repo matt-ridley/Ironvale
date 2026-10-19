@@ -30,7 +30,7 @@ Node 20 or later is needed only for these dev tools.
 - **Move:** 8 directions. On phones, touch anywhere on the left of the screen and a joystick appears under your thumb: push a little to walk, all the way to run. On a computer, use the arrow keys or WASD (two at once for diagonals, Shift to run). Add `?touch` to the URL to show the joystick hint on a desktop.
 - **Menu:** the MENU button or Esc.
 - **Sound:** the SND button mutes or unmutes music and effects (remembered on this device).
-- **Talk:** walk into a person (or press Enter/Space while facing them). Pick answers by tapping, with up/down and Enter, or with number keys.
+- **Talk:** walk into a person or a thing (or press Enter/Space while facing them). The meeting screen opens: your party on the left, them on the right, what they say at the bottom and your answers as big buttons on the right. Pick answers by tapping, with up/down and Enter, or with number keys. A chest opens on screen and shows each thing inside before you close it. A finger already on the screen when it opens (your thumb on the joystick) doesn't count as a tap when it lets go.
 - **Inventory:** the BAG button or I. Tap an item to see what it does and how it changes your AC, to-hit and damage, then equip it, take it off or drink it.
 - **Battles:** tap a monster to target it, then ATTACK, DEFEND (+2 AC until your next turn), POTION (then HEAL or DEX for you, or your companion's name to give them a Potion of Healing, which also gets them back up if they've been knocked down), 2ND WIND (heal 1d10 + level as a bonus action, once per rest) or FLEE (DEX check, DC 10).
 
@@ -68,9 +68,9 @@ src/data/     items, shops and monsters
 src/world/    tile maps (one character per tile: overworld.js, cave.js, all listed in maps.js), 8-direction movement with collisions, and random encounters. No Phaser, so they are unit tested.
 src/state/    the shared game state (hero, position, quest flags) and saving it to localStorage
 src/art/      16-bit style pixel art drawn in code: the hero's and Megan's walk cycles, monsters, people and 32px terrain tiles
-src/scenes/   Phaser screens: Boot, Title, World (+ Hud on top), Battle, Inventory, Shop (the blacksmith and the apothecary), Bank, Dialogue
+src/scenes/   Phaser screens: Boot, Title, World (+ Hud on top), Battle, Meet (talking to people and things), Inventory, Shop (the blacksmith and the apothecary), Bank, Dialogue (the cave entrance)
 src/story/    the conversation engine and the scripts (quests, NPCs, events). No Phaser, so they are unit tested.
-src/ui/       the joystick and menu widgets (buttons, paged lists)
+src/ui/       the joystick, menu widgets (buttons, paged lists) and the side-on stage that Battle and Meet share
 src/audio/    synthesised music (tracks written as notes) and sound effects, no audio files
 tests/        node --test suites
 tools/        icon generator

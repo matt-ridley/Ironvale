@@ -1,6 +1,6 @@
 // The world: whichever map state.map names (the overworld or the Deep Warrens). Move in 8 directions with the joystick
 // (touch), arrow keys or WASD (hold Shift to run); the camera glides after the hero. Walk into people, things or shop
-// doors (or press Enter/Space facing them) to interact, and onto an exit to go to another map. Wild areas can start
+// doors (or press Enter/Space facing them) to interact (people and things open the Meet screen), and onto an exit to go to another map. Wild areas can start
 // a fight as you walk; Oakhollow heals you. A Potion of Speed makes you faster and fights rarer for a number of
 // steps. A companion in your party walks along behind you. The HUD lives in the Hud scene on top.
 import { TILE, WORLD_ZOOM, FONT, COLORS } from "../config.js";
@@ -161,7 +161,7 @@ export class World extends Phaser.Scene {
   }
 
   interactWith(thing) {
-    if (thing.obj) { sfx("select"); this.openOverlay("Dialogue", { script: thing.obj.script, object: thing.obj }); }
+    if (thing.obj) { sfx("select"); this.openOverlay("Meet", { script: thing.obj.script, object: thing.obj, zone: this.zoneId }); }
     else if (thing.place === "bank") { sfx("door"); this.openOverlay("Bank"); }
     else if (thing.place) { sfx("door"); this.openOverlay("Shop", { shop: thing.place }); }
   }

@@ -147,6 +147,7 @@ test("a chest gives its gold and items once and marks itself opened", () => {
   assert.equal(s.hero.gold, gold + 40);
   assert.equal(s.hero.inventory.length, items + 2);
   assert.equal(s.flags.testChestOpened, true);
+  assert.deepEqual(takeEvents(c), [{ type: "loot", found: ["40 gold", "Potion of Speed", "Potion of Healing"] }]);
 });
 
 test("Old Tom gives you one Potion of Speed", () => {
