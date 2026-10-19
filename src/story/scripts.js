@@ -200,26 +200,26 @@ export const SCRIPTS = {
     },
   },
 
-  wren: {
-    start: s => (s.flags.bowFound ? "found" : s.flags.wrenQuest ? "waiting" : "hello"),
+  megan: {
+    start: s => (s.flags.bowFound ? "found" : s.flags.meganQuest ? "waiting" : "hello"),
     nodes: {
       hello: {
-        speaker: "WREN",
-        text: "Oh! A real adventurer! I'm Wren. I was chasing a wolf through the Whispering Wood and I dropped my bow. Now I can't find it anywhere!",
+        speaker: "MEGAN",
+        text: "Oh! A real adventurer! I'm Megan. I was chasing a wolf through the Whispering Wood and I dropped my bow. Now I can't find it anywhere!",
         choices: [
           { label: "I'll find your bow.", to: "accept" },
           { label: "Sorry, I'm busy.", to: "busy" },
         ],
       },
       accept: {
-        speaker: "WREN",
-        enter: s => { s.flags.wrenQuest = true; },
+        speaker: "MEGAN",
+        enter: s => { s.flags.meganQuest = true; },
         text: "Thank you! I lost it somewhere in the far east of the wood, past where the path ends. Look in the corners where the trees are thick.",
       },
-      busy: { speaker: "WREN", text: "Oh. Well, if you change your mind, I'll be right here." },
-      waiting: { speaker: "WREN", text: "Any luck? My bow is somewhere in the far east of the Whispering Wood, in a corner where the trees are thick." },
+      busy: { speaker: "MEGAN", text: "Oh. Well, if you change your mind, I'll be right here." },
+      waiting: { speaker: "MEGAN", text: "Any luck? My bow is somewhere in the far east of the Whispering Wood, in a corner where the trees are thick." },
       found: {
-        speaker: "WREN",
+        speaker: "MEGAN",
         text: "My bow! You found it! You know what... adventuring looks much more fun with a friend. Can I come with you?",
         choices: [
           { label: "Yes! Join my party.", to: "join" },
@@ -227,13 +227,13 @@ export const SCRIPTS = {
         ],
       },
       join: {
-        speaker: "WREN",
-        enter: s => { joinParty(s.hero, "wren"); s.flags.wrenJoined = true; },
+        speaker: "MEGAN",
+        enter: s => { joinParty(s.hero, "megan"); s.flags.meganJoined = true; },
         text: "Hooray! I'll shoot anything that tries to hurt you. Lead the way!",
         to: "joined",
       },
-      joined: { text: "Wren joined your party!" },
-      later: { speaker: "WREN", text: "Okay! Come back when you're ready. I'll keep practising." },
+      joined: { text: "Megan joined your party!" },
+      later: { speaker: "MEGAN", text: "Okay! Come back when you're ready. I'll keep practising." },
     },
   },
 
@@ -241,11 +241,11 @@ export const SCRIPTS = {
     start: "look",
     nodes: {
       look: {
-        // Open world: you can find the bow before you meet Wren.
+        // Open world: you can find the bow before you meet Megan.
         enter: s => { s.flags.bowFound = true; },
-        text: s => (s.flags.wrenQuest
-          ? "Hidden in the bushes: a small bow with WREN carved on it. You found it! Take it back to her in Willowmere."
-          : "Hidden in the bushes: a small bow with WREN carved on it. Someone must be missing this. You take it with you."),
+        text: s => (s.flags.meganQuest
+          ? "Hidden in the bushes: a small bow with MEGAN carved on it. You found it! Take it back to her in Willowmere."
+          : "Hidden in the bushes: a small bow with MEGAN carved on it. Someone must be missing this. You take it with you."),
       },
     },
   },
@@ -320,9 +320,9 @@ function obstacle({ look, checks, flag, shoveLabel, climbLabel, hurt, shoved, cl
 
 /* Side quests, shown on a second HUD line. */
 export function sideObjective(flags) {
-  if (flags.wrenJoined) return "";
-  if (flags.bowFound) return "Bring the bow back to Wren";
-  if (flags.wrenQuest) return "Find Wren's bow in the Whispering Wood";
+  if (flags.meganJoined) return "";
+  if (flags.bowFound) return "Bring the bow back to Megan";
+  if (flags.meganQuest) return "Find Megan's bow in the Whispering Wood";
   return "";
 }
 

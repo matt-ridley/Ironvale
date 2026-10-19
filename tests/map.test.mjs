@@ -156,10 +156,10 @@ test("map object ids are unique across the game (their flags are shared)", () =>
   assert.equal(new Set(flags).size, flags.length);
 });
 
-test("Wren is in Willowmere, and her bow is hidden in the Whispering Wood where you can reach it", () => {
-  const wren = world.objects.find(o => o.id === "wren"), bow = world.objects.find(o => o.id === "lostBow");
-  assert.equal(zoneAt(world, wren.x, wren.y).id, "meadow");
+test("Megan is in Willowmere, and her bow is hidden in the Whispering Wood where you can reach it", () => {
+  const megan = world.objects.find(o => o.id === "megan"), bow = world.objects.find(o => o.id === "lostBow");
+  assert.equal(zoneAt(world, megan.x, megan.y).id, "meadow");
   assert.equal(zoneAt(world, bow.x, bow.y).id, "forest");
   const seen = reachable(world, world.spawn, { logCleared: true });
-  for (const o of [wren, bow]) assert.ok([[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => seen.has(`${o.x + dx},${o.y + dy}`)), `${o.id} can't be reached`);
+  for (const o of [megan, bow]) assert.ok([[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => seen.has(`${o.x + dx},${o.y + dy}`)), `${o.id} can't be reached`);
 });

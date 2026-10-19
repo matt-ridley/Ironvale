@@ -4,8 +4,8 @@
 import { proficiencyBonus } from "./character.js";
 
 export const COMPANIONS = {
-  // Wren, a young ranger from Willowmere: light armour, a shortbow and quick hands.
-  wren: { name: "Wren", ac: 13, dexMod: 2, hpBase: 8, hpPerLevel: 5, attack: { name: "Shortbow", ability: 2, damage: "1d6" } },
+  // Megan, a young ranger from Willowmere: light armour, a shortbow and quick hands.
+  megan: { name: "Megan", ac: 13, dexMod: 2, hpBase: 8, hpPerLevel: 5, attack: { name: "Shortbow", ability: 2, damage: "1d6" } },
 };
 
 export const companionMaxHp = (id, level) => COMPANIONS[id].hpBase + COMPANIONS[id].hpPerLevel * (level - 1);

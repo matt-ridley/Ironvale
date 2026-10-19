@@ -253,7 +253,7 @@ export const SPRITES = {
     "....kbk.kbk.....",
     "....kkk.kkk.....",
   ],
-  wren: [
+  megan: [
     "................",
     ".....kkkkkk.....",
     "....kGGGGGGk....",
