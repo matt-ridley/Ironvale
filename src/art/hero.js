@@ -117,4 +117,6 @@ export const HERO_FRAMES = {
   side: [SIDE.concat(SIDE_STAND), SIDE.concat(SIDE_STRIDE), SIDE.concat(SIDE_STAND), SIDE.concat(swapShade(SIDE_STRIDE))],
 };
 export const FACINGS = ["down", "up", "side"];
+// The leg rows, for other people drawn the same way (Megan's colours turn the armour into leggings).
+export const HERO_LEGS = { stand: LEGS_STAND, stride: LEGS_STRIDE, sideStand: SIDE_STAND, sideStride: SIDE_STRIDE };
 export const HERO_W = 16, HERO_H = 24;

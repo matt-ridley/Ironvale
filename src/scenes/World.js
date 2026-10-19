@@ -11,6 +11,7 @@ import { state, autosave } from "../state/game.js";
 import { rollEncounter } from "../world/encounters.js";
 import { rest } from "../rules/character.js";
 import { stick } from "../ui/joystick.js";
+import { animKey } from "../art/pixels.js";
 import { playMusic, sfx } from "../audio/sound.js";
 
 const KEYS = { up: ["UP", "W"], down: ["DOWN", "S"], left: ["LEFT", "A"], right: ["RIGHT", "D"] };
@@ -42,7 +43,7 @@ export class World extends Phaser.Scene {
 
     // People and things stand on their tile's bottom edge; everything is drawn in order of where its feet are.
     this.objectSprites = Object.fromEntries(this.map.objects.map(o => {
-      const s = this.add.image(px(o.x + 0.5), px(o.y + 1) - 2, o.sprite).setOrigin(0.5, 1).setDepth(px(o.y + 1));
+      const s = this.add.image(px(o.x + 0.5), px(o.y + 1) - 2, o.sprite, o.frame).setOrigin(0.5, 1).setDepth(px(o.y + 1));
       if (!o.still) this.tweens.add({ targets: s, y: s.y - 2, duration: 900 + (o.x % 3) * 120, yoyo: true, repeat: -1, ease: "Sine.inOut" });
       return [o.id, s];
     }));
@@ -89,9 +90,16 @@ export class World extends Phaser.Scene {
     if (this.follower) {
       // A step or so behind, along the way you came (or just behind you, before you've moved).
       const p = this.trail.length > FOLLOW_GAP ? this.trail[this.trail.length - 1 - FOLLOW_GAP] : { x: state.pos.x, y: state.pos.y - 0.5 };
-      const fx = px(p.x), fy = px(p.y);
-      this.follower.sprite.setPosition(fx, fy - bob).setDepth(fy).setFlipX(state.pos.x < p.x);
-      this.follower.shadow.setPosition(fx, fy - 1).setDepth(fy - 1);
+      const f = this.follower, fx = px(p.x), fy = px(p.y);
+      // Walks when you do, facing the way they're going.
+      const dx = fx - (f.at?.x ?? fx), dy = fy - (f.at?.y ?? fy);
+      if (dx || dy) f.facing = facingFor(dx, dy, f.facing);
+      f.at = { x: fx, y: fy };
+      const walking = this.player.anims.currentAnim?.key.startsWith("walk");
+      f.sprite.play(animKey(f.key, walking ? "walk" : "idle", sheetFacing(f.facing)), true).setFlipX(f.facing === "left");
+      f.sprite.anims.timeScale = this.player.anims.timeScale;
+      f.sprite.setPosition(fx, fy - bob).setDepth(fy);
+      f.shadow.setPosition(fx, fy - 1).setDepth(fy - 1);
     }
   }
 
@@ -101,7 +109,9 @@ export class World extends Phaser.Scene {
     if (!c || this.follower || !this.textures.exists(c.id)) return;
     this.follower = {
       shadow: this.add.ellipse(0, 0, 18, 6, 0x000000, 0.25),
-      sprite: this.add.image(0, 0, c.id).setOrigin(0.5, 1),
+      sprite: this.add.sprite(0, 0, c.id, 0).setOrigin(0.5, 1),
+      key: c.id,
+      facing: state.facing,
     };
   }
 

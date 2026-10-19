@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { VERSION } from "../src/config.js";
 import { SPRITES, PALETTE } from "../src/art/sprites.js";
 import { HERO_FRAMES, HERO_COLOURS, HERO_W, HERO_H } from "../src/art/hero.js";
+import { MEGAN_FRAMES, MEGAN_COLOURS } from "../src/art/megan.js";
 
 const sw = readFileSync("sw.js", "utf8");
 const listFiles = dir => readdirSync(dir, { withFileTypes: true })
@@ -34,15 +35,17 @@ test("every sprite is a rectangle that only uses palette colours", () => {
   }
 });
 
-test("every hero frame is 16 x 24 and only uses hero colours", () => {
-  for (const [facing, frames] of Object.entries(HERO_FRAMES)) {
-    assert.equal(frames.length, 4, facing);
-    frames.forEach((rows, i) => {
-      assert.equal(rows.length, HERO_H, `${facing} ${i}`);
-      for (const row of rows) {
-        assert.equal(row.length, HERO_W, `${facing} ${i}: ${row}`);
-        for (const ch of row) assert.ok(ch === "." || HERO_COLOURS[ch], `${facing} ${i} uses "${ch}"`);
-      }
-    });
+test("every hero and Megan frame is 16 x 24 and only uses that sheet's colours", () => {
+  for (const [who, all, colours] of [["hero", HERO_FRAMES, HERO_COLOURS], ["megan", MEGAN_FRAMES, MEGAN_COLOURS]]) {
+    for (const [facing, frames] of Object.entries(all)) {
+      assert.equal(frames.length, 4, `${who} ${facing}`);
+      frames.forEach((rows, i) => {
+        assert.equal(rows.length, HERO_H, `${who} ${facing} ${i}`);
+        for (const row of rows) {
+          assert.equal(row.length, HERO_W, `${who} ${facing} ${i}: ${row}`);
+          for (const ch of row) assert.ok(ch === "." || colours[ch], `${who} ${facing} ${i} uses "${ch}"`);
+        }
+      });
+    }
   }
 });
