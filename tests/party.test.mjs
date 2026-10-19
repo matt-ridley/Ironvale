@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { companionStats, companionMaxHp, joinParty, equipCompanion, unequipCompanion, compareCompanionEquip, COMPANIONS } from "../src/rules/party.js";
+import { companionStats, companionMaxHp, companionDrink, companionCantDrink, joinParty, equipCompanion, unequipCompanion, compareCompanionEquip, COMPANIONS } from "../src/rules/party.js";
 import { makeItem, equip, upgradeItem, itemName } from "../src/rules/items.js";
 import { createBattle, playerAction, isPlayerTurn } from "../src/rules/combat.js";
 import { createCharacter, gainXp, rest } from "../src/rules/character.js";
@@ -123,5 +123,24 @@ test("Megan keeps her wounds between fights until you rest", () => {
   const b = createBattle(h, ["goblin"], seededRng(3));
   assert.equal(b.log[0].hp.ally, companionMaxHp("megan", 1) - 5); // before anyone has acted
   rest(h);
+  assert.equal(h.companion.hurt, 0);
+});
+
+test("Megan can drink a Potion of Healing from your pack, but not the other potions", () => {
+  const h = withMegan();
+  h.inventory.push(makeItem("potionHealing"), makeItem("potionSpeed"));
+  const [healing, speed] = h.inventory.slice(-2);
+  assert.match(companionCantDrink(h, healing), /full health/);
+  h.companion.hurt = 6;
+  assert.match(companionCantDrink(h, speed), /Only you/);
+  assert.equal(companionDrink(h, speed.uid).ok, false);
+  const r = companionDrink(h, healing.uid, () => 0); // 2d4+2 rolling all 1s: 4
+  assert.equal(r.ok, true);
+  assert.equal(r.healed, 4);
+  assert.equal(h.companion.hurt, 2);
+  assert.ok(!h.inventory.includes(healing));
+  assert.ok(h.inventory.includes(speed));
+  h.inventory.push(makeItem("potionHealing"));
+  assert.equal(companionDrink(h, h.inventory.at(-1).uid, () => 0.99).healed, 2); // never past full
   assert.equal(h.companion.hurt, 0);
 });
