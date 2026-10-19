@@ -41,6 +41,8 @@ GitHub Actions runs `npm test` on every pull request and every push to `main`, s
 ## Look and sound
 The art is in a 16-bit RPG style, drawn in code: every art pixel is a 2x2 block lit from the top left (highlights on upper edges, shadows below), with tinted rather than black outlines. The canvas is 960 x 540; menus are laid out on a 480 x 270 grid and drawn at 2x, so text stays crisp. The world camera sits at 1.5x, about 20 x 11 tiles on screen.
 
+Each map's ground is baked into one picture the first time you visit it (`src/art/terrain.js`). Every tile gets its own dice, so the grass never repeats, and tiles are drawn knowing their neighbours: rivers and the lake have earthy banks with ripples, paths fray into the grass, walls cast shadows, roofs have ridges and eaves, and cave walls have a lit ledge. Woods mix three kinds of tree whose canopies overlap, and rocky ground is heaped with boulders. Monsters are drawn to scale: the hobgoblin stands as tall as the hero, wolves and boars are long, and the Goblin King towers over his chief.
+
 Music and effects are synthesised with Web Audio in an SNES-like style (a filtered lead with echo, soft bass, simple drums). Tracks are written as notes in `src/audio/tracks.js`: the village, the wild, battle and the boss, plus victory, level-up and defeat jingles. Browsers only allow sound after the first tap or key press.
 
 ## Saving
@@ -72,7 +74,7 @@ src/rules/    the d20 rules: dice, checks, character, items, combat, the bank, p
 src/data/     items, shops and monsters
 src/world/    tile maps (one character per tile: overworld.js, cave.js, houses.js, all listed in maps.js), 8-direction movement with collisions, and random encounters. No Phaser, so they are unit tested.
 src/state/    the shared game state (hero, position, quest flags) and saving it to localStorage
-src/art/      16-bit style pixel art drawn in code: the hero's and Megan's walk cycles, monsters, people and 32px terrain tiles
+src/art/      16-bit style pixel art drawn in code: the hero's and Megan's walk cycles, monsters, people, 32px terrain tiles, and terrain.js, which bakes each map's ground into one picture
 src/scenes/   Phaser screens: Boot, Title, World (+ Hud on top), Battle, Meet (talking to people and things), Inventory, Quests (the quest log), Shop (the blacksmith and the apothecary), Bank, Dialogue (the cave entrance)
 src/story/    the conversation engine, the scripts (quests, NPCs, events) and the quest log. No Phaser, so they are unit tested.
 src/ui/       the joystick, menu widgets (buttons, paged lists) and the side-on stage that Battle and Meet share
@@ -101,6 +103,7 @@ Playable prototype: both quests can be played start to finish, and progress is s
 - [x] 0.11.1 Megan redrawn to match the hero; she can drink Potions of Healing (from the bag or in battle) and rests in Oakhollow; a thumb held on the joystick no longer taps Close
 - [x] 0.13.0 The meeting screen for people and things, and chests that open on screen
 - [x] 0.13.1 The HUD's gold and HP update straight after the bank, shops and the bag
+- [x] 0.15.0 Graphics: a baked, neighbour-aware ground (banks, path edges, shadows, roof ridges, mixed overlapping trees, boulders) and bigger, more detailed monsters
 - [x] 0.14.0 Houses you can go into (Elder Maren's, Pip's, Old Tom's hut), Hazel, Tom's spare bed, and the quest log; area names show again after changing map
 
 ## Credits

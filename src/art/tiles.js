@@ -1,12 +1,14 @@
-// Terrain tiles in the 16-bit style, 32 x 32, drawn with code into one strip (frame order = FRAMES in world/map.js).
-// Light comes from the top left. Each tile uses its own seeded dice, so the texture looks random but never changes.
-import { FRAMES } from "../world/map.js";
+// Terrain tiles in the 16-bit style, 32 x 32, drawn with code. terrain.js bakes them into one picture per map, giving
+// every tile its own seeded dice (so the texture looks random but never changes) and adding the joins between tiles.
+// Light comes from the top left. DRAW draws a tile's ground, clipped to its square; PROPS draws what stands on it
+// (trees and boulders), which may spill a little over its neighbours.
+import { TILES } from "../world/map.js";
 import { seededRng } from "../rules/dice.js";
 import { TILE } from "../config.js";
 
 const T = TILE;
 
-const C = {
+export const C = {
   grass: "#5aa04a", grassDark: "#3f7d35", grassLight: "#7cc062",
   path: "#c9a26b", pathDark: "#a8824f", pathLight: "#ddbb88",
   water: "#3f7fc9", waterDark: "#2f64a6", waterLight: "#8cc0f0",
@@ -21,19 +23,21 @@ const C = {
   flame: "#f4a23f", flameLight: "#ffe28a", bottle: "#7bc96f", bottleLight: "#c8f0b8",
   board: "#b07e4c", boardDark: "#8a5e36", boardLight: "#c99a64", plaster: "#d8c8a0", plasterDark: "#b8a67c",
   book1: "#b04a36", book2: "#3f6fb0", book3: "#5a8f29", book4: "#e8b923",
+  pine: "#2a6b45", pineDark: "#174a30", pineLight: "#3f8a58",
+  oak: "#3b6e2c", oakDark: "#26501f", oakLight: "#5b8f3a",
 };
 
-const box = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
+export const box = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
 const speckle = (ctx, rng, c, n, w = 1, h = 1) => { for (let i = 0; i < n; i++) box(ctx, c, Math.floor(rng() * (T - w + 1)), Math.floor(rng() * (T - h + 1)), w, h); };
 
-function grass(ctx, rng, blades = 26) {
+export function grass(ctx, rng, blades = 26) {
   box(ctx, C.grass, 0, 0, T, T);
   speckle(ctx, rng, C.grassDark, blades, 1, 3);
   speckle(ctx, rng, C.grassLight, 10, 1, 2);
 }
 
 /* A filled ellipse at full resolution, coloured by where each pixel sits in it (for canopies and boulders). */
-function blob(ctx, cx, cy, rx, ry, colourAt) {
+export function blob(ctx, cx, cy, rx, ry, colourAt) {
   for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - rx); x <= cx + rx; x++) {
     const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry, d = dx * dx + dy * dy;
     if (d <= 1) { ctx.fillStyle = colourAt(dx, dy, d); ctx.fillRect(x, y, 1, 1); }
@@ -42,7 +46,7 @@ function blob(ctx, cx, cy, rx, ry, colourAt) {
 
 const rocky = (dx, dy, d) => (d > 0.8 ? C.rockDark : dx + dy < -0.6 ? C.rockLight : dx + dy > 0.5 ? C.rockDark : C.rock);
 
-const DRAW = {
+export const DRAW = {
   grass: (ctx, rng) => grass(ctx, rng),
   grass2: (ctx, rng) => { grass(ctx, rng, 34); speckle(ctx, rng, C.grassDark, 6, 2, 1); },
   flowers(ctx, rng) {
@@ -69,33 +73,15 @@ const DRAW = {
     box(ctx, C.woodDark, 0, 0, T, 3); box(ctx, C.woodLight, 0, 0, T, 1); // rails
     box(ctx, C.woodDark, 0, T - 3, T, 3); box(ctx, C.woodLight, 0, T - 3, T, 1);
   },
-  rock(ctx, rng) {
-    box(ctx, C.rockDark, 0, 0, T, T);
-    blob(ctx, 10, 11, 11, 10, rocky);
-    blob(ctx, 23, 20, 10, 11, rocky);
-    speckle(ctx, rng, C.rockDark, 8, 2, 1);
-  },
+  rock: (ctx, rng) => grass(ctx, rng, 18), // boulders: PROPS.rock
   cave(ctx, rng) {
-    DRAW.rock(ctx, rng);
-    blob(ctx, 16, 22, 11, 14, (dx, dy, d) => (d > 0.75 ? C.caveEdge : C.cave));
-    box(ctx, C.cave, 5, 22, 22, 10);
+    grass(ctx, rng, 18);
+    blob(ctx, 16, 19, 17, 15, rocky); // a rocky mound with the way in at its foot
+    blob(ctx, 16, 25, 9, 11, (dx, dy, d) => (d > 0.7 ? C.caveEdge : C.cave));
+    box(ctx, C.cave, 7, 25, 18, 7);
+    box(ctx, C.rockDark, 6, 31, 20, 1);
   },
-  tree(ctx, rng) {
-    grass(ctx, rng);
-    blob(ctx, 17, 29, 11, 3, () => C.shadow); // shadow on the grass
-    box(ctx, C.trunk, 14, 21, 5, 9); box(ctx, C.trunkLight, 14, 21, 1, 9);
-    blob(ctx, 16, 13, 15, 13, (dx, dy, d) => {
-      if (d > 0.85 || dx + dy > 0.45) return C.leafDark;
-      if (dx + dy < -0.7 && d < 0.6) return C.leafShine;
-      if (dx + dy < -0.2) return C.leafLight;
-      return C.leaf;
-    });
-    for (let i = 0; i < 14; i++) { // leaf clumps
-      const a = rng() * Math.PI * 2, r = rng() * 10;
-      const x = Math.round(16 + Math.cos(a) * r), y = Math.round(13 + Math.sin(a) * r * 0.85);
-      box(ctx, y + x < 26 ? C.leafLight : C.leafDark, x, y, 2, 1);
-    }
-  },
+  tree: (ctx, rng) => grass(ctx, rng), // the tree itself: PROPS.tree
   water(ctx, rng) {
     box(ctx, C.water, 0, 0, T, T);
     speckle(ctx, rng, C.waterDark, 10, 3, 1);
@@ -234,15 +220,79 @@ const DRAW = {
   },
 };
 
-/* Draws every frame side by side into a 2D context that is FRAMES.length * TILE wide. */
-export function drawTileset(ctx) {
-  FRAMES.forEach((name, i) => {
-    ctx.save();
-    ctx.translate(i * T, 0);
-    ctx.beginPath(); ctx.rect(0, 0, T, T); ctx.clip();
-    DRAW[name](ctx, seededRng(1000 + i));
-    ctx.restore();
-  });
+/* A small picture drawn once and then copied wherever it's needed (drawing trees and boulders pixel by pixel every
+   time would make baking a big map slow on a phone). draw(ctx) paints it. */
+const stamps = new Map();
+function stamp(key, w, h, draw) {
+  if (!stamps.has(key)) {
+    const c = typeof OffscreenCanvas === "function" ? new OffscreenCanvas(w, h) : Object.assign(document.createElement("canvas"), { width: w, height: h });
+    draw(c.getContext("2d"));
+    stamps.set(key, c);
+  }
+  return stamps.get(key);
 }
 
-export const missingTileArt = () => FRAMES.filter(f => !DRAW[f]);
+const TREE_LOOKS = 12; // a dozen trees, in three kinds, picked at random
+const SPILL = 8; // how far a tree may reach past its tile
+
+function drawTree(ctx, rng, kind) {
+  blob(ctx, 17, 31, 12, 3, () => C.shadow); // shadow on the grass
+  if (kind === "pine") {
+    box(ctx, C.trunk, 14, 24, 5, 7); box(ctx, C.trunkLight, 14, 24, 1, 7);
+    for (let tier = 0; tier < 3; tier++) { // three tiers of branches, each wider than the last
+      const top = -4 + tier * 8, h = 13, w = 8 + tier * 4;
+      for (let row = 0; row < h; row++) {
+        const half = Math.round(((row + 1) / h) * w);
+        box(ctx, C.pineDark, 16 - half, top + row, half * 2 + 1, 1);
+        box(ctx, C.pine, 16 - half + 1, top + row, half * 2 - 1, 1);
+        box(ctx, C.pineLight, 16 - half + 1, top + row, Math.max(1, Math.floor(half * 0.6)), 1);
+      }
+      box(ctx, C.pineDark, 16 - w, top + h - 1, w * 2 + 1, 1);
+    }
+    return;
+  }
+  box(ctx, C.trunk, 14, 21, 5, 10); box(ctx, C.trunkLight, 14, 21, 1, 10);
+  const [main, dark, light] = kind === "oak" ? [C.oak, C.oakDark, C.oakLight] : [C.leaf, C.leafDark, C.leafLight];
+  const leafy = (dx, dy, d) => (d > 0.85 || dx + dy > 0.45 ? dark : dx + dy < -0.7 && d < 0.6 ? C.leafShine : dx + dy < -0.2 ? light : main);
+  if (kind === "oak") { // a lumpier crown out of three overlapping clumps
+    blob(ctx, 9, 14, 10, 9, leafy); blob(ctx, 23, 13, 10, 10, leafy); blob(ctx, 16, 6, 11, 9, leafy);
+  } else blob(ctx, 16, 11, 16, 14, leafy);
+  for (let i = 0; i < 16; i++) { // leaf clumps
+    const a = rng() * Math.PI * 2, rad = rng() * 11;
+    const x = Math.round(16 + Math.cos(a) * rad), y = Math.round(11 + Math.sin(a) * rad * 0.8);
+    box(ctx, y + x < 24 ? light : dark, x, y, 2, 1);
+  }
+}
+
+/* A boulder of radius rad centred on x, y, with its shadow and a crack. */
+function boulder(ctx, x, y, rad) {
+  const r = Math.round(rad), pad = 3, size = 2 * r + 2 * pad;
+  const img = stamp(`boulder${r}`, size + 2, size, c => {
+    blob(c, r + pad + 2, r + pad + r * 0.65, r, r * 0.35, () => C.shadow);
+    blob(c, r + pad, r + pad, r, r * 0.85, rocky);
+    box(c, C.rockDark, Math.round(r + pad - r * 0.2), Math.round(r + pad + r * 0.1), Math.round(r * 0.5), 1); // a crack
+  });
+  ctx.drawImage(img, Math.round(x) - r - pad, Math.round(y) - r - pad);
+}
+
+/* Things standing on a tile, drawn after every tile's ground so they can overlap their neighbours a little: a tree's
+   canopy reaches over the tile above, and boulders spill into the next rock tile, so forests and rocky hills read as
+   one mass. `next(dx, dy)` names the tile that far away. */
+export const PROPS = {
+  tree(ctx, rng) {
+    const look = Math.floor(rng() * TREE_LOOKS);
+    const kind = ["oak", "round", "oak", "round", "pine"][look % 5];
+    const img = stamp(`tree${look}`, T + 2 * SPILL, T + 2 * SPILL, c => { c.translate(SPILL, SPILL); drawTree(c, seededRng(look * 31 + 7), kind); });
+    ctx.drawImage(img, -SPILL, -SPILL);
+  },
+  rock(ctx, rng, next) {
+    // A heap of big boulders that fills the tile, so rocky ground reads as a wall you can't walk through.
+    const stones = [[8 + rng() * 4, 8 + rng() * 4, 10 + rng() * 2], [23 + rng() * 4, 10 + rng() * 5, 9 + rng() * 2], [14 + rng() * 6, 22 + rng() * 3, 10 + rng() * 2]];
+    // Neighbouring rock: a boulder over the join, so a rocky hill doesn't fall apart into squares.
+    if (next(1, 0) === "rock") stones.push([31 + rng() * 2, 8 + rng() * 16, 8 + rng() * 2]);
+    if (next(0, 1) === "rock") stones.push([6 + rng() * 20, 31 + rng() * 2, 8 + rng() * 2]);
+    for (const [x, y, rad] of stones.sort((a, b) => a[1] - b[1])) boulder(ctx, x, y, rad);
+  },
+};
+
+export const missingTileArt = () => [...new Set(Object.values(TILES).map(t => t.name))].filter(n => !DRAW[n]);
