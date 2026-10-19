@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { startConversation, view, choose, takeEvents } from "../src/story/dialogue.js";
-import { SCRIPTS, QUEST_REWARD, KING_REWARD, BOSS_FIGHT, KING_FIGHT, GATE_CHECKS, objective, questsDone } from "../src/story/scripts.js";
+import { SCRIPTS, QUEST_REWARD, KING_REWARD, BOSS_FIGHT, KING_FIGHT, GATE_CHECKS, objective, sideObjective, questsDone } from "../src/story/scripts.js";
 import { DEEP_CAVE } from "../src/world/cave.js";
 import { createCharacter } from "../src/rules/character.js";
 import { faces } from "./helpers.mjs";
@@ -174,4 +174,36 @@ test("every choice in every script leads somewhere real", () => {
       if (node.to) assert.ok(script.nodes[node.to], `${name}.${id} -> ${node.to}`);
     }
   }
+});
+
+test("Megan's quest: she asks for her bow, you find it, and she joins your party", () => {
+  const s = fresh();
+  assert.equal(sideObjective(s.flags), "");
+  const c = startConversation(SCRIPTS.megan, s);
+  pick(c, "I'll find your bow.");
+  assert.equal(s.flags.meganQuest, true);
+  assert.match(sideObjective(s.flags), /Find Megan's bow/);
+  assert.equal(startConversation(SCRIPTS.megan, s).node, "waiting");
+  const b = startConversation(SCRIPTS.lostBow, s);
+  assert.match(view(b).text, /Take it back to her/);
+  assert.equal(s.flags.bowFound, true);
+  assert.match(sideObjective(s.flags), /Bring the bow/);
+  const w = startConversation(SCRIPTS.megan, s);
+  pick(w, "Yes! Join my party.");
+  assert.deepEqual(s.hero.companion, { id: "megan", hurt: 0 });
+  assert.equal(s.flags.meganJoined, true);
+  choose(w);
+  assert.match(view(w).text, /joined your party/);
+  assert.equal(sideObjective(s.flags), "");
+});
+
+test("you can find Megan's bow before meeting her, and say 'later' when she asks to join", () => {
+  const s = fresh();
+  startConversation(SCRIPTS.lostBow, s);
+  assert.equal(s.flags.bowFound, true);
+  const w = startConversation(SCRIPTS.megan, s);
+  assert.equal(w.node, "found");
+  pick(w, "Maybe later.");
+  assert.equal(s.hero.companion, undefined);
+  assert.equal(startConversation(SCRIPTS.megan, s).node, "found");
 });

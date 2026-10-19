@@ -2,7 +2,7 @@
    - Game files (this site): network first, so a new version shows up as soon as there is signal,
      falling back to the saved copy after a few seconds or when offline.
    - Phaser and the pixel font: saved copy first. Phaser's URL includes its version, so it never changes. */
-const VERSION = "0.9.0"; // keep the same as src/config.js (a test checks)
+const VERSION = "0.10.0"; // keep the same as src/config.js (a test checks)
 const SHELL = `ironvale-shell-${VERSION}`;
 const STATIC = "ironvale-static-v1";
 const PHASER = "https://cdnjs.cloudflare.com/ajax/libs/phaser/3.90.0/phaser.min.js";
@@ -12,7 +12,7 @@ const APP_FILES = [
   "src/art/pixels.js", "src/art/sprites.js", "src/art/tiles.js", "src/art/hero.js",
   "src/audio/sound.js", "src/audio/tracks.js",
   "src/data/items.js", "src/data/monsters.js",
-  "src/rules/character.js", "src/rules/checks.js", "src/rules/combat.js", "src/rules/dice.js", "src/rules/items.js", "src/rules/gear.js", "src/rules/bank.js",
+  "src/rules/character.js", "src/rules/checks.js", "src/rules/combat.js", "src/rules/dice.js", "src/rules/items.js", "src/rules/gear.js", "src/rules/bank.js", "src/rules/party.js",
   "src/scenes/Boot.js", "src/scenes/Title.js", "src/scenes/World.js", "src/scenes/Battle.js", "src/scenes/Inventory.js", "src/scenes/Shop.js", "src/scenes/Bank.js", "src/scenes/Dialogue.js", "src/scenes/Hud.js",
   "src/story/dialogue.js", "src/story/scripts.js",
   "src/state/game.js", "src/state/save.js", "src/ui/joystick.js", "src/ui/widgets.js", "src/world/map.js", "src/world/maps.js", "src/world/overworld.js", "src/world/cave.js", "src/world/encounters.js", "src/world/movement.js",

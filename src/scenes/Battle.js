@@ -52,6 +52,17 @@ export class Battle extends Phaser.Scene {
     this.drawBackdrop();
     this.add.ellipse(110, GROUND_Y, 40, 8, 0x000000, 0.3);
     this.heroSprite = this.add.image(110, GROUND_Y, "hero", heroFrame("side")).setOrigin(0.5, 1).setScale(1.5);
+    // Your companion stands behind you, with their own name and HP bar.
+    const ally = this.battle.ally;
+    if (ally) {
+      this.add.ellipse(50, GROUND_Y, 32, 7, 0x000000, 0.3);
+      const sprite = this.add.image(50, GROUND_Y, ally.id).setOrigin(0.5, 1).setScale(2);
+      const top = GROUND_Y - sprite.displayHeight;
+      const name = this.add.text(50, top - 18, ally.name, { fontFamily: FONT, fontSize: "8px", color: COLORS.good, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
+      this.add.rectangle(50 - BAR_W / 2, top - 8, BAR_W, 4, 0x000000, 0.6).setOrigin(0, 0.5);
+      const bar = this.add.rectangle(50 - BAR_W / 2, top - 8, BAR_W, 4, 0x7bc96f).setOrigin(0, 0.5);
+      this.allyView = { sprite, name, bar, max: ally.maxHp };
+    } else this.allyView = null;
 
     const xs = this.battle.monsters.length === 1 ? [360] : [320, 410];
     this.foeViews = this.battle.monsters.map((m, i) => {
@@ -70,7 +81,7 @@ export class Battle extends Phaser.Scene {
     this.tweens.add({ targets: this.marker, y: "+=3", duration: 400, yoyo: true, repeat: -1 });
 
     // Everyone breathes a little while waiting, out of step with each other.
-    [this.heroSprite, ...this.foeViews.map(v => v.sprite)].forEach((s, i) =>
+    [this.heroSprite, ...(this.allyView ? [this.allyView.sprite] : []), ...this.foeViews.map(v => v.sprite)].forEach((s, i) =>
       this.tweens.add({ targets: s, scaleY: s.scaleY * 0.97, duration: 700 + i * 130, yoyo: true, repeat: -1, ease: "Sine.inOut" }));
 
     this.drawPanel();
@@ -206,10 +217,20 @@ export class Battle extends Phaser.Scene {
         break;
       case "monster-attack": {
         this.lunge(this.foeViews[e.actor].sprite, -1);
-        if (e.roll.hit) { this.hit(this.heroSprite, e.roll.damage, e.roll.crit); this.cameras.main.shake(120, 0.006); this.time.delayedCall(90, () => sfx("hurt")); }
-        else { this.float(this.heroSprite, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
+        const victim = e.onAlly ? this.allyView.sprite : this.heroSprite;
+        if (e.roll.hit) { this.hit(victim, e.roll.damage, e.roll.crit); this.cameras.main.shake(120, 0.006); this.time.delayedCall(90, () => sfx("hurt")); }
+        else { this.float(victim, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
         break;
       }
+      case "ally-attack":
+        this.lunge(this.allyView.sprite, 1);
+        sfx("sword");
+        if (e.roll.hit) { this.slash(foe, e.roll.crit); this.hit(foe, e.roll.damage, e.roll.crit); this.time.delayedCall(90, () => sfx(e.roll.crit ? "crit" : "hit")); }
+        else { this.float(foe, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
+        break;
+      case "ally-down":
+        this.tweens.add({ targets: [this.allyView.sprite, this.allyView.name], alpha: 0.35, duration: 400 });
+        break;
       case "loot":
         sfx("coin");
         break;
@@ -257,6 +278,11 @@ export class Battle extends Phaser.Scene {
       v.bar.width = BAR_W * h / v.max;
       v.bar.fillColor = hpColour(h, v.max);
     });
+    if (this.allyView && hp.ally !== null && hp.ally !== undefined) {
+      const v = this.allyView;
+      v.bar.width = BAR_W * hp.ally / v.max;
+      v.bar.fillColor = hpColour(hp.ally, v.max);
+    }
   }
 
   lunge(sprite, dir) {
@@ -274,7 +300,7 @@ export class Battle extends Phaser.Scene {
 
   hit(sprite, damage, crit) {
     // Knocked back a little, then settle.
-    this.tweens.add({ targets: sprite, x: sprite.x + (sprite === this.heroSprite ? -6 : 6), duration: 70, yoyo: true, delay: 90, ease: "Quad.out" });
+    this.tweens.add({ targets: sprite, x: sprite.x + (sprite === this.heroSprite || sprite === this.allyView?.sprite ? -6 : 6), duration: 70, yoyo: true, delay: 90, ease: "Quad.out" });
     this.time.delayedCall(90, () => {
       sprite.setTintFill(0xffffff);
       this.time.delayedCall(80, () => sprite.clearTint());

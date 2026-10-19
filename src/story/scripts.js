@@ -2,6 +2,7 @@
 // Old Tom the fisher, the fallen oak, the goblin cave, chests, the iron gate and the Goblin King.
 import { gainXp } from "../rules/character.js";
 import { makeItem, itemName } from "../rules/items.js";
+import { joinParty } from "../rules/party.js";
 import { tileOf, feetAt } from "../world/movement.js";
 import { DEEP_CAVE } from "../world/cave.js";
 
@@ -199,6 +200,56 @@ export const SCRIPTS = {
     },
   },
 
+  megan: {
+    start: s => (s.flags.bowFound ? "found" : s.flags.meganQuest ? "waiting" : "hello"),
+    nodes: {
+      hello: {
+        speaker: "MEGAN",
+        text: "Oh! A real adventurer! I'm Megan. I was chasing a wolf through the Whispering Wood and I dropped my bow. Now I can't find it anywhere!",
+        choices: [
+          { label: "I'll find your bow.", to: "accept" },
+          { label: "Sorry, I'm busy.", to: "busy" },
+        ],
+      },
+      accept: {
+        speaker: "MEGAN",
+        enter: s => { s.flags.meganQuest = true; },
+        text: "Thank you! I lost it somewhere in the far east of the wood, past where the path ends. Look in the corners where the trees are thick.",
+      },
+      busy: { speaker: "MEGAN", text: "Oh. Well, if you change your mind, I'll be right here." },
+      waiting: { speaker: "MEGAN", text: "Any luck? My bow is somewhere in the far east of the Whispering Wood, in a corner where the trees are thick." },
+      found: {
+        speaker: "MEGAN",
+        text: "My bow! You found it! You know what... adventuring looks much more fun with a friend. Can I come with you?",
+        choices: [
+          { label: "Yes! Join my party.", to: "join" },
+          { label: "Maybe later.", to: "later" },
+        ],
+      },
+      join: {
+        speaker: "MEGAN",
+        enter: s => { joinParty(s.hero, "megan"); s.flags.meganJoined = true; },
+        text: "Hooray! I'll shoot anything that tries to hurt you. Lead the way!",
+        to: "joined",
+      },
+      joined: { text: "Megan joined your party!" },
+      later: { speaker: "MEGAN", text: "Okay! Come back when you're ready. I'll keep practising." },
+    },
+  },
+
+  lostBow: {
+    start: "look",
+    nodes: {
+      look: {
+        // Open world: you can find the bow before you meet Megan.
+        enter: s => { s.flags.bowFound = true; },
+        text: s => (s.flags.meganQuest
+          ? "Hidden in the bushes: a small bow with MEGAN carved on it. You found it! Take it back to her in Willowmere."
+          : "Hidden in the bushes: a small bow with MEGAN carved on it. Someone must be missing this. You take it with you."),
+      },
+    },
+  },
+
   chest: {
     start: "open",
     nodes: {
@@ -265,6 +316,14 @@ function obstacle({ look, checks, flag, shoveLabel, climbLabel, hurt, shoved, cl
       climbed: { text: (s, ctx) => `${ctx.checkText} ${climbed}` },
     },
   };
+}
+
+/* Side quests, shown on a second HUD line. */
+export function sideObjective(flags) {
+  if (flags.meganJoined) return "";
+  if (flags.bowFound) return "Bring the bow back to Megan";
+  if (flags.meganQuest) return "Find Megan's bow in the Whispering Wood";
+  return "";
 }
 
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). */
