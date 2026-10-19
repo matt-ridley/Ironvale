@@ -1,10 +1,12 @@
 // Random encounters. After each step in a wild area there is a chance of a fight, rolled on that area's table.
 // Paths are safer (half the chance), and there is a short quiet spell after every fight. A Potion of Speed cuts the
 // chance further (SPEED_ENCOUNTERS): you're past most monsters before they notice you.
+// On average that's a fight every 30 or so steps off the path and every 50 or so on it (the quiet spell plus one in
+// `chance`); before 0.15.1 it was about every 18 and 28, which was too often.
 
 export const ENCOUNTERS = {
   forest: {
-    chance: 0.1,
+    chance: 0.05,
     table: [
       { weight: 4, foes: ["giantRat"] },
       { weight: 3, foes: ["wolf"] },
@@ -13,7 +15,7 @@ export const ENCOUNTERS = {
     ],
   },
   rocks: {
-    chance: 0.12,
+    chance: 0.06,
     table: [
       { weight: 3, foes: ["goblin"] },
       { weight: 1, foes: ["wolf"] },
@@ -21,7 +23,7 @@ export const ENCOUNTERS = {
     ],
   },
   meadow: {
-    chance: 0.09,
+    chance: 0.045,
     table: [
       { weight: 3, foes: ["boar"] },
       { weight: 3, foes: ["wolf"] },
@@ -30,7 +32,7 @@ export const ENCOUNTERS = {
     ],
   },
   warrens: {
-    chance: 0.1,
+    chance: 0.05,
     table: [
       { weight: 3, foes: ["goblin"] },
       { weight: 3, foes: ["giantBat"] },
@@ -41,7 +43,7 @@ export const ENCOUNTERS = {
   },
 };
 
-export const QUIET_STEPS = 8; // no fights for this many steps after one
+export const QUIET_STEPS = 12; // no fights for this many steps after one
 export const SAFE_TILES = ["cave", "caveexit"]; // standing in a cave mouth never starts a fight
 export const SPEED_ENCOUNTERS = 0.35; // a Potion of Speed leaves this much of the usual chance
 
