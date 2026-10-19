@@ -20,6 +20,7 @@ const key = t => `${t.x},${t.y}`;
 const PLACE_NOTES = {
   blacksmith: "The blacksmith's forge. Walk into the door to go in.",
   apothecary: "The apothecary: potions! Walk into the door to go in.",
+  bank: "The bank: keep your gold safe. Walk into the door to go in.",
 };
 
 export class World extends Phaser.Scene {
@@ -128,6 +129,7 @@ export class World extends Phaser.Scene {
 
   interactWith(thing) {
     if (thing.obj) { sfx("select"); this.openOverlay("Dialogue", { script: thing.obj.script, object: thing.obj }); }
+    else if (thing.place === "bank") { sfx("door"); this.openOverlay("Bank"); }
     else if (thing.place) { sfx("door"); this.openOverlay("Shop", { shop: thing.place }); }
   }
 

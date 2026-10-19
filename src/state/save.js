@@ -33,6 +33,7 @@ export function deserialize(json) {
   const hero = {
     ...h,
     hp: Math.min(Math.max(h.hp, 1), h.maxHp), // never load into a fight-ending 0
+    bank: isInt(h.bank) && h.bank > 0 ? h.bank : 0, // saves from before 0.9.0 have no bank
     secondWind: h.secondWind !== false,
     equipment: Object.fromEntries(SLOTS.map(slot => {
       const item = h.equipment?.[slot];

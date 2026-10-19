@@ -72,11 +72,11 @@ test("the bridge, the forest and the cave mouth can all be reached from the star
 });
 
 test("every door has open ground in front of it", () => {
-  for (const d of [...find("D"), ...find("B"), ...find("A")]) assert.ok(isWalkable(world, d.x, d.y + 1), `door at ${d.x},${d.y} is blocked`);
+  for (const d of [...find("D"), ...find("B"), ...find("A"), ...find("$")]) assert.ok(isWalkable(world, d.x, d.y + 1), `door at ${d.x},${d.y} is blocked`);
 });
 
-test("the blacksmith's and apothecary's doors are in the village and reachable", () => {
-  for (const [ch, place] of [["B", "blacksmith"], ["A", "apothecary"]]) {
+test("the blacksmith's, apothecary's and bank's doors are in the village and reachable", () => {
+  for (const [ch, place] of [["B", "blacksmith"], ["A", "apothecary"], ["$", "bank"]]) {
     const doors = find(ch);
     assert.equal(doors.length, 1, `map has one ${place}`);
     const [door] = doors;

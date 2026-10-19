@@ -15,9 +15,12 @@ export function newGame() {
   state.flags = {}; // quest progress, e.g. questStarted, logCleared, chiefDefeated, questRewarded
 }
 
-/* Losing a fight isn't the end: you wake in the village, rested, but half your gold is gone. */
+export const FAINT_MAX_LOSS = 50;
+
+/* Losing a fight isn't the end: you wake in the village, rested, but half the gold you carry is gone (never more
+   than FAINT_MAX_LOSS). Gold in the bank is safe. */
 export function faint() {
-  const lost = Math.floor(state.hero.gold / 2);
+  const lost = Math.min(Math.floor(state.hero.gold / 2), FAINT_MAX_LOSS);
   state.hero.gold -= lost;
   rest(state.hero);
   state.map = OVERWORLD.name;

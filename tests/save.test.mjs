@@ -137,3 +137,12 @@ test("saves from before 0.8.0 (no potion effects) load with none", () => {
   assert.deepEqual(s.hero.effects, { speed: 0, dexterity: false });
   assert.equal(s.map, OVERWORLD.name);
 });
+
+test("banked gold is saved, and saves from before the bank load with an empty one", () => {
+  played();
+  state.hero.bank = 75;
+  assert.equal(deserialize(serialize(state)).hero.bank, 75);
+  const data = JSON.parse(serialize(state));
+  delete data.state.hero.bank;
+  assert.equal(deserialize(JSON.stringify(data)).hero.bank, 0);
+});

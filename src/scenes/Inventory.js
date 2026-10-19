@@ -58,7 +58,7 @@ export class Inventory extends Phaser.Scene {
 
   refresh() {
     const h = state.hero, a = weaponAttack(h);
-    this.goldText.setText(`${h.gold} GOLD`);
+    this.goldText.setText(`${h.gold} GOLD${h.bank ? ` (${h.bank} BANKED)` : ""}`);
     this.stats.setText([`LV ${h.level}`, `HP ${h.hp}/${h.maxHp}`, `AC ${armourClass(h)}`, `HIT +${a.bonus}`, `DMG ${damageText(a)}`].join("\n"));
     this.worn.setItems(SLOTS.map(slot => {
       const item = h.equipment[slot];

@@ -302,6 +302,7 @@ export class Battle extends Phaser.Scene {
       playJingle("defeat");
       const { goldLost } = faint();
       lines.push("You wake up in Oakhollow,", `rested but ${goldLost} gold poorer.`);
+      if (state.hero.bank) lines.push(`Your ${state.hero.bank} gold in the bank is safe.`);
     } else {
       title = "ESCAPED"; color = COLORS.text;
       lines.push("You live to fight another day.");

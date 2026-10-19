@@ -28,7 +28,7 @@ export function createCharacter({
   gold = 25, potions = 2,
 } = {}) {
   const char = {
-    name, level: 1, xp: 0, gold, abilities: { ...abilities },
+    name, level: 1, xp: 0, gold, bank: 0, abilities: { ...abilities },
     maxHp: 0, hp: 0,
     secondWind: true, // used up until the next rest
     equipment: { weapon: null, shield: null, armour: null },
