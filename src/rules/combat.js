@@ -64,6 +64,7 @@ export function createBattle(player, monsterIds, rng = Math.random) {
 export const isPlayerTurn = battle => battle.state === "active" && battle.order[battle.turn].who === "player";
 
 /* action: { type: "attack", target } | { type: "defend" } | { type: "potion", base } | { type: "flee" } | { type: "secondWind" }
+   | { type: "allyPotion" } (give your companion a Potion of Healing; it gets them back up if they've been knocked down).
    A potion's base defaults to the Potion of Healing. */
 export function playerAction(battle, action, rng = Math.random) {
   if (!isPlayerTurn(battle)) return { ok: false, reason: "It isn't your turn." };
@@ -105,6 +106,17 @@ export function playerAction(battle, action, rng = Math.random) {
     } else {
       say(battle, "potion", `You drink a ${b.name} and recover ${r.healed} HP (${p.hp}/${p.maxHp}).`, { heal: r.healed });
     }
+  } else if (action.type === "allyPotion") {
+    const a = battle.ally;
+    if (!a) return { ok: false, reason: "No one is in your party." };
+    const potion = p.inventory.find(i => i.base === "potionHealing");
+    if (!potion) return { ok: false, reason: "You have no potions." };
+    if (a.hp >= a.maxHp) return { ok: false, reason: `${a.name} is already at full health.` };
+    p.inventory = p.inventory.filter(i => i !== potion);
+    const down = a.hp === 0;
+    const healed = Math.min(a.maxHp - a.hp, roll(baseOf(potion).heal, rng).total);
+    a.hp += healed;
+    say(battle, "ally-potion", `You give ${a.name} a ${baseOf(potion).name}. She recovers ${healed} HP (${a.hp}/${a.maxHp})${down ? " and gets back up!" : "."}`, { heal: healed, revived: down });
   } else if (action.type === "secondWind") {
     if (!p.secondWind) return { ok: false, reason: "You've used your Second Wind. Rest to get it back." };
     if (p.hp >= p.maxHp) return { ok: false, reason: "You're already at full health." };

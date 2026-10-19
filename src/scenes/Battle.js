@@ -129,6 +129,8 @@ export class Battle extends Phaser.Scene {
       flee: this.button(cols[0], rows[2], "FLEE", () => this.act({ type: "flee" })),
     };
     this.potionButtons = BATTLE_POTIONS.map((p, i) => ({ ...p, ...this.button(cols[i], rows[0], p.label, () => this.act({ type: "potion", base: p.base })) }));
+    // With a companion, a third potion button gives them a Potion of Healing.
+    this.allyPotionButton = this.battle.ally ? this.button(cols[1], rows[1], this.battle.ally.name.toUpperCase(), () => this.act({ type: "allyPotion" })) : null;
     this.backButton = this.button(cols[0], rows[1], "BACK", () => this.showPotions(false));
     this.showPotions(false);
   }
@@ -138,7 +140,7 @@ export class Battle extends Phaser.Scene {
     if (on && (this.busy || !isPlayerTurn(this.battle))) return;
     this.potionMenu = on;
     for (const b of Object.values(this.buttons)) { b.bg.setVisible(!on); b.text.setVisible(!on); }
-    for (const b of [...this.potionButtons, this.backButton]) { b.bg.setVisible(on); b.text.setVisible(on); }
+    for (const b of [...this.potionButtons, this.backButton, this.allyPotionButton].filter(Boolean)) { b.bg.setVisible(on); b.text.setVisible(on); }
     this.refreshButtons();
   }
 
@@ -164,6 +166,11 @@ export class Battle extends Phaser.Scene {
       b.text.setText(`${b.label} x${this.potions(b.base)}`);
       const usable = b.base === "potionHealing" ? hurt : !this.battle.quick;
       enable(b, ready && usable && this.potions(b.base) > 0);
+    }
+    if (this.allyPotionButton) {
+      const a = this.battle.ally, n = this.potions("potionHealing");
+      this.allyPotionButton.text.setText(`${a.name.toUpperCase()} x${n}`);
+      enable(this.allyPotionButton, ready && n > 0 && a.hp < a.maxHp);
     }
     enable(this.backButton, ready);
     enable(this.buttons.secondWind, ready && hurt && state.hero.secondWind);
@@ -205,7 +212,7 @@ export class Battle extends Phaser.Scene {
   }
 
   showEvent(e) {
-    const good = ["won", "level-up", "ally-level-up", "potion", "second-wind", "loot", "quick"].includes(e.type);
+    const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -231,6 +238,11 @@ export class Battle extends Phaser.Scene {
         break;
       case "ally-level-up":
         this.float(this.allyView.sprite, "LEVEL UP!", COLORS.gold);
+        break;
+      case "ally-potion":
+        sfx("heal");
+        if (e.revived) this.tweens.add({ targets: [this.allyView.sprite, this.allyView.name], alpha: 1, duration: 300 });
+        this.float(this.allyView.sprite, `+${e.heal}`, COLORS.good);
         break;
       case "ally-down":
         this.tweens.add({ targets: [this.allyView.sprite, this.allyView.name], alpha: 0.35, duration: 400 });
