@@ -4,9 +4,8 @@
 import { PALETTE, SPRITES } from "./sprites.js";
 import { HERO_COLOURS, HERO_FRAMES, FACINGS, HERO_W, HERO_H } from "./hero.js";
 import { MEGAN_COLOURS, MEGAN_FRAMES } from "./megan.js";
-import { drawTileset } from "./tiles.js";
+import { drawTerrain } from "./terrain.js";
 import { TILE } from "../config.js";
-import { FRAMES } from "../world/map.js";
 
 export const R = 2;
 
@@ -70,14 +69,18 @@ function makeSheet(scene, key, frames, colours) {
   }
 }
 
-export function makeTileset(scene, key = "tiles") {
-  const tex = scene.textures.createCanvas(key, FRAMES.length * TILE, TILE);
-  drawTileset(tex.getContext());
-  tex.refresh();
+/* The ground of a map as one picture (see terrain.js), made the first time you visit it and kept after that. */
+export function groundTexture(scene, map) {
+  const key = `ground-${map.name}`;
+  if (!scene.textures.exists(key)) {
+    const tex = scene.textures.createCanvas(key, map.width * TILE, map.height * TILE);
+    drawTerrain(tex.getContext(), map);
+    tex.refresh();
+  }
+  return key;
 }
 
 export function makeAllTextures(scene) {
   for (const [key, rows] of Object.entries(SPRITES)) makeTexture(scene, key, rows);
   for (const [key, [frames, colours]] of Object.entries(SHEETS)) makeSheet(scene, key, frames, colours);
-  makeTileset(scene);
 }

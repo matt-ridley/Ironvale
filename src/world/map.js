@@ -33,11 +33,6 @@ export const TILES = {
   "u": { name: "barrel", solid: true },
 };
 
-// Order of the tiles in the tileset image. "grass2" is a second look for grass so fields don't look stamped.
-export const FRAMES = ["grass", "grass2", "flowers", "path", "bridge", "cave", "tree", "water", "rock", "roof", "wall", "door", "fence", "smithy",
-  "apothecary", "cavefloor", "cavewall", "cavetorch", "caveexit", "bank",
-  "floorboards", "backwall", "dark", "doormat", "hearth", "shelf", "table", "barrel"];
-
 export const DIRS = {
   up: { dx: 0, dy: -1 },
   down: { dx: 0, dy: 1 },
@@ -108,13 +103,4 @@ export function reachable(map, from, flags = {}) {
     }
   }
   return seen;
-}
-
-/* Tileset frame numbers for each tile, for Phaser's tilemap. Grass alternates looks by position. */
-export function frameGrid(map) {
-  return map.rows.map((row, y) => [...row].map((ch, x) => {
-    let name = TILES[ch].name;
-    if (name === "grass" && ((x * 7 + y * 13) ^ (x * y)) % 5 === 0) name = "grass2";
-    return FRAMES.indexOf(name);
-  }));
 }

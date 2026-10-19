@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createMap, tileAt, isWalkable, step, zoneAt, reachable, frameGrid, placeAhead, objectAt, objectAhead, activeObjects, FRAMES, TILES } from "../src/world/map.js";
+import { createMap, tileAt, isWalkable, step, zoneAt, reachable, placeAhead, objectAt, objectAhead, activeObjects, TILES } from "../src/world/map.js";
+import { missingTileArt } from "../src/art/tiles.js";
 import { OVERWORLD } from "../src/world/overworld.js";
 import { DEEP_CAVE } from "../src/world/cave.js";
 import { MAPS } from "../src/world/maps.js";
@@ -97,9 +98,8 @@ test("walking stops at solid tiles and the map edge", () => {
   assert.equal(tileAt(tiny, 5, 5), null);
 });
 
-test("every tile has a tileset frame", () => {
-  for (const t of Object.values(TILES)) assert.ok(FRAMES.includes(t.name), `${t.name} has no frame`);
-  for (const m of Object.values(MAPS)) for (const row of frameGrid(m)) for (const f of row) assert.ok(f >= 0);
+test("every tile has art", () => {
+  assert.deepEqual(missingTileArt(), []);
 });
 
 const key = (x, y) => `${x},${y}`;

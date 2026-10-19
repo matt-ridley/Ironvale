@@ -6,14 +6,14 @@
 // you faster and fights rarer for a number of steps. A companion in your party walks along behind you. The HUD lives
 // in the Hud scene on top.
 import { TILE, WORLD_ZOOM, FONT, COLORS } from "../config.js";
-import { frameGrid, zoneAt, tileAt, objectAt, activeObjects, exitAt, doorAt } from "../world/map.js";
+import { zoneAt, tileAt, objectAt, activeObjects, exitAt, doorAt } from "../world/map.js";
 import { moveBody, velocity, facingFor, tileOf, tileAhead, feetAt, WALK_SPEED, SPEED_POTION_BOOST } from "../world/movement.js";
 import { MAPS } from "../world/maps.js";
 import { state, autosave } from "../state/game.js";
 import { rollEncounter } from "../world/encounters.js";
 import { rest } from "../rules/character.js";
 import { stick } from "../ui/joystick.js";
-import { animKey } from "../art/pixels.js";
+import { animKey, groundTexture } from "../art/pixels.js";
 import { playMusic, sfx } from "../audio/sound.js";
 
 const KEYS = { up: ["UP", "W"], down: ["DOWN", "S"], left: ["LEFT", "A"], right: ["RIGHT", "D"] };
@@ -41,8 +41,7 @@ export class World extends Phaser.Scene {
     this.lastTile = tileOf(state.pos);
     this.zoneId = data.quiet ? zoneAt(this.map, this.lastTile.x, this.lastTile.y)?.id ?? null : null;
 
-    const tilemap = this.make.tilemap({ data: frameGrid(this.map), tileWidth: TILE, tileHeight: TILE });
-    tilemap.createLayer(0, tilemap.addTilesetImage("tiles"), 0, 0);
+    this.add.image(0, 0, groundTexture(this, this.map)).setOrigin(0);
 
     // People and things stand on their tile's bottom edge; everything is drawn in order of where its feet are.
     this.objectSprites = Object.fromEntries(this.map.objects.map(o => {
