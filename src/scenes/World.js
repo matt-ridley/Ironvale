@@ -141,8 +141,7 @@ export class World extends Phaser.Scene {
     this.placePlayer();
     this.lastTile = tileOf(state.pos);
     this.syncObjects();
-    this.scene.resume("Hud");
-    this.hud?.refresh();
+    this.scene.resume("Hud"); // which refreshes itself
     autosave();
   }
 

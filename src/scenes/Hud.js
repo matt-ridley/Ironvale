@@ -36,6 +36,11 @@ export class Hud extends Phaser.Scene {
 
     this.joystick = new Joystick(this, { showHint: wantsTouchControls(this) });
     this.refresh();
+    // A menu, shop, bank or conversation may have changed your gold, HP or quests while this was paused. (Phaser
+    // resumes a scene on the next frame, so World can't refresh it on the spot.) Scene events outlive a restart, so
+    // swap the listener rather than adding another.
+    this.events.off("resume", this.refresh, this);
+    this.events.on("resume", this.refresh, this);
     world().hudReady?.(this);
   }
 
