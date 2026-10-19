@@ -5,6 +5,7 @@
 import { VERSION } from "../config.js";
 import { ITEMS } from "../data/items.js";
 import { SLOTS } from "../rules/items.js";
+import { COMPANIONS } from "../rules/party.js";
 import { MAPS } from "../world/maps.js";
 import { blockedAt, feetAt } from "../world/movement.js";
 import { OVERWORLD } from "../world/overworld.js";
@@ -34,6 +35,8 @@ export function deserialize(json) {
     ...h,
     hp: Math.min(Math.max(h.hp, 1), h.maxHp), // never load into a fight-ending 0
     bank: isInt(h.bank) && h.bank > 0 ? h.bank : 0, // saves from before 0.9.0 have no bank
+    // A companion the game no longer knows is dropped.
+    companion: COMPANIONS[h.companion?.id] ? { id: h.companion.id, hurt: isInt(h.companion.hurt) && h.companion.hurt > 0 ? h.companion.hurt : 0 } : undefined,
     secondWind: h.secondWind !== false,
     equipment: Object.fromEntries(SLOTS.map(slot => {
       const item = h.equipment?.[slot];
@@ -45,6 +48,7 @@ export function deserialize(json) {
       dexterity: h.effects?.dexterity === true,
     },
   };
+  if (!hero.companion) delete hero.companion;
   const flags = s.flags && typeof s.flags === "object" ? { ...s.flags } : {};
   // Saves from before 0.8.0 have no map: they're on the overworld. A map this game doesn't know means start over.
   let map = s.map === undefined ? OVERWORLD.name : MAPS[s.map] ? s.map : null;

@@ -21,6 +21,8 @@ export const OVERWORLD = {
     { id: "pip", x: 10, y: 29, sprite: "villager", script: "villager" },
     { id: "fallenLog", x: 54, y: 24, sprite: "log", script: "log", goneWhen: "logCleared", still: true },
     { id: "tom", x: 23, y: 47, sprite: "fisher", script: "fisher" },
+    { id: "wren", x: 12, y: 58, sprite: "wren", script: "wren", goneWhen: "wrenJoined" },
+    { id: "lostBow", x: 58, y: 21, sprite: "bow", script: "lostBow", goneWhen: "bowFound", still: true },
     { id: "isleChest", x: 33, y: 49, sprite: "chest", script: "chest", goneWhen: "isleChestOpened", still: true, loot: { gold: 40, items: ["potionSpeed", "potionHealing"] } },
     { id: "gardenChest", x: 7, y: 52, sprite: "chest", script: "chest", goneWhen: "gardenChestOpened", still: true, loot: { gold: 25, items: ["potionHealing", "potionHealing"] } },
     { id: "groveChest", x: 57, y: 43, sprite: "chest", script: "chest", goneWhen: "groveChestOpened", still: true, loot: { gold: 60, items: ["potionDexterity"] } },

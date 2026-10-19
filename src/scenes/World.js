@@ -2,7 +2,7 @@
 // (touch), arrow keys or WASD (hold Shift to run); the camera glides after the hero. Walk into people, things or shop
 // doors (or press Enter/Space facing them) to interact, and onto an exit to go to another map. Wild areas can start
 // a fight as you walk; Oakhollow heals you. A Potion of Speed makes you faster and fights rarer for a number of
-// steps. The HUD lives in the Hud scene on top.
+// steps. A companion in your party walks along behind you. The HUD lives in the Hud scene on top.
 import { TILE, WORLD_ZOOM, FONT, COLORS } from "../config.js";
 import { frameGrid, zoneAt, tileAt, objectAt, activeObjects, exitAt } from "../world/map.js";
 import { moveBody, velocity, facingFor, tileOf, tileAhead, feetAt, WALK_SPEED, SPEED_POTION_BOOST } from "../world/movement.js";
@@ -17,6 +17,7 @@ const KEYS = { up: ["UP", "W"], down: ["DOWN", "S"], left: ["LEFT", "A"], right:
 const sheetFacing = f => (f === "left" || f === "right" ? "side" : f);
 const px = n => Math.round(n * TILE);
 const key = t => `${t.x},${t.y}`;
+const FOLLOW_GAP = 9; // trail points (about a tenth of a tile apart) between you and your companion
 const PLACE_NOTES = {
   blacksmith: "The blacksmith's forge. Walk into the door to go in.",
   apothecary: "The apothecary: potions! Walk into the door to go in.",
@@ -49,6 +50,9 @@ export class World extends Phaser.Scene {
 
     this.shadow = this.add.ellipse(0, 0, 22, 7, 0x000000, 0.25);
     this.player = this.add.sprite(0, 0, "hero").setOrigin(0.5, 1);
+    this.follower = null;
+    this.trail = []; // where the hero's feet have been lately, for the companion to follow
+    this.syncFollower();
     this.placePlayer();
     this.player.play(`idle-${sheetFacing(state.facing)}`);
     this.player.setFlipX(state.facing === "left");
@@ -82,6 +86,23 @@ export class World extends Phaser.Scene {
     const x = px(state.pos.x), y = px(state.pos.y);
     this.player.setPosition(x, y - bob).setDepth(y);
     this.shadow.setPosition(x, y - 1).setDepth(y - 1);
+    if (this.follower) {
+      // A step or so behind, along the way you came (or just behind you, before you've moved).
+      const p = this.trail.length > FOLLOW_GAP ? this.trail[this.trail.length - 1 - FOLLOW_GAP] : { x: state.pos.x, y: state.pos.y - 0.5 };
+      const fx = px(p.x), fy = px(p.y);
+      this.follower.sprite.setPosition(fx, fy - bob).setDepth(fy).setFlipX(state.pos.x < p.x);
+      this.follower.shadow.setPosition(fx, fy - 1).setDepth(fy - 1);
+    }
+  }
+
+  /* Shows your companion (once someone has joined the party). */
+  syncFollower() {
+    const c = state.hero.companion;
+    if (!c || this.follower || !this.textures.exists(c.id)) return;
+    this.follower = {
+      shadow: this.add.ellipse(0, 0, 18, 6, 0x000000, 0.25),
+      sprite: this.add.image(0, 0, c.id).setOrigin(0.5, 1),
+    };
   }
 
   toTitle() {
@@ -105,6 +126,8 @@ export class World extends Phaser.Scene {
     this.frozen = false;
     this.input.keyboard.resetKeys(); // keys let go while a menu was open would otherwise still read as held
     // A conversation can move you (climbing the oak) or change the map (shoving it away).
+    this.syncFollower();
+    this.trail = []; // you may have been moved (over the oak, through the gate)
     this.placePlayer();
     this.lastTile = tileOf(state.pos);
     this.syncObjects();
@@ -172,6 +195,11 @@ export class World extends Phaser.Scene {
     state.pos = { x: moved.x, y: moved.y };
     this.placePlayer();
     const dist = Math.hypot(moved.x - before.x, moved.y - before.y);
+    const last = this.trail.at(-1);
+    if (!last || Math.hypot(state.pos.x - last.x, state.pos.y - last.y) >= 0.1) {
+      this.trail.push({ x: state.pos.x, y: state.pos.y });
+      if (this.trail.length > 40) this.trail.shift();
+    }
 
     // Walked into something: a door or a person in front of you, once per bump.
     if ((moved.blockedX || moved.blockedY) && dist < speed * dt * 0.5) {

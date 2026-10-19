@@ -1,6 +1,7 @@
 // Turn-based combat: initiative, attack rolls against AC, and the player's actions (attack, defend, potion, flee,
 // and Second Wind, a bonus action that heals without using up the turn). A Potion of Dexterity, drunk before or
-// during the fight, makes every ATTACK two attacks.
+// during the fight, makes every ATTACK two attacks. A companion in your party (rules/party.js) takes their own turns:
+// they shoot at the monster you last attacked, and monsters pick between you and them.
 // A battle is a plain object. The player acts with playerAction(); monsters then take their turns until it is the
 // player's turn again or the battle is over. Every step is written to battle.log for the screen to show.
 import { d20, roll } from "./dice.js";
@@ -8,6 +9,7 @@ import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND } from "./cha
 import { abilityCheck } from "./checks.js";
 import { baseOf, makeItem, itemName, useItem, cantDrink } from "./items.js";
 import { MONSTERS } from "../data/monsters.js";
+import { companionStats, afterBattle } from "./party.js";
 import { ITEMS } from "../data/items.js";
 
 export const DEFEND_AC_BONUS = 2;
@@ -41,16 +43,18 @@ const playerAc = battle => armourClass(battle.player) + (battle.defending ? DEFE
 /* Rolls initiative (d20 + DEX; ties go to the higher DEX, then the player) and plays monster turns up to the player's. */
 export function createBattle(player, monsterIds, rng = Math.random) {
   const monsters = monsterIds.map(id => spawnMonster(id, rng));
+  const ally = companionStats(player);
   const entries = [
-    { who: "player", init: d20({}, rng).natural + mod(player, "DEX"), dex: mod(player, "DEX"), tie: 1 },
+    { who: "player", init: d20({}, rng).natural + mod(player, "DEX"), dex: mod(player, "DEX"), tie: 2 },
+    ...(ally ? [{ who: "ally", init: d20({}, rng).natural + ally.dexMod, dex: ally.dexMod, tie: 1 }] : []),
     ...monsters.map((m, i) => ({ who: i, init: d20({}, rng).natural + m.dexMod, dex: m.dexMod, tie: 0 })),
   ];
   entries.sort((a, b) => b.init - a.init || b.dex - a.dex || b.tie - a.tie);
   // A Potion of Dexterity drunk before the fight is used up by it.
   const quick = !!player.effects?.dexterity;
   if (quick) player.effects = { ...player.effects, dexterity: false };
-  const battle = { player, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null };
-  const names = entries.map(e => (e.who === "player" ? "You" : monsters[e.who].name) + ` (${e.init})`);
+  const battle = { player, ally, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null };
+  const names = entries.map(e => (e.who === "player" ? "You" : e.who === "ally" ? ally.name : monsters[e.who].name) + ` (${e.init})`);
   say(battle, "start", `${monsters.map(m => m.name).join(", ")} ${monsters.length > 1 ? "appear" : "appears"}! Initiative: ${names.join(", ")}.`);
   if (quick) say(battle, "quick", "Your Potion of Dexterity makes you quick: you attack twice each turn.");
   runMonsterTurns(battle, rng);
@@ -69,6 +73,7 @@ export function playerAction(battle, action, rng = Math.random) {
   if (action.type === "attack") {
     let target = battle.monsters[action.target ?? battle.monsters.indexOf(living(battle)[0])];
     if (!target || target.hp <= 0) return { ok: false, reason: "Pick a monster that's still standing." };
+    battle.focus = battle.monsters.indexOf(target); // your companion shoots at the same one
     const atk = weaponAttack(p);
     for (let n = 0; n < (battle.quick ? 2 : 1) && target; n++) {
       const r = resolveAttack(atk, target.ac, rng);
@@ -111,6 +116,7 @@ export function playerAction(battle, action, rng = Math.random) {
     const c = abilityCheck(p, "DEX", FLEE_DC, rng);
     if (c.success) {
       battle.state = "fled";
+      afterBattle(p, battle.ally);
       say(battle, "fled", `You run for it (DEX ${c.total} vs DC ${FLEE_DC}) and get away.`);
       return { ok: true, events: battle.log.slice(start) };
     }
@@ -126,18 +132,43 @@ export function playerAction(battle, action, rng = Math.random) {
   return { ok: true, events: battle.log.slice(start) };
 }
 
+/* Plays everyone else's turns (your companion's and the monsters') until it is yours again or the fight is over. */
 function runMonsterTurns(battle, rng) {
   while (battle.state === "active" && battle.order[battle.turn].who !== "player") {
+    if (battle.order[battle.turn].who === "ally") { allyTurn(battle, rng); if (checkEnd(battle, rng)) return; nextTurn(battle); continue; }
     const m = battle.monsters[battle.order[battle.turn].who];
     if (m.hp > 0) {
-      const r = resolveAttack(m.attack, playerAc(battle), rng);
-      battle.player.hp = Math.max(0, battle.player.hp - r.damage);
-      say(battle, "monster-attack", `The ${m.name} attacks with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r, true)}`, { roll: r, actor: battle.monsters.indexOf(m) });
+      const a = battle.ally;
+      // With a companion standing, each monster picks one of you at random.
+      if (a && a.hp > 0 && rng() < 0.5) {
+        const r = resolveAttack(m.attack, a.ac, rng);
+        a.hp = Math.max(0, a.hp - r.damage);
+        say(battle, "monster-attack", `The ${m.name} attacks ${a.name} with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r)}`, { roll: r, actor: battle.monsters.indexOf(m), onAlly: true });
+        if (a.hp === 0) say(battle, "ally-down", `${a.name} is knocked down! She'll be back on her feet after the fight.`);
+      } else {
+        const r = resolveAttack(m.attack, playerAc(battle), rng);
+        battle.player.hp = Math.max(0, battle.player.hp - r.damage);
+        say(battle, "monster-attack", `The ${m.name} attacks with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r, true)}`, { roll: r, actor: battle.monsters.indexOf(m) });
+      }
       if (checkEnd(battle, rng)) return;
     }
     nextTurn(battle);
   }
   if (battle.state === "active") battle.defending = false; // the guard lasts until the start of the player's turn
+}
+
+/* Your companion shoots at the monster you last attacked (or the first one standing). */
+function allyTurn(battle, rng) {
+  const a = battle.ally;
+  if (!a || a.hp <= 0) return;
+  const focus = battle.monsters[battle.focus];
+  const target = focus?.hp > 0 ? focus : living(battle)[0];
+  if (!target) return;
+  const r = resolveAttack(a.attack, target.ac, rng);
+  target.hp = Math.max(0, target.hp - r.damage);
+  const t = battle.monsters.indexOf(target);
+  say(battle, "ally-attack", `${a.name} shoots her ${a.attack.name} at the ${target.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t });
+  if (target.hp === 0) say(battle, "defeat", `The ${target.name} falls.`, { target: t });
 }
 
 /* Each monster's loot table is rolled separately. */
@@ -155,11 +186,13 @@ function nextTurn(battle) {
 function checkEnd(battle, rng) {
   if (battle.player.hp <= 0) {
     battle.state = "lost";
+    afterBattle(battle.player, battle.ally);
     say(battle, "lost", "You fall to the ground. Darkness takes you.");
     return true;
   }
   if (living(battle).length === 0) {
     battle.state = "won";
+    afterBattle(battle.player, battle.ally);
     const xp = battle.monsters.reduce((s, m) => s + m.xp, 0);
     const gold = battle.monsters.reduce((s, m) => s + roll(m.gold, rng).total, 0);
     battle.player.gold += gold;
@@ -176,9 +209,9 @@ function checkEnd(battle, rng) {
 }
 
 /* Each log entry carries everyone's HP right after it happened, so a screen can play the fight back step by step.
-   extra: roll (an attack roll), target / actor (monster index), heal (HP recovered). */
+   extra: roll (an attack roll), target / actor (monster index), heal (HP recovered), onAlly (a monster hit your companion). */
 function say(battle, type, text, extra = {}) {
-  const hp = { player: battle.player.hp, monsters: battle.monsters.map(m => m.hp) };
+  const hp = { player: battle.player.hp, ally: battle.ally ? battle.ally.hp : null, monsters: battle.monsters.map(m => m.hp) };
   battle.log.push({ round: battle.round, type, text, hp, level: battle.player.level, ...extra });
 }
 

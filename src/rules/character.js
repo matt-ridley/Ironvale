@@ -87,10 +87,11 @@ export function gainXp(char, amount, rng = Math.random) {
   return { xp: char.xp, levelUps };
 }
 
-/* A long rest: full HP and Second Wind back. */
+/* A long rest: full HP and Second Wind back, for your companion too. */
 export function rest(char) {
   char.hp = char.maxHp;
   char.secondWind = true;
+  if (char.companion) char.companion.hurt = 0;
 }
 
 export function heal(char, amount) {

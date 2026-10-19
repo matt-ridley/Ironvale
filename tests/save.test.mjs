@@ -146,3 +146,11 @@ test("banked gold is saved, and saves from before the bank load with an empty on
   delete data.state.hero.bank;
   assert.equal(deserialize(JSON.stringify(data)).hero.bank, 0);
 });
+
+test("a companion is saved with their wounds; an unknown one is dropped", () => {
+  played();
+  state.hero.companion = { id: "wren", hurt: 3 };
+  assert.deepEqual(deserialize(serialize(state)).hero.companion, { id: "wren", hurt: 3 });
+  state.hero.companion = { id: "dragon", hurt: 0 };
+  assert.equal("companion" in deserialize(serialize(state)).hero, false);
+});

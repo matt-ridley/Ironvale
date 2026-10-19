@@ -2,7 +2,7 @@
 // and the joystick. It runs alongside World and is drawn on the menu grid, so it stays crisp while the camera moves.
 import { WIDTH, FONT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
-import { objective, questsDone } from "../story/scripts.js";
+import { objective, sideObjective, questsDone } from "../story/scripts.js";
 import { uiCamera, button } from "../ui/widgets.js";
 import { Joystick } from "../ui/joystick.js";
 import { isMuted, toggleMuted, sfx } from "../audio/sound.js";
@@ -21,14 +21,15 @@ export class Hud extends Phaser.Scene {
     this.add.rectangle(4, 4, 160, 18, COLORS.panel, 0.85).setOrigin(0).setStrokeStyle(1, COLORS.panelEdge);
     this.stats = this.add.text(10, 9, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.text });
     this.quest = this.add.text(6, 27, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.gold, stroke: "#000000", strokeThickness: 3 });
-    this.effects = this.add.text(6, 40, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.good, stroke: "#000000", strokeThickness: 3 });
+    this.side = this.add.text(6, 40, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.text, stroke: "#000000", strokeThickness: 3 });
+    this.effects = this.add.text(6, 53, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.good, stroke: "#000000", strokeThickness: 3 });
 
     button(this, WIDTH - 30, 13, 52, 18, "MENU", () => world().toTitle());
     button(this, WIDTH - 84, 13, 48, 18, "BAG", () => world().openOverlay("Inventory"));
     this.sound = button(this, WIDTH - 134, 13, 44, 18, "", () => { toggleMuted(); this.showSound(); sfx("select"); });
     this.showSound();
 
-    this.bannerText = this.add.text(WIDTH / 2, 52, "", { fontFamily: FONT, fontSize: "10px", color: COLORS.gold, stroke: "#000000", strokeThickness: 3 }).setOrigin(0.5).setAlpha(0);
+    this.bannerText = this.add.text(WIDTH / 2, 76, "", { fontFamily: FONT, fontSize: "10px", color: COLORS.gold, stroke: "#000000", strokeThickness: 3 }).setOrigin(0.5).setAlpha(0);
     this.noteText = this.add.text(WIDTH / 2, 250, "", {
       fontFamily: FONT, fontSize: "8px", color: COLORS.text, backgroundColor: "#000000aa", padding: { x: 6, y: 4 }, align: "center", wordWrap: { width: 300 },
     }).setOrigin(0.5).setAlpha(0);
@@ -45,6 +46,9 @@ export class Hud extends Phaser.Scene {
     this.stats.setText(`LV ${h.level} HP ${h.hp}/${h.maxHp} ${h.gold}G`);
     const goal = objective(state.flags);
     this.quest.setText(goal ? `QUEST: ${goal}` : "");
+    const side = sideObjective(state.flags);
+    this.side.setText(side ? `ALSO: ${side}` : "");
+    this.effects.setY(side ? 53 : 40);
     const fx = h.effects || {};
     this.effects.setText([fx.speed > 0 ? `SPEED ${fx.speed}` : "", fx.dexterity ? "DEX READY" : ""].filter(Boolean).join("  "));
     // The Elder has just paid for a quest.
