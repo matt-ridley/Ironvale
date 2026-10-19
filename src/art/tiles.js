@@ -19,6 +19,8 @@ const C = {
   cave: "#0f0d14", caveEdge: "#2a2633", shadow: "rgba(0, 0, 0, 0.22)",
   floor: "#3a3440", floorDark: "#2e2934", floorLight: "#4a4352", stone: "#55505e", stoneDark: "#2a2633", stoneLight: "#6e6878",
   flame: "#f4a23f", flameLight: "#ffe28a", bottle: "#7bc96f", bottleLight: "#c8f0b8",
+  board: "#b07e4c", boardDark: "#8a5e36", boardLight: "#c99a64", plaster: "#d8c8a0", plasterDark: "#b8a67c",
+  book1: "#b04a36", book2: "#3f6fb0", book3: "#5a8f29", book4: "#e8b923",
 };
 
 const box = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
@@ -163,6 +165,67 @@ const DRAW = {
   caveexit(ctx, rng) {
     DRAW.cavefloor(ctx, rng);
     for (let i = 0; i < 6; i++) box(ctx, `rgba(255, 240, 200, ${0.08 + i * 0.05})`, 4 + i, 4 * i + 4, T - 8 - 2 * i, 4); // daylight
+  },
+  floorboards(ctx, rng) {
+    box(ctx, C.board, 0, 0, T, T);
+    for (let y = 0; y < T; y += 8) {
+      box(ctx, C.boardLight, 0, y, T, 1);
+      box(ctx, C.boardDark, 0, y + 7, T, 1);
+      box(ctx, C.boardDark, (y * 5 + 6) % T, y, 1, 7); // where one board ends and the next begins
+    }
+    speckle(ctx, rng, C.boardDark, 6, 2, 1); // knots
+  },
+  backwall(ctx) {
+    box(ctx, C.plaster, 0, 0, T, T);
+    box(ctx, C.beam, 0, 0, T, 4); box(ctx, C.woodLight, 0, 0, T, 1); // the beam along the top
+    box(ctx, C.plasterDark, 0, 4, T, 1);
+    box(ctx, C.wood, 0, T - 10, T, 10); box(ctx, C.woodLight, 0, T - 10, T, 1); // wooden panelling
+    for (let x = 3; x < T; x += 8) box(ctx, C.woodDark, x, T - 9, 1, 9);
+    box(ctx, C.woodDark, 0, T - 2, T, 2);
+  },
+  dark(ctx) { box(ctx, C.cave, 0, 0, T, T); },
+  doormat(ctx, rng) {
+    DRAW.floorboards(ctx, rng);
+    for (let i = 0; i < 5; i++) box(ctx, `rgba(255, 240, 200, ${0.06 + i * 0.05})`, 0, 22 + i * 2, T, 2); // daylight under the door
+    box(ctx, C.roofDark, 4, 8, 24, 16);
+    box(ctx, C.roof, 5, 9, 22, 14);
+    for (let x = 7; x < 26; x += 4) box(ctx, C.roofLight, x, 11, 2, 10);
+  },
+  hearth(ctx) {
+    DRAW.backwall(ctx);
+    box(ctx, C.stoneDark, 3, 4, 26, 28);
+    box(ctx, C.stone, 4, 5, 24, 26); box(ctx, C.stoneLight, 4, 5, 24, 1); box(ctx, C.stoneLight, 4, 5, 1, 26);
+    for (const [x, y] of [[8, 9], [18, 9], [12, 14], [22, 15]]) box(ctx, C.stoneDark, x, y, 5, 1); // mortar
+    box(ctx, C.cave, 9, 17, 14, 15); // the fire opening
+    box(ctx, C.woodDark, 10, 28, 12, 3); // logs
+    box(ctx, C.flame, 11, 21, 10, 7); box(ctx, C.flameLight, 13, 23, 6, 5); box(ctx, C.flame, 15, 19, 2, 2);
+  },
+  shelf(ctx) {
+    DRAW.backwall(ctx);
+    box(ctx, C.woodDark, 3, 5, 26, 27);
+    box(ctx, C.wood, 4, 6, 24, 25);
+    for (const y of [16, 27]) { box(ctx, C.woodLight, 4, y, 24, 2); box(ctx, C.woodDark, 4, y + 2, 24, 1); }
+    const books = [C.book1, C.book2, C.book3, C.book4, C.book2, C.book1];
+    books.forEach((c, i) => { box(ctx, c, 6 + i * 4, 8 + (i % 2), 3, 8 - (i % 2)); box(ctx, C.flameLight, 6 + i * 4, 10, 3, 1); });
+    box(ctx, C.bottle, 7, 21, 4, 6); box(ctx, C.bottleLight, 8, 21, 1, 2); // a jar and a pot on the lower shelf
+    box(ctx, C.roofDark, 17, 22, 7, 5); box(ctx, C.roof, 18, 22, 5, 1);
+  },
+  table(ctx, rng) {
+    DRAW.floorboards(ctx, rng);
+    box(ctx, C.shadow, 4, 24, 26, 5);
+    box(ctx, C.woodDark, 5, 21, 3, 7); box(ctx, C.woodDark, 24, 21, 3, 7); // legs
+    box(ctx, C.woodDark, 2, 7, 28, 15);
+    box(ctx, C.woodLight, 3, 8, 26, 12); box(ctx, C.wood, 3, 16, 26, 4);
+    box(ctx, C.wall, 8, 10, 5, 5); box(ctx, C.beam, 13, 11, 1, 3); // a mug
+    box(ctx, C.wall, 18, 11, 8, 3); box(ctx, C.wallDark, 18, 13, 8, 1); // a plate
+  },
+  barrel(ctx, rng) {
+    DRAW.floorboards(ctx, rng);
+    blob(ctx, 16, 27, 11, 3, () => C.shadow);
+    box(ctx, C.woodDark, 6, 4, 20, 24);
+    box(ctx, C.wood, 7, 5, 18, 22); box(ctx, C.woodLight, 8, 5, 3, 22);
+    for (const y of [8, 21]) box(ctx, C.stoneDark, 6, y, 20, 2); // iron hoops
+    box(ctx, C.woodDark, 9, 4, 14, 2);
   },
   fence(ctx, rng) {
     grass(ctx, rng);

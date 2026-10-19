@@ -13,6 +13,12 @@ export const OVERWORLD = {
     { id: "rocks", name: "Goblin Rocks", x0: 33, y0: 25, x1: 61, y1: 37 },
     { id: "meadow", name: "Willowmere", x0: 2, y0: 38, x1: 61, y1: 59 },
   ],
+  // House doors: walk into one to go inside (`to` is the house's map, which has its own way back out).
+  doors: [
+    { x: 11, y: 9, to: "marenHouse", name: "Elder Maren's house" },
+    { x: 9, y: 24, to: "hazelHouse", name: "Pip's house" },
+    { x: 20, y: 43, to: "tomHut", name: "Old Tom's hut" },
+  ],
   // Things standing on the map. They block walking; walk into one to talk to it or deal with it.
   // `goneWhen` names a quest flag that removes the object (the oak, once shoved aside; a chest, once opened).
   // `still` objects don't bob up and down. A chest's `loot` is what's inside. `frame` picks one frame of a sheet

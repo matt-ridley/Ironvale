@@ -9,7 +9,7 @@ export const DEEP_CAVE = {
     { id: "warrens", name: "The Deep Warrens", x0: 0, y0: 6, x1: 47, y1: 33 },
     { id: "throne", name: "The Goblin King's Hall", x0: 0, y0: 0, x1: 47, y1: 5 },
   ],
-  // Walking onto an exit tile takes you to another map (`to`), standing at `at` (a tile).
+  // Walking onto an exit tile takes you to another map (`to`), standing at `at` (a tile), facing `facing` if given.
   exits: [{ x: 6, y: 32, to: "overworld", at: { x: 52, y: 30 } }],
   objects: [
     { id: "ironGate", x: 41, y: 7, sprite: "gate", script: "gate", goneWhen: "gateOpened", still: true },

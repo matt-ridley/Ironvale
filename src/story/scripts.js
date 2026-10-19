@@ -1,6 +1,7 @@
 // The conversations in the game so far: Elder Maren's two quests (the goblin chief, then the Goblin King), Pip,
-// Old Tom the fisher, the fallen oak, the goblin cave, chests, the iron gate and the Goblin King.
-import { gainXp } from "../rules/character.js";
+// Old Tom the fisher, the fallen oak, the goblin cave, chests, the iron gate and the Goblin King, and inside the
+// houses: Maren's journal, Hazel (Pip's mum) and Old Tom's spare bed.
+import { gainXp, rest } from "../rules/character.js";
 import { makeItem, itemName } from "../rules/items.js";
 import { joinParty } from "../rules/party.js";
 import { tileOf, feetAt } from "../world/movement.js";
@@ -126,7 +127,7 @@ export const SCRIPTS = {
 
   log: obstacle({
     look: "A huge fallen oak blocks the path.",
-    checks: LOG_CHECKS, flag: "logCleared",
+    checks: LOG_CHECKS, flag: "logCleared", passedFlag: "logPassed",
     shoveLabel: "Shove it aside", climbLabel: "Climb over",
     hurt: "You scrape your hands on the bark.",
     shoved: "With a mighty heave, the oak rolls into the ditch. The path is clear.",
@@ -135,7 +136,7 @@ export const SCRIPTS = {
 
   gate: obstacle({
     look: "A rusty iron gate blocks the tunnel. Snoring echoes from the hall beyond.",
-    checks: GATE_CHECKS, flag: "gateOpened",
+    checks: GATE_CHECKS, flag: "gateOpened", passedFlag: "gatePassed",
     shoveLabel: "Lift the gate", climbLabel: "Squeeze through the bars",
     hurt: "The bars pinch and scrape you.",
     shoved: "You heave the gate up until it catches with a CLANK. The way is open.",
@@ -190,7 +191,9 @@ export const SCRIPTS = {
       gift: {
         enter: s => { s.hero.inventory.push(makeItem("potionSpeed")); },
         text: "You got a Potion of Speed!",
+        to: "hut",
       },
+      hut: { speaker: "OLD TOM", text: "And if you're worn out, my hut's just up the path. Sleep in the spare bed whenever you like." },
       again: {
         speaker: "OLD TOM",
         text: s => (s.flags.groveChestOpened && s.flags.gardenChestOpened && s.flags.isleChestOpened
@@ -250,6 +253,66 @@ export const SCRIPTS = {
     },
   },
 
+  // Inside Elder Maren's house. What she's written so far follows the quests, with a hint for the next one.
+  journal: {
+    start: s => (s.flags.kingDefeated ? "hero" : s.flags.chiefDefeated ? "king" : "chief"),
+    nodes: {
+      chief: {
+        text: "Elder Maren's journal. \"Goblins raid us every week now. Their chief is strong, and the fallen oak keeps the cave safe from all but the strongest or nimblest. Whoever goes should train in the wood first, and get a sharper blade.\"",
+      },
+      king: {
+        text: "Elder Maren's journal. \"The chief served a KING, deep under the hills. Old stories say hobgoblins guard his tunnels, in armour that turns most blades. A Potion of Dexterity, to strike twice, would be worth every coin.\"",
+      },
+      hero: {
+        text: "Elder Maren's journal. \"Today the Goblin King fell. I have written our hero's name in the village book, so Oakhollow never forgets.\" Your name is underlined. Twice.",
+      },
+    },
+  },
+
+  // Pip's mum, at home. She gives you a Potion of Healing the first time, and knows a thing or two.
+  hazel: {
+    start: s => (s.flags.metHazel ? "again" : "hello"),
+    nodes: {
+      hello: {
+        speaker: "HAZEL",
+        enter: s => { s.flags.metHazel = true; },
+        text: "Oh! You must be the adventurer Pip won't stop talking about. I'm Hazel, his mum. Here, take this. Anyone fighting goblins needs it more than I do.",
+        to: "gift",
+      },
+      gift: {
+        enter: s => { s.hero.inventory.push(makeItem("potionHealing")); },
+        text: "Hazel gives you a Potion of Healing!",
+      },
+      again: {
+        speaker: "HAZEL",
+        text: s => (s.flags.kingDefeated
+          ? "Pip has made himself a wooden crown and says he's the Goblin King now. You're welcome for tea any time."
+          : s.flags.chiefDefeated
+            ? "Down in Willowmere, Old Tom has a spare bed. Handy if you're hurt and a long way from Oakhollow."
+            : "Pip's right about the wood: stick to the paths and the wolves bother you less. Come home to rest whenever you're hurt."),
+      },
+    },
+  },
+
+  // Old Tom's spare bed: a full rest in Willowmere, once he's said you can use it.
+  bed: {
+    start: s => (s.flags.metTom ? "offer" : "ask"),
+    nodes: {
+      ask: { text: "A neat little bed with a blue blanket. It must be Old Tom's. Better ask him before you climb in." },
+      offer: {
+        text: "Old Tom's spare bed. He said you're welcome to it.",
+        choices: [
+          { label: "Sleep (full rest)", to: "sleep" },
+          { label: "Not now", to: null },
+        ],
+      },
+      sleep: {
+        enter: s => rest(s.hero),
+        text: s => (s.hero.companion ? "You both sleep like logs. Everyone's HP and your Second Wind restored." : "You sleep like a log. HP and Second Wind restored."),
+      },
+    },
+  },
+
   chest: {
     start: "open",
     nodes: {
@@ -272,8 +335,9 @@ export const SCRIPTS = {
 };
 
 /* A blocked way with two ways past, like the fallen oak: a STR check clears it for good (sets `flag`), a DEX check
-   puts you on the far side. A failed try costs 1d4 HP but never knocks you out. */
-function obstacle({ look, checks, flag, shoveLabel, climbLabel, hurt, shoved, climbed }) {
+   puts you on the far side (and sets `passedFlag`, for the quest log). A failed try costs 1d4 HP but never knocks
+   you out. */
+function obstacle({ look, checks, flag, passedFlag, shoveLabel, climbLabel, hurt, shoved, climbed }) {
   return {
     start: "look",
     nodes: {
@@ -298,6 +362,7 @@ function obstacle({ look, checks, flag, shoveLabel, climbLabel, hurt, shoved, cl
           // Land on the far side: as far past the obstacle as you stand in front of it.
           const o = ctx.object;
           if (o) { const t = tileOf(s.pos); s.pos = feetAt(2 * o.x - t.x, 2 * o.y - t.y); }
+          s.flags[passedFlag] = true;
           ctx.goto("climbed");
         },
       },

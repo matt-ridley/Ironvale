@@ -1,10 +1,12 @@
-// The world: whichever map state.map names (the overworld or the Deep Warrens). Move in 8 directions with the joystick
-// (touch), arrow keys or WASD (hold Shift to run); the camera glides after the hero. Walk into people, things or shop
-// doors (or press Enter/Space facing them) to interact (people and things open the Meet screen), and onto an exit to go to another map. Wild areas can start
-// a fight as you walk; Oakhollow heals you. A Potion of Speed makes you faster and fights rarer for a number of
-// steps. A companion in your party walks along behind you. The HUD lives in the Hud scene on top.
+// The world: whichever map state.map names (the overworld, the Deep Warrens or inside a house). Move in 8 directions
+// with the joystick (touch), arrow keys or WASD (hold Shift to run); the camera glides after the hero. Walk into
+// people, things or shop doors (or press Enter/Space facing them) to interact (people and things open the Meet
+// screen), into a house door to go inside, and onto an exit (a doormat, the daylight in the cave) to go to another
+// map. Q opens the quest log. Wild areas can start a fight as you walk; Oakhollow heals you. A Potion of Speed makes
+// you faster and fights rarer for a number of steps. A companion in your party walks along behind you. The HUD lives
+// in the Hud scene on top.
 import { TILE, WORLD_ZOOM, FONT, COLORS } from "../config.js";
-import { frameGrid, zoneAt, tileAt, objectAt, activeObjects, exitAt } from "../world/map.js";
+import { frameGrid, zoneAt, tileAt, objectAt, activeObjects, exitAt, doorAt } from "../world/map.js";
 import { moveBody, velocity, facingFor, tileOf, tileAhead, feetAt, WALK_SPEED, SPEED_POTION_BOOST } from "../world/movement.js";
 import { MAPS } from "../world/maps.js";
 import { state, autosave } from "../state/game.js";
@@ -35,6 +37,7 @@ export class World extends Phaser.Scene {
     this.bumped = null; // the tile last walked into, so holding a direction doesn't reopen a door
     this.walked = 0; // distance since the last "step" (a tile's worth of walking)
     this.pendingHud = [];
+    this.hudUp = false; // until the Hud scene (re)starts and says it's ready
     this.lastTile = tileOf(state.pos);
     this.zoneId = data.quiet ? zoneAt(this.map, this.lastTile.x, this.lastTile.y)?.id ?? null : null;
 
@@ -58,7 +61,10 @@ export class World extends Phaser.Scene {
     this.player.play(`idle-${sheetFacing(state.facing)}`);
     this.player.setFlipX(state.facing === "left");
     this.cameras.main.setBackgroundColor(this.map.name === "overworld" ? COLORS.bg : 0x0f0d14);
-    this.cameras.main.setZoom(WORLD_ZOOM).setBounds(0, 0, this.map.width * TILE, this.map.height * TILE)
+    // A room smaller than the screen sits in the middle of it (Phaser would pin it to the top left).
+    const cam = this.cameras.main, mapW = this.map.width * TILE, mapH = this.map.height * TILE;
+    const boundsW = Math.max(mapW, cam.width / WORLD_ZOOM), boundsH = Math.max(mapH, cam.height / WORLD_ZOOM);
+    cam.setZoom(WORLD_ZOOM).setBounds((mapW - boundsW) / 2, (mapH - boundsH) / 2, boundsW, boundsH)
       .startFollow(this.player, true, 0.14, 0.14, 0, TILE * 0.75);
     this.cameras.main.fadeIn(250);
 
@@ -66,6 +72,7 @@ export class World extends Phaser.Scene {
     this.shift = this.input.keyboard.addKey("SHIFT");
     this.input.keyboard.on("keydown-ESC", () => this.toTitle());
     this.input.keyboard.on("keydown-I", () => this.openOverlay("Inventory"));
+    this.input.keyboard.on("keydown-Q", () => this.openOverlay("Quests"));
     this.input.keyboard.on("keydown-ENTER", () => this.interactAhead());
     this.input.keyboard.on("keydown-SPACE", () => this.interactAhead());
     // Scene events outlive a restart, so swap the listener rather than adding another.
@@ -78,9 +85,10 @@ export class World extends Phaser.Scene {
     autosave();
   }
 
-  /* The Hud scene starts a moment after this one; messages wait for it. */
-  get hud() { const h = this.scene.get("Hud"); return h && h.sys.isActive() ? h : null; }
-  hudReady(hud) { for (const [kind, msg, ms] of this.pendingHud) hud[kind](msg, ms); this.pendingHud = []; }
+  /* The Hud scene starts a moment after this one; messages wait for it. (After a trip to another map the old Hud is
+     still running while this scene sets up, and is about to be restarted, so it doesn't count until it says so.) */
+  get hud() { const h = this.scene.get("Hud"); return this.hudUp && h && h.sys.isActive() ? h : null; }
+  hudReady(hud) { this.hudUp = true; for (const [kind, msg, ms] of this.pendingHud) hud[kind](msg, ms); this.pendingHud = []; }
   say(kind, msg, ms) { if (this.hud) this.hud[kind](msg, ms); else this.pendingHud.push([kind, msg, ms]); }
 
   placePlayer(bob = 0) {
@@ -151,16 +159,19 @@ export class World extends Phaser.Scene {
     for (const [id, sprite] of Object.entries(this.objectSprites)) sprite.setVisible(active.has(id));
   }
 
-  /* Whatever is on the tile in front of you: a person or thing to talk to, or a door. */
+  /* Whatever is on the tile in front of you: a person or thing to talk to, a house door, or a shop door. */
   thingAt(t) {
     const obj = objectAt(this.map, t.x, t.y, state.flags);
     if (obj) return { obj };
+    const door = doorAt(this.map, t.x, t.y);
+    if (door) return { door };
     const place = tileAt(this.map, t.x, t.y)?.place;
     return place ? { place } : null;
   }
 
   interactWith(thing) {
     if (thing.obj) { sfx("select"); this.openOverlay("Meet", { script: thing.obj.script, object: thing.obj, zone: this.zoneId }); }
+    else if (thing.door) this.travel(thing.door.to, MAPS[thing.door.to].spawn, "up");
     else if (thing.place === "bank") { sfx("door"); this.openOverlay("Bank"); }
     else if (thing.place) { sfx("door"); this.openOverlay("Shop", { shop: thing.place }); }
   }
@@ -258,17 +269,19 @@ export class World extends Phaser.Scene {
         this.say("note", h.companion ? "You rest in Oakhollow. Everyone's HP and your Second Wind restored." : "You rest in Oakhollow. HP and Second Wind restored.", 2200);
       }
     }
-    playMusic(this.zoneId === "village" || !this.zoneId ? "village" : "wild");
+    playMusic(["village", "indoors"].includes(this.zoneId) || !this.zoneId ? "village" : "wild");
     const above = tileAt(this.map, t.x, t.y - 1);
     if (PLACE_NOTES[above?.place]) this.say("note", PLACE_NOTES[above.place], 2200);
+    const door = moved && doorAt(this.map, t.x, t.y - 1); // not when you've just come out of it
+    if (door) this.say("note", `${door.name}. Walk into the door to go in.`, 2200);
     if (!moved) return;
     if (tileAt(this.map, t.x, t.y).name === "cave") this.openOverlay("Dialogue", { script: "cave" });
     const exit = exitAt(this.map, t.x, t.y);
-    if (exit) this.travel(exit.to, exit.at);
+    if (exit) this.travel(exit.to, exit.at, exit.facing);
   }
 
-  /* Goes to another map, standing in tile `at`. */
-  travel(mapName, at) {
+  /* Goes to another map, standing in tile `at` (and turned to `facing`, if given). */
+  travel(mapName, at, facing) {
     this.frozen = true;
     this.player.play(`idle-${sheetFacing(state.facing)}`);
     sfx("door");
@@ -276,6 +289,7 @@ export class World extends Phaser.Scene {
     this.cameras.main.once("camerafadeoutcomplete", () => {
       state.map = mapName;
       state.pos = feetAt(at.x, at.y);
+      if (facing) state.facing = facing;
       state.stepsSinceFight = 0;
       this.scene.restart();
     });

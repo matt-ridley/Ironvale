@@ -33,6 +33,8 @@ GitHub Actions runs `npm test` on every pull request and every push to `main`, s
 - **Menu:** the MENU button or Esc.
 - **Sound:** the SND button mutes or unmutes music and effects (remembered on this device).
 - **Talk:** walk into a person or a thing (or press Enter/Space while facing them). The meeting screen opens: your party on the left, them on the right, what they say at the bottom and your answers as big buttons on the right. Pick answers by tapping, with up/down and Enter, or with number keys. A chest opens on screen and shows each thing inside before you close it. A finger already on the screen when it opens (your thumb on the joystick) doesn't count as a tap when it lets go.
+- **Quests:** the QUESTS button or Q opens the quest log: every quest you've heard of, unfinished ones first. Tap one to see what it's about, which steps are done (ticked), the next step (in gold) and the reward.
+- **Houses:** walk into a house door to go inside, and onto the doormat to come back out.
 - **Inventory:** the BAG button or I. Tap an item to see what it does and how it changes your AC, to-hit and damage, then equip it, take it off or drink it.
 - **Battles:** tap a monster to target it, then ATTACK, DEFEND (+2 AC until your next turn), POTION (then HEAL or DEX for you, or your companion's name to give them a Potion of Healing, which also gets them back up if they've been knocked down), 2ND WIND (heal 1d10 + level as a bonus action, once per rest) or FLEE (DEX check, DC 10).
 
@@ -61,17 +63,18 @@ Saves carry a format number. Loading drops anything the game no longer knows (an
 - The blacksmith (the house with the anvil sign, west of the crossroads) upgrades gear up to +3 (50, 100, 150 gold), sells weapons, armour and shields at SRD prices and Potions of Healing, and buys things back for half of what they cost, upgrades included. Walk into the door to go in.
 - The apothecary (the house with the green bottle sign, east of the crossroads) sells all three potions and buys things back the same way.
 - The bank (the house with the gold coin sign, south-east of the crossroads) keeps your gold safe. Put in or take out 10, 50 or all of it at a time.
+- **Houses:** three houses open their doors. Elder Maren's (north of the crossroads) has her journal, which follows the quests and drops a hint for the next one. In Pip's house (south-west of the crossroads), his mum Hazel gives you a Potion of Healing the first time you visit. Old Tom's hut in Willowmere has a spare bed: once you've met Tom, sleeping in it is a full rest, so you don't have to walk back to Oakhollow. There are no monsters indoors.
 
 ## Layout
 ```
 index.html, css/, manifest.webmanifest, sw.js   page shell, install and offline support
 src/rules/    the d20 rules: dice, checks, character, items, combat, the bank, party companions. No Phaser, so they are unit tested.
 src/data/     items, shops and monsters
-src/world/    tile maps (one character per tile: overworld.js, cave.js, all listed in maps.js), 8-direction movement with collisions, and random encounters. No Phaser, so they are unit tested.
+src/world/    tile maps (one character per tile: overworld.js, cave.js, houses.js, all listed in maps.js), 8-direction movement with collisions, and random encounters. No Phaser, so they are unit tested.
 src/state/    the shared game state (hero, position, quest flags) and saving it to localStorage
 src/art/      16-bit style pixel art drawn in code: the hero's and Megan's walk cycles, monsters, people and 32px terrain tiles
-src/scenes/   Phaser screens: Boot, Title, World (+ Hud on top), Battle, Meet (talking to people and things), Inventory, Shop (the blacksmith and the apothecary), Bank, Dialogue (the cave entrance)
-src/story/    the conversation engine and the scripts (quests, NPCs, events). No Phaser, so they are unit tested.
+src/scenes/   Phaser screens: Boot, Title, World (+ Hud on top), Battle, Meet (talking to people and things), Inventory, Quests (the quest log), Shop (the blacksmith and the apothecary), Bank, Dialogue (the cave entrance)
+src/story/    the conversation engine, the scripts (quests, NPCs, events) and the quest log. No Phaser, so they are unit tested.
 src/ui/       the joystick, menu widgets (buttons, paged lists) and the side-on stage that Battle and Meet share
 src/audio/    synthesised music (tracks written as notes) and sound effects, no audio files
 tests/        node --test suites
@@ -98,6 +101,7 @@ Playable prototype: both quests can be played start to finish, and progress is s
 - [x] 0.11.1 Megan redrawn to match the hero; she can drink Potions of Healing (from the bag or in battle) and rests in Oakhollow; a thumb held on the joystick no longer taps Close
 - [x] 0.13.0 The meeting screen for people and things, and chests that open on screen
 - [x] 0.13.1 The HUD's gold and HP update straight after the bank, shops and the bag
+- [x] 0.14.0 Houses you can go into (Elder Maren's, Pip's, Old Tom's hut), Hazel, Tom's spare bed, and the quest log; area names show again after changing map
 
 ## Credits
 Rules: this work includes material taken from the System Reference Document 5.1 ("SRD 5.1") by Wizards of the Coast LLC, available at https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.

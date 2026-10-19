@@ -17,7 +17,7 @@ import { sfx } from "../audio/sound.js";
 
 const THEM_X = 360;
 // Names for the things that don't say who they are.
-const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE", goblinKing: "GOBLIN KING" };
+const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE", goblinKing: "GOBLIN KING", journal: "JOURNAL", bed: "SPARE BED" };
 const TEXT_W = 290;
 const BTN_X = 394, BTN_W = 152, BTN_H = 28, BTN_GAP = 6; // the answer buttons: centre x, size, gap
 const POP_MS = 500; // between things coming out of a chest
