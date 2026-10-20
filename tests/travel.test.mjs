@@ -75,3 +75,39 @@ test("every overworld tile has a colour on the map", () => {
     assert.ok(MAP_COLOURS[name], `${name} has no map colour`);
   }
 });
+
+test("the world's regions: only the Vale is open; the rest are dark shapes with hints", async () => {
+  const { REGIONS, regionOpen, regionOf } = await import("../src/world/travel.js");
+  assert.deepEqual(REGIONS.map(r => r.id), ["vale", "ironvale", "pass", "beyond"]);
+  assert.deepEqual(REGIONS.filter(regionOpen).map(r => r.id), ["vale"]);
+  for (const r of REGIONS) {
+    if (regionOpen(r)) assert.ok(MAPS[r.map] && r.tab, r.id);
+    else assert.ok(["keep", "mountains", "door"].includes(r.shape) && typeof r.hint({}) === "string", r.id);
+  }
+  // Every map says which region it's in, and travel points' maps are real.
+  for (const name of Object.keys(MAPS)) assert.equal(regionOf(name).id, MAPS[name].region, name);
+  for (const p of TRAVEL_POINTS) assert.ok(MAPS[p.map], p.id);
+  // Ironvale's hint follows quest 3.
+  const ironvale = REGIONS.find(r => r.id === "ironvale");
+  assert.match(ironvale.hint({}), /east, past the marshes/);
+  assert.match(ironvale.hint({ signetShown: true }), /Ironvale Keep/);
+  assert.match(ironvale.hint({ signetShown: true, askedBrannoc: true }), /Brannoc is clearing/);
+});
+
+test("every zone plays a real track, and towns and houses are safe", async () => {
+  const { TRACKS } = await import("../src/audio/tracks.js");
+  for (const map of Object.values(MAPS)) for (const z of map.zones) assert.ok(TRACKS[z.music], `${map.name}/${z.id} has no music`);
+  assert.equal(zoneAt(world, 15, 20).safe, true);
+  assert.ok(!zoneAt(world, 45, 10).safe);
+  assert.equal(zoneAt(MAPS.inn, 6, 5).safe, true);
+});
+
+test("the goblins' back passage is blocked by rubble you can look at", async () => {
+  const { SCRIPTS } = await import("../src/story/scripts.js");
+  const { startConversation, view } = await import("../src/story/dialogue.js");
+  const hall = MAPS.deepCave, rubble = hall.objects.find(o => o.id === "rubble");
+  const from = reachable(hall, { x: 41, y: 8 }, { gateOpened: true, kingDefeated: true });
+  assert.ok([[0, 1], [-1, 0]].some(([dx, dy]) => from.has(`${rubble.x + dx},${rubble.y + dy}`)));
+  assert.match(view(startConversation(SCRIPTS.rubble, { flags: {} })).text, /choked with fallen rock/);
+  assert.match(view(startConversation(SCRIPTS.rubble, { flags: { askedBrannoc: true } })).text, /you'll need Brannoc/);
+});

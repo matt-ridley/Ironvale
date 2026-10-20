@@ -288,6 +288,18 @@ export const SCRIPTS = {
     },
   },
 
+  // The goblins' back passage behind the King's throne, up to Greywater Fen: blocked for now.
+  rubble: {
+    start: "look",
+    nodes: {
+      look: {
+        text: s => (s.flags.askedBrannoc
+          ? "The goblins' back passage, the one Brannoc told you about. Cold air sighs through the cracks between the rocks. It's choked solid: you'll need Brannoc for this."
+          : "A passage climbs up into the dark, choked with fallen rock. A cold draught sighs through the cracks, smelling of marsh water."),
+      },
+    },
+  },
+
   // Brannoc in Oakhollow, once he's free. He knows the old road to Ironvale.
   brannocTown: {
     start: s => (s.flags.askedBrannoc ? "again" : s.flags.signetShown ? "road" : "hello"),

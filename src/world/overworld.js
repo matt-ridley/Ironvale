@@ -5,14 +5,16 @@
 
 export const OVERWORLD = {
   name: "overworld",
+  region: "vale", // the world map's page (travel.js REGIONS)
   outdoors: true, // a Homeward Feather works here (not indoors or underground)
   spawn: { x: 15, y: 20 },
-  // First match wins. Tiles in no zone (the river banks) keep the last zone's name.
+  // First match wins. Tiles in no zone (the river banks) keep the last zone's name. `music` is the track that plays
+  // there; `safe` zones never have monsters.
   zones: [
-    { id: "village", name: "Oakhollow", x0: 2, y0: 2, x1: 28, y1: 37 },
-    { id: "forest", name: "Whispering Wood", x0: 33, y0: 2, x1: 61, y1: 24 },
-    { id: "rocks", name: "Goblin Rocks", x0: 33, y0: 25, x1: 61, y1: 37 },
-    { id: "meadow", name: "Willowmere", x0: 2, y0: 38, x1: 61, y1: 59 },
+    { id: "village", name: "Oakhollow", x0: 2, y0: 2, x1: 28, y1: 37, music: "village", safe: true },
+    { id: "forest", name: "Whispering Wood", x0: 33, y0: 2, x1: 61, y1: 24, music: "wild" },
+    { id: "rocks", name: "Goblin Rocks", x0: 33, y0: 25, x1: 61, y1: 37, music: "wild" },
+    { id: "meadow", name: "Willowmere", x0: 2, y0: 38, x1: 61, y1: 59, music: "wild" },
   ],
   // House doors: walk into one to go inside (`to` is the house's map, which has its own way back out).
   doors: [

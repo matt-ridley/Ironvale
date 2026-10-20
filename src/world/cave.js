@@ -4,10 +4,11 @@
 
 export const DEEP_CAVE = {
   name: "deepCave",
+  region: "vale",
   spawn: { x: 6, y: 30 },
   zones: [
-    { id: "warrens", name: "The Deep Warrens", x0: 0, y0: 6, x1: 47, y1: 33 },
-    { id: "throne", name: "The Goblin King's Hall", x0: 0, y0: 0, x1: 47, y1: 5 },
+    { id: "warrens", name: "The Deep Warrens", x0: 0, y0: 6, x1: 47, y1: 33, music: "wild" },
+    { id: "throne", name: "The Goblin King's Hall", x0: 0, y0: 0, x1: 47, y1: 5, music: "wild" },
   ],
   // Walking onto an exit tile takes you to another map (`to`), standing at `at` (a tile), facing `facing` if given.
   exits: [{ x: 6, y: 32, to: "overworld", at: { x: 52, y: 30 } }],
@@ -17,6 +18,8 @@ export const DEEP_CAVE = {
     // Once the King has fallen: the ring on his throne, and the smith chained behind it.
     { id: "signet", x: 37, y: 2, sprite: "signet", script: "signet", shownWhen: "kingDefeated", goneWhen: "signetTaken", still: true },
     { id: "brannocChained", x: 37, y: 1, sprite: "brannoc", script: "brannoc", shownWhen: "kingDefeated", goneWhen: "brannocFreed" },
+    // The goblins' back passage up to Greywater Fen, choked with rubble until Act 2's fen is built.
+    { id: "rubble", x: 45, y: 1, sprite: "rubble", script: "rubble", still: true },
     { id: "grottoChest", x: 3, y: 6, sprite: "chest", script: "chest", goneWhen: "grottoChestOpened", still: true, loot: { gold: 50, items: ["potionHealing", "potionSpeed"] } },
     { id: "barracksChest", x: 44, y: 19, sprite: "chest", script: "chest", goneWhen: "barracksChestOpened", still: true, loot: { gold: 80, items: ["potionDexterity", "potionHealing"] } },
     { id: "nestChest", x: 44, y: 29, sprite: "chest", script: "chest", goneWhen: "nestChestOpened", still: true, loot: { gold: 30, items: ["potionHealing", "potionHealing"] } },
