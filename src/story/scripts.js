@@ -7,6 +7,10 @@ import { makeItem, itemName } from "../rules/items.js";
 import { joinParty, companionStats, benchCompanion, takeCompanion, COMPANIONS } from "../rules/party.js";
 import { tileOf, feetAt } from "../world/movement.js";
 import { DEEP_CAVE } from "../world/cave.js";
+import { callName, titleOf } from "./hero.js";
+
+/* ", Mary" when the hero has a name, else nothing: for lines like `You did it${comma(s)}!`. */
+const comma = s => (callName(s.hero) ? `, ${callName(s.hero)}` : "");
 
 export const QUEST_REWARD = { gold: 100, xp: 300 };
 export const KING_REWARD = { gold: 250, xp: 1000 };
@@ -70,7 +74,7 @@ export const SCRIPTS = {
           s.flags.questRewarded = true;
           ctx.remember("newLevel", s.hero.level > before ? s.hero.level : null);
         },
-        text: (s, ctx) => (s.flags.questStarted ? "You did it! The chief is gone!" : "The goblin chief, gone? And I hadn't even asked you yet!")
+        text: (s, ctx) => (s.flags.questStarted ? `You did it${comma(s)}! The chief is gone!` : "The goblin chief, gone? And I hadn't even asked you yet!")
           + ` Please, take this: ${QUEST_REWARD.gold} gold. (+${QUEST_REWARD.xp} XP${ctx.recall("newLevel") ? `, level ${ctx.recall("newLevel")}!` : ""})`,
         to: "kingIntro",
       },
@@ -106,10 +110,13 @@ export const SCRIPTS = {
           s.flags.kingRewarded = true;
           ctx.remember("newLevel", s.hero.level > before ? s.hero.level : null);
         },
-        text: (s, ctx) => "The Goblin King, beaten! Oakhollow will sing about you for a hundred years."
+        text: (s, ctx) => `The Goblin King, beaten! Oakhollow will sing about ${callName(s.hero) || "you"} for a hundred years.`
           + ` Take this: ${KING_REWARD.gold} gold. (+${KING_REWARD.xp} XP${ctx.recall("newLevel") ? `, level ${ctx.recall("newLevel")}!` : ""})`,
       },
-      afterAll: { speaker: ELDER, text: "Hero of Oakhollow! The goblins are gone, but the world is big. Keep exploring, and keep your blade sharp." },
+      afterAll: {
+        speaker: ELDER,
+        text: s => `${callName(s.hero) ? `${callName(s.hero)}, ${titleOf(s.flags)}` : titleOf(s.flags)}! The goblins are gone, but the world is big. Keep exploring, and keep your blade sharp.`,
+      },
     },
   },
 
@@ -119,7 +126,7 @@ export const SCRIPTS = {
       hello: {
         speaker: "PIP",
         text: s => (s.flags.kingDefeated
-          ? "You beat the Goblin KING? I'm going to be a hero like you one day!"
+          ? `You beat the Goblin KING${comma(s)}? I'm going to be a hero like you one day!`
           : s.flags.chiefDefeated
             ? "You beat the goblin chief? Wait till I tell the sheep! Old Tom says there's treasure out in Willowmere, south of here."
             : "Stick to the paths in the wood. The wolves come out of the trees, but less often on the paths."),
@@ -266,7 +273,7 @@ export const SCRIPTS = {
         text: "Elder Maren's journal. \"The chief served a KING, deep under the hills. Old stories say hobgoblins guard his tunnels, in armour that turns most blades. A Potion of Dexterity, for an extra blow with every swing, would be worth every coin.\"",
       },
       hero: {
-        text: "Elder Maren's journal. \"Today the Goblin King fell. I have written our hero's name in the village book, so Oakhollow never forgets.\" Your name is underlined. Twice.",
+        text: s => `Elder Maren's journal. "Today the Goblin King fell. I have written ${callName(s.hero) ? `${callName(s.hero)}, ${titleOf(s.flags)},` : "our hero's name"} in the village book, so Oakhollow never forgets." Your name is underlined. Twice.`,
       },
     },
   },
@@ -324,7 +331,7 @@ export const SCRIPTS = {
       hello: {
         speaker: "NELL",
         text: s => (s.flags.kingDefeated
-          ? `The hero of Oakhollow, in my inn! Your bed's ready: ${INN_COST} gold, same as anyone. Fair's fair.`
+          ? `${callName(s.hero) || "The hero"}, ${titleOf(s.flags)}, in my inn! Your bed's ready: ${INN_COST} gold, same as anyone. Fair's fair.`
           : `Welcome to the Sleeping Fox! A soft bed and a hot supper, ${INN_COST} gold a night. You'll wake up good as new.`),
         choices: [
           { label: `Stay the night (${INN_COST} gold)`, to: "stay" },

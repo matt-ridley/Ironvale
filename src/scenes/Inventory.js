@@ -1,7 +1,8 @@
 // The inventory, opened over the world. Tap something you're wearing or carrying to see what it does and how it
 // would change your stats, then equip it, take it off, or drink it. With a friend in your party, HERO / the friend's
 // name switch whose gear you're looking at: a friend wears a bow and light armour from your pack. With nothing
-// picked, a friend's tab shows their TACTICS (what they do in a fight by themselves) and a button to change them.
+// picked, a friend's tab shows their TACTICS (what they do in a fight by themselves) and a button to change them, and
+// the hero's tab shows your name and title, with RENAME.
 import { WIDTH, HEIGHT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
 import { armourClass, weaponAttack } from "../rules/character.js";
@@ -12,6 +13,7 @@ import { text, panel, button, ListView, uiCamera } from "../ui/widgets.js";
 import { heroFrame } from "../art/pixels.js";
 import { sfx } from "../audio/sound.js";
 import { MAPS } from "../world/maps.js";
+import { titleOf } from "../story/hero.js";
 import { hubById } from "../world/travel.js";
 
 const SLOT_TAG = { weapon: "WPN", shield: "SHD", armour: "ARM", bow: "BOW" };
@@ -72,6 +74,13 @@ export class Inventory extends Phaser.Scene {
     this.action = button(this, 422, 244, 92, 24, "", () => this.doAction());
 
     this.showWho("hero");
+    // Back from renaming: show the new name. (Scene events outlive a restart, so swap the listener.)
+    this.events.off("resume", this.onResume, this);
+    this.events.on("resume", this.onResume, this);
+  }
+
+  onResume() {
+    if (!this.current) this.showDetail();
   }
 
   /* Look at your own gear ("hero") or your friend's ("friend"). */
@@ -128,9 +137,9 @@ export class Inventory extends Phaser.Scene {
       return;
     }
     if (!row) {
-      this.name.setText("");
+      this.name.setText(`${h.name.toUpperCase()}, ${titleOf(state.flags).toUpperCase()}`);
       this.desc.setText(h.inventory.length ? "Tap an item to see what it does." : "Your pack is empty. Beat monsters for loot, or visit the blacksmith.");
-      this.action.setVisible(false);
+      this.action.setVisible(true).setLabel("RENAME").setEnabled(true);
       return;
     }
     this.action.setVisible(true);
@@ -174,6 +183,7 @@ export class Inventory extends Phaser.Scene {
   doAction() {
     const row = this.current, h = state.hero;
     if (!row && this.who === "friend") { cycleTactics(h); sfx("select"); return this.showDetail(); }
+    if (!row) { this.scene.launch("NameEntry", { mode: "rename" }); this.scene.pause(); return; }
     if (!row?.item) return;
     let msg, ok = true;
     const friend = this.who === "friend", name = friend ? companionStats(h).name : "You";

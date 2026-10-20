@@ -12,12 +12,14 @@ import { OVERWORLD } from "../world/overworld.js";
 import { cleanBestiary } from "../rules/bestiary.js";
 import { hubById } from "../world/travel.js";
 import { asiEarned } from "../rules/character.js";
+import { cleanName } from "../story/hero.js";
 
 export const SAVE_KEY = "ironvale-save";
-export const SAVE_FORMAT = 4;
+export const SAVE_FORMAT = 5;
 // Format 1 (before 0.7.0) saved whole tiles; format 2 saves the hero's feet in fractions of a tile; format 3 (0.18.0)
 // adds lastHub, the town you wake in when you faint. Older saves get Oakhollow. Format 4 (0.19.0) adds the fighter's
 // Action Surge and ability score increases: a hero saved at level 4 or higher before then gets theirs to pick.
+// Format 5 (0.22.0) gives the hero's starting sword its crest: older saves put it on their first longsword.
 const DIR_NAMES = ["up", "down", "left", "right"];
 
 export function serialize(state) {
@@ -46,7 +48,7 @@ function loadCompanion(c) {
 export function deserialize(json) {
   let data;
   try { data = JSON.parse(json); } catch { return null; }
-  if (!data || ![1, 2, 3, SAVE_FORMAT].includes(data.format) || !data.state?.hero) return null;
+  if (!data || ![1, 2, 3, 4, SAVE_FORMAT].includes(data.format) || !data.state?.hero) return null;
   const s = data.state, h = s.hero;
   if (!h.abilities || !["STR", "DEX", "CON"].every(a => isInt(h.abilities[a]))) return null;
   for (const k of ["level", "xp", "gold", "maxHp", "hp"]) if (!isInt(h[k])) return null;
@@ -70,6 +72,12 @@ export function deserialize(json) {
     },
   };
   if (!hero.companion) delete hero.companion;
+  hero.name = cleanName(h.name);
+  if (data.format < 5) { // the crest goes on the sword you've had longest: your first longsword, worn or carried
+    const all = [hero.equipment.weapon, ...hero.inventory].filter(Boolean);
+    const sword = !all.some(i => i.crest) && all.find(i => i.base === "longsword");
+    if (sword) sword.crest = true;
+  }
   // Companions waiting at an inn (saves from before 0.21.0 have none). One that's also in the party is dropped.
   const roster = [];
   for (const c of Array.isArray(h.roster) ? h.roster.map(loadCompanion) : []) {
