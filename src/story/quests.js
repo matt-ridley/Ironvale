@@ -32,6 +32,19 @@ export const QUESTS = [
     ],
   },
   {
+    id: "signet", title: "The Iron Signet", kind: "main",
+    known: f => f.kingDefeated,
+    about: "A ring of black iron from the Goblin King's throne, with the same crest as your sword. Someone in Oakhollow may know what it means.",
+    reward: "?",
+    steps: [
+      { text: "Take the ring from the Goblin King's throne", done: f => f.signetTaken },
+      { text: "Free the smith chained behind the throne", done: f => f.brannocFreed },
+      { text: "Show the ring to Elder Maren", done: f => f.signetShown },
+      { text: "Ask Brannoc, by the smithy, about Ironvale", done: f => f.askedBrannoc },
+      { text: "Find the way to Ironvale (in a future update)", done: () => false },
+    ],
+  },
+  {
     id: "bow", title: "Megan's Bow", kind: "side",
     known: f => f.meganQuest || f.bowFound || f.meganJoined,
     about: "Megan, a young archer in Willowmere, dropped her bow chasing a wolf through the Whispering Wood.",

@@ -33,6 +33,7 @@ export class Battle extends Phaser.Scene {
   init(data) {
     this.foes = data.foes;
     this.winFlag = data.winFlag || null; // a quest flag to set if you win (the boss fight)
+    this.afterWin = data.afterWin || null; // a script to play back in the world if you win (the King's last words)
     this.zone = stageZone(data.zone);
   }
 
@@ -454,6 +455,7 @@ export class Battle extends Phaser.Scene {
     this.leaving = true;
     const quiet = this.battle.state !== "lost"; // back where you were, so no area banner
     this.cameras.main.fadeOut(250);
-    this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("World", { quiet }));
+    const script = this.battle.state === "won" ? this.afterWin : null;
+    this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("World", { quiet, script }));
   }
 }
