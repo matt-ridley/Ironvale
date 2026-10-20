@@ -9,6 +9,7 @@ import { COMPANIONS, COMPANION_SLOTS, startingGear } from "../rules/party.js";
 import { MAPS } from "../world/maps.js";
 import { blockedAt, feetAt } from "../world/movement.js";
 import { OVERWORLD } from "../world/overworld.js";
+import { cleanBestiary } from "../rules/bestiary.js";
 
 export const SAVE_KEY = "ironvale-save";
 export const SAVE_FORMAT = 2;
@@ -71,6 +72,7 @@ export function deserialize(json) {
     facing: DIR_NAMES.includes(s.facing) ? s.facing : "down",
     stepsSinceFight: isInt(s.stepsSinceFight) ? s.stepsSinceFight : 0,
     flags,
+    bestiary: cleanBestiary(s.bestiary), // saves from before 0.16.0 have none
   };
 }
 

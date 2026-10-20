@@ -2,13 +2,14 @@
 // with the joystick (touch), arrow keys or WASD (hold Shift to run); the camera glides after the hero. Walk into
 // people, things or shop doors (or press Enter/Space facing them) to interact (people and things open the Meet
 // screen), into a house door to go inside, and onto an exit (a doormat, the daylight in the cave) to go to another
-// map. Q opens the quest log. Wild areas can start a fight as you walk; Oakhollow heals you. A Potion of Speed makes
+// map. Q opens the quest log and M the world map (which can fast-travel you). Wild areas can start a fight as you walk; Oakhollow heals you. A Potion of Speed makes
 // you faster and fights rarer for a number of steps. A companion in your party walks along behind you. The HUD lives
 // in the Hud scene on top.
 import { TILE, WORLD_ZOOM, FONT, COLORS } from "../config.js";
 import { zoneAt, tileAt, objectAt, activeObjects, exitAt, doorAt } from "../world/map.js";
 import { moveBody, velocity, facingFor, tileOf, tileAhead, feetAt, WALK_SPEED, SPEED_POTION_BOOST } from "../world/movement.js";
 import { MAPS } from "../world/maps.js";
+import { markSeen } from "../world/travel.js";
 import { state, autosave } from "../state/game.js";
 import { rollEncounter } from "../world/encounters.js";
 import { rest } from "../rules/character.js";
@@ -72,6 +73,7 @@ export class World extends Phaser.Scene {
     this.input.keyboard.on("keydown-ESC", () => this.toTitle());
     this.input.keyboard.on("keydown-I", () => this.openOverlay("Inventory"));
     this.input.keyboard.on("keydown-Q", () => this.openOverlay("Quests"));
+    this.input.keyboard.on("keydown-M", () => this.openOverlay("WorldMap"));
     this.input.keyboard.on("keydown-ENTER", () => this.interactAhead());
     this.input.keyboard.on("keydown-SPACE", () => this.interactAhead());
     // Scene events outlive a restart, so swap the listener rather than adding another.
@@ -141,6 +143,10 @@ export class World extends Phaser.Scene {
 
   onResume() {
     this.frozen = false;
+    // The map asked for a fast trip somewhere.
+    const trip = this.pendingTravel;
+    this.pendingTravel = null;
+    if (trip) return this.travel(trip.map, trip.at, "down");
     this.input.keyboard.resetKeys(); // keys let go while a menu was open would otherwise still read as held
     // A conversation can move you (climbing the oak) or change the map (shoving it away).
     this.syncFollower();
@@ -259,6 +265,7 @@ export class World extends Phaser.Scene {
     const zone = zoneAt(this.map, t.x, t.y);
     if (zone && zone.id !== this.zoneId) {
       this.zoneId = zone.id;
+      markSeen(state.flags, zone.id); // for the map
       this.say("banner", zone.name, 1800);
       // Until the inn opens, coming home to the village is a full rest.
       const h = state.hero;

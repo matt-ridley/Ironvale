@@ -1,4 +1,4 @@
-// The layer over the world: HP, gold and quest line, the QUESTS / BAG / MENU / sound buttons, area banners and notes,
+// The layer over the world: HP, gold and quest line, the MAP / QUESTS / BAG / MENU / sound buttons, area banners and notes,
 // and the joystick. It runs alongside World and is drawn on the menu grid, so it stays crisp while the camera moves.
 import { WIDTH, FONT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
@@ -28,6 +28,7 @@ export class Hud extends Phaser.Scene {
     button(this, WIDTH - 84, 13, 48, 18, "BAG", () => world().openOverlay("Inventory"));
     this.sound = button(this, WIDTH - 134, 13, 44, 18, "", () => { toggleMuted(); this.showSound(); sfx("select"); });
     button(this, WIDTH - 192, 13, 64, 18, "QUESTS", () => world().openOverlay("Quests"));
+    button(this, WIDTH - 244, 13, 36, 18, "MAP", () => world().openOverlay("WorldMap"));
     this.showSound();
 
     this.bannerText = this.add.text(WIDTH / 2, 76, "", { fontFamily: FONT, fontSize: "10px", color: COLORS.gold, stroke: "#000000", strokeThickness: 3 }).setOrigin(0.5).setAlpha(0);

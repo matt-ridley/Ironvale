@@ -9,6 +9,7 @@ import { state, faint, autosave } from "../state/game.js";
 import { uiCamera } from "../ui/widgets.js";
 import { GROUND_Y, PANEL_Y, ALLY_X, stageZone, drawBackdrop, standParty, stand, breathe } from "../ui/stage.js";
 import { playMusic, playJingle, sfx } from "../audio/sound.js";
+import { recordBattle } from "../rules/bestiary.js";
 
 const LINE_MS = 700;
 const LOG_ROWS = 6;
@@ -296,6 +297,7 @@ export class Battle extends Phaser.Scene {
 
   showResult() {
     const b = this.battle, lines = [];
+    recordBattle(state.bestiary, b);
     let title, color;
     if (b.state === "won") {
       if (this.winFlag) state.flags[this.winFlag] = true;
