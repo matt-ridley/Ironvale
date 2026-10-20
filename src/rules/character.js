@@ -59,7 +59,7 @@ export function createCharacter({
   };
   char.maxHp = Math.max(1, 10 + mod(char, "CON")); // level 1: the hit die's maximum + CON
   char.hp = char.maxHp;
-  if (weapon) char.equipment.weapon = makeItem(weapon);
+  if (weapon) char.equipment.weapon = makeItem(weapon, { crest: true }); // the sword you start with (rules/items.js)
   if (shield) char.equipment.shield = makeItem(shield);
   if (armour) char.equipment.armour = makeItem(armour);
   for (let i = 0; i < potions; i++) char.inventory.push(makeItem("potionHealing"));

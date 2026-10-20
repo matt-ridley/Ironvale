@@ -1,8 +1,9 @@
-// Title screen: CONTINUE your saved hero, or start a NEW GAME (with a check first if that would replace a save).
+// Title screen: CONTINUE your saved hero, or start a NEW GAME (with a check first if that would replace a save), which
+// asks for the hero's name first (the NameEntry screen starts the game).
 import { TITLE, VERSION, WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { armourClass } from "../rules/character.js";
-import { state, newGame, autosave } from "../state/game.js";
-import { loadGame, deleteSave } from "../state/save.js";
+import { state } from "../state/game.js";
+import { loadGame } from "../state/save.js";
 import { objective } from "../story/scripts.js";
 import { text, panel, button, uiCamera } from "../ui/widgets.js";
 import { heroFrame } from "../art/pixels.js";
@@ -60,10 +61,7 @@ export class Title extends Phaser.Scene {
   }
 
   startNew() {
-    deleteSave();
-    newGame();
-    autosave();
-    this.play();
+    this.scene.start("NameEntry", { mode: "new" }); // which replaces the save once you're named
   }
 
   /* Starting over would replace the saved hero, so ask first. */

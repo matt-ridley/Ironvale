@@ -1,6 +1,6 @@
 # Ironvale roadmap
 
-The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 4 of the build order are built (0.18.0 to 0.21.0); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
+The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 5 of the build order are built (0.18.0 to 0.22.0); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
 
 ## The shape of the game
 
@@ -198,7 +198,7 @@ One pull request each, with a minor version bump.
 2. ~~**Fighter features** (L2-8), the Potion of Dexterity rework, saving throws.~~ **Built in 0.19.0.** Action Surge is a SURGE button: one more action, then your turn ends. Ability score increases are picked on a LevelUp screen that opens over the world whenever `hero.asi` > 0 (it can't be skipped). Saving throws are `savingThrow()` in `checks.js` (a fighter adds proficiency to STR and CON saves); nothing calls for one yet. Monsters have no ability scores, so their saves wait for the magic engine (step 3).
 3. ~~**Magic engine:** slots, cantrips, multi-target spells, conditions, scrolls. Rules only and unit-tested, built for both companions and hero runes.~~ **Built in 0.20.0.** `data/spells.js` (14 SRD spells: Fire Bolt, Sacred Flame, Produce Flame, Vicious Mockery, Magic Missile, Burning Hands, Sleep, Shield, Cure Wounds, Healing Word, Bless, Entangle, Faerie Fire, Fireball, plus the SRD slot table), `rules/conditions.js` (asleep, paralyzed, restrained, outlined, mocked, blessed, shielded) and `rules/magic.js` (`makeCaster`, a caster's `book` of known spells and used slots, `spendForSpell`, `castSpell`, `readScroll`, `healOutsideBattle`). The battle engine now runs conditions every turn, and monsters have SRD saves and a creature type. Not done yet: concentration (Bless and the rest just last their rounds), Turn Undead, Spiritual Weapon, Moonbeam, Misty Step, Goodberry and Hypnotic Pattern; scroll items exist but aren't sold or found, and no screen casts anything: step 4 adds the casting companions and the buttons.
 4. ~~**Companion roster** and tactics (option C); Megan moves onto it.~~ **Built in 0.21.0**, with spell scrolls in the apothecary too. The roster is `hero.roster`, swapped through Nell at the inn (any inn, once there are more). Tactics live in `rules/tactics.js`: ATTACK, HEAL (potions from your pack for Megan; healing spells first for a caster) and SAVE MAGIC (casters only: cantrips). Tapping a companion in battle sets `companion.lead`, and their turn waits for SHOOT, a potion, SPELLS (casters) or AUTO. The auto-play doesn't use Sleep, Entangle, Faerie Fire, Bless or Shield yet: only damage and healing; a caster you lead can cast them. Companion casters are tested with a stand-in wizard, since the first real one arrives in step 8.
-5. **Act 1 plant:** the crest on the sword, and support for titles.
+5. ~~**Act 1 plant:** the crest on the sword, and support for titles.~~ **Built in 0.22.0**, with hero naming (open question 3: yes). The crest is `crest: true` on the starting longsword: "a tower between two keys", only in its description; it can't be sold, so Brannoc can always see it in Act 2. Titles are `TITLES` in `story/hero.js` (Traveller, Hero of Oakhollow so far); add each act's as it's built. Lines that use the name go through `callName()`, so they still read well for a hero who kept the default "Hero".
 6. **The King's hall:** the Signet, Brannoc, the King's last words, `shownWhen`, Q3.
 7. **Multi-map travel** and the world map by region.
 8. **Fenwatch:** the tavern, bounty board, Brannoc's forge, and the first of Claire, Rachel and Robyn.
@@ -211,6 +211,6 @@ One pull request each, with a minor version bump.
 
 1. **The hero's secret:** the last Warden heir, or power from somewhere else (chosen by the Signet, or earned with no bloodline)?
 2. **Oaths:** three to choose from, or one fixed path that's simpler to build?
-3. **A name for the hero:** let the player pick one at NEW GAME? Today they're "Hero", and titles and story moments would mean more with a name.
+3. ~~**A name for the hero:**~~ Decided and built in 0.22.0: picked at NEW GAME (or RENAME in the bag), "Hero" if left empty.
 4. **Claire, Rachel and Robyn:** their roles, when you meet them, and whether one is the mentor or the rival.
 5. **Inn prices:** about 10 gold in Act 1 and 25 in Act 2 is a guess; tune once the economy is clearer.

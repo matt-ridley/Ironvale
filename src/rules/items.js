@@ -1,4 +1,6 @@
 // Item instances, equipping, and blacksmith upgrades. Functions change the character in place and return what happened.
+// An instance can carry `crest: true`: the hero's starting longsword has a worn crest on its pommel, which matters to
+// the story later (Act 2). It can't be sold, and it never stacks with other longswords.
 import { ITEMS, MAX_UPGRADE } from "../data/items.js";
 import { roll } from "./dice.js";
 
@@ -7,10 +9,12 @@ export const SLOTS = ["weapon", "shield", "armour"];
 export const isUpgradable = item => [...SLOTS, "bow"].includes(baseOf(item).type);
 
 let nextUid = 1;
-export function makeItem(base, { upgrade = 0 } = {}) {
+export function makeItem(base, { upgrade = 0, crest = false } = {}) {
   if (!ITEMS[base]) throw new Error(`Unknown item: ${base}`);
-  return { uid: `i${Date.now().toString(36)}${(nextUid++).toString(36)}`, base, upgrade };
+  return { uid: `i${Date.now().toString(36)}${(nextUid++).toString(36)}`, base, upgrade, ...(crest && { crest: true }) };
 }
+
+export const CREST_TEXT = "A worn crest is stamped on the pommel: a tower between two keys.";
 
 export const baseOf = item => ITEMS[item.base];
 export const itemName = item => baseOf(item).name + (item.upgrade ? ` +${item.upgrade}` : "");
@@ -22,7 +26,7 @@ export const isHealing = item => isPotion(item) && !!baseOf(item).heal;
 export function describeItem(item) {
   const b = baseOf(item), up = item.upgrade ? ` +${item.upgrade}` : "";
   const props = b.properties?.length ? `, ${b.properties.join(", ")}` : "";
-  if (b.type === "weapon") return `${b.damage} damage${props}.${up && ` ${up.trim()} to hit and damage.`}`;
+  if (b.type === "weapon") return `${b.damage} damage${props}.${up && ` ${up.trim()} to hit and damage.`}${item.crest ? ` ${CREST_TEXT}` : ""}`;
   if (b.type === "bow") return `${b.damage} damage, for a friend in your party.${up && ` ${up.trim()} to hit and damage.`}`;
   if (b.type === "shield") return `+${b.ac} AC.${up && ` ${up.trim()} more AC.`}`;
   if (b.type === "armour") {
@@ -41,7 +45,7 @@ export function describeItem(item) {
 export function groupPack(inventory) {
   const groups = new Map();
   for (const item of inventory) {
-    const key = `${item.base}+${item.upgrade}`;
+    const key = `${item.base}+${item.upgrade}${item.crest ? "+crest" : ""}`;
     if (!groups.has(key)) groups.set(key, { item, items: [], count: 0, name: itemName(item) });
     const g = groups.get(key);
     g.items.push(item);

@@ -5,11 +5,13 @@ import { saveGame, loadGame } from "./save.js";
 import { feetAt } from "../world/movement.js";
 import { MAPS } from "../world/maps.js";
 import { hubById, FIRST_HUB } from "../world/travel.js";
+import { cleanName } from "../story/hero.js";
 
 export const state = {};
 
-export function newGame() {
-  state.hero = createCharacter();
+/* A fresh game, with the hero's name (from the name screen; "Hero" if none). */
+export function newGame(name) {
+  state.hero = createCharacter({ name: cleanName(name) });
   state.map = OVERWORLD.name;
   state.pos = feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y); // in tiles, at the hero's feet
   state.facing = "down";
