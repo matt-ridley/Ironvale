@@ -121,3 +121,51 @@ test("a game saved inside a house loads inside it", async () => {
   assert.equal(loaded.map, "tomHut");
   assert.deepEqual(loaded.pos, s.pos);
 });
+
+test("Nell's inn is a full rest for 10 gold, and turns you away without it", async () => {
+  const { INN_COST } = await import("../src/story/scripts.js");
+  assert.equal(INN_COST, 10);
+  const s = fresh();
+  joinParty(s.hero, "megan");
+  s.hero.gold = 25; s.hero.hp = 2; s.hero.secondWind = false; s.hero.companion.hurt = 5;
+  const c = startConversation(SCRIPTS.inn, s);
+  assert.equal(view(c).speaker, "NELL");
+  pick(c, "Stay the night (10 gold)");
+  assert.equal(s.hero.gold, 15);
+  assert.equal(s.hero.hp, s.hero.maxHp);
+  assert.equal(s.hero.secondWind, true);
+  assert.equal(s.hero.companion.hurt, 0);
+  assert.match(view(c).text, /both sleep/);
+
+  const poor = fresh();
+  poor.hero.gold = 9; poor.hero.hp = 2;
+  const p = startConversation(SCRIPTS.inn, poor);
+  pick(p, "Stay the night (10 gold)");
+  assert.match(view(p).text, /only 9/);
+  assert.equal(poor.hero.gold, 9);
+  assert.equal(poor.hero.hp, 2);
+});
+
+test("the Goblin Rocks campfire is a free short rest", () => {
+  const s = fresh();
+  s.hero.hp = 1; s.hero.secondWind = false; s.hero.gold = 7;
+  const c = startConversation(SCRIPTS.campfire, s);
+  pick(c, "Rest by the fire (short rest)");
+  assert.equal(s.hero.hp, Math.floor(s.hero.maxHp / 2));
+  assert.equal(s.hero.secondWind, true);
+  assert.equal(s.hero.gold, 7);
+  assert.match(view(c).text, /Second Wind back/);
+  const again = startConversation(SCRIPTS.campfire, s);
+  pick(again, "Rest by the fire (short rest)");
+  assert.match(view(again).text, /as rested as a fire/);
+});
+
+test("the inn is in Oakhollow, the campfire at Goblin Rocks, and both can be reached", () => {
+  const door = world.doors.find(d => d.to === "inn");
+  assert.equal(zoneAt(world, door.x, door.y).id, "village");
+  const fire = world.objects.find(o => o.id === "campfire");
+  assert.equal(zoneAt(world, fire.x, fire.y).id, "rocks");
+  assert.ok(SPRITES.campfire && SPRITES.innkeeper);
+  const from = reachable(world, world.spawn, { logCleared: true });
+  assert.ok([[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => from.has(`${fire.x + dx},${fire.y + dy}`)), "can't reach the campfire");
+});

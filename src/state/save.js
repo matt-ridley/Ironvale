@@ -10,10 +10,12 @@ import { MAPS } from "../world/maps.js";
 import { blockedAt, feetAt } from "../world/movement.js";
 import { OVERWORLD } from "../world/overworld.js";
 import { cleanBestiary } from "../rules/bestiary.js";
+import { hubById } from "../world/travel.js";
 
 export const SAVE_KEY = "ironvale-save";
-export const SAVE_FORMAT = 2;
-// Format 1 (before 0.7.0) saved whole tiles; format 2 saves the hero's feet in fractions of a tile.
+export const SAVE_FORMAT = 3;
+// Format 1 (before 0.7.0) saved whole tiles; format 2 saves the hero's feet in fractions of a tile; format 3 (0.18.0)
+// adds lastHub, the town you wake in when you faint. Older saves get Oakhollow.
 const DIR_NAMES = ["up", "down", "left", "right"];
 
 export function serialize(state) {
@@ -37,7 +39,7 @@ function loadCompanion(c) {
 export function deserialize(json) {
   let data;
   try { data = JSON.parse(json); } catch { return null; }
-  if (!data || ![1, SAVE_FORMAT].includes(data.format) || !data.state?.hero) return null;
+  if (!data || ![1, 2, SAVE_FORMAT].includes(data.format) || !data.state?.hero) return null;
   const s = data.state, h = s.hero;
   if (!h.abilities || !["STR", "DEX", "CON"].every(a => isInt(h.abilities[a]))) return null;
   for (const k of ["level", "xp", "gold", "maxHp", "hp"]) if (!isInt(h[k])) return null;
@@ -73,6 +75,7 @@ export function deserialize(json) {
     stepsSinceFight: isInt(s.stepsSinceFight) ? s.stepsSinceFight : 0,
     flags,
     bestiary: cleanBestiary(s.bestiary), // saves from before 0.16.0 have none
+    lastHub: hubById(s.lastHub).id, // saves from before 0.18.0 (and unknown towns) get Oakhollow
   };
 }
 

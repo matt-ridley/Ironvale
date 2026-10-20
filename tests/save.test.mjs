@@ -159,3 +159,15 @@ test("a companion is saved with their wounds; an unknown one is dropped", () => 
   state.hero.companion = { id: "dragon", hurt: 0 };
   assert.equal("companion" in deserialize(serialize(state)).hero, false);
 });
+
+test("the last town is saved; older saves, and towns the game doesn't know, get Oakhollow", () => {
+  played();
+  assert.equal(deserialize(serialize(state)).lastHub, "oakhollow");
+  const data = JSON.parse(serialize(state));
+  assert.equal(data.format, 3);
+  delete data.state.lastHub;
+  data.format = 2; // before 0.18.0
+  assert.equal(deserialize(JSON.stringify(data)).lastHub, "oakhollow");
+  data.state.lastHub = "atlantis";
+  assert.equal(deserialize(JSON.stringify(data)).lastHub, "oakhollow");
+});

@@ -6,6 +6,7 @@ import { seededRng } from "../src/rules/dice.js";
 import { state, newGame, faint, FAINT_MAX_LOSS } from "../src/state/game.js";
 import { OVERWORLD } from "../src/world/overworld.js";
 import { feetAt } from "../src/world/movement.js";
+import { MAPS } from "../src/world/maps.js";
 
 const always = () => 0; // a roll of 0 is under any chance
 const never = () => 0.999;
@@ -46,17 +47,30 @@ test("encounters return a fresh list each time", () => {
   assert.ok(!rollEncounter("forest", "grass", 99, always).includes("dragon"));
 });
 
-test("fainting sends you home rested, minus half your gold", () => {
+test("fainting wakes you at your last town's inn, rested for free, minus half your gold", () => {
   newGame();
   state.hero.gold = 51;
   state.hero.hp = 0;
   state.hero.secondWind = false;
   state.pos = { x: 50, y: 30 };
-  assert.deepEqual(faint(), { goldLost: 25 });
+  assert.deepEqual(faint(), { goldLost: 25, hub: "oakhollow" });
   assert.equal(state.hero.gold, 26);
   assert.equal(state.hero.hp, state.hero.maxHp);
   assert.equal(state.hero.secondWind, true);
-  assert.deepEqual(state.pos, feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y));
+  assert.equal(state.map, "inn");
+  assert.deepEqual(state.pos, feetAt(MAPS.inn.spawn.x, MAPS.inn.spawn.y));
+});
+
+test("an unknown last town (a newer save, say) wakes you in Oakhollow", () => {
+  newGame();
+  state.lastHub = "atlantis";
+  assert.equal(faint().hub, "oakhollow");
+  assert.equal(state.map, "inn");
+});
+
+test("no monsters come near a camp", () => {
+  assert.ok(rollEncounter("rocks", "grass", 99, always));
+  assert.equal(rollEncounter("rocks", "grass", 99, always, { safe: true }), null);
 });
 
 test("a Potion of Speed makes fights rarer", () => {
@@ -74,19 +88,19 @@ test("Willowmere and the Deep Warrens have monsters; the King's hall and the cav
   assert.equal(rollEncounter("warrens", "caveexit", 99, always), null);
 });
 
-test("fainting in the Deep Warrens sends you home to Oakhollow", () => {
+test("fainting in the Deep Warrens sends you home to Oakhollow's inn", () => {
   newGame();
   state.map = "deepCave";
   state.pos = feetAt(20, 25);
   faint();
-  assert.equal(state.map, OVERWORLD.name);
+  assert.equal(state.map, "inn");
 });
 
 test("fainting never costs more than 50 gold, and banked gold is safe", () => {
   newGame();
   state.hero.gold = 500;
   state.hero.bank = 300;
-  assert.deepEqual(faint(), { goldLost: FAINT_MAX_LOSS });
+  assert.equal(faint().goldLost, FAINT_MAX_LOSS);
   assert.equal(FAINT_MAX_LOSS, 50);
   assert.equal(state.hero.gold, 450);
   assert.equal(state.hero.bank, 300);

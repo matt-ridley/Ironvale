@@ -47,10 +47,10 @@ export const QUIET_STEPS = 12; // no fights for this many steps after one
 export const SAFE_TILES = ["cave", "caveexit"]; // standing in a cave mouth never starts a fight
 export const SPEED_ENCOUNTERS = 0.35; // a Potion of Speed leaves this much of the usual chance
 
-/* Returns the monsters to fight (ids) or null. `stepsSinceFight` counts this step. */
-export function rollEncounter(zoneId, tileName, stepsSinceFight, rng = Math.random, { fast = false } = {}) {
+/* Returns the monsters to fight (ids) or null. `stepsSinceFight` counts this step. `safe`: you're at a camp. */
+export function rollEncounter(zoneId, tileName, stepsSinceFight, rng = Math.random, { fast = false, safe = false } = {}) {
   const area = ENCOUNTERS[zoneId];
-  if (!area || stepsSinceFight < QUIET_STEPS || SAFE_TILES.includes(tileName)) return null;
+  if (!area || safe || stepsSinceFight < QUIET_STEPS || SAFE_TILES.includes(tileName)) return null;
   const chance = (tileName === "path" ? area.chance / 2 : area.chance) * (fast ? SPEED_ENCOUNTERS : 1);
   if (rng() >= chance) return null;
   return [...pickWeighted(area.table, rng).foes];

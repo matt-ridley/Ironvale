@@ -3,6 +3,8 @@ import { createCharacter, rest } from "../rules/character.js";
 import { OVERWORLD } from "../world/overworld.js";
 import { saveGame, loadGame } from "./save.js";
 import { feetAt } from "../world/movement.js";
+import { MAPS } from "../world/maps.js";
+import { hubById, FIRST_HUB } from "../world/travel.js";
 
 export const state = {};
 
@@ -14,21 +16,23 @@ export function newGame() {
   state.stepsSinceFight = 0;
   state.flags = {}; // quest progress, e.g. questStarted, logCleared, chiefDefeated, questRewarded, and seenForest (map)
   state.bestiary = {}; // monsters met and beaten: { goblin: { seen: 3, beaten: 2 } }
+  state.lastHub = FIRST_HUB; // the last town you were in: you wake at its inn if you faint
 }
 
 export const FAINT_MAX_LOSS = 50;
 
-/* Losing a fight isn't the end: you wake in the village, rested, but half the gold you carry is gone (never more
-   than FAINT_MAX_LOSS). Gold in the bank is safe. */
+/* Losing a fight isn't the end: someone carries you to your last town's inn, where you wake rested (for free), but
+   half the gold you carry is gone (never more than FAINT_MAX_LOSS). Gold in the bank is safe. */
 export function faint() {
   const lost = Math.min(Math.floor(state.hero.gold / 2), FAINT_MAX_LOSS);
   state.hero.gold -= lost;
   rest(state.hero);
-  state.map = OVERWORLD.name;
-  state.pos = feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y);
+  const hub = hubById(state.lastHub), inn = MAPS[hub.inn];
+  state.map = inn.name;
+  state.pos = feetAt(inn.spawn.x, inn.spawn.y);
   state.facing = "down";
   state.stepsSinceFight = 0;
-  return { goldLost: lost };
+  return { goldLost: lost, hub: hub.id };
 }
 
 /* Writes the current state to the save slot. Quietly does nothing where storage isn't available. */

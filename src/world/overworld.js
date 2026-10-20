@@ -5,6 +5,7 @@
 
 export const OVERWORLD = {
   name: "overworld",
+  outdoors: true, // a Homeward Feather works here (not indoors or underground)
   spawn: { x: 15, y: 20 },
   // First match wins. Tiles in no zone (the river banks) keep the last zone's name.
   zones: [
@@ -18,6 +19,7 @@ export const OVERWORLD = {
     { x: 11, y: 9, to: "marenHouse", name: "Elder Maren's house" },
     { x: 9, y: 24, to: "hazelHouse", name: "Pip's house" },
     { x: 20, y: 43, to: "tomHut", name: "Old Tom's hut" },
+    { x: 22, y: 9, to: "inn", name: "The Sleeping Fox inn" },
   ],
   // Things standing on the map. They block walking; walk into one to talk to it or deal with it.
   // `goneWhen` names a quest flag that removes the object (the oak, once shoved aside; a chest, once opened).
@@ -26,6 +28,7 @@ export const OVERWORLD = {
   objects: [
     { id: "elder", x: 17, y: 18, sprite: "elder", script: "elder" },
     { id: "pip", x: 10, y: 29, sprite: "villager", script: "villager" },
+    { id: "campfire", x: 50, y: 31, sprite: "campfire", script: "campfire", still: true },
     { id: "fallenLog", x: 54, y: 24, sprite: "log", script: "log", goneWhen: "logCleared", still: true },
     { id: "tom", x: 23, y: 47, sprite: "fisher", script: "fisher" },
     { id: "megan", x: 12, y: 58, sprite: "megan", frame: 0, script: "megan", goneWhen: "meganJoined" },
@@ -42,9 +45,9 @@ export const OVERWORLD = {
   "TT.........................,..~~.TT.TTTTTTTT...T..T.TTTTT....TTT",
   "TT............................~~.TT..T..TTTTTT.TTTTTTTTTT.T.TTTT",
   "TT.............=.,............~~.TTTTTTTTTT....TTT.TTTT.TTTTTTTT",
-  "TT.......RRRRR.=.............T~~TT.TTT...TTTTTTTTT.TTT.TTT..TTTT",
-  "TT.......RRRRR.=..,...........~~.TT.....TT...TT..TTTTT.T.TT..TTT",
-  "TT.......HHDHH.=..............~~.TTTTT.T..TT.TTT.T.TTTTTTTTTTTTT",
+  "TT.......RRRRR.=...RRRRRR....T~~TT.TTT...TTTTTTTTT.TTT.TTT..TTTT",
+  "TT.......RRRRR.=..,RRRRRR.....~~.TT.....TT...TT..TTTTT.T.TT..TTT",
+  "TT.......HHDHH.=...HHHDHH.....~~.TTTTT.T..TT.TTT.T.TTTTTTTTTTTTT",
   "TT.........=,..=..,.......,..T~~.T.T.TT...TTT...TTTTT.T.T.TTTTTT",
   "TT.........=====.............T~~.TTTT.TT.TTTTTT...T.TTTT.TTTTTTT",
   "TT.......,.....=..............~~.T.TTT==========T.TT...TT.T.TTTT",

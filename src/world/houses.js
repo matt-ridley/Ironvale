@@ -67,4 +67,23 @@ export const TOM_HUT = house({
   ],
 });
 
-export const HOUSES = [MAREN_HOUSE, HAZEL_HOUSE, TOM_HUT];
+// Oakhollow's inn: Nell lets you a bed for the night (a long rest, for gold). Fainting wakes you here, too.
+export const INN = house({
+  name: "inn",
+  title: "The Sleeping Fox",
+  door: { x: 22, y: 9 },
+  mat: { x: 6, y: 6 },
+  objects: [{ id: "nell", x: 9, y: 2, sprite: "innkeeper", script: "inn" }],
+  rows: [
+    "xxxxxxxxxxxxx",
+    "x|s||h|||s||x",
+    "xwwwwwwwwwwux",
+    "xwkwwwwkkwwux",
+    "xwwwwwwwwwwwx",
+    "xwkwwwwwwwwwx",
+    "xwwwwwmwwwwwx",
+    "xxxxxxxxxxxxx",
+  ],
+});
+
+export const HOUSES = [MAREN_HOUSE, HAZEL_HOUSE, TOM_HUT, INN];

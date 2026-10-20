@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { TRAVEL_POINTS, travelPoints, markSeen, zoneSeen, seenFlag, canFastTravel } from "../src/world/travel.js";
+import { TRAVEL_POINTS, travelPoints, markSeen, zoneSeen, seenFlag, canFastTravel, safePlace, hubById, CAMP_RADIUS } from "../src/world/travel.js";
+import { feetAt } from "../src/world/movement.js";
 import { MAPS } from "../src/world/maps.js";
 import { isWalkable, zoneAt, reachable, tileAt } from "../src/world/map.js";
 import { MAP_COLOURS } from "../src/art/tiles.js";
@@ -36,10 +37,36 @@ test("older saves count quest progress as having been there", () => {
   assert.ok(!zoneSeen({}, "forest"));
 });
 
-test("fast travel only works out in the open", () => {
-  assert.ok(canFastTravel({ map: "overworld" }));
-  assert.ok(!canFastTravel({ map: "deepCave" }));
-  assert.ok(!canFastTravel({ map: "tomHut" }));
+const at = (map, x, y) => ({ map, pos: feetAt(x, y) });
+
+test("fast travel only works from a town or a camp", () => {
+  assert.equal(safePlace(at("overworld", 15, 20))?.id, "oakhollow"); // the crossroads
+  assert.equal(safePlace(at("inn", 6, 5))?.id, "oakhollow");
+  assert.equal(safePlace(at("marenHouse", 5, 5))?.id, "oakhollow");
+  assert.equal(safePlace(at("tomHut", 4, 4))?.id, "willowmere");
+  assert.equal(safePlace(at("overworld", 20, 45))?.id, "willowmere"); // outside Old Tom's hut
+  assert.equal(safePlace(at("overworld", 51, 30))?.id, "goblinRocks"); // by the campfire
+  for (const s of [at("overworld", 45, 10), at("overworld", 40, 52), at("overworld", 40, 33), at("deepCave", 20, 25)]) {
+    assert.equal(safePlace(s), null, `${s.map} ${s.pos.x},${s.pos.y}`);
+    assert.ok(!canFastTravel(s));
+  }
+  assert.ok(canFastTravel(at("overworld", 15, 20)));
+});
+
+test("each place is a hub or a camp; hubs have an inn, camps a centre in their own zone", () => {
+  for (const p of TRAVEL_POINTS) {
+    assert.ok(["hub", "camp"].includes(p.kind), p.id);
+    assert.ok(MAPS[p.map], p.id);
+    if (p.kind === "hub") { assert.ok(MAPS[p.inn], `${p.id} has no inn`); assert.ok(p.rooms.includes(p.inn)); }
+    else {
+      assert.equal(zoneAt(world, p.centre.x, p.centre.y).id, p.zone, p.id);
+      assert.ok(Math.max(Math.abs(p.at.x - p.centre.x), Math.abs(p.at.y - p.centre.y)) <= CAMP_RADIUS, `${p.id}: travel lands you outside the camp`);
+    }
+    for (const r of p.rooms || []) assert.ok(world.doors.some(d => d.to === r), `${r} has no door`);
+  }
+  assert.equal(hubById("oakhollow").id, "oakhollow");
+  assert.equal(hubById("nowhere").id, "oakhollow");
+  assert.equal(hubById("willowmere").id, "oakhollow"); // a camp isn't a hub
 });
 
 test("every overworld tile has a colour on the map", () => {

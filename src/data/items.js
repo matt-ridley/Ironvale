@@ -31,6 +31,8 @@ export const ITEMS = {
   potionHealing:   { name: "Potion of Healing",   type: "consumable", heal: "2d4+2", cost: 20 },
   potionSpeed:     { name: "Potion of Speed",     type: "consumable", effect: "speed", steps: 150, cost: 30 },
   potionDexterity: { name: "Potion of Dexterity", type: "consumable", effect: "dexterity", cost: 40 },
+  // Not a potion, but used up the same way: out in the open, it takes you back to the last town (hub) you were in.
+  homewardFeather: { name: "Homeward Feather", type: "consumable", effect: "homeward", cost: 50 },
 };
 
 export const MAX_UPGRADE = 3;
@@ -44,7 +46,7 @@ export const SHOPS = {
   },
   apothecary: {
     title: "APOTHECARY", tabs: ["buy", "sell"], greeting: "Bubble, bubble! Fresh potions, brewed this morning.", tint: 0x9fd18b,
-    stock: ["potionHealing", "potionSpeed", "potionDexterity"],
+    stock: ["potionHealing", "potionSpeed", "potionDexterity", "homewardFeather"],
   },
 };
 export const STOCK = SHOPS.blacksmith.stock;

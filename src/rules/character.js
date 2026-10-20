@@ -87,11 +87,29 @@ export function gainXp(char, amount, rng = Math.random) {
   return { xp: char.xp, levelUps };
 }
 
-/* A long rest: full HP and Second Wind back, for your companion too. */
+/* A long rest (an inn, Old Tom's bed): full HP and Second Wind back, for your companion too. */
 export function rest(char) {
   char.hp = char.maxHp;
   char.secondWind = true;
   if (char.companion) char.companion.hurt = 0;
+}
+
+/* A short rest (a camp's fire): back up to at least half your maximum HP, and Second Wind back. Your companion gets
+   back up to half theirs (`companionMax` is their maximum HP). Resting again does nothing more, so a free campfire is
+   never as good as a bed. Returns what it gave: { healed, secondWind, companionHealed }. */
+export function shortRest(char, companionMax = 0) {
+  const healed = Math.max(0, Math.floor(char.maxHp / 2) - char.hp);
+  char.hp += healed;
+  const secondWind = !char.secondWind;
+  char.secondWind = true;
+  let companionHealed = 0;
+  const c = char.companion;
+  if (c && companionMax) {
+    const hurt = c.hurt || 0, cap = companionMax - Math.floor(companionMax / 2); // the most hurt they can stay
+    companionHealed = Math.max(0, hurt - cap);
+    c.hurt = hurt - companionHealed;
+  }
+  return { healed, secondWind, companionHealed };
 }
 
 export function heal(char, amount) {

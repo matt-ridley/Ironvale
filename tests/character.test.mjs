@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { abilityMod, proficiencyBonus, levelForXp, createCharacter, armourClass, weaponAttack, gainXp, heal, xpToNextLevel } from "../src/rules/character.js";
+import { abilityMod, proficiencyBonus, levelForXp, createCharacter, armourClass, weaponAttack, gainXp, heal, xpToNextLevel, rest, shortRest } from "../src/rules/character.js";
 import { makeItem } from "../src/rules/items.js";
 import { faces } from "./helpers.mjs";
 
@@ -75,4 +75,29 @@ test("healing stops at max HP", () => {
   c.hp = 5;
   assert.equal(heal(c, 100), 7);
   assert.equal(c.hp, c.maxHp);
+});
+
+test("a short rest brings you up to half your HP and gives Second Wind back; a long rest is full", () => {
+  const c = createCharacter(); // 12 HP
+  c.hp = 2; c.secondWind = false;
+  assert.deepEqual(shortRest(c), { healed: 4, secondWind: true, companionHealed: 0 });
+  assert.equal(c.hp, 6);
+  assert.equal(c.secondWind, true);
+  assert.deepEqual(shortRest(c), { healed: 0, secondWind: false, companionHealed: 0 }); // resting again does nothing
+  c.hp = 10;
+  assert.equal(shortRest(c).healed, 0); // never takes HP away
+  assert.equal(c.hp, 10);
+  rest(c);
+  assert.equal(c.hp, c.maxHp);
+});
+
+test("a short rest gets your companion up to half their HP too", () => {
+  const c = createCharacter();
+  c.companion = { id: "megan", hurt: 7, gear: {} };
+  assert.equal(shortRest(c, 8).companionHealed, 3); // 1 HP left of 8 > 4 HP
+  assert.equal(c.companion.hurt, 4);
+  assert.equal(shortRest(c, 8).companionHealed, 0);
+  c.companion.hurt = 2;
+  shortRest(c, 8);
+  assert.equal(c.companion.hurt, 2);
 });

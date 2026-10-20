@@ -10,8 +10,12 @@ import { companionStats, companionCantDrink, companionDrink, equipCompanion, une
 import { text, panel, button, ListView, uiCamera } from "../ui/widgets.js";
 import { heroFrame } from "../art/pixels.js";
 import { sfx } from "../audio/sound.js";
+import { MAPS } from "../world/maps.js";
+import { hubById } from "../world/travel.js";
 
 const SLOT_TAG = { weapon: "WPN", shield: "SHD", armour: "ARM", bow: "BOW" };
+const outdoors = () => ({ outdoors: !!MAPS[state.map]?.outdoors }); // where a Homeward Feather works
+const useLabel = item => (baseOf(item).effect === "homeward" ? "USE" : "DRINK");
 
 export const damageText = a => `${a.damage}${a.damageBonus ? (a.damageBonus > 0 ? "+" : "") + a.damageBonus : ""}`;
 
@@ -130,8 +134,8 @@ export class Inventory extends Phaser.Scene {
       this.action.setLabel("TAKE OFF").setEnabled(true);
       this.showCompare(friend ? compareCompanionUnequip(h, row.slot) : compareUnequip(h, row.slot));
     } else if (isPotion(row.item)) {
-      const reason = friend ? companionCantDrink(h, row.item) : cantDrink(h, row.item);
-      this.action.setLabel("DRINK").setEnabled(!reason);
+      const reason = friend ? companionCantDrink(h, row.item) : cantDrink(h, row.item, outdoors());
+      this.action.setLabel(useLabel(row.item)).setEnabled(!reason);
       if (reason) this.msg.setText(reason).setColor(COLORS.dim);
     } else {
       const c = friend ? compareCompanionEquip(h, row.item.uid) : compareEquip(h, row.item.uid);
@@ -160,7 +164,8 @@ export class Inventory extends Phaser.Scene {
       if (friend) unequipCompanion(h, row.slot); else unequip(h, row.slot);
       msg = `${name} ${friend ? "takes" : "take"} off the ${itemName(row.item)}.`;
     } else if (isPotion(row.item)) {
-      const r = friend ? companionDrink(h, row.item.uid) : useItem(h, row.item.uid);
+      const r = friend ? companionDrink(h, row.item.uid) : useItem(h, row.item.uid, Math.random, outdoors());
+      if (r.effect === "homeward") return this.flyHome();
       ok = r.ok;
       msg = !r.ok ? r.reason : friend ? `${r.name} drinks the potion and recovers ${r.healed} HP.` : drinkText(r);
     } else {
@@ -177,6 +182,14 @@ export class Inventory extends Phaser.Scene {
     this.desc.setText("");
     this.msg.setText(msg).setColor(ok ? COLORS.good : COLORS.bad);
     sfx(!ok ? "back" : isPotion(row.item) && row.kind !== "worn" ? "heal" : "clang");
+  }
+
+  /* A Homeward Feather: close the bag and have the world take you to your last town. */
+  flyHome() {
+    const hub = hubById(state.lastHub);
+    sfx("select");
+    this.scene.get("World").pendingTravel = { map: hub.map, at: hub.at };
+    this.close();
   }
 
   close() {
