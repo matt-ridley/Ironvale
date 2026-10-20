@@ -9,9 +9,9 @@ import { DRAW, PROPS, C, box } from "./tiles.js";
 import { seededRng } from "../rules/dice.js";
 
 const T = TILE;
-const WET = new Set(["water", "bridge"]);
+const WET = new Set(["water", "bridge", "shallow", "boardwalk"]);
 const GREEN = new Set(["grass", "flowers", "tree", "fence", "rock"]); // ground a path frays into
-const TALL = new Set(["wall", "door", "smithy", "apothecary", "bank", "cavewall", "cavetorch", "backwall", "hearth", "shelf"]);
+const TALL = new Set(["wall", "door", "smithy", "apothecary", "bank", "cavewall", "cavetorch", "backwall", "hearth", "shelf", "keepwall", "palisade"]);
 const SIDES = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] };
 const CORNERS = { nw: ["n", "w", -1, -1], ne: ["n", "e", 1, -1], se: ["s", "e", 1, 1], sw: ["s", "w", -1, 1] };
 const TURN = { n: 0, e: 1, s: 2, w: 3, nw: 0, ne: 1, se: 2, sw: 3 }; // quarter turns from the top (or top-left corner)
@@ -66,6 +66,8 @@ const UNDERGROUND = [C.floor, C.floorDark, C.stoneDark];
 const LAND = {
   cavefloor: UNDERGROUND, caveexit: UNDERGROUND, cavewall: [C.stone, C.stoneDark, C.stoneDark], cavetorch: [C.stone, C.stoneDark, C.stoneDark],
   path: [C.path, C.pathDark, C.pathDark], bridge: [C.wood, C.woodDark, C.woodDark],
+  marsh: [C.marsh, C.marshDark, C.mud], reeds: [C.marsh, C.marshDark, C.mud], mud: [C.mud, C.mudDark, C.mudDark],
+  deadtree: [C.marsh, C.marshDark, C.mud], causeway: [C.flag, C.flagDark, C.flagDark], passage: [C.marsh, C.marshDark, C.mud],
 };
 const landColours = next => LAND[next] || [C.grass, C.grassDark, C.pathDark];
 

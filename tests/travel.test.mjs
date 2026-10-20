@@ -8,11 +8,11 @@ import { MAP_COLOURS } from "../src/art/tiles.js";
 
 const world = MAPS.overworld;
 
-test("every travel point is open ground in its own zone, reachable from the village", () => {
-  const from = reachable(world, world.spawn, { logCleared: true });
+test("every travel point is open ground in its own zone, reachable from where you arrive on its map", () => {
   for (const p of TRAVEL_POINTS) {
-    assert.ok(isWalkable(world, p.at.x, p.at.y), `${p.name} lands you in a wall`);
-    assert.equal(zoneAt(world, p.at.x, p.at.y).id, p.zone, p.name);
+    const map = MAPS[p.map], from = reachable(map, map.spawn, { logCleared: true });
+    assert.ok(isWalkable(map, p.at.x, p.at.y), `${p.name} lands you in a wall`);
+    assert.equal(zoneAt(map, p.at.x, p.at.y).id, p.zone, p.name);
     assert.ok(from.has(`${p.at.x},${p.at.y}`), `${p.name} can't be walked to`);
   }
 });
@@ -59,7 +59,7 @@ test("each place is a hub or a camp; hubs have an inn, camps a centre in their o
     assert.ok(MAPS[p.map], p.id);
     if (p.kind === "hub") { assert.ok(MAPS[p.inn], `${p.id} has no inn`); assert.ok(p.rooms.includes(p.inn)); }
     else {
-      assert.equal(zoneAt(world, p.centre.x, p.centre.y).id, p.zone, p.id);
+      assert.equal(zoneAt(MAPS[p.map], p.centre.x, p.centre.y).id, p.zone, p.id);
       assert.ok(Math.max(Math.abs(p.at.x - p.centre.x), Math.abs(p.at.y - p.centre.y)) <= CAMP_RADIUS, `${p.id}: travel lands you outside the camp`);
     }
     for (const r of p.rooms || []) assert.ok(world.doors.some(d => d.to === r), `${r} has no door`);
@@ -76,13 +76,14 @@ test("every overworld tile has a colour on the map", () => {
   }
 });
 
-test("the world's regions: only the Vale is open; the rest are dark shapes with hints", async () => {
+test("the world's regions: the Vale is open, Ironvale once you've reached the fen; the rest are dark shapes with hints", async () => {
   const { REGIONS, regionOpen, regionOf } = await import("../src/world/travel.js");
   assert.deepEqual(REGIONS.map(r => r.id), ["vale", "ironvale", "pass", "beyond"]);
-  assert.deepEqual(REGIONS.filter(regionOpen).map(r => r.id), ["vale"]);
+  assert.deepEqual(REGIONS.filter(r => regionOpen(r, {})).map(r => r.id), ["vale"]);
+  assert.deepEqual(REGIONS.filter(r => regionOpen(r, { seenFen: true })).map(r => r.id), ["vale", "ironvale"]);
   for (const r of REGIONS) {
-    if (regionOpen(r)) assert.ok(MAPS[r.map] && r.tab, r.id);
-    else assert.ok(["keep", "mountains", "door"].includes(r.shape) && typeof r.hint({}) === "string", r.id);
+    if (r.map) assert.ok(MAPS[r.map] && r.tab, r.id);
+    if (r.id !== "vale") assert.ok(["keep", "mountains", "door"].includes(r.shape) && typeof r.hint({}) === "string", r.id);
   }
   // Every map says which region it's in, and travel points' maps are real.
   for (const name of Object.keys(MAPS)) assert.equal(regionOf(name).id, MAPS[name].region, name);

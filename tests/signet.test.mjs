@@ -99,15 +99,18 @@ test("Maren knows the seal: Ironvale Keep and its Wardens, and the same crest on
   assert.equal(startConversation(SCRIPTS.elder, noRing).node, "signet");
 });
 
-test("Brannoc in Oakhollow knows the old road, and the goblins' passage is blocked", () => {
+test("Brannoc in Oakhollow knows the old road, and clears the goblins' passage", () => {
   const s = fresh({ ...KING_DONE, kingRewarded: true, signetTaken: true, brannocFreed: true });
   assert.match(view(startConversation(SCRIPTS.brannocTown, s)).text, /show it to your Elder/);
   s.flags.signetShown = true;
   const c = startConversation(SCRIPTS.brannocTown, s);
   assert.match(view(c).text, /Iron Road.*passage behind the King's throne/);
   choose(c);
-  assert.match(view(c).text, /choked with rubble/);
+  assert.match(view(c).text, /choked with rubble.*come back/);
   assert.equal(s.flags.askedBrannoc, true);
+  // Next time, he's cleared it.
+  assert.match(view(startConversation(SCRIPTS.brannocTown, s)).text, /goes all the way up/);
+  assert.equal(s.flags.passageCleared, true);
   assert.match(view(startConversation(SCRIPTS.brannocTown, s)).text, /Ironvale steel on your hip/);
 });
 
@@ -115,7 +118,7 @@ test("quest 3 in the log and on the HUD, step by step", () => {
   const f = { ...KING_DONE, kingRewarded: true };
   const steps = () => questLog(f).find(q => q.id === "signet").steps.map(st => (st.done ? "x" : st.current ? ">" : "."));
   assert.equal(questLog({ ...KING_DONE, kingDefeated: false }).some(q => q.id === "signet"), false);
-  assert.deepEqual(steps(), [">", ".", ".", ".", "."]);
+  assert.deepEqual(steps(), [">", ".", ".", ".", ".", ".", "."]);
   assert.equal(objective(f), "Search the Goblin King's hall");
   f.signetTaken = true;
   assert.equal(objective(f), "Free the smith chained in the King's hall");
@@ -124,8 +127,12 @@ test("quest 3 in the log and on the HUD, step by step", () => {
   f.signetShown = true;
   assert.equal(objective(f), "Ask Brannoc about Ironvale");
   f.askedBrannoc = true;
-  assert.match(objective(f), /future update/);
-  assert.deepEqual(steps(), ["x", "x", "x", "x", ">"]);
+  assert.equal(objective(f), "Come back to Brannoc by the smithy");
+  f.passageCleared = true;
+  assert.match(objective(f), /Climb the goblins' passage/);
+  f.seenFen = true;
+  assert.equal(objective(f), "Tell Elder Maren about Greywater Fen");
+  assert.deepEqual(steps(), ["x", "x", "x", "x", "x", "x", ">"]);
   assert.equal(objective({ ...KING_DONE }), "Return to Elder Maren"); // the reward comes first
   assert.ok(KING_REWARD.gold > 0);
 });

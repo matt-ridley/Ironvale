@@ -39,6 +39,8 @@ export const TRAVEL_POINTS = [
     centre: { x: 20, y: 43 }, rooms: ["tomHut"] }, // Old Tom's hut
   { id: "goblinRocks", name: "Goblin Rocks", kind: "camp", map: "overworld", zone: "rocks", at: { x: 52, y: 30 },
     centre: { x: 50, y: 31 } }, // the campfire
+  { id: "fenCamp", name: "Greywater Fen", kind: "camp", map: "ironvale", zone: "fen", at: { x: 5, y: 49 },
+    centre: { x: 6, y: 48 } }, // the campfire by the goblins' passage
 ];
 export const CAMP_RADIUS = 3;
 export const FIRST_HUB = "oakhollow";
@@ -57,18 +59,19 @@ export function safePlace(state) {
     : Math.max(Math.abs(t.x - p.centre.x), Math.abs(t.y - p.centre.y)) <= CAMP_RADIUS))) || null;
 }
 
-// The world, region by region: each act opens one, and the world map has a page for each. A region with no `map` yet
-// isn't built: the map shows it as a dark shape marked ???, with a `hint` (a function of the quest flags).
+// The world, region by region: each act opens one, and the world map has a page for each. A region is open once it's
+// built (it has a `map`) and you've been there (`reached`, a function of the quest flags); until then the map shows it
+// as a dark shape marked ???, with a `hint`.
 export const REGIONS = [
-  { id: "vale", name: "Oakhollow Vale", tab: "THE VALE", act: 1, map: "overworld" },
-  { id: "ironvale", name: "Ironvale", act: 2, shape: "keep",
+  { id: "vale", name: "Oakhollow Vale", tab: "THE VALE", act: 1, map: "overworld", reached: () => true },
+  { id: "ironvale", name: "Ironvale", tab: "IRONVALE", act: 2, map: "ironvale", reached: f => !!f.seenFen, shape: "keep",
     hint: f => (f.askedBrannoc ? "Ironvale Keep, east past the marshes. Brannoc is clearing the goblins' passage behind the King's throne."
       : f.signetShown ? "Ironvale Keep lies east, past the marshes, empty for a hundred years."
         : "Somewhere east, past the marshes.") },
   { id: "pass", name: "The Mountain Pass", act: 3, shape: "mountains", hint: () => "High mountains to the north." },
   { id: "beyond", name: "Beyond the Door", act: 4, shape: "door", hint: () => "No one knows." },
 ];
-export const regionOpen = region => !!region.map;
+export const regionOpen = (region, flags = {}) => !!region.map && !!region.reached?.(flags);
 /* The region a map belongs to (every map says, in its `region`). */
 export const regionOf = mapName => REGIONS.find(r => r.id === MAPS[mapName]?.region) || REGIONS[0];
 

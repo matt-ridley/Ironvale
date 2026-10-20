@@ -1,7 +1,7 @@
 // The quest log: every quest you've heard of, what it's about, its steps and whether each is done. It's worked out
 // from the quest flags every time, so there's nothing extra to save. No Phaser here, so it can be tested; the Quests
 // screen shows what questLog returns.
-import { QUEST_REWARD, KING_REWARD } from "./scripts.js";
+import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD } from "./scripts.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
 
@@ -35,13 +35,27 @@ export const QUESTS = [
     id: "signet", title: "The Iron Signet", kind: "main",
     known: f => f.kingDefeated,
     about: "A ring of black iron from the Goblin King's throne, with the same crest as your sword. Someone in Oakhollow may know what it means.",
-    reward: "?",
+    reward: reward(SIGNET_REWARD),
     steps: [
       { text: "Take the ring from the Goblin King's throne", done: f => f.signetTaken },
       { text: "Free the smith chained behind the throne", done: f => f.brannocFreed },
       { text: "Show the ring to Elder Maren", done: f => f.signetShown },
       { text: "Ask Brannoc, by the smithy, about Ironvale", done: f => f.askedBrannoc },
-      { text: "Find the way to Ironvale (in a future update)", done: () => false },
+      { text: "Wait for Brannoc to clear the goblins' passage", done: f => f.passageCleared },
+      { text: "Climb the passage to Greywater Fen", done: f => f.seenFen },
+      { text: "Tell Elder Maren what you found", done: f => f.fenReported },
+    ],
+  },
+  {
+    id: "causeway", title: "The Drowned Causeway", kind: "main",
+    known: f => f.seenFen,
+    about: "The old causeway to Ironvale Keep runs under black water. A marsh hag called Mother Sallow keeps it that way.",
+    reward: reward(CAUSEWAY_REWARD),
+    steps: [
+      { text: "Find the drowned causeway, north of the fen", done: f => f.causewaySeen || f.metSallow || f.causewayRaised },
+      { text: "Meet Mother Sallow at her hut", done: f => f.metSallow || f.causewayRaised },
+      { text: "Raise the causeway: fight her, or strike a bargain", done: f => f.causewayRaised },
+      { text: "Enter Ironvale Keep (in a future update)", done: () => false },
     ],
   },
   {
