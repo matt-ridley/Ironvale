@@ -11,6 +11,7 @@ import { tileOf, feetAt } from "../world/movement.js";
 import { DEEP_CAVE } from "../world/cave.js";
 import { callName, titleOf } from "./hero.js";
 import { hubById } from "../world/travel.js";
+import { GAME_SCRIPTS } from "./minigames.js";
 import { BOUNTIES, currentBounty, takeBounty, claimBounty, dropBounty, bountyLine } from "./bounties.js";
 
 /* ", Mary" when the hero has a name, else nothing: for lines like `You did it${comma(s)}!`. */
@@ -52,6 +53,7 @@ export const locksOpen = flags => LOCKS.filter(f => flags[f]).length;
 export const CHAIN_CHECKS = { smash: { ability: "STR", dc: 12 }, pick: { ability: "DEX", dc: 12 } };
 
 export const SCRIPTS = {
+  ...GAME_SCRIPTS, // knucklebones, arm wrestling, archery and fishing (story/minigames.js)
   elder: {
     start: s => {
       const f = s.flags;

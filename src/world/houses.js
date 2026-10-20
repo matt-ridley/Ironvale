@@ -75,7 +75,11 @@ export const INN = house({
   title: "The Sleeping Fox",
   door: { x: 22, y: 9 },
   mat: { x: 6, y: 6 },
-  objects: [{ id: "nell", x: 9, y: 2, sprite: "innkeeper", script: "inn" }],
+  objects: [
+    { id: "nell", x: 9, y: 2, sprite: "innkeeper", script: "inn" },
+    { id: "wat", x: 8, y: 4, sprite: "gambler", script: "diceWat" }, // knucklebones
+    { id: "oswin", x: 3, y: 5, sprite: "woodcutter", script: "armWrestle" },
+  ],
   rows: [
     "xxxxxxxxxxxxx",
     "x|s||h|||s||x",
@@ -99,6 +103,7 @@ export const DUCK = house({
   objects: [
     { id: "gully", x: 9, y: 2, sprite: "barkeep", script: "duck" },
     { id: "bountyBoard", x: 2, y: 2, sprite: "board", script: "bounties", still: true },
+    { id: "sal", x: 8, y: 4, sprite: "gambler", script: "diceSal" }, // knucklebones
   ],
   rows: [
     "xxxxxxxxxxxxx",

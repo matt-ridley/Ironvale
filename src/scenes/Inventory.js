@@ -158,6 +158,12 @@ export class Inventory extends Phaser.Scene {
     } else if (baseOf(row.item).type === "key") {
       this.action.setVisible(false);
       this.msg.setText("Keep it safe.").setColor(COLORS.dim);
+    } else if (baseOf(row.item).type === "trinket") {
+      this.action.setVisible(false);
+      this.msg.setText("It works from your pack.").setColor(COLORS.dim);
+    } else if (baseOf(row.item).type === "fish") {
+      this.action.setVisible(false);
+      this.msg.setText("Sell it at any shop.").setColor(COLORS.dim);
     } else if (baseOf(row.item).type === "scroll") {
       this.action.setLabel("READ").setEnabled(false);
       this.msg.setText("Read it in a fight: ITEMS, then SCROLL.").setColor(COLORS.dim);

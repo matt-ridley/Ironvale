@@ -35,6 +35,8 @@ export const IRONVALE = {
     { id: "flood5", x: 31, y: 38, sprite: "flood", script: "flood", goneWhen: "causewayRaised", still: true },
     { id: "keepGate", x: 31, y: 26, sprite: "portcullis", script: "keepGate", goneWhen: "keepGateOpened", still: true },
     // Fenwatch: Robyn at the shrine, and Brannoc at his new forge once you've freed him.
+    { id: "jettyRod", x: 47, y: 55, sprite: "fishingRod", script: "fishing", spot: "fenwatch", still: true,
+      look: "A rod on Fenwatch's jetty, for anyone who'll share the catch. The fen's full of eels, and the odd golden carp." },
     { id: "shrine", x: 51, y: 51, sprite: "shrine", script: "shrine", still: true },
     { id: "robyn", x: 52, y: 51, sprite: "robyn", frame: 0, script: "robyn", goneWhen: "robynJoined" },
     { id: "brannocForge", x: 59, y: 49, sprite: "brannoc", script: "brannocForge", shownWhen: "brannocFreed", goneWhen: "bladeReforged" }, // then he moves to the keep

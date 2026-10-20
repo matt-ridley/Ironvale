@@ -17,7 +17,7 @@ import { sfx } from "../audio/sound.js";
 
 const THEM_X = 360;
 // Names for the things that don't say who they are.
-const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE", goblinKing: "GOBLIN KING", journal: "JOURNAL", bed: "SPARE BED", campfire: "CAMPFIRE", signet: "IRON SIGNET", rubble: "FALLEN ROCK", flood: "FLOODWATER", portcullis: "PORTCULLIS", fenGate: "FENWATCH GATE", crown: "CROWN", board: "BOUNTY BOARD", shrine: "SHRINE", cairn: "OLD GRAVES", lever: "LEVER", seal: "ALTAR", tombDoor: "TOMB DOOR", sarcophagus: "SARCOPHAGUS" };
+const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE", goblinKing: "GOBLIN KING", journal: "JOURNAL", bed: "SPARE BED", campfire: "CAMPFIRE", signet: "IRON SIGNET", rubble: "FALLEN ROCK", flood: "FLOODWATER", portcullis: "PORTCULLIS", fenGate: "FENWATCH GATE", crown: "CROWN", board: "BOUNTY BOARD", shrine: "SHRINE", cairn: "OLD GRAVES", lever: "LEVER", seal: "ALTAR", tombDoor: "TOMB DOOR", sarcophagus: "SARCOPHAGUS", archeryTarget: "TARGET", fishingRod: "FISHING ROD" };
 const TEXT_W = 290;
 const BTN_X = 394, BTN_W = 152, BTN_H = 28, BTN_GAP = 6; // the answer buttons: centre x, size, gap
 const SLIM_H = 18, SLIM_GAP = 3; // with more than three answers, slimmer buttons (keep those labels to one line)
@@ -143,6 +143,7 @@ export class Meet extends Phaser.Scene {
     const battle = this.events_.find(e => e.type === "battle");
     const travel = this.events_.find(e => e.type === "travel");
     const shop = this.events_.find(e => e.type === "shop"); // a person who keeps a shop (Brannoc in the keep)
+    const game = this.events_.find(e => e.type === "minigame"); // knucklebones, arm wrestling, archery, fishing
     this.cameras.main.fadeOut(200);
     this.cameras.main.once("camerafadeoutcomplete", () => {
       if (battle) {
@@ -154,8 +155,8 @@ export class Meet extends Phaser.Scene {
         state.stepsSinceFight = 0;
         this.scene.stop("World");
         this.scene.start("World");
-      } else if (shop) {
-        this.scene.launch("Shop", { shop: shop.shop }); // the world stays paused until the shop closes
+      } else if (shop || game) {
+        this.scene.launch(game ? game.key : "Shop", game ? game.data : { shop: shop.shop }); // the world stays paused until it closes
         this.scene.stop();
       } else {
         this.scene.stop();

@@ -44,6 +44,17 @@ export const ITEMS = {
   homewardFeather: { name: "Homeward Feather", type: "consumable", effect: "homeward", cost: 50 },
 
   // Key items: kept for the story, never sold.
+  // Minigame prizes (rules/minigames.js), won once and never sold. Trinkets work from your pack.
+  luckyDie: { name: "Lucky Die", type: "trinket", prize: true, cost: 0,
+    about: "A bone die from the knucklebones table, worn smooth. In a fight, the first time you roll a natural 1 to attack, you roll again. Once per rest. Works from your pack." },
+  oswinBelt: { name: "Oswin's Belt", type: "trinket", prize: true, cost: 0,
+    about: "Big Oswin's wide leather belt, won in an arm wrestle. +2 STR while it's in your pack." },
+  willowBow: { name: "Willow Longbow", type: "bow", prize: true, damage: "1d8", damageType: "piercing", cost: 50 },
+  // Fish (fishing at Willowmere and Fenwatch): sell them at any shop.
+  perch: { name: "Perch", type: "fish", cost: 6, about: "A stripy little perch. A shop will give you a few coins for it." },
+  pike: { name: "Pike", type: "fish", cost: 16, about: "A long, toothy pike. Worth a bit at any shop." },
+  fenEel: { name: "Fen Eel", type: "fish", cost: 24, about: "A slippery black eel from the fen. Fenwatch folk love them." },
+  goldenCarp: { name: "Golden Carp", type: "fish", cost: 80, about: "A carp with scales like coins. Rare, and worth a lot." },
   ironSignet: { name: "Iron Signet", type: "key", cost: 0,
     about: "A heavy ring of black iron, warm to the touch. Its seal is a tower between two keys, like the crest on your sword." },
   brannocTools: { name: "Brannoc's Tools", type: "key", cost: 0,
