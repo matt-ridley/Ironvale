@@ -14,31 +14,31 @@
 // - buff: gives `condition` to `targets` ("self" or "party").
 // targets: "one" (a monster you pick), "all" (every monster), "friend" (you or your companion), "self" or "party".
 // condition: { id (in CONDITIONS), rounds, untilTurnStart, saveEnds: ability (the same DC as the spell) }.
-// classes: which casters can learn it (scrolls work for anyone).
+// classes: which casters can learn it (scrolls work for anyone). short: its name on a battle button.
 
 export const SPELLS = {
   // Cantrips
-  fireBolt:       { name: "Fire Bolt", level: 0, classes: ["wizard"], kind: "attack", targets: "one", damage: "1d10", damageType: "fire" },
-  sacredFlame:    { name: "Sacred Flame", level: 0, classes: ["cleric"], kind: "save", save: "DEX", targets: "one", damage: "1d8", damageType: "radiant" },
-  produceFlame:   { name: "Produce Flame", level: 0, classes: ["druid"], kind: "attack", targets: "one", damage: "1d8", damageType: "fire" },
-  viciousMockery: { name: "Vicious Mockery", level: 0, classes: ["bard"], kind: "save", save: "WIS", targets: "one", damage: "1d4", damageType: "psychic",
+  fireBolt:       { name: "Fire Bolt", short: "BOLT", level: 0, classes: ["wizard"], kind: "attack", targets: "one", damage: "1d10", damageType: "fire" },
+  sacredFlame:    { name: "Sacred Flame", short: "HOLY", level: 0, classes: ["cleric"], kind: "save", save: "DEX", targets: "one", damage: "1d8", damageType: "radiant" },
+  produceFlame:   { name: "Produce Flame", short: "FLARE", level: 0, classes: ["druid"], kind: "attack", targets: "one", damage: "1d8", damageType: "fire" },
+  viciousMockery: { name: "Vicious Mockery", short: "MOCK", level: 0, classes: ["bard"], kind: "save", save: "WIS", targets: "one", damage: "1d4", damageType: "psychic",
     condition: { id: "mocked" } },
 
   // Level 1
-  magicMissile:   { name: "Magic Missile", level: 1, classes: ["wizard"], kind: "darts", targets: "one", darts: 3, damage: "1d4+1", damageType: "force", upcast: { darts: 1 } },
-  burningHands:   { name: "Burning Hands", level: 1, classes: ["wizard"], kind: "save", save: "DEX", half: true, targets: "all", damage: "3d6", damageType: "fire", upcast: { dice: 1 } },
-  sleep:          { name: "Sleep", level: 1, classes: ["wizard", "bard"], kind: "sleep", targets: "all", pool: "5d8", upcast: { pool: 2 },
+  magicMissile:   { name: "Magic Missile", short: "DARTS", level: 1, classes: ["wizard"], kind: "darts", targets: "one", darts: 3, damage: "1d4+1", damageType: "force", upcast: { darts: 1 } },
+  burningHands:   { name: "Burning Hands", short: "FLAMES", level: 1, classes: ["wizard"], kind: "save", save: "DEX", half: true, targets: "all", damage: "3d6", damageType: "fire", upcast: { dice: 1 } },
+  sleep:          { name: "Sleep", short: "SLEEP", level: 1, classes: ["wizard", "bard"], kind: "sleep", targets: "all", pool: "5d8", upcast: { pool: 2 },
     condition: { id: "asleep", rounds: 10 } },
-  shield:         { name: "Shield", level: 1, classes: ["wizard"], kind: "buff", targets: "self", condition: { id: "shielded", untilTurnStart: true } },
-  cureWounds:     { name: "Cure Wounds", level: 1, classes: ["cleric", "druid", "bard"], kind: "heal", targets: "friend", heal: "1d8", upcast: { dice: 1 } },
-  healingWord:    { name: "Healing Word", level: 1, classes: ["cleric", "druid", "bard"], kind: "heal", targets: "friend", heal: "1d4", bonusAction: true, upcast: { dice: 1 } },
-  bless:          { name: "Bless", level: 1, classes: ["cleric"], kind: "buff", targets: "party", condition: { id: "blessed", rounds: 10 } },
-  entangle:       { name: "Entangle", level: 1, classes: ["druid"], kind: "save", save: "STR", targets: "all",
+  shield:         { name: "Shield", short: "SHIELD", level: 1, classes: ["wizard"], kind: "buff", targets: "self", condition: { id: "shielded", untilTurnStart: true } },
+  cureWounds:     { name: "Cure Wounds", short: "CURE", level: 1, classes: ["cleric", "druid", "bard"], kind: "heal", targets: "friend", heal: "1d8", upcast: { dice: 1 } },
+  healingWord:    { name: "Healing Word", short: "WORD", level: 1, classes: ["cleric", "druid", "bard"], kind: "heal", targets: "friend", heal: "1d4", bonusAction: true, upcast: { dice: 1 } },
+  bless:          { name: "Bless", short: "BLESS", level: 1, classes: ["cleric"], kind: "buff", targets: "party", condition: { id: "blessed", rounds: 10 } },
+  entangle:       { name: "Entangle", short: "VINES", level: 1, classes: ["druid"], kind: "save", save: "STR", targets: "all",
     condition: { id: "restrained", rounds: 10, saveEnds: "STR" } },
-  faerieFire:     { name: "Faerie Fire", level: 1, classes: ["druid", "bard"], kind: "save", save: "DEX", targets: "all", condition: { id: "outlined", rounds: 10 } },
+  faerieFire:     { name: "Faerie Fire", short: "FAERIE", level: 1, classes: ["druid", "bard"], kind: "save", save: "DEX", targets: "all", condition: { id: "outlined", rounds: 10 } },
 
   // Level 3
-  fireball:       { name: "Fireball", level: 3, classes: ["wizard"], kind: "save", save: "DEX", half: true, targets: "all", damage: "8d6", damageType: "fire", upcast: { dice: 1 } },
+  fireball:       { name: "Fireball", short: "BLAST", level: 3, classes: ["wizard"], kind: "save", save: "DEX", half: true, targets: "all", damage: "8d6", damageType: "fire", upcast: { dice: 1 } },
 };
 
 // Spell slots per long rest for a full caster (wizard, cleric, druid, bard), from the SRD: index = character level,

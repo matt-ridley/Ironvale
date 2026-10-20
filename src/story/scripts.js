@@ -4,7 +4,7 @@
 // long rest for gold) and the campfire at Goblin Rocks (a free short rest).
 import { gainXp, rest, shortRest } from "../rules/character.js";
 import { makeItem, itemName } from "../rules/items.js";
-import { joinParty, companionStats } from "../rules/party.js";
+import { joinParty, companionStats, benchCompanion, takeCompanion, COMPANIONS } from "../rules/party.js";
 import { tileOf, feetAt } from "../world/movement.js";
 import { DEEP_CAVE } from "../world/cave.js";
 
@@ -316,7 +316,8 @@ export const SCRIPTS = {
   },
 
   // Nell, who keeps the Sleeping Fox, Oakhollow's inn: a long rest for INN_COST gold. If you fainted, you were
-  // carried in and woke here for free.
+  // carried in and woke here for free. Companions who aren't travelling with you wait here (the roster): one choice
+  // per companion to leave them or bring them along.
   inn: {
     start: "hello",
     nodes: {
@@ -327,9 +328,25 @@ export const SCRIPTS = {
           : `Welcome to the Sleeping Fox! A soft bed and a hot supper, ${INN_COST} gold a night. You'll wake up good as new.`),
         choices: [
           { label: `Stay the night (${INN_COST} gold)`, to: "stay" },
+          ...Object.entries(COMPANIONS).flatMap(([id, c]) => [
+            { label: `Ask ${c.name} to wait here`, if: s => s.hero.companion?.id === id, to: "bench" },
+            { label: `Bring ${c.name} along`, if: s => !!s.hero.roster?.some(r => r.id === id), to: `take_${id}` },
+          ]),
           { label: "Not now", to: "bye" },
         ],
       },
+      bench: {
+        enter: (s, ctx) => ctx.remember("benched", COMPANIONS[benchCompanion(s.hero).id].name),
+        text: (s, ctx) => `${ctx.recall("benched")} takes a seat by the fire. "I'll be right here when you need me!" (Bring them back any time, from any inn.)`,
+      },
+      ...Object.fromEntries(Object.entries(COMPANIONS).map(([id, c]) => [`take_${id}`, {
+        enter: (s, ctx) => {
+          const before = s.hero.companion?.id;
+          takeCompanion(s.hero, id);
+          ctx.remember("swapped", before && COMPANIONS[before].name);
+        },
+        text: (s, ctx) => `${c.name} jumps up, rested and ready.${ctx.recall("swapped") ? ` ${ctx.recall("swapped")} will wait here instead.` : ""}`,
+      }])),
       stay: {
         enter: (s, ctx) => {
           if (s.hero.gold < INN_COST) return ctx.goto("poor");

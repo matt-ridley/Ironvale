@@ -3,7 +3,8 @@
 // this turn). ATTACK is one attack, or two with Extra Attack (level 5); a Potion of Dexterity, drunk before or during
 // the fight, adds one more. From level 3 your attacks crit on a 19 or 20.
 // Conditions (rules/conditions.js: asleep, restrained, blessed...) change attacks, AC and saves, and can take away a
-// turn; they start and end with each turn. Spells and scrolls (rules/magic.js) are cast through the helpers below. A companion in your party (rules/party.js) takes their own turns:
+// turn; they start and end with each turn. Spells and scrolls (rules/magic.js) are cast through the helpers below.
+// Your companion's turns are played by rules/tactics.js, or wait for you when you lead them (battle.leadAlly). A companion in your party (rules/party.js) takes their own turns:
 // they shoot at the monster you last attacked, and monsters pick between you and them.
 // A battle is a plain object. The player acts with playerAction(); monsters then take their turns until it is the
 // player's turn again or the battle is over. Every step is written to battle.log for the screen to show.
@@ -15,6 +16,7 @@ import { MONSTERS } from "../data/monsters.js";
 import { companionStats, afterBattle } from "./party.js";
 import { attackMods, conditionAc, skipsTurn, startTurn, endTurn, onDamage, conditionSave, CONDITIONS } from "./conditions.js";
 import { ITEMS } from "../data/items.js";
+import { allyTurn } from "./tactics.js"; // (tactics.js uses this file's helpers too; nothing runs until a fight)
 
 export const DEFEND_AC_BONUS = 2;
 export const FLEE_DC = 10;
@@ -88,7 +90,8 @@ export function createBattle(player, monsterIds, rng = Math.random) {
   // A Potion of Dexterity drunk before the fight is used up by it.
   const quick = !!player.effects?.dexterity;
   if (quick) player.effects = { ...player.effects, dexterity: false };
-  const battle = { player, ally, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null, conditions: {} };
+  const battle = { player, ally, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null, conditions: {},
+    leadAlly: !!player.companion?.lead }; // you pick your companion's actions
   const names = entries.map(e => (e.who === "player" ? "You" : e.who === "ally" ? ally.name : monsters[e.who].name) + ` (${e.init})`);
   say(battle, "start", `${monsters.map(m => m.name).join(", ")} ${monsters.length > 1 ? "appear" : "appears"}! Initiative: ${names.join(", ")}.`);
   if (quick) say(battle, "quick", "Your Potion of Dexterity makes you quick: one extra attack each time you ATTACK.");
@@ -97,6 +100,8 @@ export function createBattle(player, monsterIds, rng = Math.random) {
 }
 
 export const isPlayerTurn = battle => battle.state === "active" && battle.order[battle.turn].who === "player";
+/* Your companion's turn, waiting for you to pick their action (only when you lead them). */
+export const isAllyTurn = battle => battle.state === "active" && battle.order[battle.turn].who === "ally";
 
 /* action: { type: "attack", target } | { type: "defend" } | { type: "potion", base } | { type: "flee" } | { type: "secondWind" }
    | { type: "actionSurge" } | { type: "allyPotion" } (give your companion a Potion of Healing; it gets them back up if
@@ -202,6 +207,17 @@ export function endPlayerAction(battle, start, rng = Math.random) {
   return { ok: true, events: battle.log.slice(start) };
 }
 
+/* After your companion's action (when you lead them): the fight may be over; otherwise their turn ends and play
+   moves on. */
+export function endAllyAction(battle, start, rng = Math.random) {
+  if (!checkEnd(battle, rng)) {
+    finishTurn(battle, "ally", rng);
+    nextTurn(battle);
+    runMonsterTurns(battle, rng);
+  }
+  return { ok: true, events: battle.log.slice(start) };
+}
+
 /* Attacks in one ATTACK action: one, two with Extra Attack, and one more with a Potion of Dexterity. */
 export const attacksThisAction = battle => attacksPerAction(battle.player) + (battle.quick ? 1 : 0);
 
@@ -226,7 +242,7 @@ function runMonsterTurns(battle, rng) {
         const why = Object.keys(battle.conditions[key]).filter(id => CONDITIONS[id].skips).map(id => CONDITIONS[id].name).join(" and ");
         say(battle, "skip", `${nameOf(battle, key)} ${isAre(key)} ${why} and can't act.`, { who: key });
         finishTurn(battle, key, rng);
-      } else if (key === "player") break; // your turn
+      } else if (key === "player" || (key === "ally" && battle.leadAlly)) break; // your turn, or one you lead
       else {
         if (key === "ally") allyTurn(battle, rng); else monsterTurn(battle, key, rng);
         if (checkEnd(battle, rng)) return;
@@ -249,20 +265,6 @@ function monsterTurn(battle, i, rng) {
   else say(battle, "monster-attack", `The ${m.name} attacks with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r, true)}`, { roll: r, actor: i });
   tellWoken(battle, key, woke);
   if (onAlly && a.hp === 0) say(battle, "ally-down", `${a.name} is knocked down! She'll be back on her feet after the fight.`);
-}
-
-/* Your companion shoots at the monster you last attacked (or the first one standing). */
-function allyTurn(battle, rng) {
-  const a = battle.ally;
-  const focus = battle.monsters[battle.focus];
-  const target = focus?.hp > 0 ? focus : living(battle)[0];
-  if (!target) return;
-  const t = battle.monsters.indexOf(target);
-  const r = resolveAttack(a.attack, acOf(battle, t), rng, attackMods(battle, "ally", t, { melee: false }));
-  const woke = hurt(battle, t, r.damage);
-  say(battle, "ally-attack", `${a.name} shoots her ${a.attack.name} at the ${target.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t });
-  tellWoken(battle, t, woke);
-  if (target.hp === 0) say(battle, "defeat", `The ${target.name} falls.`, { target: t });
 }
 
 /* Each monster's loot table is rolled separately. */

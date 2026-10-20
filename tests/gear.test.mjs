@@ -98,9 +98,10 @@ test("the pack groups identical items", () => {
   assert.deepEqual(g.map(x => [x.name, x.count]), [["Potion of Healing", 2], ["Dagger", 1], ["Dagger +1", 1]]);
 });
 
-test("a Potion of Healing costs 20 gold, and the apothecary sells all three potions and the Homeward Feather", () => {
+test("a Potion of Healing costs 20 gold, and the apothecary sells all three potions, the Homeward Feather and scrolls", () => {
   assert.equal(ITEMS.potionHealing.cost, 20);
-  assert.deepEqual(SHOPS.apothecary.stock, ["potionHealing", "potionSpeed", "potionDexterity", "homewardFeather"]);
+  assert.deepEqual(SHOPS.apothecary.stock.slice(0, 4), ["potionHealing", "potionSpeed", "potionDexterity", "homewardFeather"]);
+  assert.ok(SHOPS.apothecary.stock.slice(4).every(base => ITEMS[base].type === "scroll"));
   assert.equal(ITEMS.homewardFeather.cost, 50);
   for (const shop of Object.values(SHOPS)) for (const base of shop.stock) assert.ok(ITEMS[base], base);
   const c = createCharacter({ gold: 30, potions: 0 });

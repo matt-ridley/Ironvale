@@ -1,12 +1,13 @@
 // The inventory, opened over the world. Tap something you're wearing or carrying to see what it does and how it
 // would change your stats, then equip it, take it off, or drink it. With a friend in your party, HERO / the friend's
-// name switch whose gear you're looking at: a friend wears a bow and light armour from your pack.
+// name switch whose gear you're looking at: a friend wears a bow and light armour from your pack. With nothing
+// picked, a friend's tab shows their TACTICS (what they do in a fight by themselves) and a button to change them.
 import { WIDTH, HEIGHT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
 import { armourClass, weaponAttack } from "../rules/character.js";
 import { equip, unequip, useItem, cantDrink, drinkText, describeItem, itemName, groupPack, baseOf, isPotion, SLOTS } from "../rules/items.js";
 import { compareEquip, compareUnequip, averageDamage } from "../rules/gear.js";
-import { companionStats, companionCantDrink, companionDrink, equipCompanion, unequipCompanion, compareCompanionEquip, compareCompanionUnequip, COMPANION_SLOTS } from "../rules/party.js";
+import { companionStats, companionCantDrink, companionDrink, equipCompanion, unequipCompanion, compareCompanionEquip, compareCompanionUnequip, COMPANION_SLOTS, TACTICS, cycleTactics } from "../rules/party.js";
 import { text, panel, button, ListView, uiCamera } from "../ui/widgets.js";
 import { heroFrame } from "../art/pixels.js";
 import { sfx } from "../audio/sound.js";
@@ -16,6 +17,11 @@ import { hubById } from "../world/travel.js";
 const SLOT_TAG = { weapon: "WPN", shield: "SHD", armour: "ARM", bow: "BOW" };
 const outdoors = () => ({ outdoors: !!MAPS[state.map]?.outdoors }); // where a Homeward Feather works
 const useLabel = item => (baseOf(item).effect === "homeward" ? "USE" : "DRINK");
+const TACTICS_ABOUT = {
+  attack: "They attack the monster you last hit. Tap them in a fight to lead them yourself.",
+  heal: "When you or they are at half HP, they heal whoever's worse off (a spell, or a potion). Else they attack.",
+  save: "Cantrips only: they keep their spell slots for when you lead them.",
+};
 
 export const damageText = a => `${a.damage}${a.damageBonus ? (a.damageBonus > 0 ? "+" : "") + a.damageBonus : ""}`;
 
@@ -114,6 +120,13 @@ export class Inventory extends Phaser.Scene {
   showDetail() {
     const row = this.current, h = state.hero;
     for (const t of this.cmp) t.setText("");
+    if (!row && this.who === "friend") {
+      const f = companionStats(h);
+      this.name.setText(`${f.name.toUpperCase()}'S TACTICS: ${TACTICS[f.tactics]}`);
+      this.desc.setText(TACTICS_ABOUT[f.tactics]);
+      this.action.setVisible(true).setLabel("CHANGE").setEnabled(true);
+      return;
+    }
     if (!row) {
       this.name.setText("");
       this.desc.setText(h.inventory.length ? "Tap an item to see what it does." : "Your pack is empty. Beat monsters for loot, or visit the blacksmith.");
@@ -133,6 +146,9 @@ export class Inventory extends Phaser.Scene {
     if (row.kind === "worn") {
       this.action.setLabel("TAKE OFF").setEnabled(true);
       this.showCompare(friend ? compareCompanionUnequip(h, row.slot) : compareUnequip(h, row.slot));
+    } else if (baseOf(row.item).type === "scroll") {
+      this.action.setLabel("READ").setEnabled(false);
+      this.msg.setText("Read it in a fight: ITEMS, then SCROLL.").setColor(COLORS.dim);
     } else if (isPotion(row.item)) {
       const reason = friend ? companionCantDrink(h, row.item) : cantDrink(h, row.item, outdoors());
       this.action.setLabel(useLabel(row.item)).setEnabled(!reason);
@@ -157,6 +173,7 @@ export class Inventory extends Phaser.Scene {
 
   doAction() {
     const row = this.current, h = state.hero;
+    if (!row && this.who === "friend") { cycleTactics(h); sfx("select"); return this.showDetail(); }
     if (!row?.item) return;
     let msg, ok = true;
     const friend = this.who === "friend", name = friend ? companionStats(h).name : "You";

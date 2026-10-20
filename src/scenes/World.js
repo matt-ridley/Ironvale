@@ -117,9 +117,14 @@ export class World extends Phaser.Scene {
     }
   }
 
-  /* Shows your companion (once someone has joined the party). */
+  /* Shows your companion walking behind you, or takes them away (left waiting at an inn), or swaps them. */
   syncFollower() {
     const c = state.hero.companion;
+    if (this.follower && this.follower.key !== c?.id) {
+      this.follower.sprite.destroy();
+      this.follower.shadow.destroy();
+      this.follower = null;
+    }
     if (!c || this.follower || !this.textures.exists(c.id)) return;
     this.follower = {
       shadow: this.add.ellipse(0, 0, 18, 6, 0x000000, 0.25),
