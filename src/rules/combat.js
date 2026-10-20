@@ -14,7 +14,7 @@ import { abilityCheck } from "./checks.js";
 import { baseOf, makeItem, itemName, useItem, cantDrink } from "./items.js";
 import { MONSTERS } from "../data/monsters.js";
 import { companionStats, afterBattle } from "./party.js";
-import { attackMods, conditionAc, skipsTurn, startTurn, endTurn, onDamage, conditionSave, CONDITIONS } from "./conditions.js";
+import { attackMods, conditionAc, skipsTurn, startTurn, endTurn, onDamage, conditionSave, addCondition, CONDITIONS } from "./conditions.js";
 import { ITEMS } from "../data/items.js";
 import { allyTurn } from "./tactics.js"; // (tactics.js uses this file's helpers too; nothing runs until a fight)
 
@@ -25,8 +25,12 @@ export function spawnMonster(id, rng = Math.random) {
   const m = MONSTERS[id];
   if (!m) throw new Error(`Unknown monster: ${id}`);
   const hp = Math.max(1, roll(m.hp, rng).total);
-  return { id, name: m.name, type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: { ...m.attack, damageBonus: 0 }, xp: m.xp, gold: m.gold };
+  const attacks = attacksOf(m).map(a => ({ ...a, damageBonus: 0 }));
+  return { id, name: m.name, type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: attacks[0], attacks, xp: m.xp, gold: m.gold };
 }
+
+/* A monster's attacks each turn: its `attacks` (a multiattack, like the lizardfolk's bite and shield), or its one `attack`. */
+export const attacksOf = m => m.attacks || [m.attack];
 
 /* One attack roll. A critical hit (a natural 20, or `critOn` and up) always hits and doubles the damage dice; a natural
    1 always misses. `bonusDice` are added to the roll (Bless); `critOnHit` makes any hit a critical (on someone
@@ -254,17 +258,32 @@ function runMonsterTurns(battle, rng) {
   if (battle.state === "active") battle.defending = false; // the guard lasts until the start of the player's turn
 }
 
-/* A monster attacks. With a companion standing, it picks one of you at random. */
+/* A monster's turn: each of its attacks, at one of you (with a companion standing, it picks one of you at random). An
+   attack with `onHit` ({ condition, save, dc, rounds }) makes whoever it hits save or take that condition, with a
+   save at the end of each of their turns to shake it off (the ghoul's paralysing claws). */
 function monsterTurn(battle, i, rng) {
   const m = battle.monsters[i], a = battle.ally;
   const onAlly = !!(a && a.hp > 0 && rng() < 0.5);
   const key = onAlly ? "ally" : "player";
-  const r = resolveAttack(m.attack, acOf(battle, key), rng, attackMods(battle, i, key));
-  const woke = hurt(battle, key, r.damage);
-  if (onAlly) say(battle, "monster-attack", `The ${m.name} attacks ${a.name} with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r)}`, { roll: r, actor: i, onAlly: true });
-  else say(battle, "monster-attack", `The ${m.name} attacks with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r, true)}`, { roll: r, actor: i });
-  tellWoken(battle, key, woke);
+  for (const atk of m.attacks) {
+    if (combatant(battle, key).hp <= 0) break;
+    const r = resolveAttack(atk, acOf(battle, key), rng, attackMods(battle, i, key));
+    const woke = hurt(battle, key, r.damage);
+    if (onAlly) say(battle, "monster-attack", `The ${m.name} attacks ${a.name} with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, actor: i, onAlly: true });
+    else say(battle, "monster-attack", `The ${m.name} attacks with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r, true)}`, { roll: r, actor: i });
+    tellWoken(battle, key, woke);
+    if (r.hit && atk.onHit && combatant(battle, key).hp > 0) afflict(battle, key, atk.onHit, rng);
+  }
   if (onAlly && a.hp === 0) say(battle, "ally-down", `${a.name} is knocked down! She'll be back on her feet after the fight.`);
+}
+
+/* An attack's lingering effect: a saving throw, or the condition. */
+function afflict(battle, key, { condition, save, dc, rounds }, rng) {
+  const s = battleSave(battle, key, save, dc, rng);
+  const who = nameOf(battle, key), are = key === "player" ? "are" : "is";
+  if (s.success) return say(battle, "save", `${who} shake${key === "player" ? "" : "s"} it off (${save} save ${s.total} vs DC ${dc}).`, { who: key });
+  addCondition(battle, key, condition, { rounds, saveEnds: { ability: save, dc } });
+  say(battle, "condition", `${who} ${are} ${CONDITIONS[condition].name}! (${save} save ${s.total} vs DC ${dc})`, { who: key, condition });
 }
 
 /* Each monster's loot table is rolled separately. */

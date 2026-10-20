@@ -3,8 +3,8 @@
 import { MONSTERS } from "../data/monsters.js";
 import { ENCOUNTERS } from "../world/encounters.js";
 
-const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willowmere", warrens: "The Deep Warrens" };
-const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall" }; // bosses don't roam
+const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willowmere", warrens: "The Deep Warrens", fen: "Greywater Fen", keepGrounds: "Ironvale Keep" };
+const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall", motherSallow: "Her hut in Greywater Fen" }; // bosses don't roam
 
 export const LORE = {
   giantRat: "A rat the size of a dog. Alone it's a nuisance; it's the bite that festers.",
@@ -15,6 +15,11 @@ export const LORE = {
   hobgoblin: "A goblin's big, disciplined cousin, in mail with a sword and shield. Its armour turns most blades.",
   goblinChief: "The goblin who led the raids on Oakhollow, in a dented helmet and a stolen red cloak.",
   goblinKing: "Twice a goblin's size, on a throne of stolen treasure, with a club like a tree trunk.",
+  giantFrog: "A frog the size of a pony, all mouth. It sits so still in the reeds you'd swear it was a log.",
+  lizardfolk: "Cold-eyed fen hunters with spiked shields. They don't hate you; they just think you'd be good to eat.",
+  ghoul: "Something that was a soldier once, hungry now. Its claws can freeze you stiff where you stand.",
+  willOWisp: "A pale light over the water that leads travellers astray, and feeds on their fear. Very hard to hit.",
+  motherSallow: "A marsh hag with weed in her hair and a laugh like a drain. She keeps the causeway under water, and she loves a bargain.",
 };
 
 /* Where a monster turns up, from the encounter tables. */
@@ -42,13 +47,13 @@ const average = dice => {
 export function bestiaryEntries(bestiary = {}) {
   return Object.entries(MONSTERS).map(([id, m]) => {
     const { seen = 0, beaten = 0 } = bestiary[id] || {};
-    const a = m.attack;
+    const attacks = m.attacks || [m.attack];
     return {
       id, name: m.name, seen, beaten, known: seen > 0, studied: beaten > 0,
       about: LORE[id] || "", where: habitat(id),
       stats: [
         `AC ${m.ac}   HP ${m.hp} (about ${average(m.hp)})`,
-        `${a.name}: +${a.bonus} to hit, ${a.damage} damage`,
+        ...attacks.map(a => `${a.name}: +${a.bonus} to hit, ${a.damage} damage${a.onHit ? ` (${a.onHit.save} save DC ${a.onHit.dc} or ${a.onHit.condition})` : ""}`),
         `${m.xp} XP${m.gold !== "0" ? `, ${m.gold} gold` : ""}`,
       ],
     };

@@ -15,6 +15,13 @@ export const TRACKS = {
     bass: "A2 - A2 - E3 - A2 - | G2 - G2 - D3 - G2 - | A2 - A2 - E3 - A2 - | D3 - D3 - A2 - D3 - | C3 - C3 - G2 - C3 - | G2 - G2 - D3 - G2 - | E2 - E2 - B2 - E2 - | A2 - A2 - E3 - A2 -",
     drums: "k . h . s . h . | k . h . s . h . | k . h . s . h . | k . h . s . h h | k . h . s . h . | k . h . s . h . | k . h . s . h . | k . h . s . h h",
   },
+  // Greywater Fen: slow and minor, a soft lead lost in the mist (heavy echo), and a drum like a distant heartbeat.
+  fen: {
+    bpm: 72, lead: "triangle", echo: 0.5,
+    melody: "D5 - - - F5 - E5 - | D5 - - - A4 - - - | Bb4 - - - C5 - D5 - | A4 - - - - - . . | D5 - - - F5 - G5 - | A5 - - - G5 - F5 - | E5 - - - C5 - E5 - | D5 - - - - - . .",
+    bass: "D2 - - - - - A2 - | D2 - - - - - A2 - | Bb1 - - - - - F2 - | A1 - - - - - E2 - | D2 - - - - - A2 - | F2 - - - - - C3 - | C2 - - - - - G2 - | D2 - - - - - A2 -",
+    drums: "k . . . . . . . | . . . . k . . . | k . . . . . . . | . . . . k . . . | k . . . . . . . | . . . . k . . . | k . . . . . . . | . . . . k . h .",
+  },
   battle: {
     bpm: 150, lead: "sawtooth", echo: 0.25,
     melody: "E5 . E5 G5 . E5 B5 - | A5 - G5 - F#5 - D5 - | E5 . E5 G5 . E5 B5 - | C6 - B5 - A5 - B5 - | E5 . E5 G5 . E5 B5 - | A5 - G5 - F#5 - D5 - | G5 - F#5 - E5 - D#5 - | E5 - - - . . . .",

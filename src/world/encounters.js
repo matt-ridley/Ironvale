@@ -41,17 +41,40 @@ export const ENCOUNTERS = {
       { weight: 1, foes: ["hobgoblin", "goblin"] },
     ],
   },
+  fen: {
+    chance: 0.05,
+    table: [
+      { weight: 3, foes: ["giantFrog"] },
+      { weight: 3, foes: ["lizardfolk"] },
+      { weight: 2, foes: ["giantFrog", "giantFrog"] },
+      { weight: 2, foes: ["ghoul"] },
+      { weight: 1, foes: ["lizardfolk", "giantFrog"] },
+      { weight: 1, foes: ["lizardfolk", "lizardfolk"] },
+      { weight: 1, foes: ["willOWisp"] },
+    ],
+  },
+  keepGrounds: {
+    chance: 0.06,
+    table: [
+      { weight: 3, foes: ["ghoul"] },
+      { weight: 2, foes: ["willOWisp"] },
+      { weight: 2, foes: ["ghoul", "ghoul"] },
+      { weight: 1, foes: ["willOWisp", "ghoul"] },
+      { weight: 1, foes: ["lizardfolk", "lizardfolk"] },
+    ],
+  },
 };
 
 export const QUIET_STEPS = 12; // no fights for this many steps after one
-export const SAFE_TILES = ["cave", "caveexit"]; // standing in a cave mouth never starts a fight
+export const SAFE_TILES = ["cave", "caveexit", "passage"]; // standing in a cave mouth never starts a fight
+export const ROADS = ["path", "boardwalk", "causeway"]; // half the chance of a fight
 export const SPEED_ENCOUNTERS = 0.35; // a Potion of Speed leaves this much of the usual chance
 
 /* Returns the monsters to fight (ids) or null. `stepsSinceFight` counts this step. `safe`: you're at a camp. */
 export function rollEncounter(zoneId, tileName, stepsSinceFight, rng = Math.random, { fast = false, safe = false } = {}) {
   const area = ENCOUNTERS[zoneId];
   if (!area || safe || stepsSinceFight < QUIET_STEPS || SAFE_TILES.includes(tileName)) return null;
-  const chance = (tileName === "path" ? area.chance / 2 : area.chance) * (fast ? SPEED_ENCOUNTERS : 1);
+  const chance = (ROADS.includes(tileName) ? area.chance / 2 : area.chance) * (fast ? SPEED_ENCOUNTERS : 1);
   if (rng() >= chance) return null;
   return [...pickWeighted(area.table, rng).foes];
 }

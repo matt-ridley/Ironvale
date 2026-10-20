@@ -37,6 +37,8 @@ export const ITEMS = {
   // Key items: kept for the story, never sold.
   ironSignet: { name: "Iron Signet", type: "key", cost: 0,
     about: "A heavy ring of black iron, warm to the touch. Its seal is a tower between two keys, like the crest on your sword." },
+  goblinCrown: { name: "Goblin King's Crown", type: "key", cost: 0,
+    about: "Bent gold set with red glass. Gaudy, and far too big for you. Somebody shinier-minded might want it." },
 
   // Spell scrolls (data/spells.js): anyone can read one in a fight, once. The apothecary sells them.
   scrollMagicMissile: { name: "Scroll of Magic Missile", type: "scroll", spell: "magicMissile", cost: 50 },

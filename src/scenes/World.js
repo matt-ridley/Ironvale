@@ -212,6 +212,8 @@ export class World extends Phaser.Scene {
       v = velocity((kx / len) * 0.9, (ky / len) * 0.9, { run: this.shift.isDown });
     } else v = velocity(stick.x, stick.y);
     if (state.hero.effects?.speed > 0) for (const k of ["vx", "vy", "speed"]) v[k] *= SPEED_POTION_BOOST;
+    const t = tileOf(state.pos), slow = tileAt(this.map, t.x, t.y)?.slow; // wading through shallow water, or mud
+    if (slow) for (const k of ["vx", "vy", "speed"]) v[k] *= slow;
     return v;
   }
 

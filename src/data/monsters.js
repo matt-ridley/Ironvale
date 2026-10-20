@@ -1,7 +1,8 @@
 // Monsters, from the 5e System Reference Document (SRD 5.1), trimmed to what the game uses so far.
 // `hp` is rolled when the monster appears; `gold` is rolled when it is beaten, and each `loot` entry has its own chance.
 // `saves` are its saving throw bonuses (its ability modifiers), for spells; `type` is its creature type (beast,
-// humanoid, undead...), which some spells care about.
+// humanoid, undead...), which some spells care about. A monster with several `attacks` makes them all each turn
+// (multiattack); an attack's `onHit` is an effect that a saving throw resists (the ghoul's paralysis).
 
 export const MONSTERS = {
   giantRat:    { name: "Giant Rat",    ac: 12, hp: "2d6",   dexMod: 2, attack: { name: "Bite",     bonus: 4, damage: "1d4+2" }, xp: 25,  gold: "1d4",
@@ -25,4 +26,22 @@ export const MONSTERS = {
   goblinKing:  { name: "Goblin King",  ac: 16, hp: "8d8+8", dexMod: 2, attack: { name: "Great Club", bonus: 5, damage: "2d6+3" }, xp: 700, gold: "10d10",
     type: "humanoid", saves: { STR: 3, DEX: 2, CON: 2, WIS: 1 },
     loot: [{ base: "greatsword", upgrade: 2, chance: 1 }, { base: "potionDexterity", chance: 1 }] },
+
+  // Greywater Fen and the grounds of Ironvale Keep (Act 2, levels 5 to 8).
+  giantFrog:   { name: "Giant Frog",   ac: 11, hp: "4d8",   dexMod: 1, attack: { name: "Bite",     bonus: 3, damage: "1d6+1" }, xp: 50,  gold: "0",
+    type: "beast", saves: { STR: 1, DEX: 1, CON: 0, WIS: 0 } },
+  lizardfolk:  { name: "Lizardfolk",   ac: 15, hp: "4d8+4", dexMod: 0,
+    attacks: [{ name: "Bite", bonus: 4, damage: "1d6+2" }, { name: "Spiked Shield", bonus: 4, damage: "1d6+2" }], xp: 100, gold: "2d8",
+    type: "humanoid", saves: { STR: 2, DEX: 0, CON: 1, WIS: 1 },
+    loot: [{ base: "potionHealing", chance: 0.2 }] },
+  ghoul:       { name: "Ghoul",        ac: 12, hp: "5d8",   dexMod: 2,
+    attack: { name: "Claws", bonus: 4, damage: "2d4+2", onHit: { condition: "paralyzed", save: "CON", dc: 10, rounds: 10 } }, xp: 200, gold: "1d10",
+    type: "undead", saves: { STR: 1, DEX: 2, CON: 0, WIS: 0 } },
+  willOWisp:   { name: "Will-o'-Wisp", ac: 19, hp: "9d4",   dexMod: 9, attack: { name: "Shock",    bonus: 4, damage: "2d8" },   xp: 450, gold: "0",
+    type: "undead", saves: { STR: -5, DEX: 9, CON: 0, WIS: 2 },
+    loot: [{ base: "potionSpeed", chance: 0.25 }] },
+  // The green hag of the SRD, keeper of the drowned causeway. A bit lighter than the SRD's (82 HP), as she's met at level 5.
+  motherSallow: { name: "Mother Sallow", ac: 17, hp: "9d8+27", dexMod: 1, attack: { name: "Claws", bonus: 6, damage: "2d8+4" }, xp: 700, gold: "6d10",
+    type: "fey", saves: { STR: 4, DEX: 1, CON: 3, WIS: 2 },
+    loot: [{ base: "scrollSleep", chance: 1 }, { base: "potionHealing", chance: 1 }] },
 };

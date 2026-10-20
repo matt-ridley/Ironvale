@@ -1,6 +1,6 @@
 // Tile maps and grid movement. No Phaser here, so it can be tested; the World scene draws what this describes.
 
-// Map legend. `solid` tiles block walking.
+// Map legend. `solid` tiles block walking; `slow` ones (wading, mud) make you walk at that share of your speed.
 export const TILES = {
   ".": { name: "grass", solid: false },
   ",": { name: "flowers", solid: false },
@@ -31,6 +31,17 @@ export const TILES = {
   "s": { name: "shelf", solid: true },
   "k": { name: "table", solid: true },
   "u": { name: "barrel", solid: true },
+  // Greywater Fen and Ironvale (Act 2)
+  "g": { name: "marsh", solid: false },
+  "r": { name: "reeds", solid: false },
+  "q": { name: "shallow", solid: false, slow: 0.6 }, // wading
+  ";": { name: "mud", solid: false, slow: 0.8 },
+  "b": { name: "boardwalk", solid: false },
+  "Y": { name: "deadtree", solid: true },
+  "c": { name: "causeway", solid: false }, // the old stone road to the keep
+  "K": { name: "keepwall", solid: true },
+  "L": { name: "palisade", solid: true }, // Fenwatch's log wall
+  "E": { name: "passage", solid: false }, // the goblins' back passage: an exit back down to the Deep Warrens
 };
 
 export const DIRS = {

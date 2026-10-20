@@ -57,12 +57,12 @@ export class WorldMap extends Phaser.Scene {
     button(this, WIDTH - 34, 13, 56, 18, "CLOSE", () => this.close());
     for (const k of ["ESC", "M"]) this.input.keyboard.on(`keydown-${k}`, () => this.close());
     REGIONS.forEach((r, i) => {
-      const tab = button(this, 82 + i * 76, 13, 70, 18, regionOpen(r) ? r.tab : "???", () => { sfx("select"); this.scene.restart({ region: r.id }); });
+      const tab = button(this, 82 + i * 76, 13, 70, 18, regionOpen(r, state.flags) ? r.tab : "???", () => { sfx("select"); this.scene.restart({ region: r.id }); });
       tab.setActive(r === region);
     });
 
     this.add.rectangle(MAP_X - 2, MAP_Y - 2, MAP_W + 4, MAP_H + 4, COLORS.panelEdge).setOrigin(0);
-    if (regionOpen(region)) this.drawRegion(region, region === here);
+    if (regionOpen(region, state.flags)) this.drawRegion(region, region === here);
     else {
       this.add.rectangle(MAP_X, MAP_Y, MAP_W, MAP_H, COLORS.bg).setOrigin(0);
       drawShape(this, region.shape);

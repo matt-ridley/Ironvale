@@ -139,8 +139,8 @@ test("the Deep Warrens: every room, chest and the king can be reached from the e
 
 test("the cave's way out leads back to just outside the goblin cave", () => {
   const cave = MAPS[DEEP_CAVE.name];
-  assert.equal(cave.exits.length, 1);
-  const [exit] = cave.exits;
+  assert.equal(cave.exits.length, 2); // and the goblins' passage up to the fen
+  const exit = cave.exits.find(e => e.to === "overworld");
   assert.ok(reachable(cave, cave.spawn).has(key(exit.x, exit.y)));
   assert.equal(exitAt(cave, exit.x, exit.y), exit);
   assert.equal(exitAt(cave, exit.x, exit.y - 1), null);

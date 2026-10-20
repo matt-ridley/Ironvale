@@ -25,6 +25,12 @@ export const C = {
   book1: "#b04a36", book2: "#3f6fb0", book3: "#5a8f29", book4: "#e8b923",
   pine: "#2a6b45", pineDark: "#174a30", pineLight: "#3f8a58",
   oak: "#3b6e2c", oakDark: "#26501f", oakLight: "#5b8f3a",
+  marsh: "#5d7a3e", marshDark: "#46602c", marshLight: "#7a9450",
+  mud: "#6b5436", mudDark: "#4f3d26", mudLight: "#87704a",
+  shallow: "#4f8a8a", shallowDark: "#3c6e70", shallowLight: "#8cc0b8",
+  reed: "#b0a052", reedDark: "#7a6e32", reedHead: "#5a3b22",
+  flag: "#8f8a80", flagDark: "#6a655c", flagLight: "#b0aa9e",
+  deadwood: "#6e6458", deadwoodDark: "#4a4238",
 };
 
 export const box = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
@@ -213,6 +219,66 @@ export const DRAW = {
     for (const y of [8, 21]) box(ctx, C.stoneDark, 6, y, 20, 2); // iron hoops
     box(ctx, C.woodDark, 9, 4, 14, 2);
   },
+  // Greywater Fen
+  marsh(ctx, rng) {
+    box(ctx, C.marsh, 0, 0, T, T);
+    speckle(ctx, rng, C.marshDark, 24, 1, 3);
+    speckle(ctx, rng, C.marshLight, 8, 1, 2);
+    if (rng() < 0.3) { const x = 4 + Math.floor(rng() * 20), y = 4 + Math.floor(rng() * 20); box(ctx, C.shallowDark, x, y, 6, 2); box(ctx, C.shallow, x + 1, y, 4, 1); } // a puddle
+  },
+  reeds(ctx, rng) {
+    DRAW.marsh(ctx, rng);
+    for (let i = 0; i < 9; i++) {
+      const x = 2 + Math.floor(rng() * 28), h = 10 + Math.floor(rng() * 10), y = T - 2 - h;
+      box(ctx, C.reedDark, x + 1, y + 2, 1, h);
+      box(ctx, C.reed, x, y + 2, 1, h);
+      box(ctx, C.reedHead, x, y, 2, 4); // a bulrush head
+    }
+  },
+  shallow(ctx, rng) {
+    box(ctx, C.shallow, 0, 0, T, T);
+    speckle(ctx, rng, C.shallowDark, 12, 3, 1);
+    for (const [x, y] of [[4, 8], [16, 18], [8, 26]]) box(ctx, C.shallowLight, x + Math.floor(rng() * 6), y, 5, 1);
+    speckle(ctx, rng, C.marshDark, 4, 1, 3); // weed under the water
+  },
+  mud(ctx, rng) {
+    box(ctx, C.mud, 0, 0, T, T);
+    speckle(ctx, rng, C.mudDark, 20, 2, 1);
+    speckle(ctx, rng, C.mudLight, 8);
+    for (let i = 0; i < 3; i++) { const x = Math.floor(rng() * 26), y = Math.floor(rng() * 28); box(ctx, C.mudDark, x, y + 1, 5, 2); box(ctx, C.shallow, x + 1, y + 1, 3, 1); } // footprints, filled with water
+  },
+  boardwalk(ctx, rng) {
+    DRAW.shallow(ctx, rng);
+    box(ctx, C.woodDark, 2, 0, 28, T);
+    for (let y = 0; y < T; y += 6) { box(ctx, C.wood, 3, y, 26, 5); box(ctx, C.woodLight, 3, y, 26, 1); box(ctx, C.woodDark, 6 + ((y * 7) % 18), y + 2, 1, 1); }
+  },
+  deadtree: (ctx, rng) => DRAW.marsh(ctx, rng), // the tree itself: PROPS.deadtree
+  causeway(ctx, rng) {
+    box(ctx, C.flagDark, 0, 0, T, T);
+    for (const [x, y, w, h] of [[1, 1, 14, 9], [16, 1, 15, 9], [1, 11, 9, 9], [11, 11, 20, 9], [1, 21, 18, 10], [20, 21, 11, 10]]) {
+      box(ctx, C.flag, x, y, w, h); box(ctx, C.flagLight, x, y, w, 1);
+    }
+    speckle(ctx, rng, C.marshDark, 6, 2, 1); // moss between the stones
+  },
+  keepwall(ctx, rng) {
+    box(ctx, C.flagDark, 0, 0, T, T);
+    for (let y = 0; y < T; y += 8) for (let x = (y % 16 ? -8 : 0); x < T; x += 16) { box(ctx, C.flag, x + 1, y + 1, 14, 6); box(ctx, C.flagLight, x + 1, y + 1, 14, 1); }
+    speckle(ctx, rng, C.marshDark, 5, 2, 2); // creeping moss
+  },
+  palisade(ctx, rng) {
+    DRAW.marsh(ctx, rng);
+    for (let x = 0; x < T; x += 8) {
+      box(ctx, C.woodDark, x, 2, 8, 30); box(ctx, C.wood, x + 1, 4, 6, 28); box(ctx, C.woodLight, x + 1, 4, 1, 28);
+      box(ctx, C.woodDark, x + 2, 0, 4, 3); // sharpened tops
+    }
+    box(ctx, C.woodDark, 0, 14, T, 2); // the rope that binds them
+  },
+  passage(ctx, rng) {
+    DRAW.marsh(ctx, rng);
+    blob(ctx, 16, 19, 17, 15, rocky); // a rocky mound with the way down at its foot
+    blob(ctx, 16, 25, 9, 11, (dx, dy, d) => (d > 0.7 ? C.caveEdge : C.cave));
+    box(ctx, C.cave, 7, 25, 18, 7);
+  },
   fence(ctx, rng) {
     grass(ctx, rng);
     for (const y of [10, 20]) { box(ctx, C.woodDark, 0, y + 1, T, 3); box(ctx, C.wood, 0, y, T, 2); }
@@ -279,6 +345,20 @@ function boulder(ctx, x, y, rad) {
    canopy reaches over the tile above, and boulders spill into the next rock tile, so forests and rocky hills read as
    one mass. `next(dx, dy)` names the tile that far away. */
 export const PROPS = {
+  deadtree(ctx, rng) {
+    const look = Math.floor(rng() * 4);
+    const img = stamp(`deadtree${look}`, T + 2 * SPILL, T + 2 * SPILL, c => {
+      c.translate(SPILL, SPILL);
+      const r = seededRng(look * 17 + 3);
+      blob(c, 16, 31, 9, 2, () => C.shadow);
+      box(c, C.deadwoodDark, 14, 6, 5, 25); box(c, C.deadwood, 14, 6, 3, 25); // the trunk
+      for (let i = 0; i < 4; i++) { // bare branches, reaching up and out
+        const y = 6 + i * 5, left = i % 2 === 0, len = 6 + Math.floor(r() * 6);
+        for (let k = 0; k < len; k++) box(c, k % 3 ? C.deadwood : C.deadwoodDark, left ? 14 - k : 18 + k, y - Math.floor(k / 2), 2, 2);
+      }
+    });
+    ctx.drawImage(img, -SPILL, -SPILL);
+  },
   tree(ctx, rng) {
     const look = Math.floor(rng() * TREE_LOOKS);
     const kind = ["oak", "round", "oak", "round", "pine"][look % 5];
@@ -299,6 +379,8 @@ export const PROPS = {
 export const MAP_COLOURS = {
   grass: C.grass, flowers: "#6aa84f", path: C.path, bridge: C.wood, cave: C.cave, tree: C.leafDark, water: C.water,
   rock: C.rock, roof: C.roof, wall: C.wall, door: C.beam, smithy: C.beam, apothecary: C.beam, bank: C.beam, fence: C.wood,
+  marsh: C.marsh, reeds: C.reed, shallow: C.shallow, mud: C.mud, boardwalk: C.wood, deadtree: C.deadwoodDark, causeway: C.flag,
+  keepwall: C.flagDark, palisade: C.woodDark, passage: C.cave,
 };
 
 export const missingTileArt = () => [...new Set(Object.values(TILES).map(t => t.name))].filter(n => !DRAW[n]);

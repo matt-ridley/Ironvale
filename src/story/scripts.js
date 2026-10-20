@@ -21,16 +21,29 @@ export const GATE_CHECKS = { shove: { ability: "STR", dc: 13 }, climb: { ability
 export const BOSS_FIGHT = ["goblinChief", "goblin"];
 export const KING_FIGHT = ["goblinKing"];
 export const INN_COST = 10; // a night at the Sleeping Fox
+export const SIGNET_REWARD = { gold: 150, xp: 1500 }; // quest 3, for reaching Greywater Fen and telling Maren
+export const CAUSEWAY_REWARD = { gold: 200, xp: 3000 }; // quest 4, when the causeway rises
+export const SALLOW_FIGHT = ["motherSallow"];
+
+/* Pays a quest reward and remembers any new level for the line that says so. */
+function pay(s, ctx, reward) {
+  const before = s.hero.level;
+  s.hero.gold += reward.gold;
+  gainXp(s.hero, reward.xp, ctx.rng);
+  ctx.remember("newLevel", s.hero.level > before ? s.hero.level : null);
+}
+const paid = (ctx, reward) => `(+${reward.gold} gold, +${reward.xp} XP${ctx.recall("newLevel") ? `, level ${ctx.recall("newLevel")}!` : ""})`;
 
 const ELDER = "ELDER MAREN";
 const BRANNOC = "BRANNOC";
+const SALLOW = "MOTHER SALLOW";
 export const CHAIN_CHECKS = { smash: { ability: "STR", dc: 12 }, pick: { ability: "DEX", dc: 12 } };
 
 export const SCRIPTS = {
   elder: {
     start: s => {
       const f = s.flags;
-      if (f.kingRewarded) return f.signetShown ? "ironvale" : f.signetTaken ? "signet" : "afterAll";
+      if (f.kingRewarded) return f.seenFen && f.signetShown && !f.fenReported ? "fenReport" : f.signetShown ? "ironvale" : f.signetTaken ? "signet" : "afterAll";
       if (f.kingDefeated) return "kingThanks";
       if (f.questRewarded) return f.kingQuestStarted ? "kingReminder" : "kingIntro";
       return f.chiefDefeated ? "thanks" : f.questStarted ? "reminder" : "intro";
@@ -138,9 +151,16 @@ export const SCRIPTS = {
         enter: s => { s.flags.signetShown = true; },
         text: s => `"Hm. Old blood turns up in strange places. Keep that ring close. If anyone knows the way to Ironvale, it's a smith: they remember the old roads.${s.flags.brannocFreed ? " Ask that dwarf you brought back." : ""}"`,
       },
+      fenReport: {
+        speaker: ELDER,
+        enter: (s, ctx) => { pay(s, ctx, SIGNET_REWARD); s.flags.fenReported = true; },
+        text: (s, ctx) => `You've been up the goblins' passage? Greywater Fen... and the keep beyond. Then the old stories are true. Whatever woke in Ironvale, you carry its seal. Take this for the road. ${paid(ctx, SIGNET_REWARD)}`,
+      },
       ironvale: {
         speaker: ELDER,
-        text: s => (s.flags.askedBrannoc
+        text: s => (s.flags.fenReported
+          ? "The causeway, the hag, the keep... Be careful out there. And keep that ring close: I think it's been waiting for you."
+          : s.flags.askedBrannoc
           ? "If the goblins fled from Ironvale, something worse lives there now. When the way opens, go carefully. And keep that ring close."
           : s.flags.brannocFreed ? "Ask Brannoc about the road to Ironvale. Smiths remember." : "The goblins kept a smith down in the King's hall, I've heard. Smiths remember the old roads."),
       },
@@ -300,9 +320,109 @@ export const SCRIPTS = {
     },
   },
 
+  // The Goblin King's crown, where it fell. Mother Sallow would love it.
+  crown: {
+    start: "look",
+    nodes: {
+      look: {
+        text: "The Goblin King's crown lies where it rolled: bent gold, too big for any goblin head but his, set with glass that's trying very hard to be rubies.",
+        choices: [{ label: "Take the crown", to: "take" }, { label: "Leave it", to: null }],
+      },
+      take: {
+        enter: s => { s.flags.crownTaken = true; s.hero.inventory.push(makeItem("goblinCrown")); },
+        text: "You got the Goblin King's crown! Gaudy, but somebody might want it.",
+      },
+    },
+  },
+
+  // Greywater Fen and Ironvale (Act 2). The causeway under Sallow's water.
+  flood: {
+    start: "look",
+    nodes: {
+      look: {
+        enter: s => { s.flags.causewaySeen = true; },
+        text: s => (s.flags.metSallow
+          ? "Mother Sallow's water, black and cold over the old stones. She won't let it go for nothing."
+          : "The old causeway runs on north under black water, too deep and too cold to wade. Somewhere close by, someone is cackling."),
+      },
+    },
+  },
+
+  // Mother Sallow, the marsh hag: fight her for the causeway, or give her something shiny.
+  sallow: {
+    start: s => (s.flags.sallowBargain ? "pleased" : s.flags.metSallow ? "again" : "hello"),
+    nodes: {
+      hello: {
+        speaker: SALLOW,
+        enter: s => { s.flags.metSallow = true; },
+        text: "Well, well! A visitor! Nobody visits Mother Sallow. Nobody nice, anyway. Mind the frogs, dearie: they're mine.",
+        choices: [{ label: "Why is the causeway flooded?", to: "why" }, { label: "Goodbye.", to: null }],
+      },
+      why: {
+        speaker: SALLOW,
+        text: "Because Mother likes it wet! And because the dead up at the keep can't swim. Nor can you, I'll wager. Hee!",
+        to: "deal",
+      },
+      again: { speaker: SALLOW, text: "Back again? Brought Mother something shiny, have we?", to: "deal" },
+      deal: {
+        speaker: SALLOW,
+        text: "Raise the causeway? For free? Hee! Bring Mother something shiny. Something a king might wear.",
+        choices: [
+          { label: "Give her the Goblin King's crown", if: s => s.hero.inventory.some(i => i.base === "goblinCrown"), to: "bargain" },
+          { label: "Then I'll make you raise it!", to: "fight" },
+          { label: "Not now.", to: null },
+        ],
+      },
+      bargain: {
+        speaker: SALLOW,
+        enter: (s, ctx) => {
+          s.hero.inventory = s.hero.inventory.filter(i => i.base !== "goblinCrown");
+          s.flags.sallowBargain = true;
+          s.flags.causewayRaised = true;
+          pay(s, ctx, CAUSEWAY_REWARD);
+        },
+        text: (s, ctx) => `"Ooooh. Shiny! Fits lovely." She waggles her fingers, and with a great gurgle the water drains off the causeway. "And dearie: Mother remembers who brings her presents." ${paid(ctx, CAUSEWAY_REWARD)}`,
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...SALLOW_FIGHT], zone: "fen", winFlag: "sallowDefeated", afterWin: "sallowFalls" }) },
+      pleased: { speaker: SALLOW, text: "Mother's busy admiring her crown. Shoo, dearie, shoo! Come back when you've something else shiny." },
+    },
+  },
+
+  // Straight after you beat Mother Sallow.
+  sallowFalls: {
+    start: "sink",
+    nodes: {
+      sink: {
+        enter: (s, ctx) => { s.flags.causewayRaised = true; pay(s, ctx, CAUSEWAY_REWARD); },
+        text: (s, ctx) => `Mother Sallow shrieks and sinks into the mud, and with a great gurgle her water drains off the old causeway. The way north to Ironvale Keep is open. ${paid(ctx, CAUSEWAY_REWARD)}`,
+      },
+    },
+  },
+
+  keepGate: {
+    start: "look",
+    nodes: {
+      look: { text: "The portcullis of Ironvale Keep is down and rusted solid. Through the bars: a courtyard, a chapel, and bones. A great many bones. (The keep opens in a future update.)" },
+    },
+  },
+
+  fenwatchGate: {
+    start: "look",
+    nodes: {
+      look: { text: "A gate of heavy logs, barred from inside. A voice calls down: \"Fenwatch is shut while we mend the boardwalks! Come back soon, traveller.\" (Fenwatch opens in the next update.)" },
+    },
+  },
+
+  rockslide: {
+    start: "look",
+    nodes: {
+      look: { text: "Rocks the size of houses block the old road into the mountains. Not even Brannoc could shift these. Something shook them down, and not long ago." },
+    },
+  },
+
   // Brannoc in Oakhollow, once he's free. He knows the old road to Ironvale.
   brannocTown: {
-    start: s => (s.flags.askedBrannoc ? "again" : s.flags.signetShown ? "road" : "hello"),
+    start: s => (s.flags.passageCleared ? "again" : s.flags.askedBrannoc ? "cleared" : s.flags.signetShown ? "road" : "hello"),
     nodes: {
       hello: {
         speaker: BRANNOC,
@@ -316,11 +436,16 @@ export const SCRIPTS = {
       rubble: {
         speaker: BRANNOC,
         enter: s => { s.flags.askedBrannoc = true; },
-        text: "\"It's choked with rubble now. The goblins brought the roof down behind them, running from whatever's up there. Give me time and I'll find us a way through.\"",
+        text: "\"It's choked with rubble now. The goblins brought the roof down behind them, running from whatever's up there. Give me a day with a pick, and come back.\"",
+      },
+      cleared: {
+        speaker: BRANNOC,
+        enter: s => { s.flags.passageCleared = true; },
+        text: "He's covered in rock dust, and grinning. \"Done! The passage behind the throne goes all the way up. Smells of marsh at the top: that'll be Greywater Fen. Mind the water, and mind what lives in it.\"",
       },
       again: {
         speaker: BRANNOC,
-        text: "\"I'm working on that passage, don't you worry. Ironvale steel on your hip and an Ironvale ring in your pack. Strange company you keep.\"",
+        text: "\"Ironvale steel on your hip and an Ironvale ring in your pack. Strange company you keep. I'll be setting up a forge in Fenwatch, once they let me in.\"",
       },
     },
   },
@@ -619,7 +744,7 @@ export function sideObjective(flags) {
 
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
    counted until it can be finished. */
-export const questsDone = flags => [flags.questRewarded, flags.kingRewarded].filter(Boolean).length;
+export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported].filter(Boolean).length;
 
 /* The line under the HP box saying what to do next. */
 export function objective(flags) {
@@ -628,7 +753,12 @@ export function objective(flags) {
     if (!flags.brannocFreed) return "Free the smith chained in the King's hall";
     if (!flags.signetShown) return "Show the Iron Signet to Elder Maren";
     if (!flags.askedBrannoc) return "Ask Brannoc about Ironvale";
-    return "The way to Ironvale opens in a future update";
+    if (!flags.passageCleared) return "Come back to Brannoc by the smithy";
+    if (!flags.seenFen) return "Climb the goblins' passage behind the King's throne";
+    if (!flags.fenReported) return "Tell Elder Maren about Greywater Fen";
+    if (!flags.metSallow) return "Find a way across the drowned causeway";
+    if (!flags.causewayRaised) return "Deal with Mother Sallow: fight her, or bargain";
+    return "Ironvale Keep opens in a future update";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";

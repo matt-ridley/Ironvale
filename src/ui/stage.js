@@ -15,9 +15,11 @@ const SKY = {
   meadow: { sky: 0x3a5a8a, far: 0x3f6b3a, ground: 0x5aa04a, groundDark: 0x4a8a3c },
   village: { sky: 0x4a6a9a, far: 0x4f7a3f, ground: 0x6aa84f, groundDark: 0x5a9043 },
   indoors: { sky: 0x6b4f34, far: 0x4a3420, ground: 0xb07e4c, groundDark: 0x8a5e36 },
+  fen: { sky: 0x3a4a48, far: 0x4a4238, ground: 0x5d7a3e, groundDark: 0x3c6e70 }, // mist, dead trees, marsh and pools
 };
 SKY.warrens = SKY.cave;
 SKY.throne = SKY.cave;
+SKY.drowned = SKY.keepGrounds = SKY.pass = SKY.fen;
 
 /* A zone id the stage knows, or `fallback`. */
 export const stageZone = (zone, fallback = "forest") => (SKY[zone] ? zone : fallback);
@@ -39,12 +41,19 @@ export function drawBackdrop(scene, zone) {
       const h = 40 + ((x * 37) % 23);
       g.fillTriangle(x, 100, x + 14, 100 - h, x + 28, 100);
     }
+  } else if (SKY[zone] === SKY.fen) {
+    for (let x = 10; x < WIDTH; x += 70 + ((x * 11) % 30)) { // bare dead trees in the mist
+      const h = 40 + ((x * 13) % 30);
+      g.fillRect(x, 100 - h, 4, h);
+      g.fillRect(x - 10, 100 - h + 10, 12, 3); g.fillRect(x + 4, 100 - h + 18, 10, 3);
+    }
   } else {
     for (let x = -20; x < WIDTH + 40; x += 60) g.fillEllipse(x + ((x * 13) % 20), 100, 80, 50 + ((x * 7) % 30));
   }
   g.fillStyle(c.ground).fillRect(0, 96, WIDTH, PANEL_Y - 96);
   g.fillStyle(c.groundDark);
-  for (let x = 0; x < WIDTH; x += 12) g.fillRect(x + ((x * 7) % 9), 100 + ((x * 5) % 48), 3, 2);
+  if (SKY[zone] === SKY.fen) for (let x = 0; x < WIDTH; x += 90) g.fillEllipse(x + 30, 112 + ((x * 3) % 30), 50, 8); // pools
+  else for (let x = 0; x < WIDTH; x += 12) g.fillRect(x + ((x * 7) % 9), 100 + ((x * 5) % 48), 3, 2);
 }
 
 /* Something standing on the ground at x, with a shadow under it (on the hero's grid and scale; the traced monsters
