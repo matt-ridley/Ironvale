@@ -34,7 +34,8 @@ function loadCompanion(c) {
   const gear = c.gear && typeof c.gear === "object"
     ? Object.fromEntries(COMPANION_SLOTS.map(s => { const i = c.gear[s]; return [s, knownItem(i) && fits[s](ITEMS[i.base]) ? i : null]; }))
     : startingGear(c.id);
-  return { id: c.id, hurt: isInt(c.hurt) && c.hurt > 0 ? c.hurt : 0, gear };
+  const slotsUsed = Array.isArray(c.slotsUsed) ? { slotsUsed: c.slotsUsed.map(n => (isInt(n) && n > 0 ? n : 0)) } : {}; // a caster's spent slots
+  return { id: c.id, hurt: isInt(c.hurt) && c.hurt > 0 ? c.hurt : 0, gear, ...slotsUsed };
 }
 
 /* Parses a save. Returns the game state, or null if it isn't a save this game can use. */

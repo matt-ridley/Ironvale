@@ -1,6 +1,6 @@
 # Ironvale roadmap
 
-The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 and 2 of the build order are built (0.18.0 and 0.19.0); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
+The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 3 of the build order are built (0.18.0 to 0.20.0); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
 
 ## The shape of the game
 
@@ -196,7 +196,7 @@ One pull request each, with a minor version bump.
 
 1. ~~**Safe places:** hubs and camps, paid inn rest, short and long rests, `lastHub`, the Homeward Feather, the Act 1 changes.~~ **Built in 0.18.0.** Oakhollow's inn is the Sleeping Fox (Nell, 10 gold a night). A short rest brings you up to half your HP and back, so resting twice does nothing more and a free campfire is never as good as a bed. Zones don't have `safe` or `music` fields yet: safe places are `TRAVEL_POINTS` in `travel.js` (a hub's zone and rooms, or within 3 tiles of a camp's centre), which is enough until step 7 adds more maps.
 2. ~~**Fighter features** (L2-8), the Potion of Dexterity rework, saving throws.~~ **Built in 0.19.0.** Action Surge is a SURGE button: one more action, then your turn ends. Ability score increases are picked on a LevelUp screen that opens over the world whenever `hero.asi` > 0 (it can't be skipped). Saving throws are `savingThrow()` in `checks.js` (a fighter adds proficiency to STR and CON saves); nothing calls for one yet. Monsters have no ability scores, so their saves wait for the magic engine (step 3).
-3. **Magic engine:** slots, cantrips, multi-target spells, conditions, scrolls. Rules only and unit-tested, built for both companions and hero runes.
+3. ~~**Magic engine:** slots, cantrips, multi-target spells, conditions, scrolls. Rules only and unit-tested, built for both companions and hero runes.~~ **Built in 0.20.0.** `data/spells.js` (14 SRD spells: Fire Bolt, Sacred Flame, Produce Flame, Vicious Mockery, Magic Missile, Burning Hands, Sleep, Shield, Cure Wounds, Healing Word, Bless, Entangle, Faerie Fire, Fireball, plus the SRD slot table), `rules/conditions.js` (asleep, paralyzed, restrained, outlined, mocked, blessed, shielded) and `rules/magic.js` (`makeCaster`, a caster's `book` of known spells and used slots, `spendForSpell`, `castSpell`, `readScroll`, `healOutsideBattle`). The battle engine now runs conditions every turn, and monsters have SRD saves and a creature type. Not done yet: concentration (Bless and the rest just last their rounds), Turn Undead, Spiritual Weapon, Moonbeam, Misty Step, Goodberry and Hypnotic Pattern; scroll items exist but aren't sold or found, and no screen casts anything: step 4 adds the casting companions and the buttons.
 4. **Companion roster** and tactics (option C); Megan moves onto it.
 5. **Act 1 plant:** the crest on the sword, and support for titles.
 6. **The King's hall:** the Signet, Brannoc, the King's last words, `shownWhen`, Q3.

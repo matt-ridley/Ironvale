@@ -1,16 +1,19 @@
 // Turn-based combat: initiative, attack rolls against AC, and the player's actions (attack, defend, potion, flee,
 // Second Wind, a bonus action that heals without using up the turn, and Action Surge, which gives you one more action
 // this turn). ATTACK is one attack, or two with Extra Attack (level 5); a Potion of Dexterity, drunk before or during
-// the fight, adds one more. From level 3 your attacks crit on a 19 or 20. A companion in your party (rules/party.js) takes their own turns:
+// the fight, adds one more. From level 3 your attacks crit on a 19 or 20.
+// Conditions (rules/conditions.js: asleep, restrained, blessed...) change attacks, AC and saves, and can take away a
+// turn; they start and end with each turn. Spells and scrolls (rules/magic.js) are cast through the helpers below. A companion in your party (rules/party.js) takes their own turns:
 // they shoot at the monster you last attacked, and monsters pick between you and them.
 // A battle is a plain object. The player acts with playerAction(); monsters then take their turns until it is the
 // player's turn again or the battle is over. Every step is written to battle.log for the screen to show.
 import { d20, roll } from "./dice.js";
-import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND, critOn, attacksPerAction, hasFeature } from "./character.js";
+import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND, critOn, attacksPerAction, hasFeature, SAVE_PROFICIENCIES, proficiencyBonus } from "./character.js";
 import { abilityCheck } from "./checks.js";
 import { baseOf, makeItem, itemName, useItem, cantDrink } from "./items.js";
 import { MONSTERS } from "../data/monsters.js";
 import { companionStats, afterBattle } from "./party.js";
+import { attackMods, conditionAc, skipsTurn, startTurn, endTurn, onDamage, conditionSave, CONDITIONS } from "./conditions.js";
 import { ITEMS } from "../data/items.js";
 
 export const DEFEND_AC_BONUS = 2;
@@ -20,27 +23,57 @@ export function spawnMonster(id, rng = Math.random) {
   const m = MONSTERS[id];
   if (!m) throw new Error(`Unknown monster: ${id}`);
   const hp = Math.max(1, roll(m.hp, rng).total);
-  return { id, name: m.name, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: { ...m.attack, damageBonus: 0 }, xp: m.xp, gold: m.gold };
+  return { id, name: m.name, type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: { ...m.attack, damageBonus: 0 }, xp: m.xp, gold: m.gold };
 }
 
 /* One attack roll. A critical hit (a natural 20, or `critOn` and up) always hits and doubles the damage dice; a natural
-   1 always misses. */
-export function resolveAttack(attack, targetAc, rng = Math.random, { advantage = false, disadvantage = false, critOn = 20 } = {}) {
+   1 always misses. `bonusDice` are added to the roll (Bless); `critOnHit` makes any hit a critical (on someone
+   paralyzed). */
+export function resolveAttack(attack, targetAc, rng = Math.random, { advantage = false, disadvantage = false, critOn = 20, bonusDice = null, critOnHit = false } = {}) {
   const { rolls, natural } = d20({ advantage, disadvantage }, rng);
-  const total = natural + attack.bonus;
-  const crit = natural >= critOn;
-  const hit = crit || (natural !== 1 && total >= targetAc);
+  const extra = bonusDice ? roll(bonusDice, rng).total : 0;
+  const total = natural + attack.bonus + extra;
+  const hit = natural >= critOn || (natural !== 1 && total >= targetAc);
+  const crit = natural >= critOn || (hit && critOnHit);
   let damage = 0, damageRolls = [];
   if (hit) {
     const r = roll(attack.damage, rng, { crit, extraBonus: attack.damageBonus || 0 });
     damage = Math.max(0, r.total);
     damageRolls = r.rolls;
   }
-  return { rolls, natural, total, targetAc, hit, crit, damage, damageRolls };
+  return { rolls, natural, extra, total, targetAc, hit, crit, damage, damageRolls };
 }
 
-const living = battle => battle.monsters.filter(m => m.hp > 0);
-const playerAc = battle => armourClass(battle.player) + (battle.defending ? DEFEND_AC_BONUS : 0);
+export const living = battle => battle.monsters.filter(m => m.hp > 0);
+const playerAc = battle => armourClass(battle.player) + (battle.defending ? DEFEND_AC_BONUS : 0) + conditionAc(battle, "player");
+
+// Everyone in a fight has a key: "player", "ally" or a monster's index.
+/* The hero, companion or monster with this key. */
+export const combatant = (battle, key) => (key === "player" ? battle.player : key === "ally" ? battle.ally : battle.monsters[key]);
+export const nameOf = (battle, key) => (key === "player" ? "You" : key === "ally" ? battle.ally.name : `The ${battle.monsters[key].name}`);
+export const acOf = (battle, key) => (key === "player" ? playerAc(battle) : combatant(battle, key).ac + conditionAc(battle, key));
+
+/* Someone's saving throw bonus: the hero's ability modifier (+ proficiency in a fighter's STR and CON saves), a
+   companion's DEX (other saves +0), or a monster's listed save. */
+export function saveBonusOf(battle, key, ability) {
+  if (key === "player") return mod(battle.player, ability) + (SAVE_PROFICIENCIES.includes(ability) ? proficiencyBonus(battle.player.level) : 0);
+  if (key === "ally") return ability === "DEX" ? battle.ally.dexMod : 0;
+  return battle.monsters[key].saves?.[ability] ?? 0;
+}
+
+/* A saving throw in a fight, with conditions (Bless, restrained) counted. */
+export const battleSave = (battle, key, ability, dc, rng = Math.random) => conditionSave(battle, key, ability, dc, saveBonusOf(battle, key, ability), rng);
+
+/* Takes HP off someone (never below 0) and wakes them if they were asleep. Call it before logging the hit (each log
+   entry records everyone's HP), then tellWoken() after. Returns the names of conditions the damage ended. */
+export function hurt(battle, key, damage) {
+  const c = combatant(battle, key);
+  c.hp = Math.max(0, c.hp - Math.max(0, damage));
+  return damage > 0 && c.hp > 0 ? onDamage(battle, key) : [];
+}
+export function tellWoken(battle, key, ended) {
+  for (const name of ended) say(battle, "condition-end", `${nameOf(battle, key)} ${key === "player" ? "are" : "is"} no longer ${name}.`);
+}
 
 /* Rolls initiative (d20 + DEX; ties go to the higher DEX, then the player) and plays monster turns up to the player's. */
 export function createBattle(player, monsterIds, rng = Math.random) {
@@ -55,7 +88,7 @@ export function createBattle(player, monsterIds, rng = Math.random) {
   // A Potion of Dexterity drunk before the fight is used up by it.
   const quick = !!player.effects?.dexterity;
   if (quick) player.effects = { ...player.effects, dexterity: false };
-  const battle = { player, ally, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null };
+  const battle = { player, ally, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null, conditions: {} };
   const names = entries.map(e => (e.who === "player" ? "You" : e.who === "ally" ? ally.name : monsters[e.who].name) + ` (${e.init})`);
   say(battle, "start", `${monsters.map(m => m.name).join(", ")} ${monsters.length > 1 ? "appear" : "appears"}! Initiative: ${names.join(", ")}.`);
   if (quick) say(battle, "quick", "Your Potion of Dexterity makes you quick: one extra attack each time you ATTACK.");
@@ -80,10 +113,11 @@ export function playerAction(battle, action, rng = Math.random) {
     battle.focus = battle.monsters.indexOf(target); // your companion shoots at the same one
     const atk = weaponAttack(p);
     for (let n = 0; n < attacksThisAction(battle) && target; n++) {
-      const r = resolveAttack(atk, target.ac, rng, { critOn: critOn(p) });
-      target.hp = Math.max(0, target.hp - r.damage);
       const t = battle.monsters.indexOf(target);
+      const r = resolveAttack(atk, acOf(battle, t), rng, { critOn: critOn(p), ...attackMods(battle, "player", t) });
+      const woke = hurt(battle, t, r.damage);
       say(battle, "attack", `${n ? "Again! You swing" : "You swing"} your ${atk.name} at the ${target.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, target: t });
+      tellWoken(battle, t, woke);
       if (target.hp === 0) {
         say(battle, "defeat", `The ${target.name} falls.`, { target: t });
         target = living(battle)[0]; // the second attack goes to the next monster
@@ -149,12 +183,19 @@ export function playerAction(battle, action, rng = Math.random) {
     return { ok: false, reason: `Unknown action: ${action.type}` };
   }
 
+  return endPlayerAction(battle, start, rng);
+}
+
+/* After an action that uses your turn: the fight may be over; Action Surge may give you another action; otherwise
+   your turn ends and everyone else's turns play out. Returns playerAction's result (rules/magic.js uses it too). */
+export function endPlayerAction(battle, start, rng = Math.random) {
   if (!checkEnd(battle, rng)) {
     if (battle.surging) { // Action Surge: one more action before your turn ends
       battle.surging = false;
       say(battle, "surge-again", "Your surge carries you on: act again!");
       return { ok: true, events: battle.log.slice(start) };
     }
+    finishTurn(battle, "player", rng);
     nextTurn(battle);
     runMonsterTurns(battle, rng);
   }
@@ -164,42 +205,63 @@ export function playerAction(battle, action, rng = Math.random) {
 /* Attacks in one ATTACK action: one, two with Extra Attack, and one more with a Potion of Dexterity. */
 export const attacksThisAction = battle => attacksPerAction(battle.player) + (battle.quick ? 1 : 0);
 
-/* Plays everyone else's turns (your companion's and the monsters') until it is yours again or the fight is over. */
+const isAre = key => (key === "player" ? "are" : "is");
+
+/* The end of someone's turn: their conditions count down, and they may save their way out of one. */
+function finishTurn(battle, key, rng) {
+  for (const e of endTurn(battle, key, ability => saveBonusOf(battle, key, ability), rng)) {
+    const how = e.save ? ` (${e.save.ability} save ${e.save.total} vs DC ${e.save.dc})` : "";
+    say(battle, "condition-end", `${nameOf(battle, key)} ${isAre(key)} no longer ${e.name}${how}.`, { who: key });
+  }
+}
+
+/* Plays everyone else's turns (your companion's and the monsters') until it is yours again or the fight is over.
+   Anyone whose conditions take their turn away (asleep, paralyzed) just has their conditions tick on, you included. */
 function runMonsterTurns(battle, rng) {
-  while (battle.state === "active" && battle.order[battle.turn].who !== "player") {
-    if (battle.order[battle.turn].who === "ally") { allyTurn(battle, rng); if (checkEnd(battle, rng)) return; nextTurn(battle); continue; }
-    const m = battle.monsters[battle.order[battle.turn].who];
-    if (m.hp > 0) {
-      const a = battle.ally;
-      // With a companion standing, each monster picks one of you at random.
-      if (a && a.hp > 0 && rng() < 0.5) {
-        const r = resolveAttack(m.attack, a.ac, rng);
-        a.hp = Math.max(0, a.hp - r.damage);
-        say(battle, "monster-attack", `The ${m.name} attacks ${a.name} with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r)}`, { roll: r, actor: battle.monsters.indexOf(m), onAlly: true });
-        if (a.hp === 0) say(battle, "ally-down", `${a.name} is knocked down! She'll be back on her feet after the fight.`);
-      } else {
-        const r = resolveAttack(m.attack, playerAc(battle), rng);
-        battle.player.hp = Math.max(0, battle.player.hp - r.damage);
-        say(battle, "monster-attack", `The ${m.name} attacks with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r, true)}`, { roll: r, actor: battle.monsters.indexOf(m) });
+  while (battle.state === "active") {
+    const key = battle.order[battle.turn].who;
+    if (combatant(battle, key).hp > 0) {
+      for (const name of startTurn(battle, key)) say(battle, "condition-end", `${nameOf(battle, key)} ${isAre(key)} no longer ${name}.`, { who: key });
+      if (skipsTurn(battle, key)) {
+        const why = Object.keys(battle.conditions[key]).filter(id => CONDITIONS[id].skips).map(id => CONDITIONS[id].name).join(" and ");
+        say(battle, "skip", `${nameOf(battle, key)} ${isAre(key)} ${why} and can't act.`, { who: key });
+        finishTurn(battle, key, rng);
+      } else if (key === "player") break; // your turn
+      else {
+        if (key === "ally") allyTurn(battle, rng); else monsterTurn(battle, key, rng);
+        if (checkEnd(battle, rng)) return;
+        finishTurn(battle, key, rng);
       }
-      if (checkEnd(battle, rng)) return;
     }
     nextTurn(battle);
   }
   if (battle.state === "active") battle.defending = false; // the guard lasts until the start of the player's turn
 }
 
+/* A monster attacks. With a companion standing, it picks one of you at random. */
+function monsterTurn(battle, i, rng) {
+  const m = battle.monsters[i], a = battle.ally;
+  const onAlly = !!(a && a.hp > 0 && rng() < 0.5);
+  const key = onAlly ? "ally" : "player";
+  const r = resolveAttack(m.attack, acOf(battle, key), rng, attackMods(battle, i, key));
+  const woke = hurt(battle, key, r.damage);
+  if (onAlly) say(battle, "monster-attack", `The ${m.name} attacks ${a.name} with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r)}`, { roll: r, actor: i, onAlly: true });
+  else say(battle, "monster-attack", `The ${m.name} attacks with its ${m.attack.name}: ${rollText(r, m.attack.bonus)} ${hitText(r, true)}`, { roll: r, actor: i });
+  tellWoken(battle, key, woke);
+  if (onAlly && a.hp === 0) say(battle, "ally-down", `${a.name} is knocked down! She'll be back on her feet after the fight.`);
+}
+
 /* Your companion shoots at the monster you last attacked (or the first one standing). */
 function allyTurn(battle, rng) {
   const a = battle.ally;
-  if (!a || a.hp <= 0) return;
   const focus = battle.monsters[battle.focus];
   const target = focus?.hp > 0 ? focus : living(battle)[0];
   if (!target) return;
-  const r = resolveAttack(a.attack, target.ac, rng);
-  target.hp = Math.max(0, target.hp - r.damage);
   const t = battle.monsters.indexOf(target);
+  const r = resolveAttack(a.attack, acOf(battle, t), rng, attackMods(battle, "ally", t, { melee: false }));
+  const woke = hurt(battle, t, r.damage);
   say(battle, "ally-attack", `${a.name} shoots her ${a.attack.name} at the ${target.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t });
+  tellWoken(battle, t, woke);
   if (target.hp === 0) say(battle, "defeat", `The ${target.name} falls.`, { target: t });
 }
 
@@ -215,7 +277,7 @@ function nextTurn(battle) {
   if (battle.turn >= battle.order.length) { battle.turn = 0; battle.round++; }
 }
 
-function checkEnd(battle, rng) {
+export function checkEnd(battle, rng) {
   if (battle.player.hp <= 0) {
     battle.state = "lost";
     afterBattle(battle.player, battle.ally);
@@ -246,11 +308,11 @@ function checkEnd(battle, rng) {
 
 /* Each log entry carries everyone's HP right after it happened, so a screen can play the fight back step by step.
    extra: roll (an attack roll), target / actor (monster index), heal (HP recovered), onAlly (a monster hit your companion). */
-function say(battle, type, text, extra = {}) {
+export function say(battle, type, text, extra = {}) {
   const hp = { player: battle.player.hp, ally: battle.ally ? battle.ally.hp : null, monsters: battle.monsters.map(m => m.hp) };
   battle.log.push({ round: battle.round, type, text, hp, level: battle.player.level, ...extra });
 }
 
-const rollText = (r, bonus) => `${r.natural} ${bonus < 0 ? "-" : "+"} ${Math.abs(bonus)} = ${r.total} vs AC ${r.targetAc}.`;
-const hitText = (r, onYou) =>
+export const rollText = (r, bonus) => `${r.natural} ${bonus < 0 ? "-" : "+"} ${Math.abs(bonus)}${r.extra ? ` + ${r.extra}` : ""} = ${r.total} vs AC ${r.targetAc}.`;
+export const hitText = (r, onYou) =>
   !r.hit ? "Miss." : `${r.crit ? "Critical hit!" : "Hit!"} ${r.damage} damage${onYou ? " to you" : ""}.`;
