@@ -2,6 +2,7 @@
 // (or, indoors, a panelled wall and floorboards), above a panel for text and buttons. Your party stands on the left; whoever you face stands on the right.
 import { WIDTH } from "../config.js";
 import { heroFrame } from "../art/pixels.js";
+import { MONSTER_ART, MONSTER_SCALE } from "../art/monsters.js";
 
 export const GROUND_Y = 124;
 export const PANEL_Y = 152;
@@ -46,8 +47,9 @@ export function drawBackdrop(scene, zone) {
   for (let x = 0; x < WIDTH; x += 12) g.fillRect(x + ((x * 7) % 9), 100 + ((x * 5) % 48), 3, 2);
 }
 
-/* Something standing on the ground at x, with a shadow under it (on the hero's grid and scale). */
-export function stand(scene, x, key, frame, { scale = 1.5, shadow = 40 } = {}) {
+/* Something standing on the ground at x, with a shadow under it (on the hero's grid and scale; the traced monsters
+   are drawn a little smaller, as in their reference). */
+export function stand(scene, x, key, frame, { scale = MONSTER_ART[key] ? MONSTER_SCALE : 1.5, shadow = 40 } = {}) {
   scene.add.ellipse(x, GROUND_Y, shadow, 8, 0x000000, 0.3);
   return scene.add.image(x, GROUND_Y, key, frame).setOrigin(0.5, 1).setScale(scale);
 }

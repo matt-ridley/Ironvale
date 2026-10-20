@@ -13,7 +13,6 @@ export const PALETTE = {
   G: "#3d6b1c", // dark green
   e: "#f4d03f", // eyes
   t: "#f5f5f0", // teeth
-  n: "#6e6e78", // wolf fur
   N: "#a3a3ad", // light fur
   m: "#8b6b4a", // rat fur
   M: "#6b4f34", // dark rat fur
@@ -21,18 +20,11 @@ export const PALETTE = {
   f: "#f1c27d", // skin
   o: "#5b4a8a", // robe
   O: "#3f3366", // dark robe
-  h: "#c8643c", // hobgoblin skin
-  H: "#8e4426", // dark hobgoblin skin
-  w: "#5a4670", // bat wing
-  W: "#7e68a0", // light bat wing
   i: "#4a4a55", // iron
   u: "#3f6fb0", // blue cloth
   U: "#2c4f80", // dark blue cloth
-  l: "#7fb33a", // light goblin green
-  c: "#b88a58", // tan leather
   a: "#e0453a", // red eyes
   x: "#efe6cf", // ivory (tusks)
-  z: "#4a4a54", // dark fur
 };
 
 export const SPRITES = {
@@ -54,51 +46,6 @@ export const SPRITES = {
     "....kbb..bbk....",
     "....kkk..kkk....",
   ],
-  // A goblin: big head, long ears, a leather vest and a scimitar (18 x 22).
-  goblin: [
-    "..................",
-    "..................",
-    "......kkkkkk......",
-    ".....kllgggggk....",
-    "kk..klgggggggGk.kk",
-    "kgkkgggggggggGGkgk",
-    ".kggggeekggeekGgk.",
-    "..kgggggggggggGk..",
-    "..kggkttttttkGGk..",
-    "...kgGkttttkGGk...",
-    "....kkGGGGGGkk....",
-    "...kcckkkkkkcck..S",
-    "..kgkccbbbbcckgkSk",
-    "..kgkcbbbbbbckgSk.",
-    "..kgkcbyyybbckgS..",
-    "..kgkkbbbbbbkkgg..",
-    "...kk.kbbbbbk.kk..",
-    "......kbkkkbk.....",
-    "......kgk.kgk.....",
-    "......kgk.kgk.....",
-    ".....kGGk.kGGk....",
-    ".....kkkk.kkkk....",
-  ],
-  // A grey wolf with a dark back and a bushy tail, side on (24 x 17).
-  wolf: [
-    "........................",
-    "................k..k....",
-    "...............knkknk...",
-    "...............knnnnnk..",
-    "..............knnnnenNk.",
-    "k.............knnnnnnNNk",
-    "zk...........knnnnnnNkkk",
-    "zzk..kkkkkkkkzznnnnnNtk.",
-    ".zzkzzzzzzzzzzznnnnnNk..",
-    "..knnnnnnnnnnnnnnnnNNk..",
-    "..knnnnnnnnnnnnnnnnNNk..",
-    "..kNNnnnnnnnnnnnnnnNNk..",
-    "...kNNNNNNNNNNNNNNNNk...",
-    "...knk.knk....knk.knk...",
-    "...knk.knk....knk.knk...",
-    "...kNk.kNk....kNk.kNk...",
-    "...kkk.kkk....kkk.kkkk..",
-  ],
   // A giant rat with a long pink tail (20 x 14).
   giantRat: [
     "....................",
@@ -115,31 +62,6 @@ export const SPRITES = {
     "....kmk.kmk.kmkmk...",
     "....kpk.kpk.kpkpk...",
     "....kkk.kkk.kkkkk...",
-  ],
-  // The goblin chief: a goblin in a dented helmet and a red cloak, with a bigger scimitar (18 x 22).
-  goblinChief: [
-    "......kkkkkk......",
-    ".....kSSsssskk....",
-    "....kSsssssssk....",
-    "kk..kkkkkkkkkk..kk",
-    "kgkkgggggggggGGkgk",
-    ".kggggeekggeekGgk.",
-    "..kgggggggggggGk..",
-    "..kggkttttttkGGk.S",
-    "...kgGkttttkGGk.SS",
-    "..rrkkGGGGGGkkrrSk",
-    ".rrkcckkkkkkcckSk.",
-    ".rkgkccbbbbcckgSk.",
-    ".rkgkcbbbbbbckgS..",
-    ".rkgkcbyyyybckgk..",
-    ".rkgkkbbbbbbkkgg..",
-    ".rrkk.kbbbbbk.kk..",
-    "..rr..kbkkkbk.....",
-    "......kgk.kgk.....",
-    "......kgk.kgk.....",
-    "......kgk.kgk.....",
-    ".....kGGk.kGGk....",
-    ".....kkkk.kkkk....",
   ],
   elder: [
     "..............y.",
@@ -184,71 +106,6 @@ export const SPRITES = {
     "....kmk..kmk....",
     "....kbk..kbk....",
     "....kkk..kkk....",
-  ],
-  // A boar with a bristly back and tusks, side on (24 x 16).
-  boar: [
-    "........................",
-    "........................",
-    "......k.k.k.k...........",
-    ".....kMkMkMkMk..........",
-    "....kMMMMMMMMMkk..k.....",
-    "...kMmmmmmmmmMMMkkMk....",
-    "..kMmmmmmmmmmmmmMMmmk...",
-    ".kMmmmmmmmmmmmmmmmmamk..",
-    ".kmmmmmmmmmmmmmmmmmmmMk.",
-    ".kmmmmmmmmmmmmmmmmmmmpkk",
-    "kMmmmmmmmmmmmmmmmmmkkpxk",
-    ".kMMmmmmmmmmmmmmmMMkkxk.",
-    "..kMMMMMMMMMMMMMMMMk.k..",
-    "...kMMk.kMk...kMk.kMMk..",
-    "...kbbk.kbk...kbk.kbbk..",
-    "...kkkk.kkk...kkk.kkkk..",
-  ],
-  // A giant bat with its wings spread (24 x 16).
-  giantBat: [
-    "........................",
-    "kk.........k..k.......kk",
-    "kwk.......kWkkWk.....kwk",
-    "kWwk.....kWWWWWWk...kwWk",
-    "kWwwk...kWaWWWaWWk.kwwWk",
-    "kWwwwkkkWWWWWWWWWkkwwwWk",
-    ".kWwwwwwkWtWWtWWkwwwwWk.",
-    ".kWwwwwwwkWWWWWkwwwwwWk.",
-    "..kWwwwwwwkkkkkwwwwwWk..",
-    "..kWwkwwwwwwwwwwwkwwWk..",
-    "...kWkkwwwkkkwwwkkwWk...",
-    "....kk..kwk.kwk..kkk....",
-    "........kk...kk.........",
-    "........................",
-    "........................",
-    "........................",
-  ],
-  // A hobgoblin in an iron helmet and mail, with a longsword and a shield: as tall as the hero (19 x 24).
-  hobgoblin: [
-    "...................",
-    "......kkkkkk....S..",
-    ".....kiSSiiik..kSk.",
-    "....kiSiiiiiik.kSk.",
-    "....kiiiiiiiik.kSk.",
-    "....kkkkkkikkk.kSk.",
-    "....khhaHhhaHk.kSk.",
-    "....khhhhhhhhk.kSk.",
-    "....kHhkkkkhHk.kSk.",
-    ".....kHtHHtHk..kSk.",
-    "....kkkkkkkkkk.kSk.",
-    "..kkrrrrrrrrrrkkyyk",
-    ".kuukiirrrriikhhkk.",
-    ".kuyukirrrrikkhhk..",
-    ".kuyyukiiiiikkhk...",
-    ".kuyukrrrrrrrk.....",
-    ".kuukbbyyyybbbk....",
-    "..kkkrrrrrrrrk.....",
-    ".....krrkkrrk......",
-    ".....kHHk.kHHk.....",
-    ".....khhk.khhk.....",
-    ".....kiik.kiik.....",
-    "....kiiik.kiiik....",
-    "....kkkkk.kkkkk....",
   ],
   // The Goblin King: twice a goblin's size, in a crown and a red cloak, with tusks and a club like a tree trunk (24 x 27).
   goblinKing: [
