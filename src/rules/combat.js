@@ -149,7 +149,13 @@ export function playerAction(battle, action, rng = Math.random) {
     const atk = weaponAttack(p);
     for (let n = 0; n < attacksThisAction(battle) && target; n++) {
       const t = battle.monsters.indexOf(target);
-      const r = adjustRoll(resolveAttack(atk, acOf(battle, t), rng, { critOn: critOn(p), ...attackMods(battle, "player", t) }), target, atk);
+      const swing = () => adjustRoll(resolveAttack(atk, acOf(battle, t), rng, { critOn: critOn(p), ...attackMods(battle, "player", t) }), target, atk);
+      let r = swing();
+      if (r.natural === 1 && !p.luckUsed && p.inventory.some(i => i.base === "luckyDie")) { // the Lucky Die, once per rest
+        p.luckUsed = true;
+        say(battle, "lucky", "A natural 1... but your Lucky Die tingles in your pack. You roll again!");
+        r = swing();
+      }
       let flare = "";
       if (rune && r.hit) {
         const extra = adjustDamage(target, roll(target.type === "undead" ? "3d8" : "2d8", rng).total, "radiant").damage;

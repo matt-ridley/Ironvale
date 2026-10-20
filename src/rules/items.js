@@ -39,7 +39,7 @@ export function describeItem(item) {
   if (b.heal) return `Drink to heal ${b.heal} HP.`;
   if (b.effect === "speed") return `Move faster and meet fewer monsters for ${b.steps} steps.`;
   if (b.effect === "dexterity") return "One extra attack every time you ATTACK, for one fight. Drink it before or during a battle.";
-  if (b.type === "key") return b.about;
+  if (b.type === "key" || b.type === "trinket" || b.type === "fish") return b.about;
   if (b.type === "scroll") return "Read it in a fight to cast the spell, once. Anyone can.";
   if (b.effect === "homeward") return "Out in the open, it flies you back to the last town you were in. Not indoors or underground.";
   return "";

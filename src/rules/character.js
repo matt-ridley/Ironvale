@@ -55,7 +55,13 @@ export const XP_FOR_LEVEL = [0, 0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48
 
 export const abilityMod = score => Math.floor((score - 10) / 2);
 export const proficiencyBonus = level => 2 + Math.floor((level - 1) / 4);
-export const mod = (char, ability) => abilityMod(char.abilities[ability]);
+// Trinkets that raise an ability while they're in your pack (minigame prizes). Each counts once, however many you carry.
+export const TRINKET_BONUS = { oswinBelt: { STR: 2 } };
+export const trinketBonus = (char, ability) => Object.entries(TRINKET_BONUS)
+  .reduce((sum, [base, b]) => sum + (b[ability] && char.inventory?.some(i => i.base === base) ? b[ability] : 0), 0);
+/* An ability score with any trinket bonus. */
+export const abilityScore = (char, ability) => char.abilities[ability] + trinketBonus(char, ability);
+export const mod = (char, ability) => abilityMod(abilityScore(char, ability));
 
 export function levelForXp(xp) {
   let level = 1;
@@ -179,6 +185,8 @@ export function rest(char) {
   char.actionSurge = true;
   if (char.slotsUsed) char.slotsUsed = [];
   if (char.runes) char.runes.used = 0;
+  char.luckUsed = false; // the Lucky Die
+  char.fishCaught = 0; // the fish bite again
   if (char.companion) char.companion.hurt = 0;
   if (char.companion?.slotsUsed) char.companion.slotsUsed = [];
 }

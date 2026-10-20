@@ -1,6 +1,6 @@
 # Ironvale roadmap
 
-The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 11 are done (0.18.0 to 0.29.0; Greywater Fen was built before Fenwatch); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
+The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 11 and step 12's minigames are done (0.18.0 to 0.30.0; Greywater Fen was built before Fenwatch); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
 
 ## The shape of the game
 
@@ -97,7 +97,7 @@ A stilt-town on boardwalks at the edge of the fen.
 - Brannoc's Forge (once he's rescued), a bank branch, and a fen herbalist (potions).
 - The goblin refugee camp at its edge.
 
-### Minigames (later, one small PR each)
+### Minigames (built in 0.30.0, all four in one go)
 
 Quick to play with taps, each with a one-off reward so they aren't a gold farm:
 
@@ -105,6 +105,8 @@ Quick to play with taps, each with a one-off reward so they aren't a gold farm:
 - **Arm wrestling** (STR contest with timed taps). Prize: a belt that adds STR.
 - **Archery contest** (Megan's, timed taps). Prize: a new bow for her.
 - **Fishing** at Willowmere and Fenwatch (Old Tom could run it). Rare fish sell well or cook into food.
+
+As built: the rules are `src/rules/minigames.js` (tested), the screens `src/scenes/minigames.js`, and the hosts' conversations `src/story/minigames.js` (a `minigame` event opens a screen). They're all reachable in Act 1 (the Sleeping Fox, Oakhollow, Willowmere) so they don't wait for the keep; the keep's training yard can host rematches later. Knucklebones has a 10-gold stake; fishing stops after five catches per rest; prizes are `prize: true` (never sold). Fish don't cook into food yet. Simulated: a careful archer beats Megan's 34 about 60-80% of the time; at arm wrestling, catching the green on most passes wins, and mashing loses.
 
 ## Companions
 
@@ -207,7 +209,7 @@ One pull request each, with a minor version bump.
     - ~~**10a:** the dungeon, damage types and silvering.~~ **Built in 0.27.0.** `src/world/keep.js` (courtyard, chapel, armoury, tomb), entered through the portcullis (STR 15 or DEX 13); the tomb door opens when the courtyard lever, chapel seal and armoury lever are all done (`script: "lock"`, STR or DEX 14). Monsters: skeleton (vulnerable to bludgeoning), ghast (paralysis), wight (`weaponResist: "silver"`), helmed horror (AC 20). Weapons have a `damageType`; `adjustDamage` applies `vulnerable`, `resistant` and silver. Silvering is a forge tab (100 gold) and Brannoc's Tools side quest. The battle simulator is `tools/simulate.mjs` (`npm run sim`). Keep fights come in pairs: with +2 armour and shield the hero's AC is about 22, and single SRD undead barely land a hit. The battle screen has room for two monsters, no more.
     - ~~**10b:** Lord Varric, the bloodline said aloud, the first rune, the reforged blade, the ending.~~ **Built in 0.28.0.** Varric (`lordVarric`: AC 18, 13d8+39, two longsword swings and Grave Touch with paralysis, `weaponResist: "silver"`, resists necrotic) appears in the tomb with `shownWhen: "tombOpen"`, says "Warden's blood... at last" as he falls (`afterWin: "varricFalls"`), and the Signet goes back on his tomb (`signetReturned`, quest 5's reward: 500 gold, 5,000 XP). Brannoc then reforges the crested sword into the Wardenblade (`reforgeBlade`: base `wardenblade`, silvered, upgrades kept) and teaches Rune Strike (`RUNES` in `character.js`: 2 slots, 3 from level 9, back with a long rest; a SKILLS page in battle). Title: Ironvale's Heir. Simulator: 34% at L6 +3, 83% silvered, 96% silvered with Robyn.
 11. ~~**The keep as your hub** (start of Act 3).~~ **Built in 0.29.0.** A travel point with `wholeMap: true` (safe anywhere on the keep's map, the tomb too) and `opensWhen: signetReturned`, `innCost` 0 and its own `music`. Hild the steward (`keepHall`, the shared `innScript`) appears with the Signet back; talking to her sets `keepHome`. Brannoc moves from Fenwatch to the keep's courtyard once he's reforged the blade (`keepForge`, which opens the forge shop through a new `shop` conversation event). The world map marks a place on a map of its own (the keep) at the way in. Not built yet: the keep's rooms unlocking over the acts (a rune library), the training yard (step 12's minigames), rescued NPCs moving in.
-12. **Later:** minigames and the other companions, one at a time.
+12. ~~**Minigames**~~ **built in 0.30.0** (see Minigames above). **Later:** the other companions, one at a time.
 
 ## Open questions
 
