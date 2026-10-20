@@ -5,7 +5,7 @@
 import { VERSION } from "../config.js";
 import { ITEMS } from "../data/items.js";
 import { SLOTS } from "../rules/items.js";
-import { COMPANIONS, COMPANION_SLOTS, startingGear } from "../rules/party.js";
+import { COMPANIONS, COMPANION_SLOTS, startingGear, tacticsFor } from "../rules/party.js";
 import { MAPS } from "../world/maps.js";
 import { blockedAt, feetAt } from "../world/movement.js";
 import { OVERWORLD } from "../world/overworld.js";
@@ -34,8 +34,12 @@ function loadCompanion(c) {
   const gear = c.gear && typeof c.gear === "object"
     ? Object.fromEntries(COMPANION_SLOTS.map(s => { const i = c.gear[s]; return [s, knownItem(i) && fits[s](ITEMS[i.base]) ? i : null]; }))
     : startingGear(c.id);
-  const slotsUsed = Array.isArray(c.slotsUsed) ? { slotsUsed: c.slotsUsed.map(n => (isInt(n) && n > 0 ? n : 0)) } : {}; // a caster's spent slots
-  return { id: c.id, hurt: isInt(c.hurt) && c.hurt > 0 ? c.hurt : 0, gear, ...slotsUsed };
+  const extra = {
+    ...(Array.isArray(c.slotsUsed) && { slotsUsed: c.slotsUsed.map(n => (isInt(n) && n > 0 ? n : 0)) }), // a caster's spent slots
+    ...(tacticsFor(c.id).includes(c.tactics) && { tactics: c.tactics }),
+    ...(c.lead === true && { lead: true }), // you pick their actions in a fight
+  };
+  return { id: c.id, hurt: isInt(c.hurt) && c.hurt > 0 ? c.hurt : 0, gear, ...extra };
 }
 
 /* Parses a save. Returns the game state, or null if it isn't a save this game can use. */
@@ -66,6 +70,12 @@ export function deserialize(json) {
     },
   };
   if (!hero.companion) delete hero.companion;
+  // Companions waiting at an inn (saves from before 0.21.0 have none). One that's also in the party is dropped.
+  const roster = [];
+  for (const c of Array.isArray(h.roster) ? h.roster.map(loadCompanion) : []) {
+    if (c && c.id !== hero.companion?.id && !roster.some(r => r.id === c.id)) roster.push(c);
+  }
+  if (roster.length) hero.roster = roster; else delete hero.roster;
   const flags = s.flags && typeof s.flags === "object" ? { ...s.flags } : {};
   // Saves from before 0.8.0 have no map: they're on the overworld. A map this game doesn't know means start over.
   let map = s.map === undefined ? OVERWORLD.name : MAPS[s.map] ? s.map : null;

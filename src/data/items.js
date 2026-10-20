@@ -34,7 +34,7 @@ export const ITEMS = {
   // Not a potion, but used up the same way: out in the open, it takes you back to the last town (hub) you were in.
   homewardFeather: { name: "Homeward Feather", type: "consumable", effect: "homeward", cost: 50 },
 
-  // Spell scrolls (data/spells.js): anyone can read one in a fight, once. Not sold or found yet.
+  // Spell scrolls (data/spells.js): anyone can read one in a fight, once. The apothecary sells them.
   scrollMagicMissile: { name: "Scroll of Magic Missile", type: "scroll", spell: "magicMissile", cost: 50 },
   scrollBurningHands: { name: "Scroll of Burning Hands", type: "scroll", spell: "burningHands", cost: 50 },
   scrollSleep:        { name: "Scroll of Sleep",         type: "scroll", spell: "sleep", cost: 50 },
@@ -53,7 +53,8 @@ export const SHOPS = {
   },
   apothecary: {
     title: "APOTHECARY", tabs: ["buy", "sell"], greeting: "Bubble, bubble! Fresh potions, brewed this morning.", tint: 0x9fd18b,
-    stock: ["potionHealing", "potionSpeed", "potionDexterity", "homewardFeather"],
+    stock: ["potionHealing", "potionSpeed", "potionDexterity", "homewardFeather",
+      "scrollMagicMissile", "scrollBurningHands", "scrollSleep", "scrollCureWounds", "scrollFireball"],
   },
 };
 export const STOCK = SHOPS.blacksmith.stock;

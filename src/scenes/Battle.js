@@ -1,9 +1,15 @@
 // The battle screen: the hero on the left, monsters on the right, actions bottom right.
 // The rules engine decides everything; this scene plays its log back one line at a time, using the HP each
-// log entry recorded, so the bars drain in step with the story. POTION opens a second set of buttons, one per kind
-// of potion you can drink in a fight.
+// log entry recorded, so the bars drain in step with the story. The six buttons show one page at a time: your
+// actions, ITEMS (potions and SCROLLs to read), and, when you lead your companion (tap them to switch), their turn.
 import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
-import { createBattle, playerAction, isPlayerTurn } from "../rules/combat.js";
+import { createBattle, playerAction, isPlayerTurn, isAllyTurn } from "../rules/combat.js";
+import { readScroll } from "../rules/magic.js";
+import { allyAction, castable } from "../rules/tactics.js";
+import { TACTICS } from "../rules/party.js";
+import { groupPack, baseOf } from "../rules/items.js";
+import { SPELLS } from "../data/spells.js";
+import { CONDITIONS } from "../rules/conditions.js";
 import { armourClass, hasFeature } from "../rules/character.js";
 import { state, faint, autosave } from "../state/game.js";
 import { hubById } from "../world/travel.js";
@@ -16,8 +22,8 @@ const LINE_MS = 700;
 const LOG_ROWS = 6;
 const BAR_W = 40;
 
-// The potions a fight can use, in button order.
-const BATTLE_POTIONS = [{ base: "potionHealing", label: "HEAL" }, { base: "potionDexterity", label: "DEX" }];
+// The potions a fight can use.
+const BATTLE_POTIONS = ["potionHealing", "potionDexterity"];
 
 const hpColour = (hp, max) => (hp > max / 2 ? 0x7bc96f : hp > max / 4 ? 0xe8b923 : 0xe0645c);
 
@@ -38,7 +44,7 @@ export class Battle extends Phaser.Scene {
     this.leaving = false;
     this.target = 0;
     this.lines = [];
-    this.potionMenu = false;
+    this.page = "main"; // which buttons show: main, items, scrolls, ally or allySpells
 
     drawBackdrop(this, this.zone);
     const ally = this.battle.ally;
@@ -51,6 +57,7 @@ export class Battle extends Phaser.Scene {
       this.add.rectangle(ALLY_X - BAR_W / 2, top - 8, BAR_W, 4, 0x000000, 0.6).setOrigin(0, 0.5);
       const bar = this.add.rectangle(ALLY_X - BAR_W / 2, top - 8, BAR_W, 4, 0x7bc96f).setOrigin(0, 0.5);
       this.allyView = { sprite, name, bar, max: ally.maxHp };
+      sprite.setInteractive({ useHandCursor: true }).on("pointerup", () => this.toggleLead());
     } else this.allyView = null;
 
     const xs = this.battle.monsters.length === 1 ? [360] : [320, 410];
@@ -74,6 +81,10 @@ export class Battle extends Phaser.Scene {
     this.placeMarker();
     this.cameras.main.fadeIn(250);
     playMusic(this.winFlag ? "boss" : "battle");
+    if (ally && !state.flags.leadTip) { // once: how to lead your companion
+      state.flags.leadTip = true;
+      this.addLine(`Tip: tap ${ally.name} to pick their actions yourself.`);
+    }
     this.play(this.battle.log); // the opening line, plus any attacks from monsters that act first
   }
 
@@ -87,28 +98,16 @@ export class Battle extends Phaser.Scene {
     this.add.text(250, PANEL_Y + 7, `AC ${armourClass(state.hero)}`, { fontFamily: FONT, fontSize: "8px", color: COLORS.dim });
     this.logText = this.add.text(10, PANEL_Y + 24, "", { fontFamily: FONT, fontSize: "8px", color: COLORS.text, lineSpacing: 5, wordWrap: { width: 290 } });
 
+    // Six buttons in two columns; what they say and do depends on the page.
     const cols = [356, 436], rows = [PANEL_Y + 24, PANEL_Y + 54, PANEL_Y + 84];
-    this.buttons = {
-      attack: this.button(cols[0], rows[0], "ATTACK", () => this.act({ type: "attack" })),
-      defend: this.button(cols[1], rows[0], "DEFEND", () => this.act({ type: "defend" })),
-      potion: this.button(cols[0], rows[1], "POTION", () => this.showPotions(true)),
-      secondWind: this.button(cols[1], rows[1], "2ND WIND", () => this.act({ type: "secondWind" })),
-      flee: this.button(cols[0], rows[2], "FLEE", () => this.act({ type: "flee" })),
-      actionSurge: this.button(cols[1], rows[2], "SURGE", () => this.act({ type: "actionSurge" })),
-    };
-    this.potionButtons = BATTLE_POTIONS.map((p, i) => ({ ...p, ...this.button(cols[i], rows[0], p.label, () => this.act({ type: "potion", base: p.base })) }));
-    // With a companion, a third potion button gives them a Potion of Healing.
-    this.allyPotionButton = this.battle.ally ? this.button(cols[1], rows[1], this.battle.ally.name.toUpperCase(), () => this.act({ type: "allyPotion" })) : null;
-    this.backButton = this.button(cols[0], rows[1], "BACK", () => this.showPotions(false));
-    this.showPotions(false);
+    this.slots = rows.flatMap(y => cols.map(x => {
+      const slot = this.button(x, y, "", () => slot.run?.());
+      return slot;
+    }));
   }
 
-  /* Swaps the action buttons for the potion buttons (on = true) and back. */
-  showPotions(on) {
-    if (on && (this.busy || !isPlayerTurn(this.battle))) return;
-    this.potionMenu = on;
-    for (const b of Object.values(this.buttons)) { b.bg.setVisible(!on); b.text.setVisible(!on); }
-    for (const b of [...this.potionButtons, this.backButton, this.allyPotionButton].filter(Boolean)) { b.bg.setVisible(on); b.text.setVisible(on); }
+  showPage(page) {
+    this.page = page;
     this.refreshButtons();
   }
 
@@ -119,31 +118,91 @@ export class Battle extends Phaser.Scene {
     return { bg, text };
   }
 
-  potions(base) { return state.hero.inventory.filter(i => (base ? i.base === base : BATTLE_POTIONS.some(p => p.base === i.base))).length; }
+  count(base) { return state.hero.inventory.filter(i => i.base === base).length; }
+  scrolls() { return groupPack(state.hero.inventory).filter(g => baseOf(g.item).type === "scroll"); }
+  items() { return BATTLE_POTIONS.reduce((n, b) => n + this.count(b), 0) + this.scrolls().reduce((n, g) => n + g.count, 0); }
+
+  /* The friend a healing spell should go to: whoever has the smaller share of their HP. */
+  friendInNeed() {
+    const a = this.battle.ally, p = this.battle.player;
+    return a && a.hp / a.maxHp < p.hp / p.maxHp ? "ally" : "player";
+  }
+
+  /* The buttons on a page, in order (top left, top right, ...): { label, on, run }, or null for an empty slot.
+     `mine`: it's your turn; `hers`: your companion's, and you lead them. */
+  pageButtons(page, mine, hers) {
+    const h = state.hero, b = this.battle, a = b.ally, heals = this.count("potionHealing");
+    const back = to => ({ label: "BACK", on: mine || hers, run: () => this.showPage(to) });
+    if (page === "items") {
+      const dex = this.count("potionDexterity"), scrolls = this.items() - heals - dex;
+      return [
+        { label: `HEAL x${heals}`, on: mine && heals > 0 && h.hp < h.maxHp, run: () => this.act({ type: "potion", base: "potionHealing" }) },
+        { label: `DEX x${dex}`, on: mine && dex > 0 && !b.quick, run: () => this.act({ type: "potion", base: "potionDexterity" }) },
+        a ? { label: `${a.name.toUpperCase()} x${heals}`, on: mine && heals > 0 && a.hp < a.maxHp, run: () => this.act({ type: "allyPotion" }) } : null,
+        { label: `SCROLL x${scrolls}`, on: mine && scrolls > 0, run: () => this.showPage("scrolls") },
+        back("main"),
+      ];
+    }
+    if (page === "scrolls") {
+      const list = this.scrolls().slice(0, 5).map(g => {
+        const spell = SPELLS[baseOf(g.item).spell];
+        return { label: `${spell.short}${g.count > 1 ? ` x${g.count}` : ""}`, on: mine, run: () => this.read(g.item.uid, spell) };
+      });
+      return [...list, ...Array(5 - list.length).fill(null), back("items")];
+    }
+    if (page === "ally") {
+      return [
+        { label: "SHOOT", on: hers, run: () => this.actAlly({ type: "shoot" }) },
+        { label: "AUTO", on: hers, run: () => this.actAlly({ type: "auto" }) },
+        { label: `YOU x${heals}`, on: hers && heals > 0 && h.hp < h.maxHp, run: () => this.actAlly({ type: "potion", on: "player" }) },
+        { label: `${a.name.toUpperCase()} x${heals}`, on: hers && heals > 0 && a.hp < a.maxHp, run: () => this.actAlly({ type: "potion", on: "ally" }) },
+        a.casting ? { label: "SPELLS", on: hers && castable(b).length > 0, run: () => this.showPage("allySpells") } : null,
+      ];
+    }
+    if (page === "allySpells") {
+      const list = castable(b).slice(0, 5).map(c => ({ label: c.spell.short, on: hers, run: () => this.actAlly({ type: "cast", spell: c.id, slotLevel: c.slotLevel }) }));
+      return [...list, ...Array(5 - list.length).fill(null), back("ally")];
+    }
+    return [
+      { label: "ATTACK", on: mine, run: () => this.act({ type: "attack" }) },
+      { label: "DEFEND", on: mine, run: () => this.act({ type: "defend" }) },
+      { label: `ITEMS x${this.items()}`, on: mine && this.items() > 0, run: () => this.showPage("items") },
+      { label: "2ND WIND", on: mine && h.hp < h.maxHp && h.secondWind, run: () => this.act({ type: "secondWind" }) },
+      { label: "FLEE", on: mine, run: () => this.act({ type: "flee" }) },
+      { label: "SURGE", on: mine && hasFeature(h, "actionSurge") && h.actionSurge && !b.surging, run: () => this.act({ type: "actionSurge" }) },
+    ];
+  }
 
   refreshButtons() {
-    const ready = !this.busy && isPlayerTurn(this.battle);
-    const enable = (b, on) => { b.bg.setAlpha(on ? 1 : 0.4); b.text.setAlpha(on ? 1 : 0.4); };
-    this.buttons.potion.text.setText(`POTION x${this.potions()}`);
-    enable(this.buttons.attack, ready);
-    enable(this.buttons.defend, ready);
-    enable(this.buttons.flee, ready);
-    enable(this.buttons.actionSurge, ready && hasFeature(state.hero, "actionSurge") && state.hero.actionSurge && !this.battle.surging);
-    const hurt = state.hero.hp < state.hero.maxHp;
-    enable(this.buttons.potion, ready && this.potions() > 0);
-    for (const b of this.potionButtons) {
-      b.text.setText(`${b.label} x${this.potions(b.base)}`);
-      const usable = b.base === "potionHealing" ? hurt : !this.battle.quick;
-      enable(b, ready && usable && this.potions(b.base) > 0);
-    }
-    if (this.allyPotionButton) {
-      const a = this.battle.ally, n = this.potions("potionHealing");
-      this.allyPotionButton.text.setText(`${a.name.toUpperCase()} x${n}`);
-      enable(this.allyPotionButton, ready && n > 0 && a.hp < a.maxHp);
-    }
-    enable(this.backButton, ready);
-    enable(this.buttons.secondWind, ready && hurt && state.hero.secondWind);
-    this.marker.setVisible(ready && this.battle.monsters.filter(m => m.hp > 0).length > 1);
+    const mine = !this.busy && isPlayerTurn(this.battle), hers = !this.busy && isAllyTurn(this.battle);
+    const allyPage = this.page.startsWith("ally");
+    if (hers && !allyPage) this.page = "ally";
+    if (mine && allyPage) this.page = "main";
+    const entries = this.pageButtons(this.page, mine, hers);
+    this.slots.forEach((slot, i) => {
+      const e = entries[i];
+      slot.bg.setVisible(!!e);
+      slot.text.setVisible(!!e);
+      slot.run = e?.on ? e.run : null;
+      if (!e) return;
+      slot.text.setText(e.label);
+      slot.bg.setAlpha(e.on ? 1 : 0.4);
+      slot.text.setAlpha(e.on ? 1 : 0.4);
+    });
+    this.marker.setVisible((mine || hers) && this.battle.monsters.filter(m => m.hp > 0).length > 1);
+  }
+
+  /* Tapping your companion: lead them (pick their actions yourself) or let them follow their tactics again. */
+  toggleLead() {
+    const b = this.battle, a = b.ally;
+    if (this.leaving || b.state !== "active") return;
+    b.leadAlly = !b.leadAlly;
+    if (b.leadAlly) state.hero.companion.lead = true; else delete state.hero.companion.lead; // remembered for next time
+    sfx("select");
+    this.float(this.allyView.sprite, b.leadAlly ? "YOU LEAD" : "AUTO", COLORS.gold);
+    this.addLine(b.leadAlly ? `You'll pick ${a.name}'s actions. Tap ${a.name} again to stop.` : `${a.name} fights by tactics (${TACTICS[a.tactics]}).`);
+    if (!b.leadAlly && isAllyTurn(b) && !this.busy) return this.actAlly({ type: "auto" });
+    this.refreshButtons();
   }
 
   select(i) {
@@ -160,9 +219,28 @@ export class Battle extends Phaser.Scene {
   act(action) {
     if (this.busy || !isPlayerTurn(this.battle)) return;
     if (action.type === "attack") action.target = this.target;
-    const r = playerAction(this.battle, action);
+    this.then(playerAction(this.battle, action));
+  }
+
+  /* Reads a scroll: at the monster you've picked, or for a healing spell, at whichever of you needs it more. */
+  read(uid, spell) {
+    if (this.busy || !isPlayerTurn(this.battle)) return;
+    const target = spell.targets === "one" ? this.target : spell.targets === "friend" ? this.friendInNeed() : undefined;
+    this.then(readScroll(this.battle, uid, { target }));
+  }
+
+  /* Your pick for your companion, when you lead them. */
+  actAlly(action) {
+    if (this.busy || !isAllyTurn(this.battle)) return;
+    const spell = SPELLS[action.spell];
+    if (action.type === "shoot" || spell?.targets === "one") action.target = this.target;
+    if (spell?.targets === "friend") action.target = this.friendInNeed();
+    this.then(allyAction(this.battle, action));
+  }
+
+  then(r) {
     if (!r.ok) return this.addLine(r.reason, COLORS.bad);
-    if (this.potionMenu) this.showPotions(false);
+    this.page = "main";
     this.play(r.events);
   }
 
@@ -176,12 +254,14 @@ export class Battle extends Phaser.Scene {
       if (this.battle.state !== "active") return this.showResult();
       if (this.battle.monsters[this.target].hp <= 0) this.target = this.battle.monsters.findIndex(m => m.hp > 0);
       this.placeMarker();
+      if (isAllyTurn(this.battle)) this.addLine(`${this.battle.ally.name}'s turn: pick an action, or AUTO.`);
       this.refreshButtons();
     });
   }
 
   showEvent(e) {
-    const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again"].includes(e.type);
+    const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again",
+      "ally-heal", "spell-heal", "spell", "scroll"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -236,6 +316,32 @@ export class Battle extends Phaser.Scene {
       case "defend":
         this.float(this.heroSprite, "GUARD", COLORS.text);
         break;
+      case "spell":
+      case "scroll":
+        sfx("select");
+        break;
+      case "spell-attack":
+      case "spell-save":
+      case "spell-hit": {
+        const damage = e.roll ? e.roll.damage : e.damage;
+        if (damage > 0) { this.slash(foe, e.roll?.crit); this.hit(foe, damage, e.roll?.crit); this.time.delayedCall(90, () => sfx(e.roll?.crit ? "crit" : "hit")); }
+        else { this.float(foe, e.save ? "RESIST" : "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
+        break;
+      }
+      case "spell-heal":
+      case "ally-heal": {
+        const who = this.spriteOf(e.who);
+        sfx("heal");
+        if (e.revived) this.tweens.add({ targets: [this.allyView.sprite, this.allyView.name], alpha: 1, duration: 300 });
+        this.float(who, `+${e.heal}`, COLORS.good);
+        break;
+      }
+      case "condition":
+        this.float(this.spriteOf(e.who), CONDITIONS[e.condition].name.toUpperCase(), COLORS.gold);
+        break;
+      case "skip":
+        this.float(this.spriteOf(e.who), "...", COLORS.dim);
+        break;
       case "surge":
         sfx("heal");
         this.float(this.heroSprite, "SURGE!", COLORS.gold);
@@ -245,6 +351,11 @@ export class Battle extends Phaser.Scene {
         this.float(this.heroSprite, "LEVEL UP!", COLORS.gold);
         break;
     }
+  }
+
+  /* The sprite for a battle key: "player", "ally" or a monster's index. */
+  spriteOf(key) {
+    return key === "player" ? this.heroSprite : key === "ally" ? this.allyView.sprite : this.foeViews[key].sprite;
   }
 
   showLevel(level) {

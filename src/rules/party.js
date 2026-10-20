@@ -2,6 +2,10 @@
 // last aimed at), levels up with you, and is carried on the hero as { id, hurt, gear } (hurt = damage taken, so a
 // rest only has to set it to 0). If a companion falls in a fight they sit out the rest of it and get up afterwards.
 // A companion has their own gear: a bow and light armour, which you swap from your pack and the blacksmith upgrades.
+// One companion travels with you (hero.companion); the others wait on the roster (hero.roster), and you swap them at
+// an inn. Each has TACTICS for when they act by themselves: attack, heal (look after whoever's badly hurt first) or,
+// for casters, save magic (cantrips only, keeping spell slots). In a fight you can also lead them yourself
+// (companion.lead): rules/tactics.js plays their turns.
 import { proficiencyBonus } from "./character.js";
 import { makeItem, baseOf, isPotion } from "./items.js";
 import { roll } from "./dice.js";
@@ -9,7 +13,12 @@ import { roll } from "./dice.js";
 export const COMPANIONS = {
   // Megan, a young ranger from Willowmere: light armour, a bow and quick hands.
   megan: { name: "Megan", dexMod: 2, hpBase: 8, hpPerLevel: 5, startGear: { bow: "shortbow", armour: "leather" } },
+  // A caster also has `casting: { mod, spells }`: their spellcasting modifier and the spells they know (data/spells.js).
 };
+
+export const TACTICS = { attack: "ATTACK", heal: "HEAL", save: "SAVE MAGIC" };
+/* The tactics a companion can use: saving magic only means something to a caster. */
+export const tacticsFor = id => (COMPANIONS[id]?.casting ? ["attack", "heal", "save"] : ["attack", "heal"]);
 
 // A companion's gear slots, and what goes in each.
 export const COMPANION_SLOTS = ["bow", "armour"];
@@ -36,7 +45,40 @@ export function companionStats(hero) {
     id: c.id, name: base.name, level: hero.level, dexMod: base.dexMod, maxHp,
     hp: Math.max(1, maxHp - (c.hurt || 0)),
     ...gearStats(base, c.gear || {}, hero.level),
+    tactics: tacticsFor(c.id).includes(c.tactics) ? c.tactics : "attack",
+    casting: base.casting || null,
   };
+}
+
+/* Switches your companion to their next tactic. Returns it. */
+export function cycleTactics(hero) {
+  const c = hero.companion;
+  if (!c) return null;
+  const all = tacticsFor(c.id), now = Math.max(0, all.indexOf(c.tactics)); // none set yet means attack
+  c.tactics = all[(now + 1) % all.length];
+  return c.tactics;
+}
+
+/* Asks your companion to wait on the roster (at an inn). */
+export function benchCompanion(hero) {
+  if (!hero.companion) return { ok: false, reason: "No one is in your party." };
+  const c = hero.companion;
+  hero.roster = [...(hero.roster || []), c];
+  delete hero.companion;
+  return { ok: true, id: c.id };
+}
+
+/* Brings a companion from the roster into the party, rested (they've been at the inn). Whoever was with you takes
+   their place on the roster. */
+export function takeCompanion(hero, id) {
+  const c = hero.roster?.find(r => r.id === id);
+  if (!c) return { ok: false, reason: `${COMPANIONS[id]?.name ?? "They"} isn't waiting here.` };
+  hero.roster = hero.roster.filter(r => r !== c);
+  if (hero.companion) hero.roster.push(hero.companion);
+  c.hurt = 0;
+  if (c.slotsUsed) c.slotsUsed = [];
+  hero.companion = c;
+  return { ok: true, id };
 }
 
 export const startingGear = id => Object.fromEntries(COMPANION_SLOTS.map(s => [s, makeItem(COMPANIONS[id].startGear[s])]));
