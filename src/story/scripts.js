@@ -90,7 +90,7 @@ export const SCRIPTS = {
       },
       kingAdvice: {
         speaker: ELDER,
-        text: "Visit the apothecary by the crossroads first. A Potion of Dexterity lets you strike twice, and you'll want it against the King.",
+        text: "Visit the apothecary by the crossroads first. A Potion of Dexterity gives you an extra blow every time you swing, and you'll want it against the King.",
       },
       kingLater: { speaker: ELDER, text: "Rest, then. But come back to me. The King won't sit still for ever." },
       kingReminder: {
@@ -263,7 +263,7 @@ export const SCRIPTS = {
         text: "Elder Maren's journal. \"Goblins raid us every week now. Their chief is strong, and the fallen oak keeps the cave safe from all but the strongest or nimblest. Whoever goes should train in the wood first, and get a sharper blade.\"",
       },
       king: {
-        text: "Elder Maren's journal. \"The chief served a KING, deep under the hills. Old stories say hobgoblins guard his tunnels, in armour that turns most blades. A Potion of Dexterity, to strike twice, would be worth every coin.\"",
+        text: "Elder Maren's journal. \"The chief served a KING, deep under the hills. Old stories say hobgoblins guard his tunnels, in armour that turns most blades. A Potion of Dexterity, for an extra blow with every swing, would be worth every coin.\"",
       },
       hero: {
         text: "Elder Maren's journal. \"Today the Goblin King fell. I have written our hero's name in the village book, so Oakhollow never forgets.\" Your name is underlined. Twice.",
@@ -364,11 +364,11 @@ export const SCRIPTS = {
         enter: (s, ctx) => {
           const r = shortRest(s.hero, companionStats(s.hero)?.maxHp);
           ctx.remember("rest", r);
-          if (!r.healed && !r.secondWind && !r.companionHealed) ctx.goto("rested");
+          if (!r.healed && !r.secondWind && !r.actionSurge && !r.companionHealed) ctx.goto("rested");
         },
         text: (s, ctx) => {
           const r = ctx.recall("rest");
-          const got = [r.healed && `+${r.healed} HP`, r.companionHealed && `${companionStats(s.hero).name} +${r.companionHealed} HP`, r.secondWind && "Second Wind back"].filter(Boolean);
+          const got = [r.healed && `+${r.healed} HP`, r.companionHealed && `${companionStats(s.hero).name} +${r.companionHealed} HP`, r.secondWind && "Second Wind back", r.actionSurge && "Action Surge back"].filter(Boolean);
           return `You warm your hands and catch your breath. ${got.join(", ")}. (A short rest brings you up to half your HP. For a full rest, find a bed.)`;
         },
       },

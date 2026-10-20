@@ -4,7 +4,7 @@
 // of potion you can drink in a fight.
 import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { createBattle, playerAction, isPlayerTurn } from "../rules/combat.js";
-import { armourClass } from "../rules/character.js";
+import { armourClass, hasFeature } from "../rules/character.js";
 import { state, faint, autosave } from "../state/game.js";
 import { hubById } from "../world/travel.js";
 import { uiCamera } from "../ui/widgets.js";
@@ -94,6 +94,7 @@ export class Battle extends Phaser.Scene {
       potion: this.button(cols[0], rows[1], "POTION", () => this.showPotions(true)),
       secondWind: this.button(cols[1], rows[1], "2ND WIND", () => this.act({ type: "secondWind" })),
       flee: this.button(cols[0], rows[2], "FLEE", () => this.act({ type: "flee" })),
+      actionSurge: this.button(cols[1], rows[2], "SURGE", () => this.act({ type: "actionSurge" })),
     };
     this.potionButtons = BATTLE_POTIONS.map((p, i) => ({ ...p, ...this.button(cols[i], rows[0], p.label, () => this.act({ type: "potion", base: p.base })) }));
     // With a companion, a third potion button gives them a Potion of Healing.
@@ -127,6 +128,7 @@ export class Battle extends Phaser.Scene {
     enable(this.buttons.attack, ready);
     enable(this.buttons.defend, ready);
     enable(this.buttons.flee, ready);
+    enable(this.buttons.actionSurge, ready && hasFeature(state.hero, "actionSurge") && state.hero.actionSurge && !this.battle.surging);
     const hurt = state.hero.hp < state.hero.maxHp;
     enable(this.buttons.potion, ready && this.potions() > 0);
     for (const b of this.potionButtons) {
@@ -179,7 +181,7 @@ export class Battle extends Phaser.Scene {
   }
 
   showEvent(e) {
-    const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick"].includes(e.type);
+    const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -233,6 +235,10 @@ export class Battle extends Phaser.Scene {
         break;
       case "defend":
         this.float(this.heroSprite, "GUARD", COLORS.text);
+        break;
+      case "surge":
+        sfx("heal");
+        this.float(this.heroSprite, "SURGE!", COLORS.gold);
         break;
       case "level-up":
         this.showLevel(e.level);
@@ -305,7 +311,7 @@ export class Battle extends Phaser.Scene {
       title = "VICTORY!"; color = COLORS.gold;
       playJingle(b.rewards.levelUps.length ? "levelUp" : "victory");
       lines.push(`+${b.rewards.xp} XP   +${b.rewards.gold} gold`);
-      for (const l of b.rewards.levelUps) lines.push(`Level ${l.level}! +${l.hpGain} max HP`);
+      for (const l of b.rewards.levelUps) lines.push(`Level ${l.level}! +${l.hpGain} max HP${l.features.length ? `, ${l.features.join(", ")}` : ""}`);
       if (b.rewards.loot.length) lines.push(`Found: ${b.rewards.loot.join(", ")}`);
     } else if (b.state === "lost") {
       title = "DEFEATED"; color = COLORS.bad;

@@ -31,7 +31,7 @@ export function describeItem(item) {
   }
   if (b.heal) return `Drink to heal ${b.heal} HP.`;
   if (b.effect === "speed") return `Move faster and meet fewer monsters for ${b.steps} steps.`;
-  if (b.effect === "dexterity") return "Attack twice each turn for one fight. Drink it before or during a battle.";
+  if (b.effect === "dexterity") return "One extra attack every time you ATTACK, for one fight. Drink it before or during a battle.";
   if (b.effect === "homeward") return "Out in the open, it flies you back to the last town you were in. Not indoors or underground.";
   return "";
 }
@@ -81,7 +81,7 @@ export function useItem(char, uid, rng = Math.random, { outdoors = false } = {})
 /* What drinking a potion did, in a sentence. */
 export function drinkText(r) {
   if (r.effect === "speed") return "You feel light on your feet! Fewer monsters can catch you.";
-  if (r.effect === "dexterity") return "Your hands feel quick! You'll attack twice each turn in your next fight.";
+  if (r.effect === "dexterity") return "Your hands feel quick! You'll get an extra attack every time you ATTACK in your next fight.";
   return `You drink the potion and recover ${r.healed} HP.`;
 }
 

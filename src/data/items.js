@@ -27,7 +27,7 @@ export const ITEMS = {
   shield:      { name: "Shield", type: "shield", ac: 2, cost: 10 },
 
   // Potions. Healing works any time you're hurt. Speed lasts a number of steps in the world: you move faster and
-  // run into fewer monsters. Dexterity lasts one fight: you attack twice each turn.
+  // run into fewer monsters. Dexterity lasts one fight: one extra attack each time you ATTACK.
   potionHealing:   { name: "Potion of Healing",   type: "consumable", heal: "2d4+2", cost: 20 },
   potionSpeed:     { name: "Potion of Speed",     type: "consumable", effect: "speed", steps: 150, cost: 30 },
   potionDexterity: { name: "Potion of Dexterity", type: "consumable", effect: "dexterity", cost: 40 },
