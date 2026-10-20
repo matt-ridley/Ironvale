@@ -83,6 +83,12 @@ export class World extends Phaser.Scene {
     this.scene.launch("Hud");
     this.enteredTile(false);
     autosave();
+    this.time.delayedCall(400, () => this.offerLevelUp());
+  }
+
+  /* An ability score increase to spend (from a fight, a quest reward or an old save) opens the level-up screen. */
+  offerLevelUp() {
+    if (state.hero.asi > 0 && !this.frozen) this.openOverlay("LevelUp");
   }
 
   /* The Hud scene starts a moment after this one; messages wait for it. (After a trip to another map the old Hud is
@@ -155,6 +161,7 @@ export class World extends Phaser.Scene {
     this.syncObjects();
     this.scene.resume("Hud"); // which refreshes itself
     autosave();
+    this.time.delayedCall(250, () => this.offerLevelUp());
   }
 
   /* Hides objects that the quest flags have removed. */

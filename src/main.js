@@ -11,6 +11,7 @@ import { Dialogue } from "./scenes/Dialogue.js";
 import { Meet } from "./scenes/Meet.js";
 import { Quests } from "./scenes/Quests.js";
 import { WorldMap } from "./scenes/WorldMap.js";
+import { LevelUp } from "./scenes/LevelUp.js";
 import { Hud } from "./scenes/Hud.js";
 import { unlockAudio } from "./audio/sound.js";
 import { restoreSave, autosave } from "./state/game.js";
@@ -33,7 +34,7 @@ window.game = new Phaser.Game({
   backgroundColor: COLORS.bg,
   pixelArt: true,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [Boot, Title, World, Hud, Battle, Inventory, Shop, Bank, Dialogue, Meet, Quests, WorldMap], // later ones draw on top
+  scene: [Boot, Title, World, Hud, Battle, Inventory, Shop, Bank, Dialogue, Meet, Quests, WorldMap, LevelUp], // later ones draw on top
 });
 
 // Browsers only allow sound after a tap or key press.

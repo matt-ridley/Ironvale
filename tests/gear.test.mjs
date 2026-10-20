@@ -130,5 +130,5 @@ test("a Potion of Dexterity waits for the next fight, and only one at a time", (
 
 test("potion descriptions", () => {
   assert.match(describeItem(makeItem("potionSpeed")), /faster.*150 steps/);
-  assert.match(describeItem(makeItem("potionDexterity")), /twice/);
+  assert.match(describeItem(makeItem("potionDexterity")), /One extra attack every time you ATTACK/);
 });

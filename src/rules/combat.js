@@ -1,11 +1,12 @@
 // Turn-based combat: initiative, attack rolls against AC, and the player's actions (attack, defend, potion, flee,
-// and Second Wind, a bonus action that heals without using up the turn). A Potion of Dexterity, drunk before or
-// during the fight, makes every ATTACK two attacks. A companion in your party (rules/party.js) takes their own turns:
+// Second Wind, a bonus action that heals without using up the turn, and Action Surge, which gives you one more action
+// this turn). ATTACK is one attack, or two with Extra Attack (level 5); a Potion of Dexterity, drunk before or during
+// the fight, adds one more. From level 3 your attacks crit on a 19 or 20. A companion in your party (rules/party.js) takes their own turns:
 // they shoot at the monster you last attacked, and monsters pick between you and them.
 // A battle is a plain object. The player acts with playerAction(); monsters then take their turns until it is the
 // player's turn again or the battle is over. Every step is written to battle.log for the screen to show.
 import { d20, roll } from "./dice.js";
-import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND } from "./character.js";
+import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND, critOn, attacksPerAction, hasFeature } from "./character.js";
 import { abilityCheck } from "./checks.js";
 import { baseOf, makeItem, itemName, useItem, cantDrink } from "./items.js";
 import { MONSTERS } from "../data/monsters.js";
@@ -22,11 +23,12 @@ export function spawnMonster(id, rng = Math.random) {
   return { id, name: m.name, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: { ...m.attack, damageBonus: 0 }, xp: m.xp, gold: m.gold };
 }
 
-/* One attack roll. A natural 20 always hits and doubles the damage dice; a natural 1 always misses. */
-export function resolveAttack(attack, targetAc, rng = Math.random, { advantage = false, disadvantage = false } = {}) {
+/* One attack roll. A critical hit (a natural 20, or `critOn` and up) always hits and doubles the damage dice; a natural
+   1 always misses. */
+export function resolveAttack(attack, targetAc, rng = Math.random, { advantage = false, disadvantage = false, critOn = 20 } = {}) {
   const { rolls, natural } = d20({ advantage, disadvantage }, rng);
   const total = natural + attack.bonus;
-  const crit = natural === 20;
+  const crit = natural >= critOn;
   const hit = crit || (natural !== 1 && total >= targetAc);
   let damage = 0, damageRolls = [];
   if (hit) {
@@ -56,7 +58,7 @@ export function createBattle(player, monsterIds, rng = Math.random) {
   const battle = { player, ally, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null };
   const names = entries.map(e => (e.who === "player" ? "You" : e.who === "ally" ? ally.name : monsters[e.who].name) + ` (${e.init})`);
   say(battle, "start", `${monsters.map(m => m.name).join(", ")} ${monsters.length > 1 ? "appear" : "appears"}! Initiative: ${names.join(", ")}.`);
-  if (quick) say(battle, "quick", "Your Potion of Dexterity makes you quick: you attack twice each turn.");
+  if (quick) say(battle, "quick", "Your Potion of Dexterity makes you quick: one extra attack each time you ATTACK.");
   runMonsterTurns(battle, rng);
   return battle;
 }
@@ -64,7 +66,8 @@ export function createBattle(player, monsterIds, rng = Math.random) {
 export const isPlayerTurn = battle => battle.state === "active" && battle.order[battle.turn].who === "player";
 
 /* action: { type: "attack", target } | { type: "defend" } | { type: "potion", base } | { type: "flee" } | { type: "secondWind" }
-   | { type: "allyPotion" } (give your companion a Potion of Healing; it gets them back up if they've been knocked down).
+   | { type: "actionSurge" } | { type: "allyPotion" } (give your companion a Potion of Healing; it gets them back up if
+   they've been knocked down).
    A potion's base defaults to the Potion of Healing. */
 export function playerAction(battle, action, rng = Math.random) {
   if (!isPlayerTurn(battle)) return { ok: false, reason: "It isn't your turn." };
@@ -76,8 +79,8 @@ export function playerAction(battle, action, rng = Math.random) {
     if (!target || target.hp <= 0) return { ok: false, reason: "Pick a monster that's still standing." };
     battle.focus = battle.monsters.indexOf(target); // your companion shoots at the same one
     const atk = weaponAttack(p);
-    for (let n = 0; n < (battle.quick ? 2 : 1) && target; n++) {
-      const r = resolveAttack(atk, target.ac, rng);
+    for (let n = 0; n < attacksThisAction(battle) && target; n++) {
+      const r = resolveAttack(atk, target.ac, rng, { critOn: critOn(p) });
       target.hp = Math.max(0, target.hp - r.damage);
       const t = battle.monsters.indexOf(target);
       say(battle, "attack", `${n ? "Again! You swing" : "You swing"} your ${atk.name} at the ${target.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, target: t });
@@ -103,7 +106,7 @@ export function playerAction(battle, action, rng = Math.random) {
     if (r.effect === "dexterity") {
       p.effects = { ...p.effects, dexterity: false }; // used up by this fight
       battle.quick = true;
-      say(battle, "quick", "You gulp down a Potion of Dexterity. From your next turn, you attack twice!");
+      say(battle, "quick", "You gulp down a Potion of Dexterity. From now on, every ATTACK is one attack more!");
     } else {
       say(battle, "potion", `You drink a ${b.name} and recover ${r.healed} HP (${p.hp}/${p.maxHp}).`, { heal: r.healed });
     }
@@ -125,6 +128,14 @@ export function playerAction(battle, action, rng = Math.random) {
     const healed = heal(p, roll(SECOND_WIND, rng).total + p.level);
     say(battle, "second-wind", `You catch your Second Wind and recover ${healed} HP (${p.hp}/${p.maxHp}). You can still act.`, { heal: healed });
     return { ok: true, events: battle.log.slice(start) }; // a bonus action: still your turn
+  } else if (action.type === "actionSurge") {
+    if (!hasFeature(p, "actionSurge")) return { ok: false, reason: "You learn Action Surge at level 2." };
+    if (battle.surging) return { ok: false, reason: "You've already surged this turn." };
+    if (!p.actionSurge) return { ok: false, reason: "You've used your Action Surge. Rest to get it back." };
+    p.actionSurge = false;
+    battle.surging = true;
+    say(battle, "surge", "Action Surge! You push yourself: after this action, you get one more.");
+    return { ok: true, events: battle.log.slice(start) }; // still your turn
   } else if (action.type === "flee") {
     const c = abilityCheck(p, "DEX", FLEE_DC, rng);
     if (c.success) {
@@ -139,11 +150,19 @@ export function playerAction(battle, action, rng = Math.random) {
   }
 
   if (!checkEnd(battle, rng)) {
+    if (battle.surging) { // Action Surge: one more action before your turn ends
+      battle.surging = false;
+      say(battle, "surge-again", "Your surge carries you on: act again!");
+      return { ok: true, events: battle.log.slice(start) };
+    }
     nextTurn(battle);
     runMonsterTurns(battle, rng);
   }
   return { ok: true, events: battle.log.slice(start) };
 }
+
+/* Attacks in one ATTACK action: one, two with Extra Attack, and one more with a Potion of Dexterity. */
+export const attacksThisAction = battle => attacksPerAction(battle.player) + (battle.quick ? 1 : 0);
 
 /* Plays everyone else's turns (your companion's and the monsters') until it is yours again or the fight is over. */
 function runMonsterTurns(battle, rng) {
@@ -216,7 +235,8 @@ function checkEnd(battle, rng) {
     say(battle, "won", `Victory! You gain ${xp} XP and ${gold} gold.`);
     for (const name of battle.rewards.loot) say(battle, "loot", `You find a ${name}.`);
     for (const l of levelUps) {
-      say(battle, "level-up", `You reach level ${l.level}! +${l.hpGain} max HP.`, { level: l.level });
+      const news = [...l.features, ...(l.asi ? ["an ability score increase"] : [])];
+      say(battle, "level-up", `You reach level ${l.level}! +${l.hpGain} max HP.${news.length ? ` New: ${news.join(", ")}.` : ""}`, { level: l.level });
       if (battle.ally) say(battle, "ally-level-up", `${battle.ally.name} reaches level ${l.level} too!`);
     }
     return true;

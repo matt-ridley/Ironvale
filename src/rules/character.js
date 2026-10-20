@@ -1,4 +1,6 @@
-// The player character: ability scores, HP, armour class, attacks and levelling up.
+// The player character: ability scores, HP, armour class, attacks, levelling up, and the fighter's features from the
+// SRD (Champion): Second Wind (L1), Action Surge (L2), Improved Critical (L3), ability score increases (L4, L6, L8...)
+// and Extra Attack (L5).
 import { roll } from "./dice.js";
 import { baseOf, makeItem } from "./items.js";
 
@@ -6,6 +8,24 @@ export const ABILITIES = ["STR", "DEX", "CON"];
 export const HIT_DIE = "1d10"; // a fighter's hit die
 export const SECOND_WIND = "1d10"; // + level, once per rest
 export const MAX_LEVEL = 20;
+export const MAX_SCORE = 20; // an ability score can't go above this
+export const ASI_LEVELS = [4, 6, 8, 12, 14, 16, 19]; // a fighter's ability score increases: +2 to one score
+export const SAVE_PROFICIENCIES = ["STR", "CON"]; // a fighter's saving throws
+
+// The features a fighter gains as they level up, in order.
+export const FEATURES = [
+  { id: "actionSurge", level: 2, name: "Action Surge", about: "Once per rest, take one more action on your turn." },
+  { id: "improvedCritical", level: 3, name: "Improved Critical", about: "Your attacks score a critical hit on a 19 or 20." },
+  { id: "extraAttack", level: 5, name: "Extra Attack", about: "Attack twice whenever you take the ATTACK action." },
+];
+export const hasFeature = (char, id) => char.level >= FEATURES.find(f => f.id === id).level;
+export const featuresAt = level => FEATURES.filter(f => f.level === level);
+/* The lowest d20 roll that's a critical hit: 19 with Improved Critical, otherwise 20. */
+export const critOn = char => (hasFeature(char, "improvedCritical") ? 19 : 20);
+/* Attacks each time you take the ATTACK action (before any potion). */
+export const attacksPerAction = char => (hasFeature(char, "extraAttack") ? 2 : 1);
+/* How many ability score increases a character of this level has earned. */
+export const asiEarned = level => ASI_LEVELS.filter(l => l <= level).length;
 
 // XP needed to reach each level (index = level), from the 5e table.
 export const XP_FOR_LEVEL = [0, 0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000,
@@ -31,6 +51,8 @@ export function createCharacter({
     name, level: 1, xp: 0, gold, bank: 0, abilities: { ...abilities },
     maxHp: 0, hp: 0,
     secondWind: true, // used up until the next rest
+    actionSurge: true, // the same (from level 2)
+    asi: 0, // ability score increases earned but not picked yet (the level-up screen asks)
     equipment: { weapon: null, shield: null, armour: null },
     inventory: [],
     effects: { speed: 0, dexterity: false }, // from potions: speed (steps left), dexterity (until the next fight)
@@ -72,7 +94,8 @@ export function weaponAttack(char) {
   };
 }
 
-/* Adds XP and levels up as many times as it now allows. Each level adds 1d10 + CON HP (at least 1). */
+/* Adds XP and levels up as many times as it now allows. Each level adds 1d10 + CON HP (at least 1), any new
+   features, and at ASI_LEVELS an ability score increase to pick. */
 export function gainXp(char, amount, rng = Math.random) {
   char.xp += amount;
   const levelUps = [];
@@ -82,26 +105,68 @@ export function gainXp(char, amount, rng = Math.random) {
     const hpGain = Math.max(1, roll(HIT_DIE, rng).total + mod(char, "CON"));
     char.maxHp += hpGain;
     char.hp += hpGain;
-    levelUps.push({ level: char.level, hpGain, proficiency: proficiencyBonus(char.level) });
+    const asi = ASI_LEVELS.includes(char.level);
+    if (asi) char.asi = (char.asi || 0) + 1;
+    levelUps.push({ level: char.level, hpGain, proficiency: proficiencyBonus(char.level), features: featuresAt(char.level).map(f => f.name), asi });
   }
   return { xp: char.xp, levelUps };
 }
 
-/* A long rest (an inn, Old Tom's bed): full HP and Second Wind back, for your companion too. */
+/* Spends an ability score increase: +2 to STR, DEX or CON (at most MAX_SCORE). A higher CON modifier raises your
+   maximum HP by 1 for every level, as in 5e. */
+export function increaseAbility(char, ability) {
+  if (!(char.asi > 0)) return { ok: false, reason: "You have no ability score increase to spend." };
+  if (!ABILITIES.includes(ability)) return { ok: false, reason: `Unknown ability: ${ability}` };
+  const before = char.abilities[ability];
+  if (before >= MAX_SCORE) return { ok: false, reason: `Your ${ability} is already ${MAX_SCORE}, as high as it goes.` };
+  const oldMod = mod(char, ability);
+  char.abilities[ability] = Math.min(MAX_SCORE, before + 2);
+  char.asi--;
+  let hpGain = 0;
+  if (ability === "CON") {
+    hpGain = (mod(char, "CON") - oldMod) * char.level;
+    char.maxHp += hpGain;
+    char.hp += hpGain;
+  }
+  return { ok: true, ability, from: before, to: char.abilities[ability], hpGain };
+}
+
+/* What raising an ability would change, tried on a copy: { ok, reason, from, to, ac, hit, damage, hp, init } as
+   differences (hit and damage are the weapon's to-hit and damage bonus; init is initiative and fleeing). */
+export function previewIncrease(char, ability) {
+  const copy = structuredClone(char);
+  copy.asi = Math.max(1, copy.asi || 0);
+  const r = increaseAbility(copy, ability);
+  if (!r.ok) return { ok: false, reason: r.reason };
+  const a = weaponAttack(char), b = weaponAttack(copy);
+  return {
+    ok: true, from: r.from, to: r.to,
+    ac: armourClass(copy) - armourClass(char),
+    hit: b.bonus - a.bonus,
+    damage: b.damageBonus - a.damageBonus,
+    hp: r.hpGain,
+    init: ability === "DEX" ? mod(copy, "DEX") - mod(char, "DEX") : 0,
+  };
+}
+
+/* A long rest (an inn, Old Tom's bed): full HP, Second Wind and Action Surge back, for your companion too. */
 export function rest(char) {
   char.hp = char.maxHp;
   char.secondWind = true;
+  char.actionSurge = true;
   if (char.companion) char.companion.hurt = 0;
 }
 
-/* A short rest (a camp's fire): back up to at least half your maximum HP, and Second Wind back. Your companion gets
-   back up to half theirs (`companionMax` is their maximum HP). Resting again does nothing more, so a free campfire is
-   never as good as a bed. Returns what it gave: { healed, secondWind, companionHealed }. */
+/* A short rest (a camp's fire): back up to at least half your maximum HP, and Second Wind and Action Surge back.
+   Your companion gets back up to half theirs (`companionMax` is their maximum HP). Resting again does nothing more,
+   so a free campfire is never as good as a bed. Returns what it gave: { healed, secondWind, actionSurge, companionHealed }. */
 export function shortRest(char, companionMax = 0) {
   const healed = Math.max(0, Math.floor(char.maxHp / 2) - char.hp);
   char.hp += healed;
   const secondWind = !char.secondWind;
   char.secondWind = true;
+  const actionSurge = hasFeature(char, "actionSurge") && !char.actionSurge;
+  char.actionSurge = true;
   let companionHealed = 0;
   const c = char.companion;
   if (c && companionMax) {
@@ -109,7 +174,7 @@ export function shortRest(char, companionMax = 0) {
     companionHealed = Math.max(0, hurt - cap);
     c.hurt = hurt - companionHealed;
   }
-  return { healed, secondWind, companionHealed };
+  return { healed, secondWind, actionSurge, companionHealed };
 }
 
 export function heal(char, amount) {

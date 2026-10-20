@@ -80,10 +80,10 @@ test("healing stops at max HP", () => {
 test("a short rest brings you up to half your HP and gives Second Wind back; a long rest is full", () => {
   const c = createCharacter(); // 12 HP
   c.hp = 2; c.secondWind = false;
-  assert.deepEqual(shortRest(c), { healed: 4, secondWind: true, companionHealed: 0 });
+  assert.deepEqual(shortRest(c), { healed: 4, secondWind: true, actionSurge: false, companionHealed: 0 }); // level 1: no surge yet
   assert.equal(c.hp, 6);
   assert.equal(c.secondWind, true);
-  assert.deepEqual(shortRest(c), { healed: 0, secondWind: false, companionHealed: 0 }); // resting again does nothing
+  assert.deepEqual(shortRest(c), { healed: 0, secondWind: false, actionSurge: false, companionHealed: 0 }); // resting again does nothing
   c.hp = 10;
   assert.equal(shortRest(c).healed, 0); // never takes HP away
   assert.equal(c.hp, 10);
