@@ -90,6 +90,8 @@ Every release bumps `VERSION` in both `src/config.js` and `sw.js` (a test checks
 ## Status
 Playable prototype: both quests can be played start to finish, and progress is saved.
 
+What comes next (Act 2 and beyond, magic, companions, hubs) is planned in [docs/ROADMAP.md](docs/ROADMAP.md).
+
 - [x] M0 Skeleton: Phaser title screen, installable PWA, offline support, GitHub Pages
 - [x] M1 Rules engine: dice, ability checks, AC, attacks, levelling, equipment, blacksmith upgrades, turn-based combat
 - [x] M2 World: tile map, walking, collisions, camera, touch controls
