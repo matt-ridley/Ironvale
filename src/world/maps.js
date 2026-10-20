@@ -4,5 +4,6 @@ import { OVERWORLD } from "./overworld.js";
 import { DEEP_CAVE } from "./cave.js";
 import { HOUSES } from "./houses.js";
 import { IRONVALE } from "./ironvale.js";
+import { KEEP } from "./keep.js";
 
-export const MAPS = Object.fromEntries([OVERWORLD, DEEP_CAVE, ...HOUSES, IRONVALE].map(def => [def.name, createMap(def)]));
+export const MAPS = Object.fromEntries([OVERWORLD, DEEP_CAVE, ...HOUSES, IRONVALE, KEEP].map(def => [def.name, createMap(def)]));

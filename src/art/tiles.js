@@ -225,6 +225,27 @@ export const DRAW = {
     box(ctx, C.beam, 5, 0, 22, 6); box(ctx, C.woodLight, 5, 0, 22, 1); // sign board
     box(ctx, C.leaf, 12, 1, 8, 4); box(ctx, C.leafShine, 13, 1, 3, 1); box(ctx, C.trunk, 15, 4, 2, 2); // a sprig of herbs
   },
+  // Inside Ironvale Keep
+  flagstone(ctx, rng) {
+    box(ctx, C.stoneDark, 0, 0, T, T);
+    for (const [x, y, w, h] of [[1, 1, 15, 14], [17, 1, 14, 9], [17, 11, 14, 11], [1, 16, 9, 15], [11, 16, 5, 6], [11, 23, 20, 8]]) {
+      box(ctx, C.stone, x, y, w, h); box(ctx, C.stoneLight, x, y, w, 1);
+    }
+    speckle(ctx, rng, C.marshDark, 4, 2, 1); // moss in the cracks
+  },
+  rubble: (ctx, rng) => DRAW.flagstone(ctx, rng), // the heap itself: PROPS.rubble
+  pew(ctx, rng) {
+    DRAW.flagstone(ctx, rng);
+    box(ctx, C.shadow, 0, 22, T, 6);
+    box(ctx, C.woodDark, 0, 8, T, 14); box(ctx, C.wood, 0, 9, T, 6); box(ctx, C.woodLight, 0, 9, T, 1); // the back
+    box(ctx, C.wood, 0, 16, T, 5); box(ctx, C.woodDark, 2, 21, 3, 6); box(ctx, C.woodDark, 27, 21, 3, 6); // the seat and legs
+  },
+  rack(ctx, rng) {
+    DRAW.flagstone(ctx, rng);
+    box(ctx, C.woodDark, 3, 4, 26, 3); box(ctx, C.woodDark, 3, 20, 26, 3); // two empty rails
+    box(ctx, C.woodDark, 4, 4, 3, 26); box(ctx, C.woodDark, 25, 4, 3, 26);
+    box(ctx, C.rockDark, 12, 7, 2, 13); box(ctx, C.rockLight, 12, 7, 1, 13); // one broken blade left behind
+  },
   // Greywater Fen
   marsh(ctx, rng) {
     box(ctx, C.marsh, 0, 0, T, T);
@@ -351,6 +372,9 @@ function boulder(ctx, x, y, rad) {
    canopy reaches over the tile above, and boulders spill into the next rock tile, so forests and rocky hills read as
    one mass. `next(dx, dy)` names the tile that far away. */
 export const PROPS = {
+  rubble(ctx, rng) {
+    for (const [x, y, rad] of [[9 + rng() * 4, 14 + rng() * 4, 7], [21 + rng() * 4, 12 + rng() * 6, 8], [15 + rng() * 4, 22 + rng() * 3, 7]]) boulder(ctx, x, y, rad);
+  },
   deadtree(ctx, rng) {
     const look = Math.floor(rng() * 4);
     const img = stamp(`deadtree${look}`, T + 2 * SPILL, T + 2 * SPILL, c => {
@@ -387,6 +411,7 @@ export const MAP_COLOURS = {
   rock: C.rock, roof: C.roof, wall: C.wall, door: C.beam, smithy: C.beam, apothecary: C.beam, bank: C.beam, fence: C.wood,
   marsh: C.marsh, reeds: C.reed, shallow: C.shallow, mud: C.mud, boardwalk: C.wood, deadtree: C.deadwoodDark, causeway: C.flag,
   keepwall: C.flagDark, palisade: C.woodDark, passage: C.cave, forge: C.beam, herbalist: C.beam,
+  flagstone: C.stone, rubble: C.rock, pew: C.wood, rack: C.woodDark,
 };
 
 export const missingTileArt = () => [...new Set(Object.values(TILES).map(t => t.name))].filter(n => !DRAW[n]);

@@ -55,7 +55,20 @@ export const QUESTS = [
       { text: "Find the drowned causeway, north of the fen", done: f => f.causewaySeen || f.metSallow || f.causewayRaised },
       { text: "Meet Mother Sallow at her hut", done: f => f.metSallow || f.causewayRaised },
       { text: "Raise the causeway: fight her, or strike a bargain", done: f => f.causewayRaised },
-      { text: "Enter Ironvale Keep (in a future update)", done: () => false },
+      { text: "Cross the causeway to Ironvale Keep", done: f => f.keepGateOpened },
+    ],
+  },
+  {
+    id: "keep", title: "Ironvale Keep", kind: "main",
+    known: f => f.causewayRaised,
+    about: "The dead walk Ironvale Keep, and the Iron Signet came from its tomb. Find out what lies at the bottom of it.",
+    steps: [
+      { text: "Open the keep's portcullis", done: f => f.keepGateOpened },
+      { text: "Pull the lever in the courtyard", done: f => f.courtyardLever },
+      { text: "Break the seal on the chapel altar", done: f => f.chapelSeal },
+      { text: "Pull the lever in the armoury", done: f => f.armouryLever },
+      { text: "Go down into Lord Varric's tomb", done: f => f.seenTomb },
+      { text: "Face whatever walks the tomb (in the next update)", done: () => false },
     ],
   },
   {
@@ -78,6 +91,16 @@ export const QUESTS = [
       { text: "Meet Robyn at Fenwatch's shrine", done: f => f.robynQuest || f.robynJoined },
       { text: "Beat the ghouls at the old graves, west in the fen", done: f => f.gravesAtRest },
       { text: "Go back to Robyn", done: f => f.robynJoined },
+    ],
+  },
+  {
+    id: "tools", title: "Brannoc's Tools", kind: "side",
+    known: f => f.toolsFound,
+    about: "Brannoc's own toolbox, somehow, in the keep's armoury.",
+    reward: "Brannoc silvers your weapon",
+    steps: [
+      { text: "Find the toolbox in the keep's armoury", done: f => f.toolsFound },
+      { text: "Bring it to Brannoc's forge in Fenwatch", done: f => f.toolsReturned },
     ],
   },
   {

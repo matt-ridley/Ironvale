@@ -26,7 +26,29 @@ export function spawnMonster(id, rng = Math.random) {
   if (!m) throw new Error(`Unknown monster: ${id}`);
   const hp = Math.max(1, roll(m.hp, rng).total);
   const attacks = attacksOf(m).map(a => ({ ...a, damageBonus: 0 }));
-  return { id, name: m.name, type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: attacks[0], attacks, xp: m.xp, gold: m.gold };
+  return { id, name: m.name, type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: attacks[0], attacks, xp: m.xp, gold: m.gold,
+    vulnerable: m.vulnerable || [], resistant: m.resistant || [], weaponResist: m.weaponResist || null };
+}
+
+export const WEAPON_DAMAGE = ["slashing", "piercing", "bludgeoning"];
+/* Damage after the target's weaknesses and resistances: { damage, note } where note is "weak", "resists" or null.
+   `vulnerable` types do double, `resistant` ones half; `weaponResist: "silver"` (wights) halves weapon damage unless
+   the weapon is silvered. Only monsters have these. */
+export function adjustDamage(target, damage, type, { silvered = false } = {}) {
+  if (!damage || !type) return { damage, note: null };
+  if (target.vulnerable?.includes(type)) return { damage: damage * 2, note: "weak" };
+  if (target.resistant?.includes(type) || (target.weaponResist === "silver" && WEAPON_DAMAGE.includes(type) && !silvered)) {
+    return { damage: Math.floor(damage / 2), note: "resists" };
+  }
+  return { damage, note: null };
+}
+/* Applies adjustDamage to an attack roll's result (in place), for the log and the screen. */
+export function adjustRoll(r, target, attack) {
+  if (!r.hit) return r;
+  const a = adjustDamage(target, r.damage, attack.damageType, { silvered: attack.silvered });
+  r.damage = a.damage;
+  r.note = a.note;
+  return r;
 }
 
 /* A monster's attacks each turn: its `attacks` (a multiattack, like the lizardfolk's bite and shield), or its one `attack`. */
@@ -123,7 +145,7 @@ export function playerAction(battle, action, rng = Math.random) {
     const atk = weaponAttack(p);
     for (let n = 0; n < attacksThisAction(battle) && target; n++) {
       const t = battle.monsters.indexOf(target);
-      const r = resolveAttack(atk, acOf(battle, t), rng, { critOn: critOn(p), ...attackMods(battle, "player", t) });
+      const r = adjustRoll(resolveAttack(atk, acOf(battle, t), rng, { critOn: critOn(p), ...attackMods(battle, "player", t) }), target, atk);
       const woke = hurt(battle, t, r.damage);
       say(battle, "attack", `${n ? "Again! You swing" : "You swing"} your ${atk.name} at the ${target.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, target: t });
       tellWoken(battle, t, woke);
@@ -336,4 +358,5 @@ export function say(battle, type, text, extra = {}) {
 
 export const rollText = (r, bonus) => `${r.natural} ${bonus < 0 ? "-" : "+"} ${Math.abs(bonus)}${r.extra ? ` + ${r.extra}` : ""} = ${r.total} vs AC ${r.targetAc}.`;
 export const hitText = (r, onYou) =>
-  !r.hit ? "Miss." : `${r.crit ? "Critical hit!" : "Hit!"} ${r.damage} damage${onYou ? " to you" : ""}.`;
+  !r.hit ? "Miss." : `${r.crit ? "Critical hit!" : "Hit!"} ${r.damage} damage${onYou ? " to you" : ""}${NOTES[r.note] || ""}.`;
+const NOTES = { weak: " (it's weak to that!)", resists: " (it shrugs off half)" };

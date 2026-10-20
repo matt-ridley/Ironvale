@@ -47,9 +47,9 @@ test("upgrades add to AC", () => {
 
 test("weapon attacks use STR, or the better of STR and DEX for finesse", () => {
   const c = createCharacter({ abilities: { STR: 12, DEX: 18, CON: 10 }, weapon: "longsword" });
-  assert.deepEqual(weaponAttack(c), { name: "Longsword", bonus: 3, damage: "1d8", damageBonus: 1 });
+  assert.deepEqual(weaponAttack(c), { name: "Longsword", bonus: 3, damage: "1d8", damageBonus: 1, damageType: "slashing", silvered: false });
   c.equipment.weapon = makeItem("rapier", { upgrade: 1 });
-  assert.deepEqual(weaponAttack(c), { name: "Rapier", bonus: 4 + 2 + 1, damage: "1d8", damageBonus: 4 + 1 });
+  assert.deepEqual(weaponAttack(c), { name: "Rapier", bonus: 4 + 2 + 1, damage: "1d8", damageBonus: 4 + 1, damageType: "piercing", silvered: false });
   c.equipment.weapon = null;
   assert.equal(weaponAttack(c).name, "Fist");
 });

@@ -1,7 +1,7 @@
 // Item instances, equipping, and blacksmith upgrades. Functions change the character in place and return what happened.
 // An instance can carry `crest: true`: the hero's starting longsword has a worn crest on its pommel, which matters to
 // the story later (Act 2). It can't be sold, and it never stacks with other longswords.
-import { ITEMS, MAX_UPGRADE } from "../data/items.js";
+import { ITEMS, MAX_UPGRADE, SILVER_COST } from "../data/items.js";
 import { roll } from "./dice.js";
 
 export const SLOTS = ["weapon", "shield", "armour"];
@@ -17,7 +17,8 @@ export function makeItem(base, { upgrade = 0, crest = false } = {}) {
 export const CREST_TEXT = "A worn crest is stamped on the pommel: a tower between two keys.";
 
 export const baseOf = item => ITEMS[item.base];
-export const itemName = item => baseOf(item).name + (item.upgrade ? ` +${item.upgrade}` : "");
+export const itemName = item => (item.silvered ? "Silvered " : "") + baseOf(item).name + (item.upgrade ? ` +${item.upgrade}` : "");
+export const canSilver = item => ["weapon", "bow"].includes(baseOf(item).type);
 export const isTwoHanded = item => !!item && (baseOf(item).properties || []).includes("two-handed");
 export const isPotion = item => baseOf(item).type === "consumable";
 export const isHealing = item => isPotion(item) && !!baseOf(item).heal;
@@ -26,8 +27,9 @@ export const isHealing = item => isPotion(item) && !!baseOf(item).heal;
 export function describeItem(item) {
   const b = baseOf(item), up = item.upgrade ? ` +${item.upgrade}` : "";
   const props = b.properties?.length ? `, ${b.properties.join(", ")}` : "";
-  if (b.type === "weapon") return `${b.damage} damage${props}.${up && ` ${up.trim()} to hit and damage.`}${item.crest ? ` ${CREST_TEXT}` : ""}`;
-  if (b.type === "bow") return `${b.damage} damage, for a friend in your party.${up && ` ${up.trim()} to hit and damage.`}`;
+  const silver = item.silvered ? " Silvered: wights can't shrug it off." : "";
+  if (b.type === "weapon") return `${b.damage} ${b.damageType} damage${props}.${up && ` ${up.trim()} to hit and damage.`}${silver}${item.crest ? ` ${CREST_TEXT}` : ""}`;
+  if (b.type === "bow") return `${b.damage} ${b.damageType} damage, for a friend in your party.${up && ` ${up.trim()} to hit and damage.`}${silver}`;
   if (b.type === "shield") return `+${b.ac} AC.${up && ` ${up.trim()} more AC.`}`;
   if (b.type === "armour") {
     const dex = b.category === "light" ? " + DEX" : b.category === "medium" ? " + DEX (max 2)" : "";
@@ -46,7 +48,7 @@ export function describeItem(item) {
 export function groupPack(inventory) {
   const groups = new Map();
   for (const item of inventory) {
-    const key = `${item.base}+${item.upgrade}${item.crest ? "+crest" : ""}`;
+    const key = `${item.base}+${item.upgrade}${item.crest ? "+crest" : ""}${item.silvered ? "+silver" : ""}`;
     if (!groups.has(key)) groups.set(key, { item, items: [], count: 0, name: itemName(item) });
     const g = groups.get(key);
     g.items.push(item);
@@ -126,6 +128,19 @@ export function unequip(char, slot) {
    this smith can manage (`max`). */
 export function upgradeCost(item, max = MAX_UPGRADE) {
   return item.upgrade >= max ? null : 50 * (item.upgrade + 1);
+}
+
+/* Brannoc silvers a weapon or bow (worn, carried, or your companion's) for SILVER_COST gold. */
+export function silverItem(char, uid) {
+  const companion = Object.values(char.companion?.gear || {});
+  const item = [...Object.values(char.equipment), ...char.inventory, ...companion].find(i => i && i.uid === uid);
+  if (!item) return { ok: false, reason: "You don't have that item." };
+  if (!canSilver(item)) return { ok: false, reason: "Only weapons take silver." };
+  if (item.silvered) return { ok: false, reason: `Your ${itemName(item)} is already silvered.` };
+  if (char.gold < SILVER_COST) return { ok: false, reason: `That costs ${SILVER_COST} gold. You have ${char.gold}.` };
+  char.gold -= SILVER_COST;
+  item.silvered = true;
+  return { ok: true, item, cost: SILVER_COST };
 }
 
 /* The blacksmith. Works on equipped or carried items, and your companion's gear. Each tier is +1 to hit and damage

@@ -83,7 +83,7 @@ export function armourClass(char) {
 export function weaponAttack(char) {
   const w = char.equipment.weapon;
   const str = mod(char, "STR"), dex = mod(char, "DEX");
-  if (!w) return { name: "Fist", bonus: str + proficiencyBonus(char.level), damage: "1", damageBonus: str };
+  if (!w) return { name: "Fist", bonus: str + proficiencyBonus(char.level), damage: "1", damageBonus: str, damageType: "bludgeoning" };
   const base = baseOf(w);
   const ability = base.properties.includes("finesse") ? Math.max(str, dex) : str;
   return {
@@ -91,6 +91,7 @@ export function weaponAttack(char) {
     bonus: ability + proficiencyBonus(char.level) + w.upgrade,
     damage: base.damage,
     damageBonus: ability + w.upgrade,
+    damageType: base.damageType, silvered: !!w.silvered,
   };
 }
 

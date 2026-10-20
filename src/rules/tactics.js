@@ -10,7 +10,7 @@ import { SPELLS } from "../data/spells.js";
 import { roll } from "./dice.js";
 import { baseOf } from "./items.js";
 import { attackMods } from "./conditions.js";
-import { acOf, hurt, tellWoken, say, living, resolveAttack, rollText, hitText, isAllyTurn, endAllyAction } from "./combat.js";
+import { acOf, hurt, tellWoken, say, living, resolveAttack, adjustRoll, rollText, hitText, isAllyTurn, endAllyAction } from "./combat.js";
 import { makeCaster, castSpell, slotsLeft, spendForSpell } from "./magic.js";
 
 /* Your companion as a caster (their spell attack bonus and DC at your level), or null if they don't cast. */
@@ -74,7 +74,7 @@ function doAllyAction(battle, action, rng) {
     const target = battle.monsters[action.target]?.hp > 0 ? battle.monsters[action.target] : living(battle)[0];
     if (!target) return { ok: false, reason: "There's nothing left to shoot." };
     const t = battle.monsters.indexOf(target);
-    const r = resolveAttack(a.attack, acOf(battle, t), rng, attackMods(battle, "ally", t, { melee: false }));
+    const r = adjustRoll(resolveAttack(a.attack, acOf(battle, t), rng, attackMods(battle, "ally", t, { melee: false })), target, a.attack);
     const woke = hurt(battle, t, r.damage);
     say(battle, "ally-attack", `${a.name} attacks the ${target.name} with a ${a.attack.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t });
     tellWoken(battle, t, woke);

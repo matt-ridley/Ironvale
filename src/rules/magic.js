@@ -8,7 +8,7 @@ import { ITEMS } from "../data/items.js";
 import { roll, parseDice } from "./dice.js";
 import { proficiencyBonus } from "./character.js";
 import { addCondition, attackMods, CONDITIONS } from "./conditions.js";
-import { combatant, nameOf, acOf, battleSave, hurt, tellWoken, say, living, resolveAttack, rollText, hitText, isPlayerTurn, endPlayerAction } from "./combat.js";
+import { combatant, nameOf, acOf, battleSave, hurt, tellWoken, say, living, resolveAttack, adjustRoll, adjustDamage, rollText, hitText, isPlayerTurn, endPlayerAction } from "./combat.js";
 import { companionStats } from "./party.js";
 
 /* Spell slots a full caster of this level has, by slot level (index 0 = level 1 slots). */
@@ -94,8 +94,8 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
 
   if (spell.kind === "attack") {
     const t = keys[0];
-    const r = resolveAttack({ bonus: caster.attackBonus, damage: spellDice(spell, "damage", caster.level, slot), damageBonus: 0 }, acOf(battle, t), rng,
-      attackMods(battle, caster.key, t, { melee: false }));
+    const r = adjustRoll(resolveAttack({ bonus: caster.attackBonus, damage: spellDice(spell, "damage", caster.level, slot), damageBonus: 0 }, acOf(battle, t), rng,
+      attackMods(battle, caster.key, t, { melee: false })), battle.monsters[t], spell);
     const woke = hurt(battle, t, r.damage);
     say(battle, "spell-attack", `${spell.name} at the ${battle.monsters[t].name}: ${rollText(r, caster.attackBonus)} ${hitText(r)}`, { roll: r, target: t, spell: spellId });
     tellWoken(battle, t, woke);
@@ -104,7 +104,7 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
     for (const t of keys) {
       const s = battleSave(battle, t, spell.save, caster.saveDc, rng);
       const full = spell.damage ? roll(spellDice(spell, "damage", caster.level, slot), rng).total : 0;
-      const dmg = s.success ? (spell.half ? Math.floor(full / 2) : 0) : full;
+      const dmg = adjustDamage(battle.monsters[t], s.success ? (spell.half ? Math.floor(full / 2) : 0) : full, spell.damageType).damage;
       const woke = hurt(battle, t, dmg);
       const saved = `${s.ability} save ${s.total} vs DC ${s.dc}`;
       say(battle, "spell-save", `The ${battle.monsters[t].name} ${s.success ? "resists" : "is caught"} (${saved})${spell.damage ? `: ${dmg} ${spell.damageType} damage` : ""}.`, { target: t, save: s, damage: dmg, spell: spellId });
@@ -116,7 +116,7 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
     let t = keys[0];
     const darts = spell.darts + (spell.upcast?.darts || 0) * Math.max(0, slot - spell.level);
     for (let n = 0; n < darts && t !== undefined; n++) {
-      const dmg = roll(spell.damage, rng).total;
+      const dmg = adjustDamage(battle.monsters[t], roll(spell.damage, rng).total, spell.damageType).damage;
       const woke = hurt(battle, t, dmg);
       say(battle, "spell-hit", `A glowing dart strikes the ${battle.monsters[t].name}: ${dmg} ${spell.damageType} damage.`, { target: t, damage: dmg, spell: spellId });
       tellWoken(battle, t, woke);

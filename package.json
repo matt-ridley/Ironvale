@@ -5,6 +5,7 @@
   "description": "Dev tools only. The game itself has no build step and no npm dependencies.",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "icons": "node tools/make-icons.mjs"
+    "icons": "node tools/make-icons.mjs",
+    "sim": "node tools/simulate.mjs"
   }
 }

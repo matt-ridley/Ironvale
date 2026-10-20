@@ -1,0 +1,68 @@
+// Ironvale Keep, inside the walls: a ruined courtyard (south, through the portcullis), the chapel (west) and the armoury
+// (east), a corridor along the north, and behind a great iron door, the tomb of Lord Varric. The door has three locks:
+// a lever in the courtyard, a seal on the chapel altar, and a lever in the armoury. The dead walk every room.
+// One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 40 wide).
+
+export const KEEP = {
+  name: "keep",
+  region: "ironvale",
+  spawn: { x: 19, y: 31 },
+  zones: [
+    { id: "tomb", name: "Lord Varric's Tomb", x0: 12, y0: 0, x1: 27, y1: 10, music: "keep" },
+    { id: "chapel", name: "The Chapel", x0: 0, y0: 13, x1: 12, y1: 33, music: "keep" },
+    { id: "armoury", name: "The Armoury", x0: 27, y0: 13, x1: 39, y1: 33, music: "keep" },
+    { id: "courtyard", name: "Ironvale Keep", x0: 0, y0: 11, x1: 39, y1: 33, music: "keep" },
+  ],
+  // Out through the gate, back onto the causeway.
+  exits: [{ x: 19, y: 32, to: "ironvale", at: { x: 31, y: 27 }, facing: "down" }],
+  objects: [
+    // The three locks on the tomb door (script "lock" reads `flag` and `look`).
+    { id: "courtyardLever", x: 16, y: 16, sprite: "lever", script: "lock", flag: "courtyardLever", still: true,
+      look: "A great iron lever, rusted halfway. A chain runs from it into the wall, towards the north." },
+    { id: "chapelSeal", x: 6, y: 15, sprite: "seal", script: "lock", flag: "chapelSeal", still: true,
+      look: "On the chapel altar, a seal of black iron: a tower between two keys. A chain runs down through the floor." },
+    { id: "armouryLever", x: 33, y: 15, sprite: "lever", script: "lock", flag: "armouryLever", still: true,
+      look: "A lever among the empty weapon racks, its chain running north through the wall." },
+    { id: "tombDoor", x: 19, y: 10, sprite: "tombDoor", script: "tombDoor", goneWhen: "tombOpen", still: true },
+    { id: "sarcophagus", x: 19, y: 2, sprite: "sarcophagus", script: "sarcophagus", still: true },
+    { id: "brannocTools", x: 35, y: 29, sprite: "chest", script: "brannocTools", goneWhen: "toolsFound", still: true },
+    { id: "chapelChest", x: 3, y: 29, sprite: "chest", script: "chest", goneWhen: "chapelChestOpened", still: true, loot: { gold: 150, items: ["potionGreaterHealing", "scrollFireball"] } },
+    { id: "courtyardChest", x: 24, y: 30, sprite: "chest", script: "chest", goneWhen: "courtyardChestOpened", still: true, loot: { gold: 120, items: ["potionGreaterHealing", "potionGreaterHealing"] } },
+  ],
+  rows: [
+  "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKnnnnnnnnnnnnnnnnKKKKKKKKKKKK",
+  "KKKKKKKKKKKKnnnnnnnnnnnnnnnnKKKKKKKKKKKK",
+  "KKKKKKKKKKKKnnKnnnnnnnnnnKnnKKKKKKKKKKKK",
+  "KKKKKKKKKKKKnnnnnnnnnnnnnnnnKKKKKKKKKKKK",
+  "KKKKKKKKKKKKnnnnnnnnnnnnnnnnKKKKKKKKKKKK",
+  "KKKKKKKKKKKKnnnnnnnnnnnnnnnnKKKKKKKKKKKK",
+  "KKKKKKKKKKKKnnKnnnnnnnnnnKnnKKKKKKKKKKKK",
+  "KKKKKKKKKKKKnnnnnnnnnnnnnnnnKKKKKKKKKKKK",
+  "KKKKKKKKKKKKnnnnnnnnnnnnnnnnKKKKKKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKnKKKKKKKKKKKKKKKKKKKK",
+  "KKnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnKK",
+  "KKnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnKK",
+  "KKKKKKnKKKKKKKKKKKKnKKKKKKKKKKKKKnKKKKKK",
+  "KKnnnnnnnnnnKngn*nnnnnnnnnnKnnnnnnnnnnKK",
+  "KKnnnnnnnnnnK*nnnnnnnnnnngnKQnnnnnnnnQKK",
+  "KKnnnnnnnnnnK*ngnnnnngnnnnnKnnnnnnnnnnKK",
+  "KKnnnnnnnnnnKn*nnnnnnnnnnnnKQnnnnnnnnQKK",
+  "KKnPPPnnPPPnKnnnnnnnnnnnnnnKnnnnnnnnnnKK",
+  "KKnnnnnnnnnnKnnnnnnnnnngnnnKQnnnnnnnnQKK",
+  "KKnPPPnnPPPnK*nnnnnnnngnnn*KnnnnnnnnnnKK",
+  "KKnnnnnnnnnnKnnnnnnnnnnnnnnKQnnnnnnnnQKK",
+  "KKnPPPnnPPPnnnnnnnnnnnn*nnnnnnnnnnnnnnKK",
+  "KKnnnnnnnnnnKn*n*nnnn*nnnnnKQnnnnnnnnQKK",
+  "KKnPPPnnPPPnKnnnn*nnnnnnnnnKnnnnnnnnnnKK",
+  "KKnnnnnnnnnnKnnnnnnnnnnnnnnKQnnnnnnnnQKK",
+  "KKnPPPnnPPPnKnnnnnnnnnnnnnnKnnnnnnnnnnKK",
+  "KKnnnnnnnnnnKnnnnnnnnnnnnnnKQnnnnnnnnQKK",
+  "KKnnnnnnnnnnKnnnnnnnnnnnnnnKnnnnnnnnnnKK",
+  "KKnnnnnnnnnnK*nnnnnnnnnnnnnKQnnnnnnnnQKK",
+  "KKnnnnnnnnnnK*nnnnnnnnnnn*nKnnnnnnnnnnKK",
+  "KKKKKKKKKKKKKnnnnnnnnnnnnnnKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKOKKKKKKKKKKKKKKKKKKKK",
+  "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK",
+  ],
+};

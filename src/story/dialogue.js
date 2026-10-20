@@ -1,6 +1,6 @@
 // A tiny conversation engine. A script is a set of nodes:
 //   { speaker, text, choices: [{ label, to, if }], to, enter }
-// - `start` (a node id, or a function of the game state) picks the first node.
+// - `start` (a node id, or a function of the game state and { object }) picks the first node.
 // - `text` can be a function (state, ctx) so it can mention the last check or a reward.
 // - `choices` with an `if` (a function of the state) only show when it returns true.
 // - A node with no choices shows "Continue" and goes to `to`, or ends the conversation if there is no `to`.
@@ -14,7 +14,7 @@ export const END = null;
 
 export function startConversation(script, state, { rng = Math.random, object = null } = {}) {
   const convo = { script, state, rng, object, node: null, ended: false, events: [], lastCheck: null };
-  const first = typeof script.start === "function" ? script.start(state) : script.start;
+  const first = typeof script.start === "function" ? script.start(state, { object }) : script.start;
   goTo(convo, first);
   return convo;
 }
