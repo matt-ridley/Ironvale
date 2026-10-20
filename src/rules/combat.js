@@ -9,7 +9,7 @@
 // A battle is a plain object. The player acts with playerAction(); monsters then take their turns until it is the
 // player's turn again or the battle is over. Every step is written to battle.log for the screen to show.
 import { d20, roll } from "./dice.js";
-import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND, critOn, attacksPerAction, hasFeature, SAVE_PROFICIENCIES, proficiencyBonus } from "./character.js";
+import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND, critOn, attacksPerAction, hasFeature, SAVE_PROFICIENCIES, proficiencyBonus, runesLeft, knowsRune } from "./character.js";
 import { abilityCheck } from "./checks.js";
 import { baseOf, makeItem, itemName, useItem, cantDrink } from "./items.js";
 import { MONSTERS } from "../data/monsters.js";
@@ -138,7 +138,11 @@ export function playerAction(battle, action, rng = Math.random) {
   const start = battle.log.length;
   const p = battle.player;
 
-  if (action.type === "attack") {
+  if (action.type === "attack" || action.type === "runeStrike") {
+    // Rune Strike: an ATTACK whose first hit also burns a rune slot for radiant damage (none spent on a miss).
+    let rune = action.type === "runeStrike";
+    if (rune && !knowsRune(p, "runeStrike")) return { ok: false, reason: "You don't know that rune." };
+    if (rune && !runesLeft(p)) return { ok: false, reason: "No rune slots left. A long rest brings them back." };
     let target = battle.monsters[action.target ?? battle.monsters.indexOf(living(battle)[0])];
     if (!target || target.hp <= 0) return { ok: false, reason: "Pick a monster that's still standing." };
     battle.focus = battle.monsters.indexOf(target); // your companion shoots at the same one
@@ -146,14 +150,23 @@ export function playerAction(battle, action, rng = Math.random) {
     for (let n = 0; n < attacksThisAction(battle) && target; n++) {
       const t = battle.monsters.indexOf(target);
       const r = adjustRoll(resolveAttack(atk, acOf(battle, t), rng, { critOn: critOn(p), ...attackMods(battle, "player", t) }), target, atk);
+      let flare = "";
+      if (rune && r.hit) {
+        const extra = adjustDamage(target, roll(target.type === "undead" ? "3d8" : "2d8", rng).total, "radiant").damage;
+        r.damage += extra;
+        p.runes.used = (p.runes.used || 0) + 1;
+        rune = false;
+        flare = ` The rune on your blade flares: +${extra} radiant!`;
+      }
       const woke = hurt(battle, t, r.damage);
-      say(battle, "attack", `${n ? "Again! You swing" : "You swing"} your ${atk.name} at the ${target.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, target: t });
+      say(battle, "attack", `${n ? "Again! You swing" : "You swing"} your ${atk.name} at the ${target.name}: ${rollText(r, atk.bonus)} ${hitText(r)}${flare}`, { roll: r, target: t, rune: !!flare });
       tellWoken(battle, t, woke);
       if (target.hp === 0) {
         say(battle, "defeat", `The ${target.name} falls.`, { target: t });
         target = living(battle)[0]; // the second attack goes to the next monster
       }
     }
+    if (rune) say(battle, "rune-miss", "Your rune stays dark: no hit, no slot spent.");
   } else if (action.type === "defend") {
     battle.defending = true;
     say(battle, "defend", `You raise your guard (+${DEFEND_AC_BONUS} AC until your next turn).`);

@@ -1,7 +1,7 @@
 // The quest log: every quest you've heard of, what it's about, its steps and whether each is done. It's worked out
 // from the quest flags every time, so there's nothing extra to save. No Phaser here, so it can be tested; the Quests
 // screen shows what questLog returns.
-import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD } from "./scripts.js";
+import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD } from "./scripts.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
 
@@ -62,13 +62,16 @@ export const QUESTS = [
     id: "keep", title: "Ironvale Keep", kind: "main",
     known: f => f.causewayRaised,
     about: "The dead walk Ironvale Keep, and the Iron Signet came from its tomb. Find out what lies at the bottom of it.",
+    reward: reward(KEEP_REWARD),
     steps: [
       { text: "Open the keep's portcullis", done: f => f.keepGateOpened },
       { text: "Pull the lever in the courtyard", done: f => f.courtyardLever },
       { text: "Break the seal on the chapel altar", done: f => f.chapelSeal },
       { text: "Pull the lever in the armoury", done: f => f.armouryLever },
-      { text: "Go down into Lord Varric's tomb", done: f => f.seenTomb },
-      { text: "Face whatever walks the tomb (in the next update)", done: () => false },
+      { text: "Go down into Lord Varric's tomb", done: f => f.seenTomb || f.varricDefeated },
+      { text: "Face Lord Varric", done: f => f.varricDefeated },
+      { text: "Put the Iron Signet back on his tomb", done: f => f.signetReturned },
+      { text: "Tell Brannoc what Varric called you", done: f => f.bladeReforged },
     ],
   },
   {

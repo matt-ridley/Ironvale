@@ -5,7 +5,7 @@ import { ENCOUNTERS } from "../world/encounters.js";
 
 const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willowmere", warrens: "The Deep Warrens", fen: "Greywater Fen", keepGrounds: "Ironvale Keep's grounds",
   courtyard: "Ironvale Keep's courtyard", chapel: "Ironvale Keep's chapel", armoury: "Ironvale Keep's armoury" };
-const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall", motherSallow: "Her hut in Greywater Fen" }; // bosses don't roam
+const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall", motherSallow: "Her hut in Greywater Fen", lordVarric: "His tomb, under Ironvale Keep" }; // bosses don't roam
 
 export const LORE = {
   giantRat: "A rat the size of a dog. Alone it's a nuisance; it's the bite that festers.",
@@ -24,6 +24,7 @@ export const LORE = {
   ghast: "A ghoul's bigger, fouler cousin. The stink is the least of it: its claws freeze you where you stand.",
   wight: "A dead knight with cold eyes, who remembers how to fight. Plain steel only half-bites it. Silver does the job.",
   helmedHorror: "A suit of armour with nothing inside, still guarding the armoury. Very hard to hit, and it hits back twice.",
+  lordVarric: "The Ironbound: the last lord of Ironvale, a wight knight in black plate. Plain steel only half-bites him, and his touch can freeze you.",
   motherSallow: "A marsh hag with weed in her hair and a laugh like a drain. She keeps the causeway under water, and she loves a bargain.",
 };
 

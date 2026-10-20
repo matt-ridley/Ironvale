@@ -24,6 +24,28 @@ export const featuresAt = level => FEATURES.filter(f => f.level === level);
 export const critOn = char => (hasFeature(char, "improvedCritical") ? 19 : 20);
 /* Attacks each time you take the ATTACK action (before any potion). */
 export const attacksPerAction = char => (hasFeature(char, "extraAttack") ? 2 : 1);
+// Warden runes: the hero's own magic, learned from the story. Rune slots come back with a long rest, like spell slots.
+export const RUNES = {
+  runeStrike: { name: "Rune Strike", about: "After you hit, your blade's rune flares: 2d8 radiant damage, 3d8 against the undead." },
+};
+/* How many rune slots the hero has (none until they learn a rune). */
+export const runeSlots = char => (char.runes?.known?.length ? (char.level >= 9 ? 3 : 2) : 0);
+export const runesLeft = char => Math.max(0, runeSlots(char) - (char.runes?.used || 0));
+export const knowsRune = (char, id) => !!char.runes?.known?.includes(id);
+export function learnRune(char, id) {
+  char.runes = { known: [...new Set([...(char.runes?.known || []), id])], used: char.runes?.used || 0 };
+}
+
+/* Brannoc reforges the sword with the crest into the Wardenblade (keeping its upgrades), silvered. Returns it. */
+export function reforgeBlade(char) {
+  const all = [char.equipment.weapon, ...char.inventory].filter(Boolean);
+  let blade = all.find(i => i.crest);
+  if (!blade) { blade = makeItem("wardenblade", { crest: true }); char.inventory.push(blade); }
+  blade.base = "wardenblade";
+  blade.silvered = true;
+  return blade;
+}
+
 /* How many ability score increases a character of this level has earned. */
 export const asiEarned = level => ASI_LEVELS.filter(l => l <= level).length;
 
@@ -156,6 +178,7 @@ export function rest(char) {
   char.secondWind = true;
   char.actionSurge = true;
   if (char.slotsUsed) char.slotsUsed = [];
+  if (char.runes) char.runes.used = 0;
   if (char.companion) char.companion.hurt = 0;
   if (char.companion?.slotsUsed) char.companion.slotsUsed = [];
 }

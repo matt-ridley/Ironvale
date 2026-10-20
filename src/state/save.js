@@ -11,7 +11,7 @@ import { blockedAt, feetAt } from "../world/movement.js";
 import { OVERWORLD } from "../world/overworld.js";
 import { cleanBestiary } from "../rules/bestiary.js";
 import { hubById } from "../world/travel.js";
-import { asiEarned } from "../rules/character.js";
+import { asiEarned, RUNES } from "../rules/character.js";
 import { cleanName } from "../story/hero.js";
 import { cleanBounty } from "../story/bounties.js";
 
@@ -61,6 +61,7 @@ export function deserialize(json) {
     companion: loadCompanion(h.companion),
     secondWind: h.secondWind !== false,
     actionSurge: h.actionSurge !== false,
+    ...(Array.isArray(h.runes?.known) && { runes: { known: h.runes.known.filter(id => RUNES[id]), used: isInt(h.runes.used) && h.runes.used > 0 ? h.runes.used : 0 } }),
     asi: data.format < 4 ? asiEarned(h.level) : isInt(h.asi) && h.asi > 0 ? h.asi : 0,
     equipment: Object.fromEntries(SLOTS.map(slot => {
       const item = h.equipment?.[slot];
