@@ -22,12 +22,14 @@ export const OVERWORLD = {
     { x: 22, y: 9, to: "inn", name: "The Sleeping Fox inn" },
   ],
   // Things standing on the map. They block walking; walk into one to talk to it or deal with it.
-  // `goneWhen` names a quest flag that removes the object (the oak, once shoved aside; a chest, once opened).
+  // `goneWhen` names a quest flag that removes the object (the oak, once shoved aside; a chest, once opened), and
+  // `shownWhen` one that puts it there (Brannoc, once you've freed him).
   // `still` objects don't bob up and down. A chest's `loot` is what's inside. `frame` picks one frame of a sheet
   // (Megan is drawn on a walking sheet like the hero's; frame 0 is her facing you).
   objects: [
     { id: "elder", x: 17, y: 18, sprite: "elder", script: "elder" },
     { id: "pip", x: 10, y: 29, sprite: "villager", script: "villager" },
+    { id: "brannoc", x: 12, y: 17, sprite: "brannoc", script: "brannocTown", shownWhen: "brannocFreed" }, // by the smithy
     { id: "campfire", x: 50, y: 31, sprite: "campfire", script: "campfire", still: true },
     { id: "fallenLog", x: 54, y: 24, sprite: "log", script: "log", goneWhen: "logCleared", still: true },
     { id: "tom", x: 23, y: 47, sprite: "fisher", script: "fisher" },

@@ -68,7 +68,7 @@ test("the second quest: the elder sends you after the Goblin King and pays once 
   assert.equal(k.node, "kingThanks");
   assert.equal(s.hero.gold, gold + KING_REWARD.gold);
   assert.equal(s.flags.kingRewarded, true);
-  assert.equal(objective(s.flags), "");
+  assert.match(objective(s.flags), /King's hall/); // on to the Iron Signet
   assert.equal(questsDone(s.flags), 2);
   assert.equal(startConversation(SCRIPTS.elder, s).node, "afterAll");
 });
@@ -121,7 +121,7 @@ test("once the chief is beaten, the cave leads down into the Deep Warrens", () =
 test("the Goblin King starts the final fight", () => {
   const c = startConversation(SCRIPTS.king, fresh());
   pick(c, "Fight the Goblin King!");
-  assert.deepEqual(takeEvents(c), [{ type: "battle", foes: KING_FIGHT, zone: "cave", winFlag: "kingDefeated" }]);
+  assert.deepEqual(takeEvents(c), [{ type: "battle", foes: KING_FIGHT, zone: "cave", winFlag: "kingDefeated", afterWin: "kingWords" }]);
 });
 
 test("the iron gate: lifting it opens it for good, squeezing through puts you on the far side", () => {
@@ -165,7 +165,7 @@ test("the quest objective follows the flags", () => {
   assert.match(objective({ questStarted: true }), /goblin chief/);
   assert.match(objective({ chiefDefeated: true }), /Return/);
   assert.match(objective({ questRewarded: true }), /Elder Maren/);
-  assert.equal(objective({ questRewarded: true, kingQuestStarted: true, kingDefeated: true, kingRewarded: true }), "");
+  assert.equal(objective({ questRewarded: true, kingQuestStarted: true, kingDefeated: true, kingRewarded: true }), "Search the Goblin King's hall");
 });
 
 test("every choice in every script leads somewhere real", () => {

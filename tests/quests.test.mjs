@@ -32,7 +32,8 @@ test("the King shows up once the chief is paid for, and finished quests go to th
   assert.equal(log[1].done, true);
   assert.deepEqual(steps(log, "king"), [">", ".", ".", "."]);
   const all = { questStarted: true, chiefDefeated: true, questRewarded: true, kingQuestStarted: true, gatePassed: true, kingDefeated: true, kingRewarded: true };
-  assert.ok(questLog(all).every(q => q.done));
+  assert.ok(questLog(all).filter(q => q.id !== "signet").every(q => q.done));
+  assert.equal(questLog(all)[0].id, "signet"); // the Iron Signet, unfinished, comes first
 });
 
 test("side quests appear when you hear of them", () => {

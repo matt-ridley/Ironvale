@@ -56,7 +56,7 @@ test("people and the oak block the way until the oak is cleared", () => {
   const log = world.objects.find(o => o.id === "fallenLog");
   assert.equal(objectAt(world, log.x, log.y).id, "fallenLog");
   assert.equal(objectAt(world, log.x, log.y, { logCleared: true }), null);
-  assert.equal(activeObjects(world, { logCleared: true }).length, world.objects.length - 1);
+  assert.equal(activeObjects(world, { logCleared: true }).length, world.objects.filter(o => !o.shownWhen).length - 1);
 });
 
 test("objects can't be placed on solid tiles", () => {

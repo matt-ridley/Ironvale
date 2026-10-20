@@ -30,7 +30,8 @@ const PLACE_NOTES = {
 export class World extends Phaser.Scene {
   constructor() { super("World"); }
 
-  /* data.quiet: coming back from a fight where you started it, so don't announce the area again. */
+  /* data.quiet: coming back from a fight where you started it, so don't announce the area again. data.script: a
+     conversation to play straight away (the Goblin King's last words). */
   create(data = {}) {
     this.map = MAPS[state.map];
     this.frozen = false;
@@ -83,6 +84,7 @@ export class World extends Phaser.Scene {
     this.scene.launch("Hud");
     this.enteredTile(false);
     autosave();
+    if (data.script) this.time.delayedCall(300, () => this.openOverlay("Dialogue", { script: data.script }));
     this.time.delayedCall(400, () => this.offerLevelUp());
   }
 

@@ -1,7 +1,9 @@
 // The conversations in the game so far: Elder Maren's two quests (the goblin chief, then the Goblin King), Pip,
 // Old Tom the fisher, the fallen oak, the goblin cave, chests, the iron gate and the Goblin King, and inside the
 // houses: Maren's journal, Hazel (Pip's mum) and Old Tom's spare bed. And resting: Nell at the Sleeping Fox inn (a
-// long rest for gold) and the campfire at Goblin Rocks (a free short rest).
+// long rest for gold) and the campfire at Goblin Rocks (a free short rest). Then the start of Act 2 (quest 3, the Iron
+// Signet): the King's last words, the ring on his throne, Brannoc the smith, and what Maren makes of the ring. The
+// ring's crest is the one on the hero's sword: the first hints that the hero is of the Wardens' blood.
 import { gainXp, rest, shortRest } from "../rules/character.js";
 import { makeItem, itemName } from "../rules/items.js";
 import { joinParty, companionStats, benchCompanion, takeCompanion, COMPANIONS } from "../rules/party.js";
@@ -21,12 +23,14 @@ export const KING_FIGHT = ["goblinKing"];
 export const INN_COST = 10; // a night at the Sleeping Fox
 
 const ELDER = "ELDER MAREN";
+const BRANNOC = "BRANNOC";
+export const CHAIN_CHECKS = { smash: { ability: "STR", dc: 12 }, pick: { ability: "DEX", dc: 12 } };
 
 export const SCRIPTS = {
   elder: {
     start: s => {
       const f = s.flags;
-      if (f.kingRewarded) return "afterAll";
+      if (f.kingRewarded) return f.signetShown ? "ironvale" : f.signetTaken ? "signet" : "afterAll";
       if (f.kingDefeated) return "kingThanks";
       if (f.questRewarded) return f.kingQuestStarted ? "kingReminder" : "kingIntro";
       return f.chiefDefeated ? "thanks" : f.questStarted ? "reminder" : "intro";
@@ -112,6 +116,33 @@ export const SCRIPTS = {
         },
         text: (s, ctx) => `The Goblin King, beaten! Oakhollow will sing about ${callName(s.hero) || "you"} for a hundred years.`
           + ` Take this: ${KING_REWARD.gold} gold. (+${KING_REWARD.xp} XP${ctx.recall("newLevel") ? `, level ${ctx.recall("newLevel")}!` : ""})`,
+        to: "afterKing",
+      },
+      afterKing: { enter: (s, ctx) => ctx.goto(s.flags.signetTaken ? "signet" : null) },
+      // Quest 3: the Iron Signet.
+      signet: {
+        speaker: ELDER,
+        text: "What's that on your finger? Show me... By the old stones. That's the seal of Ironvale Keep, a fortress past the marshes to the east. Empty for a hundred years. Its lords were called the Wardens.",
+        to: "crest",
+      },
+      crest: {
+        speaker: ELDER,
+        text: "She looks from the ring to your sword, and back. \"The same crest. Where did you get that blade?\"",
+        choices: [
+          { label: "I've always had it.", to: "blood" },
+          { label: "I don't know.", to: "blood" },
+        ],
+      },
+      blood: {
+        speaker: ELDER,
+        enter: s => { s.flags.signetShown = true; },
+        text: s => `"Hm. Old blood turns up in strange places. Keep that ring close. If anyone knows the way to Ironvale, it's a smith: they remember the old roads.${s.flags.brannocFreed ? " Ask that dwarf you brought back." : ""}"`,
+      },
+      ironvale: {
+        speaker: ELDER,
+        text: s => (s.flags.askedBrannoc
+          ? "If the goblins fled from Ironvale, something worse lives there now. When the way opens, go carefully. And keep that ring close."
+          : s.flags.brannocFreed ? "Ask Brannoc about the road to Ironvale. Smiths remember." : "The goblins kept a smith down in the King's hall, I've heard. Smiths remember the old roads."),
       },
       afterAll: {
         speaker: ELDER,
@@ -184,7 +215,101 @@ export const SCRIPTS = {
           { label: "Back away", to: null },
         ],
       },
-      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...KING_FIGHT], zone: "cave", winFlag: "kingDefeated" }) },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...KING_FIGHT], zone: "cave", winFlag: "kingDefeated", afterWin: "kingWords" }) },
+    },
+  },
+
+  // Straight after you beat the Goblin King.
+  kingWords: {
+    start: "fall",
+    nodes: {
+      fall: {
+        text: "The Goblin King crashes to his knees. \"The bones...\" he gasps. \"They walk. They took our home...\" Then he is still.",
+        to: "after",
+      },
+      after: { text: "Something glints among the treasure on his throne. And from behind it comes a groan, and the clink of a chain." },
+    },
+  },
+
+  // The ring on the Goblin King's throne: its seal is the crest on the hero's sword.
+  signet: {
+    start: "look",
+    nodes: {
+      look: {
+        text: "Among the stolen pots and coins on the throne lies a heavy ring of black iron. Its seal is a tower between two keys: the same worn crest as on your sword's pommel.",
+        choices: [{ label: "Take the ring", to: "take" }],
+      },
+      take: {
+        enter: s => { s.flags.signetTaken = true; s.hero.inventory.push(makeItem("ironSignet")); },
+        text: "It's warm in your hand, as if it knows you. You got the Iron Signet!",
+      },
+    },
+  },
+
+  // Brannoc, chained behind the throne: the goblins made him forge their armour.
+  brannoc: {
+    start: "hello",
+    nodes: {
+      hello: {
+        speaker: BRANNOC,
+        text: "You beat him? Ha! Then get me out of these chains, friend. The lock's rusty and the links are worse.",
+        choices: [
+          { label: `Smash the chain (STR, DC ${CHAIN_CHECKS.smash.dc})`, to: "smash" },
+          { label: `Pick the lock (DEX, DC ${CHAIN_CHECKS.pick.dc})`, to: "pick" },
+          { label: "Not now", to: null },
+        ],
+      },
+      smash: { enter: (s, ctx) => ctx.goto(ctx.check(CHAIN_CHECKS.smash.ability, CHAIN_CHECKS.smash.dc).success ? "free" : "stuck") },
+      pick: { enter: (s, ctx) => ctx.goto(ctx.check(CHAIN_CHECKS.pick.ability, CHAIN_CHECKS.pick.dc).success ? "free" : "stuck") },
+      stuck: {
+        speaker: BRANNOC,
+        text: (s, ctx) => `${ctx.checkText} "Not quite. Again! I've got all day. Well. I've had all year."`,
+        choices: [
+          { label: `Smash the chain (STR, DC ${CHAIN_CHECKS.smash.dc})`, to: "smash" },
+          { label: `Pick the lock (DEX, DC ${CHAIN_CHECKS.pick.dc})`, to: "pick" },
+          { label: "Not now", to: null },
+        ],
+      },
+      free: {
+        enter: s => { s.flags.brannocFreed = true; },
+        speaker: BRANNOC,
+        text: (s, ctx) => `${ctx.checkText} The chain drops. "Brannoc, smith. They kept me down here a year, making their armour. That hobgoblin plate? Mine. Sorry about that."`,
+        to: "sword",
+      },
+      sword: {
+        speaker: BRANNOC,
+        text: "He squints at your sword. \"That crest on the pommel... I've seen it before. Somewhere old. It'll come to me.\"",
+        to: "go",
+      },
+      go: {
+        speaker: BRANNOC,
+        text: s => `"I'll make my own way up to Oakhollow. Find me by the smithy.${s.flags.signetTaken ? "" : " And take that ring off the throne: the King would have killed for it."}"`,
+      },
+    },
+  },
+
+  // Brannoc in Oakhollow, once he's free. He knows the old road to Ironvale.
+  brannocTown: {
+    start: s => (s.flags.askedBrannoc ? "again" : s.flags.signetShown ? "road" : "hello"),
+    nodes: {
+      hello: {
+        speaker: BRANNOC,
+        text: s => `"Sun on my face! I'd forgotten.${s.flags.signetTaken ? " That ring you took: show it to your Elder. She looked at me like she knows old things." : ""} And that crest on your sword still bothers me."`,
+      },
+      road: {
+        speaker: BRANNOC,
+        text: "\"Ironvale? The Iron Road ran east from here, over the hills, but the gate's been shut a hundred years. The goblins came the back way: a passage behind the King's throne, climbing up to the fen.\"",
+        to: "rubble",
+      },
+      rubble: {
+        speaker: BRANNOC,
+        enter: s => { s.flags.askedBrannoc = true; },
+        text: "\"It's choked with rubble now. The goblins brought the roof down behind them, running from whatever's up there. Give me time and I'll find us a way through.\"",
+      },
+      again: {
+        speaker: BRANNOC,
+        text: "\"I'm working on that passage, don't you worry. Ironvale steel on your hip and an Ironvale ring in your pack. Strange company you keep.\"",
+      },
     },
   },
 
@@ -480,12 +605,19 @@ export function sideObjective(flags) {
   return "";
 }
 
-/* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). */
+/* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
+   counted until it can be finished. */
 export const questsDone = flags => [flags.questRewarded, flags.kingRewarded].filter(Boolean).length;
 
 /* The line under the HP box saying what to do next. */
 export function objective(flags) {
-  if (flags.kingRewarded) return "";
+  if (flags.kingRewarded) {
+    if (!flags.signetTaken) return "Search the Goblin King's hall";
+    if (!flags.brannocFreed) return "Free the smith chained in the King's hall";
+    if (!flags.signetShown) return "Show the Iron Signet to Elder Maren";
+    if (!flags.askedBrannoc) return "Ask Brannoc about Ironvale";
+    return "The way to Ironvale opens in a future update";
+  }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";
   if (flags.questRewarded) return "Talk to Elder Maren";

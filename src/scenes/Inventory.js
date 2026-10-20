@@ -155,6 +155,9 @@ export class Inventory extends Phaser.Scene {
     if (row.kind === "worn") {
       this.action.setLabel("TAKE OFF").setEnabled(true);
       this.showCompare(friend ? compareCompanionUnequip(h, row.slot) : compareUnequip(h, row.slot));
+    } else if (baseOf(row.item).type === "key") {
+      this.action.setVisible(false);
+      this.msg.setText("Keep it safe.").setColor(COLORS.dim);
     } else if (baseOf(row.item).type === "scroll") {
       this.action.setLabel("READ").setEnabled(false);
       this.msg.setText("Read it in a fight: ITEMS, then SCROLL.").setColor(COLORS.dim);

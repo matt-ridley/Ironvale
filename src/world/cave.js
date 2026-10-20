@@ -14,6 +14,9 @@ export const DEEP_CAVE = {
   objects: [
     { id: "ironGate", x: 41, y: 7, sprite: "gate", script: "gate", goneWhen: "gateOpened", still: true },
     { id: "goblinKing", x: 37, y: 2, sprite: "goblinKing", script: "king", goneWhen: "kingDefeated" },
+    // Once the King has fallen: the ring on his throne, and the smith chained behind it.
+    { id: "signet", x: 37, y: 2, sprite: "signet", script: "signet", shownWhen: "kingDefeated", goneWhen: "signetTaken", still: true },
+    { id: "brannocChained", x: 37, y: 1, sprite: "brannoc", script: "brannoc", shownWhen: "kingDefeated", goneWhen: "brannocFreed" },
     { id: "grottoChest", x: 3, y: 6, sprite: "chest", script: "chest", goneWhen: "grottoChestOpened", still: true, loot: { gold: 50, items: ["potionHealing", "potionSpeed"] } },
     { id: "barracksChest", x: 44, y: 19, sprite: "chest", script: "chest", goneWhen: "barracksChestOpened", still: true, loot: { gold: 80, items: ["potionDexterity", "potionHealing"] } },
     { id: "nestChest", x: 44, y: 29, sprite: "chest", script: "chest", goneWhen: "nestChestOpened", still: true, loot: { gold: 30, items: ["potionHealing", "potionHealing"] } },

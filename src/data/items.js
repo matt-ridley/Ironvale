@@ -34,6 +34,10 @@ export const ITEMS = {
   // Not a potion, but used up the same way: out in the open, it takes you back to the last town (hub) you were in.
   homewardFeather: { name: "Homeward Feather", type: "consumable", effect: "homeward", cost: 50 },
 
+  // Key items: kept for the story, never sold.
+  ironSignet: { name: "Iron Signet", type: "key", cost: 0,
+    about: "A heavy ring of black iron, warm to the touch. Its seal is a tower between two keys, like the crest on your sword." },
+
   // Spell scrolls (data/spells.js): anyone can read one in a fight, once. The apothecary sells them.
   scrollMagicMissile: { name: "Scroll of Magic Missile", type: "scroll", spell: "magicMissile", cost: 50 },
   scrollBurningHands: { name: "Scroll of Burning Hands", type: "scroll", spell: "burningHands", cost: 50 },

@@ -1,6 +1,6 @@
 # Ironvale roadmap
 
-The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 5 of the build order are built (0.18.0 to 0.22.0); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
+The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 6 of the build order are built (0.18.0 to 0.23.0); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
 
 ## The shape of the game
 
@@ -199,7 +199,7 @@ One pull request each, with a minor version bump.
 3. ~~**Magic engine:** slots, cantrips, multi-target spells, conditions, scrolls. Rules only and unit-tested, built for both companions and hero runes.~~ **Built in 0.20.0.** `data/spells.js` (14 SRD spells: Fire Bolt, Sacred Flame, Produce Flame, Vicious Mockery, Magic Missile, Burning Hands, Sleep, Shield, Cure Wounds, Healing Word, Bless, Entangle, Faerie Fire, Fireball, plus the SRD slot table), `rules/conditions.js` (asleep, paralyzed, restrained, outlined, mocked, blessed, shielded) and `rules/magic.js` (`makeCaster`, a caster's `book` of known spells and used slots, `spendForSpell`, `castSpell`, `readScroll`, `healOutsideBattle`). The battle engine now runs conditions every turn, and monsters have SRD saves and a creature type. Not done yet: concentration (Bless and the rest just last their rounds), Turn Undead, Spiritual Weapon, Moonbeam, Misty Step, Goodberry and Hypnotic Pattern; scroll items exist but aren't sold or found, and no screen casts anything: step 4 adds the casting companions and the buttons.
 4. ~~**Companion roster** and tactics (option C); Megan moves onto it.~~ **Built in 0.21.0**, with spell scrolls in the apothecary too. The roster is `hero.roster`, swapped through Nell at the inn (any inn, once there are more). Tactics live in `rules/tactics.js`: ATTACK, HEAL (potions from your pack for Megan; healing spells first for a caster) and SAVE MAGIC (casters only: cantrips). Tapping a companion in battle sets `companion.lead`, and their turn waits for SHOOT, a potion, SPELLS (casters) or AUTO. The auto-play doesn't use Sleep, Entangle, Faerie Fire, Bless or Shield yet: only damage and healing; a caster you lead can cast them. Companion casters are tested with a stand-in wizard, since the first real one arrives in step 8.
 5. ~~**Act 1 plant:** the crest on the sword, and support for titles.~~ **Built in 0.22.0**, with hero naming (open question 3: yes). The crest is `crest: true` on the starting longsword: "a tower between two keys", only in its description; it can't be sold, so Brannoc can always see it in Act 2. Titles are `TITLES` in `story/hero.js` (Traveller, Hero of Oakhollow so far); add each act's as it's built. Lines that use the name go through `callName()`, so they still read well for a hero who kept the default "Hero".
-6. **The King's hall:** the Signet, Brannoc, the King's last words, `shownWhen`, Q3.
+6. ~~**The King's hall:** the Signet, Brannoc, the King's last words, `shownWhen`, Q3.~~ **Built in 0.23.0.** The last words play after the fight (`afterWin` on the battle). The Signet (a key item: kept, never sold) and Brannoc (STR or DEX DC 12 to free him) appear with `shownWhen: "kingDefeated"`; Brannoc then waits by Oakhollow's smithy. Q3 runs: take the ring, free Brannoc, show Maren (who names Ironvale Keep and its Wardens, and spots the same crest on your sword), ask Brannoc (the Iron Road, and the goblins' back passage, now choked with rubble). Its last step, "Find the way to Ironvale", waits for step 7. Bloodline hints so far: the ring's crest matches the sword's and is warm in your hand; Brannoc half-recognises the crest; Maren: "Old blood turns up in strange places."
 7. **Multi-map travel** and the world map by region.
 8. **Fenwatch:** the tavern, bounty board, Brannoc's forge, and the first of Claire, Rachel and Robyn.
 9. **Greywater Fen:** tileset, map, `fen` track, new monsters, Mother Sallow and her choice.
@@ -209,7 +209,7 @@ One pull request each, with a minor version bump.
 
 ## Open questions
 
-1. **The hero's secret:** the last Warden heir, or power from somewhere else (chosen by the Signet, or earned with no bloodline)?
+1. **The hero's secret:** leaning to the last Warden heir: Act 2's opening (0.23.0) hints at the bloodline without saying it. Still open: confirm it, and when it's said out loud (Varric's "Warden's blood... at last" is the plan).
 2. **Oaths:** three to choose from, or one fixed path that's simpler to build?
 3. ~~**A name for the hero:**~~ Decided and built in 0.22.0: picked at NEW GAME (or RENAME in the bag), "Hero" if left empty.
 4. **Claire, Rachel and Robyn:** their roles, when you meet them, and whether one is the mentor or the rival.

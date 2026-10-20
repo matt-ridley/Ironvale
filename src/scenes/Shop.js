@@ -64,7 +64,7 @@ export class Shop extends Phaser.Scene {
     if (this.tab === "buy") {
       return this.shop.stock.map(base => ({ base, item: makeItem(base), label: ITEMS[base].name, right: `${ITEMS[base].cost}g`, color: ITEMS[base].cost > gold ? COLORS.dim : COLORS.text }));
     }
-    return groupPack(h.inventory).map(g => ({ item: g.item, label: g.name + (g.count > 1 ? ` x${g.count}` : ""), right: `${sellPrice(g.item)}g` }));
+    return groupPack(h.inventory).filter(g => baseOf(g.item).type !== "key").map(g => ({ item: g.item, label: g.name + (g.count > 1 ? ` x${g.count}` : ""), right: `${sellPrice(g.item)}g` }));
   }
 
   refresh() {

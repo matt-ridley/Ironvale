@@ -49,6 +49,7 @@ export function sellPrice(item) {
 export function sellItem(char, uid) {
   const item = char.inventory.find(i => i.uid === uid);
   if (!item) return { ok: false, reason: "Take it off before you sell it." };
+  if (baseOf(item).type === "key") return { ok: false, reason: "You can't sell that. It matters too much." };
   if (item.crest) return { ok: false, reason: "You've carried this sword since the very start. You'd rather keep it." };
   const price = sellPrice(item);
   char.inventory = char.inventory.filter(i => i !== item);
