@@ -22,6 +22,13 @@ export const TRACKS = {
     bass: "D2 - - - - - A2 - | D2 - - - - - A2 - | Bb1 - - - - - F2 - | A1 - - - - - E2 - | D2 - - - - - A2 - | F2 - - - - - C3 - | C2 - - - - - G2 - | D2 - - - - - A2 -",
     drums: "k . . . . . . . | . . . . k . . . | k . . . . . . . | . . . . k . . . | k . . . . . . . | . . . . k . . . | k . . . . . . . | . . . . k . h .",
   },
+  // Ironvale Keep: slow, low and organ-like (a square lead), with a sparse, heavy beat. Something sleeps here.
+  keep: {
+    bpm: 66, lead: "square", echo: 0.45,
+    melody: "A4 - - - C5 - B4 - | A4 - - - E4 - - - | F4 - - - G4 - A4 - | E4 - - - - - . . | A4 - - - C5 - D5 - | E5 - - - D5 - C5 - | B4 - - - G#4 - B4 - | A4 - - - - - . .",
+    bass: "A1 - - - - - - - | A1 - - - - - - - | F1 - - - - - - - | E1 - - - - - - - | A1 - - - - - - - | C2 - - - - - - - | E1 - - - - - - - | A1 - - - - - - -",
+    drums: "k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . h .",
+  },
   battle: {
     bpm: 150, lead: "sawtooth", echo: 0.25,
     melody: "E5 . E5 G5 . E5 B5 - | A5 - G5 - F#5 - D5 - | E5 . E5 G5 . E5 B5 - | C6 - B5 - A5 - B5 - | E5 . E5 G5 . E5 B5 - | A5 - G5 - F#5 - D5 - | G5 - F#5 - E5 - D#5 - | E5 - - - . . . .",

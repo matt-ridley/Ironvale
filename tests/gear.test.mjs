@@ -72,7 +72,7 @@ test("potions aren't wasted at full health, and swords can't be drunk", () => {
 });
 
 test("item descriptions", () => {
-  assert.equal(describeItem(makeItem("rapier", { upgrade: 2 })), "1d8 damage, finesse. +2 to hit and damage.");
+  assert.equal(describeItem(makeItem("rapier", { upgrade: 2 })), "1d8 piercing damage, finesse. +2 to hit and damage.");
   assert.equal(describeItem(makeItem("chainShirt")), "Medium armour: AC 13 + DEX (max 2).");
   assert.equal(describeItem(makeItem("shield", { upgrade: 1 })), "+2 AC. +1 more AC.");
   assert.equal(describeItem(makeItem("potionHealing")), "Drink to heal 2d4+2 HP.");

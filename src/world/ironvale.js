@@ -20,7 +20,10 @@ export const IRONVALE = {
   // Fenwatch's tavern (the town's inn): walk into its door to go in.
   doors: [{ x: 50, y: 47, to: "duck", name: "The Drowned Duck tavern" }],
   // The passage back down to the Deep Warrens, by the throne.
-  exits: [{ x: 2, y: 50, to: "deepCave", at: { x: 44, y: 2 }, facing: "down" }],
+  exits: [
+    { x: 2, y: 50, to: "deepCave", at: { x: 44, y: 2 }, facing: "down" },
+    { x: 31, y: 26, to: "keep", at: { x: 19, y: 31 }, facing: "up" }, // through the portcullis, once it's up
+  ],
   objects: [
     { id: "fenCampfire", x: 6, y: 48, sprite: "campfire", script: "campfire", still: true },
     { id: "sallow", x: 30, y: 44, sprite: "motherSallow", script: "sallow", goneWhen: "sallowDefeated" },
@@ -30,7 +33,7 @@ export const IRONVALE = {
     { id: "flood3", x: 31, y: 36, sprite: "flood", script: "flood", goneWhen: "causewayRaised", still: true },
     { id: "flood4", x: 31, y: 37, sprite: "flood", script: "flood", goneWhen: "causewayRaised", still: true },
     { id: "flood5", x: 31, y: 38, sprite: "flood", script: "flood", goneWhen: "causewayRaised", still: true },
-    { id: "keepGate", x: 31, y: 26, sprite: "portcullis", script: "keepGate", still: true },
+    { id: "keepGate", x: 31, y: 26, sprite: "portcullis", script: "keepGate", goneWhen: "keepGateOpened", still: true },
     // Fenwatch: Robyn at the shrine, and Brannoc at his new forge once you've freed him.
     { id: "shrine", x: 51, y: 51, sprite: "shrine", script: "shrine", still: true },
     { id: "robyn", x: 52, y: 51, sprite: "robyn", frame: 0, script: "robyn", goneWhen: "robynJoined" },

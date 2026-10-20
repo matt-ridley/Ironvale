@@ -17,7 +17,7 @@ import { sfx } from "../audio/sound.js";
 
 const THEM_X = 360;
 // Names for the things that don't say who they are.
-const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE", goblinKing: "GOBLIN KING", journal: "JOURNAL", bed: "SPARE BED", campfire: "CAMPFIRE", signet: "IRON SIGNET", rubble: "FALLEN ROCK", flood: "FLOODWATER", portcullis: "PORTCULLIS", fenGate: "FENWATCH GATE", crown: "CROWN", board: "BOUNTY BOARD", shrine: "SHRINE", cairn: "OLD GRAVES" };
+const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE", goblinKing: "GOBLIN KING", journal: "JOURNAL", bed: "SPARE BED", campfire: "CAMPFIRE", signet: "IRON SIGNET", rubble: "FALLEN ROCK", flood: "FLOODWATER", portcullis: "PORTCULLIS", fenGate: "FENWATCH GATE", crown: "CROWN", board: "BOUNTY BOARD", shrine: "SHRINE", cairn: "OLD GRAVES", lever: "LEVER", seal: "ALTAR", tombDoor: "TOMB DOOR", sarcophagus: "SARCOPHAGUS" };
 const TEXT_W = 290;
 const BTN_X = 394, BTN_W = 152, BTN_H = 28, BTN_GAP = 6; // the answer buttons: centre x, size, gap
 const SLIM_H = 18, SLIM_GAP = 3; // with more than three answers, slimmer buttons (keep those labels to one line)

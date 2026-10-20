@@ -2,7 +2,9 @@
 // `hp` is rolled when the monster appears; `gold` is rolled when it is beaten, and each `loot` entry has its own chance.
 // `saves` are its saving throw bonuses (its ability modifiers), for spells; `type` is its creature type (beast,
 // humanoid, undead...), which some spells care about. A monster with several `attacks` makes them all each turn
-// (multiattack); an attack's `onHit` is an effect that a saving throw resists (the ghoul's paralysis).
+// (multiattack); an attack's `onHit` is an effect that a saving throw resists (the ghoul's paralysis). Damage types:
+// `vulnerable` ones do double, `resistant` ones half, and `weaponResist: "silver"` halves weapon damage unless the
+// weapon is silvered (wights).
 
 export const MONSTERS = {
   giantRat:    { name: "Giant Rat",    ac: 12, hp: "2d6",   dexMod: 2, attack: { name: "Bite",     bonus: 4, damage: "1d4+2" }, xp: 25,  gold: "1d4",
@@ -40,6 +42,20 @@ export const MONSTERS = {
   willOWisp:   { name: "Will-o'-Wisp", ac: 19, hp: "9d4",   dexMod: 9, attack: { name: "Shock",    bonus: 4, damage: "2d8" },   xp: 450, gold: "0",
     type: "undead", saves: { STR: -5, DEX: 9, CON: 0, WIS: 2 },
     loot: [{ base: "potionSpeed", chance: 0.25 }] },
+  // Inside Ironvale Keep: the risen garrison.
+  skeleton:    { name: "Skeleton",     ac: 13, hp: "2d8+4", dexMod: 2, attack: { name: "Shortsword", bonus: 4, damage: "1d6+2" }, xp: 50,  gold: "1d6",
+    type: "undead", saves: { STR: 0, DEX: 2, CON: 2, WIS: -1 }, vulnerable: ["bludgeoning"] },
+  ghast:       { name: "Ghast",        ac: 13, hp: "8d8",   dexMod: 3,
+    attack: { name: "Claws", bonus: 5, damage: "2d6+3", onHit: { condition: "paralyzed", save: "CON", dc: 10, rounds: 10 } }, xp: 450, gold: "2d10",
+    type: "undead", saves: { STR: 3, DEX: 3, CON: 0, WIS: 0 }, resistant: ["necrotic"] },
+  wight:       { name: "Wight",        ac: 14, hp: "6d8+18", dexMod: 2,
+    attacks: [{ name: "Longsword", bonus: 4, damage: "1d8+2" }, { name: "Longsword", bonus: 4, damage: "1d8+2" }], xp: 700, gold: "3d10",
+    type: "undead", saves: { STR: 2, DEX: 2, CON: 3, WIS: 1 }, resistant: ["necrotic"], weaponResist: "silver",
+    loot: [{ base: "potionGreaterHealing", chance: 0.3 }] },
+  helmedHorror: { name: "Helmed Horror", ac: 20, hp: "8d8+16", dexMod: 1,
+    attacks: [{ name: "Longsword", bonus: 6, damage: "1d8+4" }, { name: "Longsword", bonus: 6, damage: "1d8+4" }], xp: 1100, gold: "0",
+    type: "construct", saves: { STR: 4, DEX: 1, CON: 3, WIS: 0 },
+    loot: [{ base: "plate", chance: 0.1 }] },
   // The green hag of the SRD, keeper of the drowned causeway. A bit lighter than the SRD's (82 HP), as she's met at level 5.
   motherSallow: { name: "Mother Sallow", ac: 17, hp: "9d8+27", dexMod: 1, attack: { name: "Claws", bonus: 6, damage: "2d8+4" }, xp: 700, gold: "6d10",
     type: "fey", saves: { STR: 4, DEX: 1, CON: 3, WIS: 2 },

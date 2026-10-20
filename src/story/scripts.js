@@ -41,6 +41,11 @@ const BRANNOC = "BRANNOC";
 const SALLOW = "MOTHER SALLOW";
 const ROBYN = "ROBYN";
 export const GRAVES_FIGHT = ["ghoul", "ghoul"];
+export const KEEP_CHECKS = { lift: { ability: "STR", dc: 15 }, winch: { ability: "DEX", dc: 13 } };
+export const LOCK_CHECKS = { force: { ability: "STR", dc: 14 }, loose: { ability: "DEX", dc: 14 } };
+export const LOCKS = ["courtyardLever", "chapelSeal", "armouryLever"];
+/* How many of the tomb door's three locks are open. */
+export const locksOpen = flags => LOCKS.filter(f => flags[f]).length;
 export const CHAIN_CHECKS = { smash: { ability: "STR", dc: 12 }, pick: { ability: "DEX", dc: 12 } };
 
 export const SCRIPTS = {
@@ -403,10 +408,99 @@ export const SCRIPTS = {
     },
   },
 
+  // Ironvale Keep (quest 5). The portcullis: heave it up, or find the winch in the gatehouse.
   keepGate: {
     start: "look",
     nodes: {
-      look: { text: "The portcullis of Ironvale Keep is down and rusted solid. Through the bars: a courtyard, a chapel, and bones. A great many bones. (The keep opens in a future update.)" },
+      look: {
+        text: "The portcullis of Ironvale Keep is down and rusted solid. Through the bars: a courtyard, a chapel, and bones. A great many bones.",
+        choices: [
+          { label: `Heave it up (STR, DC ${KEEP_CHECKS.lift.dc})`, to: "lift" },
+          { label: `Find the winch (DEX, DC ${KEEP_CHECKS.winch.dc})`, to: "winch" },
+          { label: "Leave it", to: null },
+        ],
+      },
+      lift: { enter: (s, ctx) => ctx.goto(ctx.check(KEEP_CHECKS.lift.ability, KEEP_CHECKS.lift.dc).success ? "lifted" : "stuck") },
+      winch: { enter: (s, ctx) => ctx.goto(ctx.check(KEEP_CHECKS.winch.ability, KEEP_CHECKS.winch.dc).success ? "wound" : "stuck") },
+      stuck: {
+        text: (s, ctx) => `${ctx.checkText} A hundred years of rust says no. Not yet, anyway.`,
+        choices: [
+          { label: `Heave it up (STR, DC ${KEEP_CHECKS.lift.dc})`, to: "lift" },
+          { label: `Find the winch (DEX, DC ${KEEP_CHECKS.winch.dc})`, to: "winch" },
+          { label: "Leave it", to: null },
+        ],
+      },
+      lifted: {
+        enter: s => { s.flags.keepGateOpened = true; },
+        text: (s, ctx) => `${ctx.checkText} You get your shoulder under the bars and heave. With a scream of rust the portcullis rises, and jams open. Ironvale Keep is open.`,
+      },
+      wound: {
+        enter: s => { s.flags.keepGateOpened = true; },
+        text: (s, ctx) => `${ctx.checkText} You squeeze through a gap in the gatehouse wall and find the winch. Round and round, and the portcullis grinds up. Ironvale Keep is open.`,
+      },
+    },
+  },
+
+  // The tomb door's three locks: the courtyard lever, the chapel seal and the armoury lever. The map object says
+  // which flag it sets (`flag`) and what you see (`look`).
+  lock: {
+    start: (s, { object }) => (s.flags[object?.flag] ? "done" : "look"),
+    nodes: {
+      look: {
+        text: (s, ctx) => ctx.object.look,
+        choices: [
+          { label: `Force it (STR, DC ${LOCK_CHECKS.force.dc})`, to: "force" },
+          { label: `Work it loose (DEX, DC ${LOCK_CHECKS.loose.dc})`, to: "loose" },
+          { label: "Leave it", to: null },
+        ],
+      },
+      force: { enter: (s, ctx) => ctx.goto(ctx.check(LOCK_CHECKS.force.ability, LOCK_CHECKS.force.dc).success ? "opened" : "stuck") },
+      loose: { enter: (s, ctx) => ctx.goto(ctx.check(LOCK_CHECKS.loose.ability, LOCK_CHECKS.loose.dc).success ? "opened" : "stuck") },
+      stuck: {
+        text: (s, ctx) => `${ctx.checkText} It doesn't give.`,
+        choices: [
+          { label: `Force it (STR, DC ${LOCK_CHECKS.force.dc})`, to: "force" },
+          { label: `Work it loose (DEX, DC ${LOCK_CHECKS.loose.dc})`, to: "loose" },
+          { label: "Leave it", to: null },
+        ],
+      },
+      opened: {
+        enter: (s, ctx) => {
+          s.flags[ctx.object.flag] = true;
+          if (locksOpen(s.flags) === 3) s.flags.tombOpen = true;
+        },
+        text: (s, ctx) => `${ctx.checkText} ${s.flags.tombOpen
+          ? "With a clank, the chain runs off north. Far away, stone grinds on stone: the tomb door is open."
+          : `With a clank, the chain runs off north. That's ${locksOpen(s.flags)} of the tomb's three locks.`}`,
+      },
+      done: { text: s => (s.flags.tombOpen ? "Open. The tomb door, to the north, stands open too." : `Open. ${locksOpen(s.flags)} of the tomb's three locks.`) },
+    },
+  },
+
+  tombDoor: {
+    start: "look",
+    nodes: {
+      look: {
+        text: s => `A great door of black iron, with three chains running into it: west to the chapel, south to the courtyard, east to the armoury. ${locksOpen(s.flags)} of 3 are pulled.`,
+      },
+    },
+  },
+
+  sarcophagus: {
+    start: "look",
+    nodes: {
+      look: { text: "Lord Varric's sarcophagus. The stone lid has been pushed aside, from the inside. It's empty, and fresh scratches lead off into the dark. (Lord Varric wakes in the next update.)" },
+    },
+  },
+
+  // Brannoc's tools, left in the keep's armoury a long time ago. He'll be glad of them.
+  brannocTools: {
+    start: "look",
+    nodes: {
+      look: {
+        enter: s => { s.flags.toolsFound = true; s.hero.inventory.push(makeItem("brannocTools")); },
+        text: "Under an empty rack, a dwarf-sized toolbox bound in iron, with BRANNOC burned into the lid. How did these get here? You take them.",
+      },
     },
   },
 
@@ -496,6 +590,22 @@ export const SCRIPTS = {
       crest: {
         speaker: BRANNOC,
         text: "\"And that crest on your sword: I've placed it. The Wardens' mark, the lords of Ironvale. Folk round here would look at you funny if they saw it. Or bow.\"",
+        choices: [
+          { label: "Give Brannoc his tools", if: s => s.hero.inventory.some(i => i.base === "brannocTools"), to: "tools" },
+          { label: "Goodbye.", to: null },
+        ],
+      },
+      tools: {
+        speaker: BRANNOC,
+        enter: s => {
+          s.hero.inventory = s.hero.inventory.filter(i => i.base !== "brannocTools");
+          s.flags.toolsReturned = true;
+          const w = s.hero.equipment.weapon;
+          if (w) w.silvered = true;
+        },
+        text: s => (s.hero.equipment.weapon
+          ? `"My tools! My own hammer! Where were... the keep's armoury? I've never been... Hm. Never mind. Here: on the house." He silvers your ${itemName(s.hero.equipment.weapon)} while you wait.`
+          : "\"My tools! My own hammer! I owe you. Come back with a sword in your hand and I'll silver it, on the house.\""),
       },
     },
   },
@@ -896,7 +1006,10 @@ export function objective(flags) {
     if (!flags.fenReported) return "Tell Elder Maren about Greywater Fen";
     if (!flags.metSallow) return "Find a way across the drowned causeway";
     if (!flags.causewayRaised) return "Deal with Mother Sallow: fight her, or bargain";
-    return "Ironvale Keep opens in a future update";
+    if (!flags.keepGateOpened) return "Open the portcullis of Ironvale Keep";
+    if (!flags.tombOpen) return `Open the tomb's three locks in the keep (${locksOpen(flags)}/3)`;
+    if (!flags.seenTomb) return "Go down into Lord Varric's tomb";
+    return "Lord Varric wakes in the next update";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";

@@ -44,6 +44,11 @@ export const TILES = {
   "E": { name: "passage", solid: false }, // the goblins' back passage: an exit back down to the Deep Warrens
   "F": { name: "forge", solid: true, place: "forge" }, // Brannoc's forge in Fenwatch
   "J": { name: "herbalist", solid: true, place: "herbalist" },
+  // Inside Ironvale Keep
+  "n": { name: "flagstone", solid: false },
+  "*": { name: "rubble", solid: true },
+  "P": { name: "pew", solid: true },
+  "Q": { name: "rack", solid: true }, // an empty weapon rack
 };
 
 export const DIRS = {

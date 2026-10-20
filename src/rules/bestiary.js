@@ -3,7 +3,8 @@
 import { MONSTERS } from "../data/monsters.js";
 import { ENCOUNTERS } from "../world/encounters.js";
 
-const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willowmere", warrens: "The Deep Warrens", fen: "Greywater Fen", keepGrounds: "Ironvale Keep" };
+const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willowmere", warrens: "The Deep Warrens", fen: "Greywater Fen", keepGrounds: "Ironvale Keep's grounds",
+  courtyard: "Ironvale Keep's courtyard", chapel: "Ironvale Keep's chapel", armoury: "Ironvale Keep's armoury" };
 const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall", motherSallow: "Her hut in Greywater Fen" }; // bosses don't roam
 
 export const LORE = {
@@ -19,6 +20,10 @@ export const LORE = {
   lizardfolk: "Cold-eyed fen hunters with spiked shields. They don't hate you; they just think you'd be good to eat.",
   ghoul: "Something that was a soldier once, hungry now. Its claws can freeze you stiff where you stand.",
   willOWisp: "A pale light over the water that leads travellers astray, and feeds on their fear. Very hard to hit.",
+  skeleton: "What's left of Ironvale's garrison, still on watch. Blades skitter off them; a mace or a hammer smashes them flat.",
+  ghast: "A ghoul's bigger, fouler cousin. The stink is the least of it: its claws freeze you where you stand.",
+  wight: "A dead knight with cold eyes, who remembers how to fight. Plain steel only half-bites it. Silver does the job.",
+  helmedHorror: "A suit of armour with nothing inside, still guarding the armoury. Very hard to hit, and it hits back twice.",
   motherSallow: "A marsh hag with weed in her hair and a laugh like a drain. She keeps the causeway under water, and she loves a bargain.",
 };
 

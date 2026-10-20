@@ -16,10 +16,12 @@ const SKY = {
   village: { sky: 0x4a6a9a, far: 0x4f7a3f, ground: 0x6aa84f, groundDark: 0x5a9043 },
   indoors: { sky: 0x6b4f34, far: 0x4a3420, ground: 0xb07e4c, groundDark: 0x8a5e36 },
   fen: { sky: 0x3a4a48, far: 0x4a4238, ground: 0x5d7a3e, groundDark: 0x3c6e70 }, // mist, dead trees, marsh and pools
+  keep: { sky: 0x1f1d26, far: 0x4a4652, ground: 0x6a6574, groundDark: 0x55505e }, // grey stone, in the dark
 };
 SKY.warrens = SKY.cave;
 SKY.throne = SKY.cave;
 SKY.drowned = SKY.keepGrounds = SKY.pass = SKY.fenwatch = SKY.fen;
+SKY.courtyard = SKY.chapel = SKY.armoury = SKY.tomb = SKY.keep;
 
 /* A zone id the stage knows, or `fallback`. */
 export const stageZone = (zone, fallback = "forest") => (SKY[zone] ? zone : fallback);

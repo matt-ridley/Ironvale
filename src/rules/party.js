@@ -34,8 +34,8 @@ function gearStats(base, gear, level) {
   const ac = armour ? baseOf(armour).baseAc + base.dexMod + armour.upgrade : 10 + base.dexMod;
   const up = bow ? bow.upgrade : 0;
   const attack = bow
-    ? { name: baseOf(bow).name, bonus: base.dexMod + proficiencyBonus(level) + up, damage: baseOf(bow).damage, damageBonus: base.dexMod + up }
-    : { name: "Fist", bonus: base.dexMod + proficiencyBonus(level), damage: "1d4", damageBonus: 0 };
+    ? { name: baseOf(bow).name, bonus: base.dexMod + proficiencyBonus(level) + up, damage: baseOf(bow).damage, damageBonus: base.dexMod + up, damageType: baseOf(bow).damageType, silvered: !!bow.silvered }
+    : { name: "Fist", bonus: base.dexMod + proficiencyBonus(level), damage: "1d4", damageBonus: 0, damageType: "bludgeoning" };
   return { ac, attack };
 }
 

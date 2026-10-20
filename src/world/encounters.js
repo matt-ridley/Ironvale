@@ -53,6 +53,33 @@ export const ENCOUNTERS = {
       { weight: 1, foes: ["willOWisp"] },
     ],
   },
+  // Ironvale Keep: the risen garrison comes in pairs (the hero's armour is good by now). At level 5 with +2 gear the
+  // simulator gives two wights about 77%, a wight and a ghast 81%, a helmed horror and a skeleton 87%.
+  courtyard: {
+    chance: 0.06,
+    table: [
+      { weight: 3, foes: ["skeleton", "skeleton"] },
+      { weight: 2, foes: ["skeleton", "ghoul"] },
+      { weight: 2, foes: ["ghast", "skeleton"] },
+      { weight: 1, foes: ["wight"] },
+    ],
+  },
+  chapel: {
+    chance: 0.07,
+    table: [
+      { weight: 2, foes: ["ghast", "ghast"] },
+      { weight: 2, foes: ["wight", "skeleton"] },
+      { weight: 1, foes: ["wight", "ghast"] },
+    ],
+  },
+  armoury: {
+    chance: 0.07,
+    table: [
+      { weight: 2, foes: ["skeleton", "skeleton"] },
+      { weight: 2, foes: ["helmedHorror", "skeleton"] },
+      { weight: 1, foes: ["wight", "wight"] },
+    ],
+  },
   keepGrounds: {
     chance: 0.06,
     table: [

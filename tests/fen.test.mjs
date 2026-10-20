@@ -106,7 +106,7 @@ test("the King's crown lies in his hall once he's beaten, and Mother Sallow take
   assert.match(view(meet).text, /Mother remembers/);
   assert.equal(startConversation(SCRIPTS.sallow, s).node, "pleased");
   const q3 = { signetTaken: true, brannocFreed: true, signetShown: true, askedBrannoc: true, passageCleared: true, seenFen: true, fenReported: true };
-  assert.equal(objective({ ...s.flags, ...q3 }), "Ironvale Keep opens in a future update");
+  assert.equal(objective({ ...s.flags, ...q3 }), "Open the portcullis of Ironvale Keep");
 });
 
 test("without the crown, the only way is to fight her; beating her drains the water and pays the same", () => {

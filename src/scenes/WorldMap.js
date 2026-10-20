@@ -22,7 +22,7 @@ const FOG = "#24233a", SHADOW = 0x24233a;
 function whereOn(region) {
   const map = MAPS[region.map];
   if (state.map === map.name) return tileOf(state.pos);
-  const door = map.doors.find(d => d.to === state.map);
+  const door = map.doors.find(d => d.to === state.map) || map.exits.find(e => e.to === state.map);
   if (door) return { x: door.x, y: door.y };
   return { x: 52, y: 29 }; // the goblin cave
 }
