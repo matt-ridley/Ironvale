@@ -11,7 +11,7 @@ import { seededRng } from "../rules/dice.js";
 const T = TILE;
 const WET = new Set(["water", "bridge", "shallow", "boardwalk"]);
 const GREEN = new Set(["grass", "flowers", "tree", "fence", "rock"]); // ground a path frays into
-const TALL = new Set(["wall", "door", "smithy", "apothecary", "bank", "cavewall", "cavetorch", "backwall", "hearth", "shelf", "keepwall", "palisade"]);
+const TALL = new Set(["wall", "door", "smithy", "apothecary", "bank", "cavewall", "cavetorch", "backwall", "hearth", "shelf", "keepwall", "palisade", "forge", "herbalist"]);
 const SIDES = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] };
 const CORNERS = { nw: ["n", "w", -1, -1], ne: ["n", "e", 1, -1], se: ["s", "e", 1, 1], sw: ["s", "w", -1, 1] };
 const TURN = { n: 0, e: 1, s: 2, w: 3, nw: 0, ne: 1, se: 2, sw: 3 }; // quarter turns from the top (or top-left corner)

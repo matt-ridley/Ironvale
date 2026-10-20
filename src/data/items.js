@@ -7,6 +7,7 @@ export const ITEMS = {
   shortsword:  { name: "Shortsword",  type: "weapon", damage: "1d6",  properties: ["finesse", "light"], cost: 10 },
   mace:        { name: "Mace",        type: "weapon", damage: "1d6",  properties: [], cost: 5 },
   longsword:   { name: "Longsword",   type: "weapon", damage: "1d8",  properties: [], cost: 15 },
+  warhammer:   { name: "Warhammer",   type: "weapon", damage: "1d8",  properties: [], cost: 15 },
   rapier:      { name: "Rapier",      type: "weapon", damage: "1d8",  properties: ["finesse"], cost: 25 },
   scimitar:    { name: "Scimitar",    type: "weapon", damage: "1d6",  properties: ["finesse", "light"], cost: 25 },
   greataxe:    { name: "Greataxe",    type: "weapon", damage: "1d12", properties: ["two-handed"], cost: 30 },
@@ -15,6 +16,8 @@ export const ITEMS = {
   // Bows, for a companion in your party (Megan): damage die. The hero fights up close.
   shortbow:    { name: "Shortbow", type: "bow", damage: "1d6", cost: 25 },
   longbow:     { name: "Longbow",  type: "bow", damage: "1d8", cost: 50 },
+  sling:       { name: "Sling",    type: "bow", damage: "1d4", cost: 1 },
+  lightCrossbow: { name: "Light Crossbow", type: "bow", damage: "1d8", cost: 25 },
 
   // Armour: light = base + DEX, medium = base + DEX (max +2), heavy = base only.
   padded:      { name: "Padded Armour",  type: "armour", category: "light",  baseAc: 11, cost: 5 },
@@ -23,12 +26,15 @@ export const ITEMS = {
   hide:        { name: "Hide Armour",    type: "armour", category: "medium", baseAc: 12, cost: 10 },
   chainShirt:  { name: "Chain Shirt",    type: "armour", category: "medium", baseAc: 13, cost: 50 },
   chainMail:   { name: "Chain Mail",     type: "armour", category: "heavy",  baseAc: 16, cost: 75 },
+  splint:      { name: "Splint Armour",  type: "armour", category: "heavy",  baseAc: 17, cost: 200 },
+  plate:       { name: "Plate Armour",   type: "armour", category: "heavy",  baseAc: 18, cost: 1500 },
 
   shield:      { name: "Shield", type: "shield", ac: 2, cost: 10 },
 
   // Potions. Healing works any time you're hurt. Speed lasts a number of steps in the world: you move faster and
   // run into fewer monsters. Dexterity lasts one fight: one extra attack each time you ATTACK.
   potionHealing:   { name: "Potion of Healing",   type: "consumable", heal: "2d4+2", cost: 20 },
+  potionGreaterHealing: { name: "Potion of Greater Healing", type: "consumable", heal: "4d4+4", cost: 50 },
   potionSpeed:     { name: "Potion of Speed",     type: "consumable", effect: "speed", steps: 150, cost: 30 },
   potionDexterity: { name: "Potion of Dexterity", type: "consumable", effect: "dexterity", cost: 40 },
   // Not a potion, but used up the same way: out in the open, it takes you back to the last town (hub) you were in.
@@ -48,14 +54,26 @@ export const ITEMS = {
   scrollFireball:     { name: "Scroll of Fireball",      type: "scroll", spell: "fireball", cost: 300 },
 };
 
-export const MAX_UPGRADE = 3;
+export const MAX_UPGRADE = 3; // Oakhollow's blacksmith; Brannoc's forge goes to +5 (a shop's maxUpgrade)
 
-// Oakhollow's shops: what each sells, in shop order, and which tabs it has (only the blacksmith upgrades).
+// The shops: what each sells, in shop order, and which tabs it has (only smiths upgrade, up to their maxUpgrade).
+// Oakhollow has the blacksmith and the apothecary; Fenwatch has Brannoc's forge and the herbalist.
 export const SHOPS = {
   blacksmith: {
     title: "BLACKSMITH", tabs: ["upgrade", "buy", "sell"], greeting: "Steel's hot. What'll it be?", tint: 0xc8a27a,
     stock: ["dagger", "shortsword", "mace", "scimitar", "longsword", "rapier", "greataxe", "greatsword",
       "leather", "studded", "hide", "chainShirt", "chainMail", "shield", "shortbow", "longbow", "potionHealing"],
+  },
+  forge: {
+    title: "BRANNOC'S FORGE", tabs: ["upgrade", "buy", "sell"], maxUpgrade: 5, tint: 0xd0684e,
+    greeting: "Proper steel, at last! I can take your gear past +3. Up to +5, if you've the coin.",
+    stock: ["longsword", "warhammer", "rapier", "greataxe", "greatsword", "studded", "chainMail", "splint", "plate", "shield",
+      "longbow", "lightCrossbow", "sling", "potionHealing"],
+  },
+  herbalist: {
+    title: "FEN HERBALIST", tabs: ["buy", "sell"], tint: 0x7bc96f,
+    greeting: "Wren's remedies! Bog myrtle, frogspawn and a little magic. Greater Healing's my speciality.",
+    stock: ["potionHealing", "potionGreaterHealing", "potionSpeed", "potionDexterity", "homewardFeather", "scrollCureWounds", "scrollSleep"],
   },
   apothecary: {
     title: "APOTHECARY", tabs: ["buy", "sell"], greeting: "Bubble, bubble! Fresh potions, brewed this morning.", tint: 0x9fd18b,

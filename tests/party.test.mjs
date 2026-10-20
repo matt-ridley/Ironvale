@@ -92,7 +92,7 @@ test("Megan takes turns in battle and shoots at the monster you attacked", () =>
     const shot = r.events.find(e => e.type === "ally-attack");
     if (!shot) continue; // Megan acts before you this round
     assert.equal(shot.target, 1);
-    assert.match(shot.text, /^Megan shoots/);
+    assert.match(shot.text, /^Megan attacks the .* with a Shortbow/);
     return;
   }
   assert.fail("no seed showed Megan's turn after yours");

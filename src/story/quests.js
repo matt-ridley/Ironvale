@@ -70,6 +70,17 @@ export const QUESTS = [
     ],
   },
   {
+    id: "robyn", title: "The Restless Dead", kind: "side",
+    known: f => f.robynQuest || f.gravesAtRest || f.robynJoined,
+    about: "Robyn, a young cleric at Fenwatch's shrine, says the fen's old graves keep giving up ghouls.",
+    reward: "Robyn joins your party",
+    steps: [
+      { text: "Meet Robyn at Fenwatch's shrine", done: f => f.robynQuest || f.robynJoined },
+      { text: "Beat the ghouls at the old graves, west in the fen", done: f => f.gravesAtRest },
+      { text: "Go back to Robyn", done: f => f.robynJoined },
+    ],
+  },
+  {
     id: "willowmere", title: "Willowmere Treasure", kind: "side",
     known: f => f.metTom,
     about: "Old Tom the fisher says there's treasure hidden around Willowmere, if you know where to look.",

@@ -28,13 +28,15 @@ export function markSeen(flags, zoneId) {
 
 // Safe places, which are also where you fast-travel to and from, anywhere in the world (`map` is where they are). Each is found by setting foot in its zone, and `at`
 // is the tile out in the open where fast travel lands you.
-// - A hub (one per act) is a whole town: no monsters, an inn for a long rest (for gold), and the shops. You wake in
+// - A hub (one per act) is a whole town: no monsters, an inn for a long rest (`innCost` gold), and the shops. You wake in
 //   your last hub's inn if you faint, and a Homeward Feather takes you back to it. `rooms` are its houses.
 // - A camp is a small safe spot out in the wild: no monsters within CAMP_RADIUS tiles of its `centre`, and a free
 //   short rest (the campfire), or Old Tom's spare bed in his hut.
 export const TRAVEL_POINTS = [
   { id: "oakhollow", name: "Oakhollow", kind: "hub", map: "overworld", zone: "village", at: OVERWORLD.spawn,
-    inn: "inn", innName: "the Sleeping Fox", rooms: ["marenHouse", "hazelHouse", "inn"] },
+    inn: "inn", innName: "the Sleeping Fox", innCost: 10, rooms: ["marenHouse", "hazelHouse", "inn"] },
+  { id: "fenwatch", name: "Fenwatch", kind: "hub", map: "ironvale", zone: "fenwatch", at: { x: 54, y: 50 },
+    inn: "duck", innName: "the Drowned Duck", innCost: 25, rooms: ["duck"] },
   { id: "willowmere", name: "Willowmere", kind: "camp", map: "overworld", zone: "meadow", at: { x: 20, y: 45 },
     centre: { x: 20, y: 43 }, rooms: ["tomHut"] }, // Old Tom's hut
   { id: "goblinRocks", name: "Goblin Rocks", kind: "camp", map: "overworld", zone: "rocks", at: { x: 52, y: 30 },

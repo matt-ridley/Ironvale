@@ -163,7 +163,7 @@ export function playerAction(battle, action, rng = Math.random) {
     const down = a.hp === 0;
     const healed = Math.min(a.maxHp - a.hp, roll(baseOf(potion).heal, rng).total);
     a.hp += healed;
-    say(battle, "ally-potion", `You give ${a.name} a ${baseOf(potion).name}. She recovers ${healed} HP (${a.hp}/${a.maxHp})${down ? " and gets back up!" : "."}`, { heal: healed, revived: down });
+    say(battle, "ally-potion", `You give ${a.name} a ${baseOf(potion).name}. ${a.name} recovers ${healed} HP (${a.hp}/${a.maxHp})${down ? " and gets back up!" : "."}`, { heal: healed, revived: down });
   } else if (action.type === "secondWind") {
     if (!p.secondWind) return { ok: false, reason: "You've used your Second Wind. Rest to get it back." };
     if (p.hp >= p.maxHp) return { ok: false, reason: "You're already at full health." };
@@ -274,7 +274,7 @@ function monsterTurn(battle, i, rng) {
     tellWoken(battle, key, woke);
     if (r.hit && atk.onHit && combatant(battle, key).hp > 0) afflict(battle, key, atk.onHit, rng);
   }
-  if (onAlly && a.hp === 0) say(battle, "ally-down", `${a.name} is knocked down! She'll be back on her feet after the fight.`);
+  if (onAlly && a.hp === 0) say(battle, "ally-down", `${a.name} is knocked down! ${a.name} will be back up after the fight.`);
 }
 
 /* An attack's lingering effect: a saving throw, or the condition. */

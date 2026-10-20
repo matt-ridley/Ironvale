@@ -53,7 +53,7 @@ export class Hud extends Phaser.Scene {
     this.stats.setText(`LV ${h.level} HP ${h.hp}/${h.maxHp} ${h.gold}G`);
     const goal = objective(state.flags);
     this.quest.setText(goal ? `QUEST: ${goal}` : "");
-    const side = sideObjective(state.flags);
+    const side = sideObjective(state.flags, state);
     this.side.setText(side ? `ALSO: ${side}` : "");
     this.effects.setY(side ? 53 : 40);
     const fx = h.effects || {};

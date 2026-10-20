@@ -122,20 +122,21 @@ export function unequip(char, slot) {
   return { ok: true, item };
 }
 
-/* Gold to raise an item one tier: 50, 100, 150, or null once it is at the top tier. */
-export function upgradeCost(item) {
-  return item.upgrade >= MAX_UPGRADE ? null : 50 * (item.upgrade + 1);
+/* Gold to raise an item one tier: 50, 100, 150 (then 200, 250 at Brannoc's forge), or null once it is at the top tier
+   this smith can manage (`max`). */
+export function upgradeCost(item, max = MAX_UPGRADE) {
+  return item.upgrade >= max ? null : 50 * (item.upgrade + 1);
 }
 
 /* The blacksmith. Works on equipped or carried items, and your companion's gear. Each tier is +1 to hit and damage
    (weapons and bows) or +1 AC. */
-export function upgradeItem(char, uid) {
+export function upgradeItem(char, uid, max = MAX_UPGRADE) {
   const companion = Object.values(char.companion?.gear || {});
   const item = [...Object.values(char.equipment), ...char.inventory, ...companion].find(i => i && i.uid === uid);
   if (!item) return { ok: false, reason: "You don't have that item." };
   if (!isUpgradable(item)) return { ok: false, reason: `${itemName(item)} can't be upgraded.` };
-  const cost = upgradeCost(item);
-  if (cost === null) return { ok: false, reason: `${itemName(item)} can't be improved further.` };
+  const cost = upgradeCost(item, max);
+  if (cost === null) return { ok: false, reason: `${itemName(item)} can't be improved further here.` };
   if (char.gold < cost) return { ok: false, reason: `That costs ${cost} gold. You have ${char.gold}.` };
   char.gold -= cost;
   item.upgrade += 1;

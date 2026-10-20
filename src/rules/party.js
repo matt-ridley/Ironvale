@@ -14,6 +14,9 @@ export const COMPANIONS = {
   // Megan, a young ranger from Willowmere: light armour, a bow and quick hands.
   megan: { name: "Megan", dexMod: 2, hpBase: 8, hpPerLevel: 5, startGear: { bow: "shortbow", armour: "leather" } },
   // A caster also has `casting: { mod, spells }`: their spellcasting modifier and the spells they know (data/spells.js).
+  // Robyn, a cleric from Fenwatch's shrine: a sling for when the magic runs out, and her prayers (WIS +3).
+  robyn: { name: "Robyn", dexMod: 1, hpBase: 9, hpPerLevel: 6, startGear: { bow: "sling", armour: "leather" },
+    casting: { mod: 3, spells: ["sacredFlame", "cureWounds", "healingWord", "bless"] } },
 };
 
 export const TACTICS = { attack: "ATTACK", heal: "HEAL", save: "SAVE MAGIC" };
@@ -83,8 +86,13 @@ export function takeCompanion(hero, id) {
 
 export const startingGear = id => Object.fromEntries(COMPANION_SLOTS.map(s => [s, makeItem(COMPANIONS[id].startGear[s])]));
 
+/* Someone new joins your party; whoever was travelling with you goes to wait on the roster (at an inn). Returns the
+   id of whoever went to wait, if anyone. */
 export function joinParty(hero, id) {
+  const before = hero.companion;
+  if (before) hero.roster = [...(hero.roster || []), before];
   hero.companion = { id, hurt: 0, gear: startingGear(id) };
+  return before?.id || null;
 }
 
 /* After a fight: keep the companion's wounds (at least 1 HP left; a fallen friend gets back up). */

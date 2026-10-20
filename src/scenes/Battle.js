@@ -23,7 +23,7 @@ const LOG_ROWS = 6;
 const BAR_W = 40;
 
 // The potions a fight can use.
-const BATTLE_POTIONS = ["potionHealing", "potionDexterity"];
+const BATTLE_POTIONS = ["potionHealing", "potionGreaterHealing", "potionDexterity"];
 
 const hpColour = (hp, max) => (hp > max / 2 ? 0x7bc96f : hp > max / 4 ? 0xe8b923 : 0xe0645c);
 
@@ -135,13 +135,14 @@ export class Battle extends Phaser.Scene {
     const h = state.hero, b = this.battle, a = b.ally, heals = this.count("potionHealing");
     const back = to => ({ label: "BACK", on: mine || hers, run: () => this.showPage(to) });
     if (page === "items") {
-      const dex = this.count("potionDexterity"), scrolls = this.items() - heals - dex;
+      const dex = this.count("potionDexterity"), great = this.count("potionGreaterHealing"), scrolls = this.items() - heals - dex - great;
       return [
         { label: `HEAL x${heals}`, on: mine && heals > 0 && h.hp < h.maxHp, run: () => this.act({ type: "potion", base: "potionHealing" }) },
         { label: `DEX x${dex}`, on: mine && dex > 0 && !b.quick, run: () => this.act({ type: "potion", base: "potionDexterity" }) },
         a ? { label: `${a.name.toUpperCase()} x${heals}`, on: mine && heals > 0 && a.hp < a.maxHp, run: () => this.act({ type: "allyPotion" }) } : null,
         { label: `SCROLL x${scrolls}`, on: mine && scrolls > 0, run: () => this.showPage("scrolls") },
         back("main"),
+        { label: `GREAT x${great}`, on: mine && great > 0 && h.hp < h.maxHp, run: () => this.act({ type: "potion", base: "potionGreaterHealing" }) },
       ];
     }
     if (page === "scrolls") {

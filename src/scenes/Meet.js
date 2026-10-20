@@ -17,9 +17,10 @@ import { sfx } from "../audio/sound.js";
 
 const THEM_X = 360;
 // Names for the things that don't say who they are.
-const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE", goblinKing: "GOBLIN KING", journal: "JOURNAL", bed: "SPARE BED", campfire: "CAMPFIRE", signet: "IRON SIGNET", rubble: "FALLEN ROCK", flood: "FLOODWATER", portcullis: "PORTCULLIS", fenGate: "FENWATCH GATE", crown: "CROWN" };
+const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE", goblinKing: "GOBLIN KING", journal: "JOURNAL", bed: "SPARE BED", campfire: "CAMPFIRE", signet: "IRON SIGNET", rubble: "FALLEN ROCK", flood: "FLOODWATER", portcullis: "PORTCULLIS", fenGate: "FENWATCH GATE", crown: "CROWN", board: "BOUNTY BOARD", shrine: "SHRINE", cairn: "OLD GRAVES" };
 const TEXT_W = 290;
 const BTN_X = 394, BTN_W = 152, BTN_H = 28, BTN_GAP = 6; // the answer buttons: centre x, size, gap
+const SLIM_H = 18, SLIM_GAP = 3; // with more than three answers, slimmer buttons (keep those labels to one line)
 const POP_MS = 500; // between things coming out of a chest
 
 export class Meet extends Phaser.Scene {
@@ -105,10 +106,11 @@ export class Meet extends Phaser.Scene {
     for (const b of this.buttons) { b.bg.destroy(); b.label.destroy(); }
     this.speaker.setText(v.speaker);
     this.body.setText(v.text).setY(PANEL_Y + (v.speaker ? 24 : 10));
+    const slim = v.choices.length > 3, h = slim ? SLIM_H : BTN_H, gap = slim ? SLIM_GAP : BTN_GAP;
     this.buttons = v.choices.map((c, i) => {
       // A lone "Continue" or "Close" sits at the bottom; a list of answers stacks from the top.
-      const y = v.choices.length === 1 ? HEIGHT - 8 - BTN_H / 2 : PANEL_Y + 8 + BTN_H / 2 + i * (BTN_H + BTN_GAP);
-      const bg = this.add.rectangle(BTN_X, y, BTN_W, BTN_H, COLORS.bg).setStrokeStyle(1, COLORS.panelEdge).setInteractive({ useHandCursor: true });
+      const y = v.choices.length === 1 ? HEIGHT - 8 - h / 2 : PANEL_Y + 8 + h / 2 + i * (h + gap);
+      const bg = this.add.rectangle(BTN_X, y, BTN_W, h, COLORS.bg).setStrokeStyle(1, COLORS.panelEdge).setInteractive({ useHandCursor: true });
       const label = text(this, BTN_X, y, `${v.choices.length > 1 ? `${i + 1}. ` : ""}${c.label}`.toUpperCase(),
         { align: "center", wordWrap: { width: BTN_W - 10 }, lineSpacing: 3 }).setOrigin(0.5);
       bg.on("pointerover", () => this.highlight(i));

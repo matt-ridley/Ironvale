@@ -13,6 +13,7 @@ import { cleanBestiary } from "../rules/bestiary.js";
 import { hubById } from "../world/travel.js";
 import { asiEarned } from "../rules/character.js";
 import { cleanName } from "../story/hero.js";
+import { cleanBounty } from "../story/bounties.js";
 
 export const SAVE_KEY = "ironvale-save";
 export const SAVE_FORMAT = 5;
@@ -99,6 +100,7 @@ export function deserialize(json) {
     flags,
     bestiary: cleanBestiary(s.bestiary), // saves from before 0.16.0 have none
     lastHub: hubById(s.lastHub).id, // saves from before 0.18.0 (and unknown towns) get Oakhollow
+    ...(cleanBounty(s.bounty) && { bounty: cleanBounty(s.bounty) }), // a hunt from the bounty board
   };
 }
 

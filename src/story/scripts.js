@@ -10,6 +10,8 @@ import { joinParty, companionStats, benchCompanion, takeCompanion, COMPANIONS } 
 import { tileOf, feetAt } from "../world/movement.js";
 import { DEEP_CAVE } from "../world/cave.js";
 import { callName, titleOf } from "./hero.js";
+import { hubById } from "../world/travel.js";
+import { BOUNTIES, currentBounty, takeBounty, claimBounty, dropBounty, bountyLine } from "./bounties.js";
 
 /* ", Mary" when the hero has a name, else nothing: for lines like `You did it${comma(s)}!`. */
 const comma = s => (callName(s.hero) ? `, ${callName(s.hero)}` : "");
@@ -20,7 +22,7 @@ export const LOG_CHECKS = { shove: { ability: "STR", dc: 12 }, climb: { ability:
 export const GATE_CHECKS = { shove: { ability: "STR", dc: 13 }, climb: { ability: "DEX", dc: 15 } };
 export const BOSS_FIGHT = ["goblinChief", "goblin"];
 export const KING_FIGHT = ["goblinKing"];
-export const INN_COST = 10; // a night at the Sleeping Fox
+export const INN_COST = 10; // a night at the Sleeping Fox (each hub's innCost, in travel.js)
 export const SIGNET_REWARD = { gold: 150, xp: 1500 }; // quest 3, for reaching Greywater Fen and telling Maren
 export const CAUSEWAY_REWARD = { gold: 200, xp: 3000 }; // quest 4, when the causeway rises
 export const SALLOW_FIGHT = ["motherSallow"];
@@ -37,6 +39,8 @@ const paid = (ctx, reward) => `(+${reward.gold} gold, +${reward.xp} XP${ctx.reca
 const ELDER = "ELDER MAREN";
 const BRANNOC = "BRANNOC";
 const SALLOW = "MOTHER SALLOW";
+const ROBYN = "ROBYN";
+export const GRAVES_FIGHT = ["ghoul", "ghoul"];
 export const CHAIN_CHECKS = { smash: { ability: "STR", dc: 12 }, pick: { ability: "DEX", dc: 12 } };
 
 export const SCRIPTS = {
@@ -406,17 +410,93 @@ export const SCRIPTS = {
     },
   },
 
-  fenwatchGate: {
-    start: "look",
-    nodes: {
-      look: { text: "A gate of heavy logs, barred from inside. A voice calls down: \"Fenwatch is shut while we mend the boardwalks! Come back soon, traveller.\" (Fenwatch opens in the next update.)" },
-    },
-  },
-
   rockslide: {
     start: "look",
     nodes: {
       look: { text: "Rocks the size of houses block the old road into the mountains. Not even Brannoc could shift these. Something shook them down, and not long ago." },
+    },
+  },
+
+  // Fenwatch's shrine, where Robyn keeps the candles lit.
+  shrine: {
+    start: "look",
+    nodes: { look: { text: "A little stone shrine on the boardwalk, candles guttering in the damp. Someone keeps them lit, every night." } },
+  },
+
+  // Robyn, a young cleric at the shrine. The Restless Dead: lay the fen's old graves to rest and she joins you.
+  robyn: {
+    start: s => (s.flags.gravesAtRest ? "thanks" : s.flags.robynQuest ? "waiting" : "hello"),
+    nodes: {
+      hello: {
+        speaker: ROBYN,
+        text: "You came up through the goblin hole? Then you can help. I'm Robyn; I keep the shrine. The fen's dead won't lie still: out west, past the end of the boardwalk, the old graves keep giving up ghouls.",
+        choices: [{ label: "I'll lay them to rest.", to: "accept" }, { label: "Not now.", to: "busy" }],
+      },
+      accept: {
+        speaker: ROBYN,
+        enter: s => { s.flags.robynQuest = true; },
+        text: "Bless you! Take this holy water. Beat whatever crawls out, then pour it over the cairn. The graves are among the dead trees, west, near where you came up.",
+      },
+      busy: { speaker: ROBYN, text: "Then pray for us, at least. The candles burn either way." },
+      waiting: { speaker: ROBYN, text: "The old graves are west in the fen, among the dead trees near the goblins' passage. Beat the ghouls, then the holy water." },
+      thanks: {
+        speaker: ROBYN,
+        text: "The graves are quiet! I felt it from here, like a held breath let go. But they weren't just restless: something's calling the dead. From the keep. I want to see it stopped. Can I come with you?",
+        choices: [{ label: "Yes, join me.", to: "join" }, { label: "Maybe later.", to: "later" }],
+      },
+      join: {
+        speaker: ROBYN,
+        enter: (s, ctx) => {
+          const left = joinParty(s.hero, "robyn");
+          s.flags.robynJoined = true;
+          ctx.remember("left", left && COMPANIONS[left].name);
+        },
+        text: "I'll keep you standing; you keep the dead lying down. Lead on!",
+        to: "joined",
+      },
+      joined: { text: (s, ctx) => `Robyn joined your party!${ctx.recall("left") ? ` ${ctx.recall("left")} will wait for you at an inn: swap them there any time.` : ""}` },
+      later: { speaker: ROBYN, text: "I'll be here, with the candles." },
+    },
+  },
+
+  // The old graves in the fen: where the ghouls come from, until you lay them to rest for Robyn.
+  cairn: {
+    start: s => (s.flags.gravesAtRest ? "quiet" : s.flags.robynQuest ? "stir" : "look"),
+    nodes: {
+      look: { text: "A heap of old stones over a grave, sunk in the mud. All round it, the ground is clawed up from below." },
+      stir: {
+        text: "You uncork Robyn's holy water. At once the mud round the old graves heaves, and grey hands claw up out of it!",
+        choices: [{ label: "Fight!", to: "fight" }, { label: "Back away", to: null }],
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...GRAVES_FIGHT], zone: "fen", afterWin: "gravesRest" }) },
+      quiet: { text: "The old cairn, quiet now. The mud is still, and someone has left a candle on the top stone." },
+    },
+  },
+
+  // Straight after you beat the ghouls at the old graves.
+  gravesRest: {
+    start: "pour",
+    nodes: {
+      pour: {
+        enter: s => { s.flags.gravesAtRest = true; },
+        text: "You pour Robyn's holy water over the cairn. It hisses on the stones, the mud stops moving, and the fen goes very quiet. Robyn will want to know.",
+      },
+    },
+  },
+
+  // Brannoc at his forge in Fenwatch.
+  brannocForge: {
+    start: "hello",
+    nodes: {
+      hello: {
+        speaker: BRANNOC,
+        text: "\"My own forge again! Fenwatch let me in when I said I'd mend their nails. Walk into the door for business: I'll take your gear to +5.\"",
+        to: "crest",
+      },
+      crest: {
+        speaker: BRANNOC,
+        text: "\"And that crest on your sword: I've placed it. The Wardens' mark, the lords of Ironvale. Folk round here would look at you funny if they saw it. Or bow.\"",
+      },
     },
   },
 
@@ -445,7 +525,7 @@ export const SCRIPTS = {
       },
       again: {
         speaker: BRANNOC,
-        text: "\"Ironvale steel on your hip and an Ironvale ring in your pack. Strange company you keep. I'll be setting up a forge in Fenwatch, once they let me in.\"",
+        text: "\"Ironvale steel on your hip and an Ironvale ring in your pack. Strange company you keep. I'll be setting up a forge in Fenwatch: look for me there.\"",
       },
     },
   },
@@ -585,55 +665,56 @@ export const SCRIPTS = {
   },
 
   // Nell, who keeps the Sleeping Fox, Oakhollow's inn: a long rest for INN_COST gold. If you fainted, you were
-  // carried in and woke here for free. Companions who aren't travelling with you wait here (the roster): one choice
-  // per companion to leave them or bring them along.
-  inn: {
-    start: "hello",
+  // carried in and woke here for free.
+  inn: innScript({
+    keeper: "NELL", hub: "oakhollow",
+    welcome: cost => `Welcome to the Sleeping Fox! A soft bed and a hot supper, ${cost} gold a night. You'll wake up good as new.`,
+    famous: (s, cost) => `${callName(s.hero) || "The hero"}, ${titleOf(s.flags)}, in my inn! Your bed's ready: ${cost} gold, same as anyone. Fair's fair.`,
+    poor: (s, cost) => `It's ${cost} gold, love, and you've only ${s.hero.gold}. The bank's just down the road, or Old Tom in Willowmere has a spare bed for nothing.`,
+    bye: "Mind how you go. The door's always open.",
+  }),
+
+  // The bounty board in the Drowned Duck: one hunt at a time, paid here, and taken again as often as you like.
+  bounties: {
+    start: s => (currentBounty(s)?.finished ? "claim" : s.bounty ? "hunting" : "board"),
     nodes: {
-      hello: {
-        speaker: "NELL",
-        text: s => (s.flags.kingDefeated
-          ? `${callName(s.hero) || "The hero"}, ${titleOf(s.flags)}, in my inn! Your bed's ready: ${INN_COST} gold, same as anyone. Fair's fair.`
-          : `Welcome to the Sleeping Fox! A soft bed and a hot supper, ${INN_COST} gold a night. You'll wake up good as new.`),
+      board: {
+        text: `Hunts, pinned up with fish hooks. Gully pays: ${BOUNTIES.map(b => `${b.label} ${b.gold}g`).join(", ")}, and XP. One at a time.`,
         choices: [
-          { label: `Stay the night (${INN_COST} gold)`, to: "stay" },
-          ...Object.entries(COMPANIONS).flatMap(([id, c]) => [
-            { label: `Ask ${c.name} to wait here`, if: s => s.hero.companion?.id === id, to: "bench" },
-            { label: `Bring ${c.name} along`, if: s => !!s.hero.roster?.some(r => r.id === id), to: `take_${id}` },
-          ]),
-          { label: "Not now", to: "bye" },
+          ...BOUNTIES.map(b => ({ label: `${b.label} x${b.count}`, to: `take_${b.id}` })),
+          { label: "Leave it", to: null },
         ],
       },
-      bench: {
-        enter: (s, ctx) => ctx.remember("benched", COMPANIONS[benchCompanion(s.hero).id].name),
-        text: (s, ctx) => `${ctx.recall("benched")} takes a seat by the fire. "I'll be right here when you need me!" (Bring them back any time, from any inn.)`,
-      },
-      ...Object.fromEntries(Object.entries(COMPANIONS).map(([id, c]) => [`take_${id}`, {
-        enter: (s, ctx) => {
-          const before = s.hero.companion?.id;
-          takeCompanion(s.hero, id);
-          ctx.remember("swapped", before && COMPANIONS[before].name);
-        },
-        text: (s, ctx) => `${c.name} jumps up, rested and ready.${ctx.recall("swapped") ? ` ${ctx.recall("swapped")} will wait here instead.` : ""}`,
+      ...Object.fromEntries(BOUNTIES.map(b => [`take_${b.id}`, {
+        enter: s => { takeBounty(s, b.id); },
+        text: `You tear down the notice: ${b.title}. Beat ${b.count} of them, then come back to the board for ${b.gold} gold and ${b.xp} XP.`,
       }])),
-      stay: {
+      hunting: {
+        text: s => `Your hunt: ${bountyLine(s).replace("Bounty: ", "")}.`,
+        choices: [{ label: "Keep hunting", to: null }, { label: "Give up the hunt", to: "drop" }],
+      },
+      drop: { enter: s => dropBounty(s), text: "You pin the notice back on the board. Someone else's problem now." },
+      claim: {
         enter: (s, ctx) => {
-          if (s.hero.gold < INN_COST) return ctx.goto("poor");
-          s.hero.gold -= INN_COST;
-          rest(s.hero);
-          ctx.goto("slept");
+          const r = claimBounty(s, ctx.rng);
+          ctx.remember("claimed", r);
+        },
+        text: (s, ctx) => {
+          const r = ctx.recall("claimed"), up = r.levelUps.at(-1);
+          return `Gully counts out the coin. "${r.bounty.title}: done, and done well." (+${r.bounty.gold} gold, +${r.bounty.xp} XP${up ? `, level ${up.level}!` : ""})`;
         },
       },
-      slept: {
-        text: s => `${s.hero.companion ? "You both sleep like logs. Everyone's HP" : "You sleep like a log. HP"} and Second Wind restored. (-${INN_COST} gold)`,
-      },
-      poor: {
-        speaker: "NELL",
-        text: s => `It's ${INN_COST} gold, love, and you've only ${s.hero.gold}. The bank's just down the road, or Old Tom in Willowmere has a spare bed for nothing.`,
-      },
-      bye: { speaker: "NELL", text: "Mind how you go. The door's always open." },
     },
   },
+
+  // Gully, who keeps the Drowned Duck, Fenwatch's tavern: dearer than Nell (it's Act 2).
+  duck: innScript({
+    keeper: "GULLY", hub: "fenwatch",
+    welcome: cost => `Welcome to the Drowned Duck! Dry beds, ${cost} gold a night, frog stew free. The bounty board's by the hearth if you're after work.`,
+    famous: (s, cost) => `${callName(s.hero) || "Traveller"}! Folk say you came up out of the goblin hole. A bed's ${cost} gold. Don't drip on the floor.`,
+    poor: (s, cost) => `${cost} gold, friend, and you've ${s.hero.gold}. Try the bounty board: there's always something in the fen that wants killing.`,
+    bye: "Mind the planks on your way out. Some of them aren't planks.",
+  }),
 
   // The campfire at Goblin Rocks, kept going by Oakhollow's woodcutters: a free short rest. No monsters come near it.
   campfire: {
@@ -682,6 +763,64 @@ export const SCRIPTS = {
     },
   },
 };
+
+/* An inn: its keeper lets a bed for the night (a long rest, for the hub's innCost), and keeps the companions who aren't
+   travelling with you (the roster: one choice per companion to leave them or bring them along). */
+function innScript({ keeper, hub, welcome, famous, poor, bye }) {
+  const cost = () => hubById(hub).innCost;
+  return {
+    start: "hello",
+    nodes: {
+      hello: {
+        speaker: keeper,
+        text: s => (s.flags.kingDefeated ? famous(s, cost()) : welcome(cost())),
+        choices: [
+          { label: `Stay the night (${cost()} gold)`, to: "stay" },
+          { label: "Your companions", if: s => !!(s.hero.companion || s.hero.roster?.length), to: "party" },
+          { label: "Not now", to: "bye" },
+        ],
+      },
+      party: {
+        speaker: keeper,
+        text: s => (s.hero.roster?.length
+          ? `Waiting by the fire: ${s.hero.roster.map(r => COMPANIONS[r.id].name).join(", ")}.${s.hero.companion ? ` With you: ${COMPANIONS[s.hero.companion.id].name}.` : ""}`
+          : `${COMPANIONS[s.hero.companion.id].name} could wait here by the fire, if you'd rather travel alone.`),
+        choices: [
+          ...Object.entries(COMPANIONS).flatMap(([id, c]) => [
+            { label: `${c.name}: wait here`, if: s => s.hero.companion?.id === id, to: "bench" },
+            { label: `${c.name}: come along`, if: s => !!s.hero.roster?.some(r => r.id === id), to: `take_${id}` },
+          ]),
+          { label: "Back", to: "hello" },
+        ],
+      },
+      bench: {
+        enter: (s, ctx) => ctx.remember("benched", COMPANIONS[benchCompanion(s.hero).id].name),
+        text: (s, ctx) => `${ctx.recall("benched")} takes a seat by the fire. "I'll be right here when you need me!" (Bring them back any time, from any inn.)`,
+      },
+      ...Object.fromEntries(Object.entries(COMPANIONS).map(([id, c]) => [`take_${id}`, {
+        enter: (s, ctx) => {
+          const before = s.hero.companion?.id;
+          takeCompanion(s.hero, id);
+          ctx.remember("swapped", before && COMPANIONS[before].name);
+        },
+        text: (s, ctx) => `${c.name} jumps up, rested and ready.${ctx.recall("swapped") ? ` ${ctx.recall("swapped")} will wait here instead.` : ""}`,
+      }])),
+      stay: {
+        enter: (s, ctx) => {
+          if (s.hero.gold < cost()) return ctx.goto("poor");
+          s.hero.gold -= cost();
+          rest(s.hero);
+          ctx.goto("slept");
+        },
+      },
+      slept: {
+        text: s => `${s.hero.companion ? "You both sleep like logs. Everyone's HP" : "You sleep like a log. HP"} and Second Wind restored. (-${cost()} gold)`,
+      },
+      poor: { speaker: keeper, text: s => poor(s, cost()) },
+      bye: { speaker: keeper, text: bye },
+    },
+  };
+}
 
 /* A blocked way with two ways past, like the fallen oak: a STR check clears it for good (sets `flag`), a DEX check
    puts you on the far side (and sets `passedFlag`, for the quest log). A failed try costs 1d4 HP but never knocks
@@ -734,12 +873,11 @@ function obstacle({ look, checks, flag, passedFlag, shoveLabel, climbLabel, hurt
   };
 }
 
-/* Side quests, shown on a second HUD line. */
-export function sideObjective(flags) {
-  if (flags.meganJoined) return "";
-  if (flags.bowFound) return "Bring the bow back to Megan";
-  if (flags.meganQuest) return "Find Megan's bow in the Whispering Wood";
-  return "";
+/* Side quests (and a bounty hunt), shown on a second HUD line: the first one still going. */
+export function sideObjective(flags, state = {}) {
+  if (flags.meganQuest && !flags.meganJoined) return flags.bowFound ? "Bring the bow back to Megan" : "Find Megan's bow in the Whispering Wood";
+  if (flags.robynQuest && !flags.robynJoined) return flags.gravesAtRest ? "Tell Robyn the graves are quiet" : "Lay the restless graves in the fen to rest";
+  return bountyLine(state);
 }
 
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
