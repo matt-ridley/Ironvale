@@ -37,7 +37,7 @@ export const IRONVALE = {
     // Fenwatch: Robyn at the shrine, and Brannoc at his new forge once you've freed him.
     { id: "shrine", x: 51, y: 51, sprite: "shrine", script: "shrine", still: true },
     { id: "robyn", x: 52, y: 51, sprite: "robyn", frame: 0, script: "robyn", goneWhen: "robynJoined" },
-    { id: "brannocForge", x: 59, y: 49, sprite: "brannoc", script: "brannocForge", shownWhen: "brannocFreed" },
+    { id: "brannocForge", x: 59, y: 49, sprite: "brannoc", script: "brannocForge", shownWhen: "brannocFreed", goneWhen: "bladeReforged" }, // then he moves to the keep
     // The Restless Dead: the old graves in the fen where the ghouls crawl out.
     { id: "cairn", x: 12, y: 46, sprite: "cairn", script: "cairn", still: true },
     { id: "rockslide", x: 31, y: 6, sprite: "rubble", script: "rockslide", still: true },

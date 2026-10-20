@@ -1,6 +1,7 @@
 // Ironvale Keep, inside the walls: a ruined courtyard (south, through the portcullis), the chapel (west) and the armoury
 // (east), a corridor along the north, and behind a great iron door, the tomb of Lord Varric. The door has three locks:
-// a lever in the courtyard, a seal on the chapel altar, and a lever in the armoury. The dead walk every room.
+// a lever in the courtyard, a seal on the chapel altar, and a lever in the armoury. The dead walk every room, until the
+// Signet goes back on Varric's tomb: then the keep is your home, Act 3's hub (travel.js).
 // One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 40 wide).
 
 export const KEEP = {
@@ -26,6 +27,9 @@ export const KEEP = {
     { id: "tombDoor", x: 19, y: 10, sprite: "tombDoor", script: "tombDoor", goneWhen: "tombOpen", still: true },
     { id: "sarcophagus", x: 19, y: 2, sprite: "sarcophagus", script: "sarcophagus", still: true },
     { id: "varric", x: 19, y: 4, sprite: "lordVarric", script: "varric", shownWhen: "tombOpen", goneWhen: "varricDefeated" },
+    // Once the dead sleep, the keep is home: Hild the steward (your bed, and the companions who wait), and Brannoc's forge.
+    { id: "hild", x: 17, y: 28, sprite: "steward", script: "keepHall", shownWhen: "signetReturned" },
+    { id: "keepBrannoc", x: 22, y: 28, sprite: "brannoc", script: "keepForge", shownWhen: "bladeReforged" },
     { id: "brannocTools", x: 35, y: 29, sprite: "chest", script: "brannocTools", goneWhen: "toolsFound", still: true },
     { id: "chapelChest", x: 3, y: 29, sprite: "chest", script: "chest", goneWhen: "chapelChestOpened", still: true, loot: { gold: 150, items: ["potionGreaterHealing", "scrollFireball"] } },
     { id: "courtyardChest", x: 24, y: 30, sprite: "chest", script: "chest", goneWhen: "courtyardChestOpened", still: true, loot: { gold: 120, items: ["potionGreaterHealing", "potionGreaterHealing"] } },

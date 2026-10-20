@@ -88,7 +88,7 @@ test("Brannoc reforges your sword into the Wardenblade, and your first rune burn
   assert.match(view(c).text, /learned Rune Strike/);
   choose(c);
   assert.match(view(c).text, /ACT 2 COMPLETE/);
-  assert.equal(objective(s.flags), "Act 2 complete. Act 3 is coming.");
+  assert.equal(objective(s.flags), "Go home to Ironvale Keep: Hild is waiting");
   assert.ok(questLog(s.flags).find(q => q.id === "keep").done);
 });
 

@@ -91,8 +91,11 @@ export class WorldMap extends Phaser.Scene {
       const [cx, cy] = at((z.x0 + z.x1) / 2, z.y0 + 1);
       text(this, cx, cy, z.name.toUpperCase(), { color: COLORS.text, stroke: "#000000", strokeThickness: 3 }).setOrigin(0.5, 0);
     }
-    for (const p of travelPoints(state.flags).filter(p => p.found && p.map === world.name)) {
-      const [tx, ty] = at(p.at.x, p.at.y);
+    for (const p of travelPoints(state.flags).filter(p => p.found)) {
+      // A place on a map of its own (the keep) shows at the way in.
+      const spot = p.map === world.name ? p.at : [...world.exits, ...world.doors].find(e => e.to === p.map);
+      if (!spot) continue;
+      const [tx, ty] = at(spot.x, spot.y);
       this.add.rectangle(tx, ty, 4, 4, 0xffffff).setStrokeStyle(1, 0x000000);
     }
     if (!youreHere) return;
