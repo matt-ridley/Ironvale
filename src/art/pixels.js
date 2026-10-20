@@ -2,6 +2,7 @@
 // (R), lit from the top left: edges facing up get a highlight, edges facing down get a shadow, and the right
 // edge is a touch darker. Outlines stay flat.
 import { PALETTE, SPRITES } from "./sprites.js";
+import { MONSTER_ART } from "./monsters.js";
 import { HERO_COLOURS, HERO_FRAMES, FACINGS, HERO_W, HERO_H } from "./hero.js";
 import { MEGAN_COLOURS, MEGAN_FRAMES } from "./megan.js";
 import { drawTerrain } from "./terrain.js";
@@ -82,5 +83,6 @@ export function groundTexture(scene, map) {
 
 export function makeAllTextures(scene) {
   for (const [key, rows] of Object.entries(SPRITES)) makeTexture(scene, key, rows);
+  for (const [key, { rows, colours }] of Object.entries(MONSTER_ART)) makeTexture(scene, key, rows, colours);
   for (const [key, [frames, colours]] of Object.entries(SHEETS)) makeSheet(scene, key, frames, colours);
 }

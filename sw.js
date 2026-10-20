@@ -2,14 +2,14 @@
    - Game files (this site): network first, so a new version shows up as soon as there is signal,
      falling back to the saved copy after a few seconds or when offline.
    - Phaser and the pixel font: saved copy first. Phaser's URL includes its version, so it never changes. */
-const VERSION = "0.16.0"; // keep the same as src/config.js (a test checks)
+const VERSION = "0.17.0"; // keep the same as src/config.js (a test checks)
 const SHELL = `ironvale-shell-${VERSION}`;
 const STATIC = "ironvale-static-v1";
 const PHASER = "https://cdnjs.cloudflare.com/ajax/libs/phaser/3.90.0/phaser.min.js";
 const APP_FILES = [
   "./", "index.html", "manifest.webmanifest", "css/app.css",
   "src/main.js", "src/config.js",
-  "src/art/pixels.js", "src/art/sprites.js", "src/art/tiles.js", "src/art/terrain.js", "src/art/hero.js", "src/art/megan.js",
+  "src/art/pixels.js", "src/art/sprites.js", "src/art/tiles.js", "src/art/terrain.js", "src/art/monsters.js", "src/art/hero.js", "src/art/megan.js",
   "src/audio/sound.js", "src/audio/tracks.js",
   "src/data/items.js", "src/data/monsters.js",
   "src/rules/character.js", "src/rules/checks.js", "src/rules/combat.js", "src/rules/dice.js", "src/rules/items.js", "src/rules/gear.js", "src/rules/bank.js", "src/rules/party.js", "src/rules/bestiary.js",
