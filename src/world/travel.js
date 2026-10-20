@@ -30,6 +30,7 @@ export function markSeen(flags, zoneId) {
 // is the tile out in the open where fast travel lands you.
 // - A hub (one per act) is a whole town: no monsters, an inn for a long rest (`innCost` gold), and the shops. You wake in
 //   your last hub's inn if you faint, and a Homeward Feather takes you back to it. `rooms` are its houses.
+//   A hub with `wholeMap` is safe anywhere on its map, and one with `opensWhen` only becomes a hub once the story says.
 // - A camp is a small safe spot out in the wild: no monsters within CAMP_RADIUS tiles of its `centre`, and a free
 //   short rest (the campfire), or Old Tom's spare bed in his hut.
 export const TRAVEL_POINTS = [
@@ -37,6 +38,9 @@ export const TRAVEL_POINTS = [
     inn: "inn", innName: "the Sleeping Fox", innCost: 10, rooms: ["marenHouse", "hazelHouse", "inn"] },
   { id: "fenwatch", name: "Fenwatch", kind: "hub", map: "ironvale", zone: "fenwatch", at: { x: 54, y: 50 },
     inn: "duck", innName: "the Drowned Duck", innCost: 25, rooms: ["duck"] },
+  // Act 3's hub: the whole keep is home once the Signet is back and the dead sleep (`opensWhen`). Your own bed is free.
+  { id: "keep", name: "Ironvale Keep", kind: "hub", map: "keep", zone: "courtyard", at: { x: 19, y: 29 }, wholeMap: true,
+    opensWhen: f => !!f.signetReturned, music: "village", inn: "keep", innName: "Ironvale Keep", innCost: 0 },
   { id: "willowmere", name: "Willowmere", kind: "camp", map: "overworld", zone: "meadow", at: { x: 20, y: 45 },
     centre: { x: 20, y: 43 }, rooms: ["tomHut"] }, // Old Tom's hut
   { id: "goblinRocks", name: "Goblin Rocks", kind: "camp", map: "overworld", zone: "rocks", at: { x: 52, y: 30 },
@@ -51,14 +55,15 @@ export const FIRST_HUB = "oakhollow";
 export const hubById = id => TRAVEL_POINTS.find(p => p.kind === "hub" && p.id === id) || TRAVEL_POINTS.find(p => p.id === FIRST_HUB);
 
 /* Every travel point, with whether you've found it. */
-export const travelPoints = flags => TRAVEL_POINTS.map(p => ({ ...p, found: zoneSeen(flags, p.zone) }));
+export const travelPoints = flags => TRAVEL_POINTS.map(p => ({ ...p, found: zoneSeen(flags, p.zone) && pointOpen(p, flags) }));
+const pointOpen = (p, flags = {}) => !p.opensWhen || p.opensWhen(flags);
 
 /* The hub or camp you're standing in (or in one of its rooms), or null out in the wild and underground. */
 export function safePlace(state) {
   const t = tileOf(state.pos);
-  return TRAVEL_POINTS.find(p => p.rooms?.includes(state.map) || (p.map === state.map && (p.kind === "hub"
+  return TRAVEL_POINTS.find(p => pointOpen(p, state.flags) && (p.rooms?.includes(state.map) || (p.map === state.map && (p.wholeMap || (p.kind === "hub"
     ? zoneAt(MAPS[p.map], t.x, t.y)?.id === p.zone
-    : Math.max(Math.abs(t.x - p.centre.x), Math.abs(t.y - p.centre.y)) <= CAMP_RADIUS))) || null;
+    : Math.max(Math.abs(t.x - p.centre.x), Math.abs(t.y - p.centre.y)) <= CAMP_RADIUS))))) || null;
 }
 
 // The world, region by region: each act opens one, and the world map has a page for each. A region is open once it's

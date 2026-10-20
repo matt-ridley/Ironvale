@@ -142,6 +142,7 @@ export class Meet extends Phaser.Scene {
     this.done = true;
     const battle = this.events_.find(e => e.type === "battle");
     const travel = this.events_.find(e => e.type === "travel");
+    const shop = this.events_.find(e => e.type === "shop"); // a person who keeps a shop (Brannoc in the keep)
     this.cameras.main.fadeOut(200);
     this.cameras.main.once("camerafadeoutcomplete", () => {
       if (battle) {
@@ -153,6 +154,9 @@ export class Meet extends Phaser.Scene {
         state.stepsSinceFight = 0;
         this.scene.stop("World");
         this.scene.start("World");
+      } else if (shop) {
+        this.scene.launch("Shop", { shop: shop.shop }); // the world stays paused until the shop closes
+        this.scene.stop();
       } else {
         this.scene.stop();
         this.scene.resume("World");

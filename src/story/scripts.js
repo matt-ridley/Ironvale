@@ -656,20 +656,9 @@ export const SCRIPTS = {
         to: "act2",
       },
       act2: {
-        text: s => `ACT 2 COMPLETE. The dead of Ironvale sleep again, and they called you Warden. You are ${callName(s.hero) ? `${callName(s.hero)}, ` : ""}${titleOf(s.flags)}. The carvings in the tomb showed a door in the mountain pass, and something on the other side of it, pushing. Act 3 is coming.`,
+        text: s => `ACT 2 COMPLETE. The dead of Ironvale sleep again, and they called you Warden. You are ${callName(s.hero) ? `${callName(s.hero)}, ` : ""}${titleOf(s.flags)}. The carvings in the tomb showed a door in the mountain pass, and something on the other side of it, pushing. Act 3 is coming. (Ironvale Keep is yours now: go home.)`,
       },
-      tools: {
-        speaker: BRANNOC,
-        enter: s => {
-          s.hero.inventory = s.hero.inventory.filter(i => i.base !== "brannocTools");
-          s.flags.toolsReturned = true;
-          const w = s.hero.equipment.weapon;
-          if (w) w.silvered = true;
-        },
-        text: s => (s.hero.equipment.weapon
-          ? `"My tools! My own hammer! Where were... the keep's armoury? I've never been... Hm. Never mind. Here: on the house." He silvers your ${itemName(s.hero.equipment.weapon)} while you wait.`
-          : "\"My tools! My own hammer! I owe you. Come back with a sword in your hand and I'll silver it, on the house.\""),
-      },
+      tools: toolsNode(),
     },
   },
 
@@ -889,6 +878,35 @@ export const SCRIPTS = {
     bye: "Mind the planks on your way out. Some of them aren't planks.",
   }),
 
+  // Hild, the keep's steward, come up from Fenwatch once the dead sleep: your own bed (free), and the companions who
+  // aren't with you wait in the hall. Talking to her makes the keep your home.
+  keepHall: innScript({
+    keeper: "HILD", hub: "keep", stayLabel: "Sleep in your own bed",
+    onHello: (s, ctx) => { ctx.remember("first", !s.flags.keepHome); s.flags.keepHome = true; },
+    welcome: () => "Welcome home.",
+    famous: (s, cost, ctx) => `${!ctx.recall("first") ? "Welcome home" : "So you're the one who put the old lord to bed. I kept the Duck's kitchen for thirty years; Gully says this place needs a steward more than he does. Welcome home"}, ${callName(s.hero) || "my lord"}. Your bed's made, and your friends can wait in the hall.`,
+    poor: () => "It's your own bed. It's free.",
+    bye: "I'll keep the fire in.",
+  }),
+
+  // Brannoc's forge in the keep, where he moves once the blade is reforged: the same shop as Fenwatch's.
+  keepForge: {
+    start: "hello",
+    nodes: {
+      hello: {
+        speaker: BRANNOC,
+        text: "\"Ironvale's forge, lit again after a hundred years! The bellows still work. Same as ever: gear to +5, and silver.\"",
+        choices: [
+          { label: "Let's see the forge", to: "shop" },
+          { label: "Give Brannoc his tools", if: s => s.hero.inventory.some(i => i.base === "brannocTools"), to: "tools" },
+          { label: "Goodbye.", to: null },
+        ],
+      },
+      shop: { enter: (s, ctx) => ctx.emit({ type: "shop", shop: "forge" }) },
+      tools: toolsNode(),
+    },
+  },
+
   // The campfire at Goblin Rocks, kept going by Oakhollow's woodcutters: a free short rest. No monsters come near it.
   campfire: {
     start: "look",
@@ -937,6 +955,22 @@ export const SCRIPTS = {
   },
 };
 
+/* Giving Brannoc his tools back (at either of his forges): he silvers your weapon for free. */
+function toolsNode() {
+  return {
+    speaker: BRANNOC,
+    enter: s => {
+      s.hero.inventory = s.hero.inventory.filter(i => i.base !== "brannocTools");
+      s.flags.toolsReturned = true;
+      const w = s.hero.equipment.weapon;
+      if (w) w.silvered = true;
+    },
+    text: s => (s.hero.equipment.weapon
+      ? `"My tools! My own hammer! Where were... the keep's armoury? I've never been... Hm. Never mind. Here: on the house." He silvers your ${itemName(s.hero.equipment.weapon)} while you wait.`
+      : "\"My tools! My own hammer! I owe you. Come back with a sword in your hand and I'll silver it, on the house.\""),
+  };
+}
+
 /* Putting the Iron Signet back on Varric's tomb: the dead sleep again, the carvings show the door in the pass, and
    quest 5's reward. Shared by the end of the fight and the sarcophagus (if you walked away first). */
 function signetNodes() {
@@ -958,16 +992,17 @@ function signetNodes() {
 
 /* An inn: its keeper lets a bed for the night (a long rest, for the hub's innCost), and keeps the companions who aren't
    travelling with you (the roster: one choice per companion to leave them or bring them along). */
-function innScript({ keeper, hub, welcome, famous, poor, bye }) {
+function innScript({ keeper, hub, welcome, famous, poor, bye, stayLabel, onHello }) {
   const cost = () => hubById(hub).innCost;
   return {
     start: "hello",
     nodes: {
       hello: {
         speaker: keeper,
-        text: s => (s.flags.kingDefeated ? famous(s, cost()) : welcome(cost())),
+        enter: onHello,
+        text: (s, ctx) => (s.flags.kingDefeated ? famous(s, cost(), ctx) : welcome(cost())),
         choices: [
-          { label: `Stay the night (${cost()} gold)`, to: "stay" },
+          { label: stayLabel || `Stay the night (${cost()} gold)`, to: "stay" },
           { label: "Your companions", if: s => !!(s.hero.companion || s.hero.roster?.length), to: "party" },
           { label: "Not now", to: "bye" },
         ],
@@ -1006,7 +1041,7 @@ function innScript({ keeper, hub, welcome, famous, poor, bye }) {
         },
       },
       slept: {
-        text: s => `${s.hero.companion ? "You both sleep like logs. Everyone's HP" : "You sleep like a log. HP"} and Second Wind restored. (-${cost()} gold)`,
+        text: s => `${s.hero.companion ? "You both sleep like logs. Everyone's HP" : "You sleep like a log. HP"} and Second Wind restored.${cost() ? ` (-${cost()} gold)` : ""}`,
       },
       poor: { speaker: keeper, text: s => poor(s, cost()) },
       bye: { speaker: keeper, text: bye },
@@ -1094,7 +1129,8 @@ export function objective(flags) {
     if (!flags.varricDefeated) return "Face Lord Varric in his tomb";
     if (!flags.signetReturned) return "Put the Iron Signet back on Varric's tomb";
     if (!flags.bladeReforged) return "Tell Brannoc what Varric called you";
-    return "Act 2 complete. Act 3 is coming.";
+    if (!flags.keepHome) return "Go home to Ironvale Keep: Hild is waiting";
+    return "Act 3 is coming: the door in the mountain pass";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";

@@ -57,7 +57,7 @@ test("each place is a hub or a camp; hubs have an inn, camps a centre in their o
   for (const p of TRAVEL_POINTS) {
     assert.ok(["hub", "camp"].includes(p.kind), p.id);
     assert.ok(MAPS[p.map], p.id);
-    if (p.kind === "hub") { assert.ok(MAPS[p.inn], `${p.id} has no inn`); assert.ok(p.rooms.includes(p.inn)); }
+    if (p.kind === "hub") { assert.ok(MAPS[p.inn], `${p.id} has no inn`); assert.ok(p.wholeMap ? p.inn === p.map : p.rooms.includes(p.inn)); }
     else {
       assert.equal(zoneAt(MAPS[p.map], p.centre.x, p.centre.y).id, p.zone, p.id);
       assert.ok(Math.max(Math.abs(p.at.x - p.centre.x), Math.abs(p.at.y - p.centre.y)) <= CAMP_RADIUS, `${p.id}: travel lands you outside the camp`);

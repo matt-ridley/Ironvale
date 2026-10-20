@@ -290,7 +290,7 @@ export class World extends Phaser.Scene {
     const place = safePlace(state);
     if (place?.kind === "hub") state.lastHub = place.id; // where you wake if you faint, and where a feather goes
     if (zone) this.zone = zone;
-    playMusic(this.zone?.music ?? "village");
+    playMusic(place?.music ?? this.zone?.music ?? "village"); // a hub can have its own (the keep, once it's home)
     const above = tileAt(this.map, t.x, t.y - 1);
     if (PLACE_NOTES[above?.place]) this.say("note", PLACE_NOTES[above.place], 2200);
     const door = moved && doorAt(this.map, t.x, t.y - 1); // not when you've just come out of it
