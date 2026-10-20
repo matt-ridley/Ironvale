@@ -33,6 +33,13 @@ export const ITEMS = {
   potionDexterity: { name: "Potion of Dexterity", type: "consumable", effect: "dexterity", cost: 40 },
   // Not a potion, but used up the same way: out in the open, it takes you back to the last town (hub) you were in.
   homewardFeather: { name: "Homeward Feather", type: "consumable", effect: "homeward", cost: 50 },
+
+  // Spell scrolls (data/spells.js): anyone can read one in a fight, once. Not sold or found yet.
+  scrollMagicMissile: { name: "Scroll of Magic Missile", type: "scroll", spell: "magicMissile", cost: 50 },
+  scrollBurningHands: { name: "Scroll of Burning Hands", type: "scroll", spell: "burningHands", cost: 50 },
+  scrollSleep:        { name: "Scroll of Sleep",         type: "scroll", spell: "sleep", cost: 50 },
+  scrollCureWounds:   { name: "Scroll of Cure Wounds",   type: "scroll", spell: "cureWounds", cost: 50 },
+  scrollFireball:     { name: "Scroll of Fireball",      type: "scroll", spell: "fireball", cost: 300 },
 };
 
 export const MAX_UPGRADE = 3;

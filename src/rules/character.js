@@ -149,12 +149,14 @@ export function previewIncrease(char, ability) {
   };
 }
 
-/* A long rest (an inn, Old Tom's bed): full HP, Second Wind and Action Surge back, for your companion too. */
+/* A long rest (an inn, Old Tom's bed): full HP, Second Wind, Action Surge and spell slots back, for your companion too. */
 export function rest(char) {
   char.hp = char.maxHp;
   char.secondWind = true;
   char.actionSurge = true;
+  if (char.slotsUsed) char.slotsUsed = [];
   if (char.companion) char.companion.hurt = 0;
+  if (char.companion?.slotsUsed) char.companion.slotsUsed = [];
 }
 
 /* A short rest (a camp's fire): back up to at least half your maximum HP, and Second Wind and Action Surge back.

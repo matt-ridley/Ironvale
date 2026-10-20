@@ -75,8 +75,8 @@ Saves carry a format number. Loading drops anything the game no longer knows (an
 ## Layout
 ```
 index.html, css/, manifest.webmanifest, sw.js   page shell, install and offline support
-src/rules/    the d20 rules: dice, checks, character, items, combat, the bank, party companions, the bestiary. No Phaser, so they are unit tested.
-src/data/     items, shops and monsters
+src/rules/    the d20 rules: dice, checks and saving throws, character (with the fighter's features), items, combat, conditions (asleep, restrained, blessed...), magic (spell slots, casting, scrolls), the bank, party companions, the bestiary. No Phaser, so they are unit tested.
+src/data/     items, shops, monsters and spells
 src/world/    tile maps (one character per tile: overworld.js, cave.js, houses.js, all listed in maps.js), 8-direction movement with collisions, random encounters, and travel.js: the map's fog, the safe places (hubs and camps) and fast travel between them. No Phaser, so they are unit tested.
 src/state/    the shared game state (hero, position, quest flags) and saving it to localStorage
 src/art/      16-bit style pixel art drawn in code: the hero's and Megan's walk cycles, monsters (monsters.js: traced ones with their own palettes), people, 32px terrain tiles, and terrain.js, which bakes each map's ground into one picture
@@ -110,6 +110,7 @@ What comes next (Act 2 and beyond, magic, companions, hubs) is planned in [docs/
 - [x] 0.11.1 Megan redrawn to match the hero; she can drink Potions of Healing (from the bag or in battle) and rests in Oakhollow; a thumb held on the joystick no longer taps Close
 - [x] 0.13.0 The meeting screen for people and things, and chests that open on screen
 - [x] 0.13.1 The HUD's gold and HP update straight after the bank, shops and the bag
+- [x] 0.20.0 The magic engine, under the hood: spell slots, cantrips that grow with level, upcasting, 14 SRD spells (damage, saving throws, area spells, Sleep, healing, Bless, Shield), conditions that change attacks, saves and turns, and spell scrolls. Nothing in the game casts yet: companions and the hero's runes will
 - [x] 0.19.0 Fighter features: Action Surge (L2), Improved Critical (L3), ability score increases picked on a new level-up screen (L4, L6, L8), Extra Attack (L5); the Potion of Dexterity is now one extra attack; saving throws in the rules
 - [x] 0.18.0 Safe places: hubs and camps, the Sleeping Fox inn (a long rest for 10 gold), a free short rest at the Goblin Rocks campfire, fast travel only from a safe place, the Homeward Feather, and fainting wakes you at your last town's inn
 - [x] 0.17.0 New monster art for the goblin, chief, hobgoblin, wolf, boar and giant bat, traced from a reference lineup
