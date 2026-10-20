@@ -1,5 +1,6 @@
 // Ironvale, the Act 2 region: Greywater Fen in the south (reeds, pools, mud and dead trees, with a camp by the goblins'
-// passage and Fenwatch's palisade in the south-east), the old causeway north through deep water to Ironvale Keep's
+// passage, the old graves, and Fenwatch, a stilt-town behind a log palisade in the south-east: the Drowned Duck tavern,
+// Brannoc's forge, the herbalist, a bank and the shrine), the old causeway north through deep water to Ironvale Keep's
 // walls, and the Mountain Pass beyond, blocked by a rockslide until Act 3. Mother Sallow, a marsh hag, keeps the causeway
 // under water. You arrive up the goblins' back passage from the Deep Warrens.
 // One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 64 wide).
@@ -16,6 +17,8 @@ export const IRONVALE = {
     { id: "keepGrounds", name: "Ironvale Keep", x0: 0, y0: 13, x1: 63, y1: 33, music: "fen" },
     { id: "pass", name: "The Mountain Pass", x0: 0, y0: 0, x1: 63, y1: 12, music: "fen" },
   ],
+  // Fenwatch's tavern (the town's inn): walk into its door to go in.
+  doors: [{ x: 50, y: 47, to: "duck", name: "The Drowned Duck tavern" }],
   // The passage back down to the Deep Warrens, by the throne.
   exits: [{ x: 2, y: 50, to: "deepCave", at: { x: 44, y: 2 }, facing: "down" }],
   objects: [
@@ -28,7 +31,12 @@ export const IRONVALE = {
     { id: "flood4", x: 31, y: 37, sprite: "flood", script: "flood", goneWhen: "causewayRaised", still: true },
     { id: "flood5", x: 31, y: 38, sprite: "flood", script: "flood", goneWhen: "causewayRaised", still: true },
     { id: "keepGate", x: 31, y: 26, sprite: "portcullis", script: "keepGate", still: true },
-    { id: "fenwatchGate", x: 46, y: 50, sprite: "fenGate", script: "fenwatchGate", still: true },
+    // Fenwatch: Robyn at the shrine, and Brannoc at his new forge once you've freed him.
+    { id: "shrine", x: 51, y: 51, sprite: "shrine", script: "shrine", still: true },
+    { id: "robyn", x: 52, y: 51, sprite: "robyn", frame: 0, script: "robyn", goneWhen: "robynJoined" },
+    { id: "brannocForge", x: 59, y: 49, sprite: "brannoc", script: "brannocForge", shownWhen: "brannocFreed" },
+    // The Restless Dead: the old graves in the fen where the ghouls crawl out.
+    { id: "cairn", x: 12, y: 46, sprite: "cairn", script: "cairn", still: true },
     { id: "rockslide", x: 31, y: 6, sprite: "rubble", script: "rockslide", still: true },
     { id: "fenChest", x: 42, y: 57, sprite: "chest", script: "chest", goneWhen: "fenChestOpened", still: true, loot: { gold: 90, items: ["scrollBurningHands", "potionHealing"] } },
   ],
@@ -78,18 +86,18 @@ export const IRONVALE = {
   "^^gYggggqq~~~~~~~~YqqgYggqqqqqqbgg;qq~~~~~~~qqgrgggrrgrggggggggT",
   "^^rgggrggqq~~~~~~YqqggggrgRRRRgbggrgqqqq~qqqqgggg;rgrgrggg;ggggT",
   "^^ggggggggqqqq~qqqqYggggggLLLLgbggggggggqgggggLLLLLLLLLLLLLLLLLT",
-  "^^ggrYggggggggqgggggggrggqqqqqqbggYgggggrgggggLqqqqqqqbqqqqqqqLT",
-  "^^^grrrrggggggggggggggrrgqqqqqqbgrgYggggggggggLqqqqqqqbqqqqqqqLT",
-  "^^^gggggg;rg;rgggggggrgggggggggbggggggggYggggrLqqqqqqqbqqqqqqqLT",
-  "^^^gggg;ggg;YgrggggggggggggggYgbggggggggggggggLqqqqqqqbqqqqqqqLT",
-  "^^^ggggrrgggggYgggggggggggggrrgbggg;ggggggYgggLqqqqqqqbqqqqqqqLT",
+  "^^ggrYggggggggqgggggggrggqqqqqqbggYgggggrgggggLRRRRRRqbqRRRRRqLT",
+  "^^^grrrrggggggggggggggrrgqqqqqqbgrgYggggggggggLRRRRRRqbqRRRRRqLT",
+  "^^^gggggg;rg;rgggggggrgggggggggbggggggggYggggrLHHHDHHqbqHHFHHqLT",
+  "^^^gggg;ggg;YgrggggggggggggggYgbggggggggggggggLqqqbqqqbqqqbqqqLT",
+  "^^^ggggrrgggggYgggggggggggggrrgbggg;ggggggYgggLqqqbqqqbqqqbqqqLT",
   "^^EbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbLT",
-  "^^^gggggrggggg;ggggYqqqq~qqqqqrgggggggggrrggggLqqqqqqqbqqqqqqqLT",
-  "^^^ggggggrggggggggqq~~~~~~~~~qqggg;rggqgggggggLqqqqqqqbqqqqqqqLT",
-  "^^^ggggggggg;Ygggqq~~~~;~~~~~~qqgrgqqY~qqqggggLqqqqqqqbqqqqqqqLT",
-  "^^^ggggrqYggggggggqqY~~~~~~~~qqgggqq~;~~~qqgggLqqqqqqqbqqqqqqqLT",
-  "^^ggqqqq~qqqqrrggggqqqqq~qq;qqgggqq~~~Y~~~qqgrLqqqqqqqbqqqqqqqLT",
-  "^^gqY~~~~~~~qqggggggggggqgggggrgggqqY~~~~qqggrLqqqqqqqbqqqqqqqLT",
+  "^^^gggggrggggg;ggggYqqqq~qqqqqrgggggggggrrggggLqqqqbbbbqqqqqqqLT",
+  "^^^ggggggrggggggggqq~~~~~~~~~qqggg;rggqgggggggLRRRRRqqbqRRRRRqLT",
+  "^^^ggggggggg;Ygggqq~~~~;~~~~~~qqgrgqqY~qqqggggLRRRRRqqbqRRRRRqLT",
+  "^^^ggggrqYggggggggqqY~~~~~~~~qqgggqq~;~~~qqgggLHJHHHqqbqHH$HHqLT",
+  "^^ggqqqq~qqqqrrggggqqqqq~qq;qqgggqq~~~Y~~~qqgrLqbqqqqqbqqqbqqqLT",
+  "^^gqY~~~~~~~qqggggggggggqgggggrgggqqY~~~~qqggrLbbbbbbbbbbbbbbbLT",
   "^^ggqqqq~qqqqggggggggggggggggggggggqqq~qqqgrggLqqqqqqqbqqqqqqqLT",
   "T^ggTTggqgggTTTTggTgggTggTTgTggrgTTTTTTgTTgTTTLLLLLLLLLLLLLLLLLT",
   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",

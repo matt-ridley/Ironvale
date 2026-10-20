@@ -219,6 +219,12 @@ export const DRAW = {
     for (const y of [8, 21]) box(ctx, C.stoneDark, 6, y, 20, 2); // iron hoops
     box(ctx, C.woodDark, 9, 4, 14, 2);
   },
+  forge(ctx) { DRAW.smithy(ctx); }, // Brannoc's sign is an anvil too
+  herbalist(ctx) {
+    DRAW.door(ctx);
+    box(ctx, C.beam, 5, 0, 22, 6); box(ctx, C.woodLight, 5, 0, 22, 1); // sign board
+    box(ctx, C.leaf, 12, 1, 8, 4); box(ctx, C.leafShine, 13, 1, 3, 1); box(ctx, C.trunk, 15, 4, 2, 2); // a sprig of herbs
+  },
   // Greywater Fen
   marsh(ctx, rng) {
     box(ctx, C.marsh, 0, 0, T, T);
@@ -380,7 +386,7 @@ export const MAP_COLOURS = {
   grass: C.grass, flowers: "#6aa84f", path: C.path, bridge: C.wood, cave: C.cave, tree: C.leafDark, water: C.water,
   rock: C.rock, roof: C.roof, wall: C.wall, door: C.beam, smithy: C.beam, apothecary: C.beam, bank: C.beam, fence: C.wood,
   marsh: C.marsh, reeds: C.reed, shallow: C.shallow, mud: C.mud, boardwalk: C.wood, deadtree: C.deadwoodDark, causeway: C.flag,
-  keepwall: C.flagDark, palisade: C.woodDark, passage: C.cave,
+  keepwall: C.flagDark, palisade: C.woodDark, passage: C.cave, forge: C.beam, herbalist: C.beam,
 };
 
 export const missingTileArt = () => [...new Set(Object.values(TILES).map(t => t.name))].filter(n => !DRAW[n]);

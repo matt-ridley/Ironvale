@@ -1,5 +1,6 @@
-// Oakhollow's shops. The blacksmith upgrades gear (+1 to +3), sells gear and buys back what you don't need; the
-// apothecary sells potions and buys things back too. Which shop is in data.shop (a key of SHOPS).
+// The shops. A smith upgrades gear (Oakhollow's blacksmith to +3, Brannoc's forge in Fenwatch to +5), sells gear and
+// buys back what you don't need; the apothecary and the herbalist sell potions and buy things back too. Which shop is in
+// data.shop (a key of SHOPS).
 import { WIDTH, HEIGHT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
 import { ITEMS, SHOPS, MAX_UPGRADE } from "../data/items.js";
@@ -18,6 +19,7 @@ export class Shop extends Phaser.Scene {
   create(data = {}) {
     uiCamera(this);
     this.shop = SHOPS[data.shop] || SHOPS.blacksmith;
+    this.max = this.shop.maxUpgrade || MAX_UPGRADE;
     const tabs = this.shop.tabs;
     this.current = null;
     this.add.rectangle(0, 0, WIDTH, HEIGHT, COLORS.bg).setOrigin(0);
@@ -57,7 +59,7 @@ export class Shop extends Phaser.Scene {
       const friend = companionGear(h);
       const carried = h.inventory.filter(isUpgradable);
       return [...worn, ...friend, ...carried].map(item => {
-        const cost = upgradeCost(item);
+        const cost = upgradeCost(item, this.max);
         return { item, worn: worn.includes(item), friend: friend.includes(item), label: itemName(item), right: cost === null ? "MAX" : `${cost}g`, color: cost !== null && cost > gold ? COLORS.dim : COLORS.text };
       });
     }
@@ -93,8 +95,8 @@ export class Shop extends Phaser.Scene {
     const gold = state.hero.gold;
     this.name.setText(itemName(row.item));
     if (this.tab === "upgrade") {
-      const cost = upgradeCost(row.item), type = baseOf(row.item).type;
-      const next = cost === null ? `Already +${MAX_UPGRADE}, as good as it gets.` : `Next: +${row.item.upgrade + 1}, ${UPGRADE_HELP[type]}.`;
+      const cost = upgradeCost(row.item, this.max), type = baseOf(row.item).type;
+      const next = cost === null ? `Already +${row.item.upgrade}, as good as ${this.max > MAX_UPGRADE ? "it gets" : "this forge can make it"}.` : `Next: +${row.item.upgrade + 1}, ${UPGRADE_HELP[type]}.`;
       const who = row.worn ? "(worn)\n" : row.friend ? `(${COMPANIONS[h.companion.id].name}'s)\n` : "";
       this.desc.setText(`${describeItem(row.item)}\n${who}${next}`);
       this.action.setLabel(cost === null ? "MAXED" : `UPGRADE ${cost}g`).setEnabled(cost !== null && cost <= gold);
@@ -113,7 +115,7 @@ export class Shop extends Phaser.Scene {
     if (!row) return;
     let r, line;
     if (this.tab === "upgrade") {
-      r = upgradeItem(h, row.item.uid);
+      r = upgradeItem(h, row.item.uid, this.max);
       line = r.ok ? `*clang clang* There. Your ${itemName(r.item)} is better than new. (${r.cost} gold)` : r.reason;
     } else if (this.tab === "buy") {
       r = buyItem(h, row.base, this.shop.stock);

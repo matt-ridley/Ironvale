@@ -42,6 +42,8 @@ export const TILES = {
   "K": { name: "keepwall", solid: true },
   "L": { name: "palisade", solid: true }, // Fenwatch's log wall
   "E": { name: "passage", solid: false }, // the goblins' back passage: an exit back down to the Deep Warrens
+  "F": { name: "forge", solid: true, place: "forge" }, // Brannoc's forge in Fenwatch
+  "J": { name: "herbalist", solid: true, place: "herbalist" },
 };
 
 export const DIRS = {

@@ -54,14 +54,17 @@ test("the roster: leave your companion at an inn, and bring them back rested", (
 test("Nell keeps the roster: ask your companion to wait, and bring them back", () => {
   const s = state(withFriend());
   const c = startConversation(SCRIPTS.inn, s);
-  assert.ok(labels(c).includes("Ask Megan to wait here"));
-  assert.ok(!labels(c).includes("Bring Megan along"));
-  pick(c, "Ask Megan to wait here");
+  pick(c, "Your companions");
+  assert.ok(labels(c).includes("Megan: wait here"));
+  assert.ok(!labels(c).includes("Megan: come along"));
+  pick(c, "Megan: wait here");
   assert.match(view(c).text, /Megan takes a seat/);
   assert.equal(s.hero.companion, undefined);
   const again = startConversation(SCRIPTS.inn, s);
-  assert.ok(labels(again).includes("Bring Megan along"));
-  pick(again, "Bring Megan along");
+  pick(again, "Your companions");
+  assert.match(view(again).text, /Waiting by the fire: Megan/);
+  assert.ok(labels(again).includes("Megan: come along"));
+  pick(again, "Megan: come along");
   assert.equal(s.hero.companion.id, "megan");
   assert.match(view(again).text, /rested and ready\.$/);
 });

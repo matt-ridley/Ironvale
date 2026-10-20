@@ -25,6 +25,8 @@ const PLACE_NOTES = {
   blacksmith: "The blacksmith's forge. Walk into the door to go in.",
   apothecary: "The apothecary: potions! Walk into the door to go in.",
   bank: "The bank: keep your gold safe. Walk into the door to go in.",
+  forge: "Brannoc's forge. Walk into the door to go in.",
+  herbalist: "The fen herbalist: potions and remedies. Walk into the door to go in.",
 };
 
 export class World extends Phaser.Scene {

@@ -16,12 +16,15 @@ const fresh = (flags = {}) => ({ hero: createCharacter(), flags: { ...flags }, p
 const labels = c => view(c).choices.map(x => x.label);
 const pick = (c, label) => choose(c, labels(c).indexOf(label));
 
-test("every plain door on the overworld leads into a house", () => {
-  world.rows.forEach((row, y) => [...row].forEach((ch, x) => {
-    if (ch === "D") assert.ok(doorAt(world, x, y), `the door at ${x},${y} goes nowhere`);
-  }));
-  assert.equal(world.doors.length, HOUSES.length);
-  for (const d of world.doors) assert.ok(MAPS[d.to], `no map called ${d.to}`);
+test("every plain door, on any map, leads into a house, and every house has its door", () => {
+  const outside = Object.values(MAPS).filter(m => m.doors.length);
+  for (const map of outside) {
+    map.rows.forEach((row, y) => [...row].forEach((ch, x) => {
+      if (ch === "D") assert.ok(doorAt(map, x, y), `${map.name}: the door at ${x},${y} goes nowhere`);
+    }));
+    for (const d of map.doors) assert.ok(MAPS[d.to], `no map called ${d.to}`);
+  }
+  assert.equal(outside.flatMap(m => m.doors).length, HOUSES.length);
 });
 
 test("you can walk up to every house door from the village", () => {

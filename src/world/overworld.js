@@ -31,7 +31,8 @@ export const OVERWORLD = {
   objects: [
     { id: "elder", x: 17, y: 18, sprite: "elder", script: "elder" },
     { id: "pip", x: 10, y: 29, sprite: "villager", script: "villager" },
-    { id: "brannoc", x: 12, y: 17, sprite: "brannoc", script: "brannocTown", shownWhen: "brannocFreed" }, // by the smithy
+    // By the smithy once you've freed him, until he moves to his forge in Fenwatch (when you first get there).
+    { id: "brannoc", x: 12, y: 17, sprite: "brannoc", script: "brannocTown", shownWhen: "brannocFreed", goneWhen: "seenFenwatch" },
     { id: "campfire", x: 50, y: 31, sprite: "campfire", script: "campfire", still: true },
     { id: "fallenLog", x: 54, y: 24, sprite: "log", script: "log", goneWhen: "logCleared", still: true },
     { id: "tom", x: 23, y: 47, sprite: "fisher", script: "fisher" },

@@ -2,14 +2,15 @@
 // walk onto the doormat to go back out, in front of the door. One character per tile; the legend is TILES in map.js.
 // Every room's zone is "indoors": no monsters, the village music, and the meeting screen draws a room behind people.
 
-/* A room with the way out at `mat`, leading back to the overworld in front of the door at `door`. */
-function house({ name, title, door, mat, objects = [], rows }) {
+/* A room with the way out at `mat`, leading back out to the map `outside` (the overworld, unless it's elsewhere) in
+   front of the door at `door`. */
+function house({ name, title, door, mat, objects = [], rows, outside = "overworld", region = "vale" }) {
   return {
     name,
-    region: "vale",
+    region,
     spawn: { x: mat.x, y: mat.y - 1 },
     zones: [{ id: "indoors", name: title, x0: 0, y0: 0, x1: rows[0].length - 1, y1: rows.length - 1, music: "village", safe: true }],
-    exits: [{ x: mat.x, y: mat.y, to: "overworld", at: { x: door.x, y: door.y + 1 }, facing: "down" }],
+    exits: [{ x: mat.x, y: mat.y, to: outside, at: { x: door.x, y: door.y + 1 }, facing: "down" }],
     objects,
     rows,
   };
@@ -87,4 +88,28 @@ export const INN = house({
   ],
 });
 
-export const HOUSES = [MAREN_HOUSE, HAZEL_HOUSE, TOM_HUT, INN];
+// Fenwatch's tavern, the Drowned Duck: the Act 2 inn (Gully lets a bed for more than Nell does), and the bounty board.
+export const DUCK = house({
+  name: "duck",
+  title: "The Drowned Duck",
+  door: { x: 50, y: 47 },
+  mat: { x: 6, y: 6 },
+  outside: "ironvale",
+  region: "ironvale",
+  objects: [
+    { id: "gully", x: 9, y: 2, sprite: "barkeep", script: "duck" },
+    { id: "bountyBoard", x: 2, y: 2, sprite: "board", script: "bounties", still: true },
+  ],
+  rows: [
+    "xxxxxxxxxxxxx",
+    "x|s||h|||u||x",
+    "xwwwwwwwwwwux",
+    "xwkwwwwkkwwwx",
+    "xwwwwwwwwwwwx",
+    "xwkwwkwwwwkwx",
+    "xwwwwwmwwwwwx",
+    "xxxxxxxxxxxxx",
+  ],
+});
+
+export const HOUSES = [MAREN_HOUSE, HAZEL_HOUSE, TOM_HUT, INN, DUCK];

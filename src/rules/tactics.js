@@ -76,7 +76,7 @@ function doAllyAction(battle, action, rng) {
     const t = battle.monsters.indexOf(target);
     const r = resolveAttack(a.attack, acOf(battle, t), rng, attackMods(battle, "ally", t, { melee: false }));
     const woke = hurt(battle, t, r.damage);
-    say(battle, "ally-attack", `${a.name} shoots her ${a.attack.name} at the ${target.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t });
+    say(battle, "ally-attack", `${a.name} attacks the ${target.name} with a ${a.attack.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t });
     tellWoken(battle, t, woke);
     if (target.hp === 0) say(battle, "defeat", `The ${target.name} falls.`, { target: t });
     return { ok: true };

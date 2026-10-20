@@ -62,7 +62,7 @@ test("each place is a hub or a camp; hubs have an inn, camps a centre in their o
       assert.equal(zoneAt(MAPS[p.map], p.centre.x, p.centre.y).id, p.zone, p.id);
       assert.ok(Math.max(Math.abs(p.at.x - p.centre.x), Math.abs(p.at.y - p.centre.y)) <= CAMP_RADIUS, `${p.id}: travel lands you outside the camp`);
     }
-    for (const r of p.rooms || []) assert.ok(world.doors.some(d => d.to === r), `${r} has no door`);
+    for (const r of p.rooms || []) assert.ok(MAPS[p.map].doors.some(d => d.to === r), `${r} has no door`);
   }
   assert.equal(hubById("oakhollow").id, "oakhollow");
   assert.equal(hubById("nowhere").id, "oakhollow");

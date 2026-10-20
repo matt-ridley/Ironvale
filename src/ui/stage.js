@@ -19,7 +19,7 @@ const SKY = {
 };
 SKY.warrens = SKY.cave;
 SKY.throne = SKY.cave;
-SKY.drowned = SKY.keepGrounds = SKY.pass = SKY.fen;
+SKY.drowned = SKY.keepGrounds = SKY.pass = SKY.fenwatch = SKY.fen;
 
 /* A zone id the stage knows, or `fallback`. */
 export const stageZone = (zone, fallback = "forest") => (SKY[zone] ? zone : fallback);

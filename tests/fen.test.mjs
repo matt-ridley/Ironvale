@@ -39,9 +39,10 @@ test("the goblins' passage: blocked by rubble until Brannoc clears it, then it l
   assert.equal(exitAt(hall, down.at.x, down.at.y), null, "you'd walk straight back up");
 });
 
-test("from where you arrive you can reach the camp, Sallow, the floodwater, Fenwatch's gate and the chest, but not the keep", () => {
+test("from where you arrive you can reach the camp, Sallow, the floodwater, Fenwatch and the chest, but not the keep", () => {
   const from = reachable(fen, fen.spawn, {});
-  for (const id of ["fenCampfire", "sallow", "flood5", "fenwatchGate", "fenChest"]) assert.ok(near(from, obj(id)), `can't reach ${id}`);
+  for (const id of ["fenCampfire", "sallow", "flood5", "robyn", "shrine", "fenChest", "cairn"]) assert.ok(near(from, obj(id)), `can't reach ${id}`);
+  assert.ok(from.has("54,50"), "can't walk into Fenwatch");
   assert.ok(!near(from, obj("keepGate")), "the keep should be cut off by the water");
   const raised = reachable(fen, fen.spawn, { causewayRaised: true });
   for (const id of ["keepGate", "rockslide"]) assert.ok(near(raised, obj(id)), `can't reach ${id} once the causeway rises`);
