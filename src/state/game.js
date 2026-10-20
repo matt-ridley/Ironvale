@@ -1,4 +1,4 @@
-// The one game state every scene shares: the hero, where they are, and quest progress. save.js writes it out.
+// The one game state every scene shares: the hero, where they are, quest progress and the bestiary. save.js writes it out.
 import { createCharacter, rest } from "../rules/character.js";
 import { OVERWORLD } from "../world/overworld.js";
 import { saveGame, loadGame } from "./save.js";
@@ -12,7 +12,8 @@ export function newGame() {
   state.pos = feetAt(OVERWORLD.spawn.x, OVERWORLD.spawn.y); // in tiles, at the hero's feet
   state.facing = "down";
   state.stepsSinceFight = 0;
-  state.flags = {}; // quest progress, e.g. questStarted, logCleared, chiefDefeated, questRewarded
+  state.flags = {}; // quest progress, e.g. questStarted, logCleared, chiefDefeated, questRewarded, and seenForest (map)
+  state.bestiary = {}; // monsters met and beaten: { goblin: { seen: 3, beaten: 2 } }
 }
 
 export const FAINT_MAX_LOSS = 50;

@@ -295,4 +295,10 @@ export const PROPS = {
   },
 };
 
+/* One colour per tile, for the world map. */
+export const MAP_COLOURS = {
+  grass: C.grass, flowers: "#6aa84f", path: C.path, bridge: C.wood, cave: C.cave, tree: C.leafDark, water: C.water,
+  rock: C.rock, roof: C.roof, wall: C.wall, door: C.beam, smithy: C.beam, apothecary: C.beam, bank: C.beam, fence: C.wood,
+};
+
 export const missingTileArt = () => [...new Set(Object.values(TILES).map(t => t.name))].filter(n => !DRAW[n]);

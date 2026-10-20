@@ -34,6 +34,8 @@ GitHub Actions runs `npm test` on every pull request and every push to `main`, s
 - **Sound:** the SND button mutes or unmutes music and effects (remembered on this device).
 - **Talk:** walk into a person or a thing (or press Enter/Space while facing them). The meeting screen opens: your party on the left, them on the right, what they say at the bottom and your answers as big buttons on the right. Pick answers by tapping, with up/down and Enter, or with number keys. A chest opens on screen and shows each thing inside before you close it. A finger already on the screen when it opens (your thumb on the joystick) doesn't count as a tap when it lets go.
 - **Quests:** the QUESTS button or Q opens the quest log: every quest you've heard of, unfinished ones first. Tap one to see what it's about, which steps are done (ticked), the next step (in gold) and the reward.
+- **Bestiary:** the BESTIARY tab in the quest log (or the right arrow key) lists every monster. Ones you haven't met are ???. Once you've met one you see its picture, where it lives and a line about it, and how many you've met and beaten; beat one to learn its stats (AC, HP, attack, XP and gold).
+- **Map:** the MAP button or M shows the overworld, with the places you haven't been yet under fog and a blinking marker where you are. Once you've set foot in Oakhollow, Willowmere or Goblin Rocks, tap its name to fast-travel there. That works from anywhere outdoors, but not from inside a house or underground.
 - **Houses:** walk into a house door to go inside, and onto the doormat to come back out.
 - **Inventory:** the BAG button or I. Tap an item to see what it does and how it changes your AC, to-hit and damage, then equip it, take it off or drink it.
 - **Battles:** tap a monster to target it, then ATTACK, DEFEND (+2 AC until your next turn), POTION (then HEAL or DEX for you, or your companion's name to give them a Potion of Healing, which also gets them back up if they've been knocked down), 2ND WIND (heal 1d10 + level as a bonus action, once per rest) or FLEE (DEX check, DC 10).
@@ -70,12 +72,12 @@ Saves carry a format number. Loading drops anything the game no longer knows (an
 ## Layout
 ```
 index.html, css/, manifest.webmanifest, sw.js   page shell, install and offline support
-src/rules/    the d20 rules: dice, checks, character, items, combat, the bank, party companions. No Phaser, so they are unit tested.
+src/rules/    the d20 rules: dice, checks, character, items, combat, the bank, party companions, the bestiary. No Phaser, so they are unit tested.
 src/data/     items, shops and monsters
-src/world/    tile maps (one character per tile: overworld.js, cave.js, houses.js, all listed in maps.js), 8-direction movement with collisions, and random encounters. No Phaser, so they are unit tested.
+src/world/    tile maps (one character per tile: overworld.js, cave.js, houses.js, all listed in maps.js), 8-direction movement with collisions, random encounters, and the map's fog and fast travel (travel.js). No Phaser, so they are unit tested.
 src/state/    the shared game state (hero, position, quest flags) and saving it to localStorage
 src/art/      16-bit style pixel art drawn in code: the hero's and Megan's walk cycles, monsters, people, 32px terrain tiles, and terrain.js, which bakes each map's ground into one picture
-src/scenes/   Phaser screens: Boot, Title, World (+ Hud on top), Battle, Meet (talking to people and things), Inventory, Quests (the quest log), Shop (the blacksmith and the apothecary), Bank, Dialogue (the cave entrance)
+src/scenes/   Phaser screens: Boot, Title, World (+ Hud on top), Battle, Meet (talking to people and things), Inventory, Quests (the quest log and bestiary), WorldMap, Shop (the blacksmith and the apothecary), Bank, Dialogue (the cave entrance)
 src/story/    the conversation engine, the scripts (quests, NPCs, events) and the quest log. No Phaser, so they are unit tested.
 src/ui/       the joystick, menu widgets (buttons, paged lists) and the side-on stage that Battle and Meet share
 src/audio/    synthesised music (tracks written as notes) and sound effects, no audio files
@@ -103,6 +105,8 @@ Playable prototype: both quests can be played start to finish, and progress is s
 - [x] 0.11.1 Megan redrawn to match the hero; she can drink Potions of Healing (from the bag or in battle) and rests in Oakhollow; a thumb held on the joystick no longer taps Close
 - [x] 0.13.0 The meeting screen for people and things, and chests that open on screen
 - [x] 0.13.1 The HUD's gold and HP update straight after the bank, shops and the bag
+- [x] 0.16.0 The world map, with fog and fast travel between Oakhollow, Willowmere and Goblin Rocks; the bestiary
+- [x] 0.15.1 Random fights about half as often
 - [x] 0.15.0 Graphics: a baked, neighbour-aware ground (banks, path edges, shadows, roof ridges, mixed overlapping trees, boulders) and bigger, more detailed monsters
 - [x] 0.14.0 Houses you can go into (Elder Maren's, Pip's, Old Tom's hut), Hazel, Tom's spare bed, and the quest log; area names show again after changing map
 
