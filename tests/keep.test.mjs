@@ -75,8 +75,8 @@ test("quest 5 in the log and on the HUD", () => {
   assert.equal(objective({ ...q5, keepGateOpened: false }), "Open the portcullis of Ironvale Keep");
   assert.equal(objective({ ...q5, tombOpen: true }), "Go down into Lord Varric's tomb");
   const steps = f => questLog(f).find(q => q.id === "keep").steps.map(st => (st.done ? "x" : st.current ? ">" : "."));
-  assert.deepEqual(steps({ causewayRaised: true }), [">", ".", ".", ".", ".", "."]);
-  assert.deepEqual(steps({ ...q5, courtyardLever: true, chapelSeal: true, armouryLever: true, tombOpen: true, seenTomb: true }), ["x", "x", "x", "x", "x", ">"]);
+  assert.deepEqual(steps({ causewayRaised: true }), [">", ".", ".", ".", ".", ".", ".", "."]);
+  assert.deepEqual(steps({ ...q5, courtyardLever: true, chapelSeal: true, armouryLever: true, tombOpen: true, seenTomb: true }), ["x", "x", "x", "x", "x", ">", ".", "."]);
 });
 
 test("damage types: skeletons crumble to bludgeoning, wights shrug off unsilvered weapons, ghasts resist necrotic", () => {

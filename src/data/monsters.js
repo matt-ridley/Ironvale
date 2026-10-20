@@ -56,6 +56,14 @@ export const MONSTERS = {
     attacks: [{ name: "Longsword", bonus: 6, damage: "1d8+4" }, { name: "Longsword", bonus: 6, damage: "1d8+4" }], xp: 1100, gold: "0",
     type: "construct", saves: { STR: 4, DEX: 1, CON: 3, WIS: 0 },
     loot: [{ base: "plate", chance: 0.1 }] },
+  // Not in the SRD: Lord Varric, the Ironbound, a wight knight in black plate, the boss of Act 2. Tuned with the battle
+  // simulator (tools/simulate.mjs): see the roadmap for the numbers.
+  lordVarric:  { name: "Lord Varric",  ac: 18, hp: "13d8+39", dexMod: 1,
+    attacks: [{ name: "Longsword", bonus: 7, damage: "1d8+4" }, { name: "Longsword", bonus: 7, damage: "1d8+4" },
+      { name: "Grave Touch", bonus: 7, damage: "2d6+2", onHit: { condition: "paralyzed", save: "CON", dc: 12, rounds: 3 } }],
+    xp: 2300, gold: "20d10",
+    type: "undead", saves: { STR: 4, DEX: 1, CON: 3, WIS: 2 }, resistant: ["necrotic"], weaponResist: "silver",
+    loot: [{ base: "potionGreaterHealing", chance: 1 }] },
   // The green hag of the SRD, keeper of the drowned causeway. A bit lighter than the SRD's (82 HP), as she's met at level 5.
   motherSallow: { name: "Mother Sallow", ac: 17, hp: "9d8+27", dexMod: 1, attack: { name: "Claws", bonus: 6, damage: "2d8+4" }, xp: 700, gold: "6d10",
     type: "fey", saves: { STR: 4, DEX: 1, CON: 3, WIS: 2 },

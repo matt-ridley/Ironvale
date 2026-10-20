@@ -25,6 +25,7 @@ export const KEEP = {
       look: "A lever among the empty weapon racks, its chain running north through the wall." },
     { id: "tombDoor", x: 19, y: 10, sprite: "tombDoor", script: "tombDoor", goneWhen: "tombOpen", still: true },
     { id: "sarcophagus", x: 19, y: 2, sprite: "sarcophagus", script: "sarcophagus", still: true },
+    { id: "varric", x: 19, y: 4, sprite: "lordVarric", script: "varric", shownWhen: "tombOpen", goneWhen: "varricDefeated" },
     { id: "brannocTools", x: 35, y: 29, sprite: "chest", script: "brannocTools", goneWhen: "toolsFound", still: true },
     { id: "chapelChest", x: 3, y: 29, sprite: "chest", script: "chest", goneWhen: "chapelChestOpened", still: true, loot: { gold: 150, items: ["potionGreaterHealing", "scrollFireball"] } },
     { id: "courtyardChest", x: 24, y: 30, sprite: "chest", script: "chest", goneWhen: "courtyardChestOpened", still: true, loot: { gold: 120, items: ["potionGreaterHealing", "potionGreaterHealing"] } },

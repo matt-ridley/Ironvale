@@ -1,7 +1,8 @@
 // The battle screen: the hero on the left, monsters on the right, actions bottom right.
 // The rules engine decides everything; this scene plays its log back one line at a time, using the HP each
 // log entry recorded, so the bars drain in step with the story. The six buttons show one page at a time: your
-// actions, ITEMS (potions and SCROLLs to read), and, when you lead your companion (tap them to switch), their turn.
+// actions, ITEMS (potions and SCROLLs to read), SKILLS (Action Surge and Rune Strike, once you know a rune), and, when
+// you lead your companion (tap them to switch), their turn.
 import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { createBattle, playerAction, isPlayerTurn, isAllyTurn } from "../rules/combat.js";
 import { readScroll } from "../rules/magic.js";
@@ -10,7 +11,7 @@ import { TACTICS } from "../rules/party.js";
 import { groupPack, baseOf } from "../rules/items.js";
 import { SPELLS } from "../data/spells.js";
 import { CONDITIONS } from "../rules/conditions.js";
-import { armourClass, hasFeature } from "../rules/character.js";
+import { armourClass, hasFeature, runesLeft, runeSlots } from "../rules/character.js";
 import { state, faint, autosave } from "../state/game.js";
 import { hubById } from "../world/travel.js";
 import { uiCamera } from "../ui/widgets.js";
@@ -161,6 +162,10 @@ export class Battle extends Phaser.Scene {
         a.casting ? { label: "SPELLS", on: hers && castable(b).length > 0, run: () => this.showPage("allySpells") } : null,
       ];
     }
+    if (page === "skills") {
+      const surge = { label: "SURGE", on: mine && hasFeature(h, "actionSurge") && h.actionSurge && !b.surging, run: () => this.act({ type: "actionSurge" }) };
+      return [surge, { label: `RUNE x${runesLeft(h)}`, on: mine && runesLeft(h) > 0, run: () => this.act({ type: "runeStrike" }) }, null, null, back("main")];
+    }
     if (page === "allySpells") {
       const list = castable(b).slice(0, 5).map(c => ({ label: c.spell.short, on: hers, run: () => this.actAlly({ type: "cast", spell: c.id, slotLevel: c.slotLevel }) }));
       return [...list, ...Array(5 - list.length).fill(null), back("ally")];
@@ -171,7 +176,9 @@ export class Battle extends Phaser.Scene {
       { label: `ITEMS x${this.items()}`, on: mine && this.items() > 0, run: () => this.showPage("items") },
       { label: "2ND WIND", on: mine && h.hp < h.maxHp && h.secondWind, run: () => this.act({ type: "secondWind" }) },
       { label: "FLEE", on: mine, run: () => this.act({ type: "flee" }) },
-      { label: "SURGE", on: mine && hasFeature(h, "actionSurge") && h.actionSurge && !b.surging, run: () => this.act({ type: "actionSurge" }) },
+      runeSlots(h)
+        ? { label: "SKILLS", on: mine, run: () => this.showPage("skills") } // Action Surge and the Warden's runes
+        : { label: "SURGE", on: mine && hasFeature(h, "actionSurge") && h.actionSurge && !b.surging, run: () => this.act({ type: "actionSurge" }) },
     ];
   }
 
@@ -220,7 +227,7 @@ export class Battle extends Phaser.Scene {
 
   act(action) {
     if (this.busy || !isPlayerTurn(this.battle)) return;
-    if (action.type === "attack") action.target = this.target;
+    if (action.type === "attack" || action.type === "runeStrike") action.target = this.target;
     this.then(playerAction(this.battle, action));
   }
 
@@ -273,6 +280,7 @@ export class Battle extends Phaser.Scene {
         sfx("sword");
         if (e.roll.hit) { this.slash(foe, e.roll.crit); this.hit(foe, e.roll.damage, e.roll.crit); this.time.delayedCall(90, () => sfx(e.roll.crit ? "crit" : "hit")); }
         else { this.float(foe, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
+        if (e.rune) this.float(this.heroSprite, "RUNE!", COLORS.gold);
         break;
       case "monster-attack": {
         this.lunge(this.foeViews[e.actor].sprite, -1);

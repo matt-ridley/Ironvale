@@ -1,6 +1,6 @@
 # Ironvale roadmap
 
-The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 9 and 10a are done (0.18.0 to 0.27.0; Greywater Fen was built before Fenwatch); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
+The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 10 are done (0.18.0 to 0.28.0; Greywater Fen was built before Fenwatch); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
 
 ## The shape of the game
 
@@ -205,13 +205,13 @@ One pull request each, with a minor version bump.
 9. ~~**Fenwatch:** the tavern, bounty board, Brannoc's forge, and Robyn the cleric (the first of Claire, Rachel and Robyn).~~ **Built in 0.26.0.** Fenwatch is a hub (`innCost` 25) inside the palisade on `ironvale.js`; the inn script is shared (`innScript` in scripts.js), with companions under a "Your companions" sub-menu. The bounty board (`story/bounties.js`) counts kills from the bestiary, one hunt at a time, repeatable. Brannoc's forge is a shop with `maxUpgrade: 5`; silvering waits for damage types (step 10). The herbalist is Wren (only a name so far; she's still a companion candidate). Robyn: The Restless Dead (beat two ghouls at the cairn, `gravesAtRest`), then she joins; joining sends the current companion to the roster. Companion battle lines now use names, not pronouns. The conversation screen fits up to five answers (slimmer buttons past three: keep those labels to one line). Not built: the tavern's dice table and the goblin refugee camp (minigames and Act 3's payoff), and the ferryman.
 10. **Ironvale Keep**, in two parts:
     - ~~**10a:** the dungeon, damage types and silvering.~~ **Built in 0.27.0.** `src/world/keep.js` (courtyard, chapel, armoury, tomb), entered through the portcullis (STR 15 or DEX 13); the tomb door opens when the courtyard lever, chapel seal and armoury lever are all done (`script: "lock"`, STR or DEX 14). Monsters: skeleton (vulnerable to bludgeoning), ghast (paralysis), wight (`weaponResist: "silver"`), helmed horror (AC 20). Weapons have a `damageType`; `adjustDamage` applies `vulnerable`, `resistant` and silver. Silvering is a forge tab (100 gold) and Brannoc's Tools side quest. The battle simulator is `tools/simulate.mjs` (`npm run sim`). Keep fights come in pairs: with +2 armour and shield the hero's AC is about 22, and single SRD undead barely land a hit. The battle screen has room for two monsters, no more.
-    - **10b:** Lord Varric, the bloodline said aloud, the first rune, the reforged blade, the ending.
+    - ~~**10b:** Lord Varric, the bloodline said aloud, the first rune, the reforged blade, the ending.~~ **Built in 0.28.0.** Varric (`lordVarric`: AC 18, 13d8+39, two longsword swings and Grave Touch with paralysis, `weaponResist: "silver"`, resists necrotic) appears in the tomb with `shownWhen: "tombOpen"`, says "Warden's blood... at last" as he falls (`afterWin: "varricFalls"`), and the Signet goes back on his tomb (`signetReturned`, quest 5's reward: 500 gold, 5,000 XP). Brannoc then reforges the crested sword into the Wardenblade (`reforgeBlade`: base `wardenblade`, silvered, upgrades kept) and teaches Rune Strike (`RUNES` in `character.js`: 2 slots, 3 from level 9, back with a long rest; a SKILLS page in battle). Title: Ironvale's Heir. Simulator: 34% at L6 +3, 83% silvered, 96% silvered with Robyn.
 11. **The keep as your hub** (start of Act 3).
 12. **Later:** minigames and the other companions, one at a time.
 
 ## Open questions
 
-1. **The hero's secret:** leaning to the last Warden heir: Act 2's opening (0.23.0) hints at the bloodline without saying it. Still open: confirm it, and when it's said out loud (Varric's "Warden's blood... at last" is the plan).
+1. **The hero's secret:** leaning to the last Warden heir: Act 2's opening (0.23.0) hints at the bloodline without saying it. Still open: confirm it, and when it's said out loud (built in 0.28.0 as Varric's "Warden's blood... at last").
 2. **Oaths:** three to choose from, or one fixed path that's simpler to build?
 3. ~~**A name for the hero:**~~ Decided and built in 0.22.0: picked at NEW GAME (or RENAME in the bag), "Hero" if left empty.
 4. **Claire, Rachel and Robyn:** Robyn is decided (a cleric, met at Fenwatch). Still open: Claire's and Rachel's roles, when you meet them, and whether one is the mentor or the rival.

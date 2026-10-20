@@ -56,6 +56,9 @@ export const SCENARIOS = [
   ["Goblin King, L4 +2, Megan", { level: 4, upgrade: 2, companion: "megan" }, ["goblinKing"]],
   ["Mother Sallow, L5 +2", { level: 5, upgrade: 2 }, ["motherSallow"]],
   ["Mother Sallow, L5 +2, Megan", { level: 5, upgrade: 2, companion: "megan" }, ["motherSallow"]],
+  ["Lord Varric, L6 +3", { level: 6, upgrade: 3, potions: 3 }, ["lordVarric"]],
+  ["Lord Varric, L6 +3 silvered", { level: 6, upgrade: 3, potions: 3, silvered: true }, ["lordVarric"]],
+  ["Lord Varric, L6 +3 silvered, Robyn", { level: 6, upgrade: 3, potions: 3, silvered: true, companion: "robyn" }, ["lordVarric"]],
 ];
 
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split("/").pop())) {

@@ -4,7 +4,7 @@
 // long rest for gold) and the campfire at Goblin Rocks (a free short rest). Then the start of Act 2 (quest 3, the Iron
 // Signet): the King's last words, the ring on his throne, Brannoc the smith, and what Maren makes of the ring. The
 // ring's crest is the one on the hero's sword: the first hints that the hero is of the Wardens' blood.
-import { gainXp, rest, shortRest } from "../rules/character.js";
+import { gainXp, rest, shortRest, reforgeBlade, learnRune } from "../rules/character.js";
 import { makeItem, itemName } from "../rules/items.js";
 import { joinParty, companionStats, benchCompanion, takeCompanion, COMPANIONS } from "../rules/party.js";
 import { tileOf, feetAt } from "../world/movement.js";
@@ -40,6 +40,9 @@ const ELDER = "ELDER MAREN";
 const BRANNOC = "BRANNOC";
 const SALLOW = "MOTHER SALLOW";
 const ROBYN = "ROBYN";
+const VARRIC = "LORD VARRIC";
+export const VARRIC_FIGHT = ["lordVarric"];
+export const KEEP_REWARD = { gold: 500, xp: 5000 }; // quest 5, when the Signet goes home
 export const GRAVES_FIGHT = ["ghoul", "ghoul"];
 export const KEEP_CHECKS = { lift: { ability: "STR", dc: 15 }, winch: { ability: "DEX", dc: 13 } };
 export const LOCK_CHECKS = { force: { ability: "STR", dc: 14 }, loose: { ability: "DEX", dc: 14 } };
@@ -167,7 +170,9 @@ export const SCRIPTS = {
       },
       ironvale: {
         speaker: ELDER,
-        text: s => (s.flags.fenReported
+        text: s => (s.flags.varricDefeated
+          ? `Warden. I knew it the day I saw that crest, ${callName(s.hero) || "my dear"}, and I didn't dare say. Oakhollow's proud of you. Now go and be careful: Wardens hold doors, and doors have two sides.`
+          : s.flags.fenReported
           ? "The causeway, the hag, the keep... Be careful out there. And keep that ring close: I think it's been waiting for you."
           : s.flags.askedBrannoc
           ? "If the goblins fled from Ironvale, something worse lives there now. When the way opens, go carefully. And keep that ring close."
@@ -487,9 +492,47 @@ export const SCRIPTS = {
   },
 
   sarcophagus: {
-    start: "look",
+    start: s => (s.flags.signetReturned ? "rest" : s.flags.varricDefeated ? "hollow" : "empty"),
     nodes: {
-      look: { text: "Lord Varric's sarcophagus. The stone lid has been pushed aside, from the inside. It's empty, and fresh scratches lead off into the dark. (Lord Varric wakes in the next update.)" },
+      empty: { text: "Lord Varric's sarcophagus. The stone lid has been pushed aside, from the inside. It's empty." },
+      hollow: { text: "On the lid, a ring-shaped hollow, waiting.", to: "place" },
+      ...signetNodes(),
+      rest: { text: "The Iron Signet sits in its hollow on the lid. The tomb is quiet, and so is the keep above it." },
+    },
+  },
+
+  // Lord Varric, the Ironbound, risen and guarding his tomb. He thinks you're one more thief with his Signet.
+  varric: {
+    start: "rise",
+    nodes: {
+      rise: {
+        speaker: VARRIC,
+        text: "A knight in black plate rises from the dark, eyes like cold stars. \"Thief. You carry the seal you stole from my tomb. Give it back, or stand my watch forever.\"",
+        choices: [
+          { label: "I didn't steal it!", to: "deaf" },
+          { label: "Draw your sword", to: "fight" },
+          { label: "Back away", to: null },
+        ],
+      },
+      deaf: { speaker: VARRIC, text: "\"They all say that.\" He lifts his sword.", to: "fight" },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...VARRIC_FIGHT], zone: "tomb", winFlag: "varricDefeated", afterWin: "varricFalls" }) },
+    },
+  },
+
+  // Straight after you beat Lord Varric: the bloodline, said aloud at last, and the Signet goes home.
+  varricFalls: {
+    start: "fall",
+    nodes: {
+      fall: {
+        speaker: VARRIC,
+        text: "Varric staggers to one knee. His cold eyes find the crest on your sword, then your face. \"Warden's blood...\" he breathes. \"At last.\"",
+        to: "still",
+      },
+      still: {
+        text: "He bows his head, and is still. The Iron Signet grows warm in your pack. On the lid of his sarcophagus there's a ring-shaped hollow, waiting.",
+        to: "place",
+      },
+      ...signetNodes(),
     },
   },
 
@@ -592,8 +635,28 @@ export const SCRIPTS = {
         text: "\"And that crest on your sword: I've placed it. The Wardens' mark, the lords of Ironvale. Folk round here would look at you funny if they saw it. Or bow.\"",
         choices: [
           { label: "Give Brannoc his tools", if: s => s.hero.inventory.some(i => i.base === "brannocTools"), to: "tools" },
+          { label: "Varric called me Warden...", if: s => s.flags.signetReturned && !s.flags.bladeReforged, to: "warden" },
           { label: "Goodbye.", to: null },
         ],
+      },
+      // The end of Act 2: the sword becomes the Wardenblade, and the first rune.
+      warden: {
+        speaker: BRANNOC,
+        text: "\"Did he now.\" Brannoc goes very quiet. \"Then that's Ironvale steel on your hip, and it's waited a hundred years for the right hand. Give it here. It deserves a proper forging.\"",
+        to: "reforge",
+      },
+      reforge: {
+        enter: (s, ctx) => {
+          const blade = reforgeBlade(s.hero);
+          learnRune(s.hero, "runeStrike");
+          s.flags.bladeReforged = true;
+          ctx.remember("blade", itemName(blade));
+        },
+        text: (s, ctx) => `All night the forge roars. At dawn Brannoc hands you the ${ctx.recall("blade")}: longer, brighter, silvered, the crest shining on the pommel. As your hand closes on it, a rune burns itself into the blade. You've learned Rune Strike! (SKILLS in a fight: after you hit, the rune flares for radiant damage. Two slots, back with a long rest.)`,
+        to: "act2",
+      },
+      act2: {
+        text: s => `ACT 2 COMPLETE. The dead of Ironvale sleep again, and they called you Warden. You are ${callName(s.hero) ? `${callName(s.hero)}, ` : ""}${titleOf(s.flags)}. The carvings in the tomb showed a door in the mountain pass, and something on the other side of it, pushing. Act 3 is coming.`,
       },
       tools: {
         speaker: BRANNOC,
@@ -874,6 +937,25 @@ export const SCRIPTS = {
   },
 };
 
+/* Putting the Iron Signet back on Varric's tomb: the dead sleep again, the carvings show the door in the pass, and
+   quest 5's reward. Shared by the end of the fight and the sarcophagus (if you walked away first). */
+function signetNodes() {
+  return {
+    place: {
+      text: "The Iron Signet is warm in your hand, as if it knows where it belongs.",
+      choices: [{ label: "Put the Signet back", to: "placed" }],
+    },
+    placed: {
+      enter: (s, ctx) => {
+        s.hero.inventory = s.hero.inventory.filter(i => i.base !== "ironSignet");
+        s.flags.signetReturned = true;
+        pay(s, ctx, KEEP_REWARD);
+      },
+      text: (s, ctx) => `It fits the hollow like a key. All through the keep, things that were walking lie down. Carved round the tomb walls: a knight with the Signet before a great door in the mountains, and beyond the door, something vast, pushing. ${paid(ctx, KEEP_REWARD)} (Brannoc should hear about this.)`,
+    },
+  };
+}
+
 /* An inn: its keeper lets a bed for the night (a long rest, for the hub's innCost), and keeps the companions who aren't
    travelling with you (the roster: one choice per companion to leave them or bring them along). */
 function innScript({ keeper, hub, welcome, famous, poor, bye }) {
@@ -992,7 +1074,7 @@ export function sideObjective(flags, state = {}) {
 
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
    counted until it can be finished. */
-export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported].filter(Boolean).length;
+export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported, flags.causewayRaised, flags.signetReturned].filter(Boolean).length;
 
 /* The line under the HP box saying what to do next. */
 export function objective(flags) {
@@ -1008,8 +1090,11 @@ export function objective(flags) {
     if (!flags.causewayRaised) return "Deal with Mother Sallow: fight her, or bargain";
     if (!flags.keepGateOpened) return "Open the portcullis of Ironvale Keep";
     if (!flags.tombOpen) return `Open the tomb's three locks in the keep (${locksOpen(flags)}/3)`;
-    if (!flags.seenTomb) return "Go down into Lord Varric's tomb";
-    return "Lord Varric wakes in the next update";
+    if (!flags.seenTomb && !flags.varricDefeated) return "Go down into Lord Varric's tomb";
+    if (!flags.varricDefeated) return "Face Lord Varric in his tomb";
+    if (!flags.signetReturned) return "Put the Iron Signet back on Varric's tomb";
+    if (!flags.bladeReforged) return "Tell Brannoc what Varric called you";
+    return "Act 2 complete. Act 3 is coming.";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";

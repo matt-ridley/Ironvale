@@ -8,6 +8,8 @@ export const ITEMS = {
   shortsword:  { name: "Shortsword",  type: "weapon", damage: "1d6", damageType: "piercing",  properties: ["finesse", "light"], cost: 10 },
   mace:        { name: "Mace",        type: "weapon", damage: "1d6", damageType: "bludgeoning",  properties: [], cost: 5 },
   longsword:   { name: "Longsword",   type: "weapon", damage: "1d8", damageType: "slashing",  properties: [], cost: 15 },
+  // The hero's own sword, reforged by Brannoc at the end of Act 2 (not sold anywhere). It grows with the story.
+  wardenblade: { name: "Wardenblade", type: "weapon", damage: "1d10", damageType: "slashing", properties: [], cost: 0 },
   warhammer:   { name: "Warhammer",   type: "weapon", damage: "1d8", damageType: "bludgeoning",  properties: [], cost: 15 },
   rapier:      { name: "Rapier",      type: "weapon", damage: "1d8", damageType: "piercing",  properties: ["finesse"], cost: 25 },
   scimitar:    { name: "Scimitar",    type: "weapon", damage: "1d6", damageType: "slashing",  properties: ["finesse", "light"], cost: 25 },

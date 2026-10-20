@@ -15,6 +15,7 @@ export function makeItem(base, { upgrade = 0, crest = false } = {}) {
 }
 
 export const CREST_TEXT = "A worn crest is stamped on the pommel: a tower between two keys.";
+const WARDEN_TEXT = "Reforged by Brannoc in Ironvale steel. The crest glows when a rune burns.";
 
 export const baseOf = item => ITEMS[item.base];
 export const itemName = item => (item.silvered ? "Silvered " : "") + baseOf(item).name + (item.upgrade ? ` +${item.upgrade}` : "");
@@ -28,7 +29,7 @@ export function describeItem(item) {
   const b = baseOf(item), up = item.upgrade ? ` +${item.upgrade}` : "";
   const props = b.properties?.length ? `, ${b.properties.join(", ")}` : "";
   const silver = item.silvered ? " Silvered: wights can't shrug it off." : "";
-  if (b.type === "weapon") return `${b.damage} ${b.damageType} damage${props}.${up && ` ${up.trim()} to hit and damage.`}${silver}${item.crest ? ` ${CREST_TEXT}` : ""}`;
+  if (b.type === "weapon") return `${b.damage} ${b.damageType} damage${props}.${up && ` ${up.trim()} to hit and damage.`}${silver}${item.base === "wardenblade" ? ` ${WARDEN_TEXT}` : item.crest ? ` ${CREST_TEXT}` : ""}`;
   if (b.type === "bow") return `${b.damage} ${b.damageType} damage, for a friend in your party.${up && ` ${up.trim()} to hit and damage.`}${silver}`;
   if (b.type === "shield") return `+${b.ac} AC.${up && ` ${up.trim()} more AC.`}`;
   if (b.type === "armour") {
