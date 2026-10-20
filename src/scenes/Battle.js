@@ -6,6 +6,7 @@ import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { createBattle, playerAction, isPlayerTurn } from "../rules/combat.js";
 import { armourClass } from "../rules/character.js";
 import { state, faint, autosave } from "../state/game.js";
+import { hubById } from "../world/travel.js";
 import { uiCamera } from "../ui/widgets.js";
 import { GROUND_Y, PANEL_Y, ALLY_X, stageZone, drawBackdrop, standParty, stand, breathe } from "../ui/stage.js";
 import { playMusic, playJingle, sfx } from "../audio/sound.js";
@@ -309,8 +310,8 @@ export class Battle extends Phaser.Scene {
     } else if (b.state === "lost") {
       title = "DEFEATED"; color = COLORS.bad;
       playJingle("defeat");
-      const { goldLost } = faint();
-      lines.push("You wake up in Oakhollow,", `rested but ${goldLost} gold poorer.`);
+      const { goldLost, hub } = faint();
+      lines.push(`You wake up at ${hubById(hub).innName},`, `rested but ${goldLost} gold poorer.`);
       if (state.hero.bank) lines.push(`Your ${state.hero.bank} gold in the bank is safe.`);
     } else {
       title = "ESCAPED"; color = COLORS.text;

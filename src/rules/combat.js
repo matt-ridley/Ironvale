@@ -95,6 +95,7 @@ export function playerAction(battle, action, rng = Math.random) {
     if (!potion) return { ok: false, reason: base === "potionHealing" ? "You have no potions." : `You have no ${ITEMS[base]?.name ?? "potion like that"}.` };
     const b = baseOf(potion);
     if (b.effect === "speed") return { ok: false, reason: "A Potion of Speed is for travelling. Drink it from your bag." };
+    if (b.effect === "homeward") return { ok: false, reason: "There's no flying home from the middle of a fight!" };
     if (b.effect === "dexterity" && battle.quick) return { ok: false, reason: "You're already as quick as you can be." };
     const reason = cantDrink(p, potion);
     if (reason) return { ok: false, reason };

@@ -1,9 +1,10 @@
 // The conversations in the game so far: Elder Maren's two quests (the goblin chief, then the Goblin King), Pip,
 // Old Tom the fisher, the fallen oak, the goblin cave, chests, the iron gate and the Goblin King, and inside the
-// houses: Maren's journal, Hazel (Pip's mum) and Old Tom's spare bed.
-import { gainXp, rest } from "../rules/character.js";
+// houses: Maren's journal, Hazel (Pip's mum) and Old Tom's spare bed. And resting: Nell at the Sleeping Fox inn (a
+// long rest for gold) and the campfire at Goblin Rocks (a free short rest).
+import { gainXp, rest, shortRest } from "../rules/character.js";
 import { makeItem, itemName } from "../rules/items.js";
-import { joinParty } from "../rules/party.js";
+import { joinParty, companionStats } from "../rules/party.js";
 import { tileOf, feetAt } from "../world/movement.js";
 import { DEEP_CAVE } from "../world/cave.js";
 
@@ -13,6 +14,7 @@ export const LOG_CHECKS = { shove: { ability: "STR", dc: 12 }, climb: { ability:
 export const GATE_CHECKS = { shove: { ability: "STR", dc: 13 }, climb: { ability: "DEX", dc: 15 } };
 export const BOSS_FIGHT = ["goblinChief", "goblin"];
 export const KING_FIGHT = ["goblinKing"];
+export const INN_COST = 10; // a night at the Sleeping Fox
 
 const ELDER = "ELDER MAREN";
 
@@ -289,7 +291,7 @@ export const SCRIPTS = {
           ? "Pip has made himself a wooden crown and says he's the Goblin King now. You're welcome for tea any time."
           : s.flags.chiefDefeated
             ? "Down in Willowmere, Old Tom has a spare bed. Handy if you're hurt and a long way from Oakhollow."
-            : "Pip's right about the wood: stick to the paths and the wolves bother you less. Come home to rest whenever you're hurt."),
+            : `Pip's right about the wood: stick to the paths and the wolves bother you less. And when you're hurt, Nell at the Sleeping Fox lets a bed for ${INN_COST} gold.`),
       },
     },
   },
@@ -310,6 +312,67 @@ export const SCRIPTS = {
         enter: s => rest(s.hero),
         text: s => (s.hero.companion ? "You both sleep like logs. Everyone's HP and your Second Wind restored." : "You sleep like a log. HP and Second Wind restored."),
       },
+    },
+  },
+
+  // Nell, who keeps the Sleeping Fox, Oakhollow's inn: a long rest for INN_COST gold. If you fainted, you were
+  // carried in and woke here for free.
+  inn: {
+    start: "hello",
+    nodes: {
+      hello: {
+        speaker: "NELL",
+        text: s => (s.flags.kingDefeated
+          ? `The hero of Oakhollow, in my inn! Your bed's ready: ${INN_COST} gold, same as anyone. Fair's fair.`
+          : `Welcome to the Sleeping Fox! A soft bed and a hot supper, ${INN_COST} gold a night. You'll wake up good as new.`),
+        choices: [
+          { label: `Stay the night (${INN_COST} gold)`, to: "stay" },
+          { label: "Not now", to: "bye" },
+        ],
+      },
+      stay: {
+        enter: (s, ctx) => {
+          if (s.hero.gold < INN_COST) return ctx.goto("poor");
+          s.hero.gold -= INN_COST;
+          rest(s.hero);
+          ctx.goto("slept");
+        },
+      },
+      slept: {
+        text: s => `${s.hero.companion ? "You both sleep like logs. Everyone's HP" : "You sleep like a log. HP"} and Second Wind restored. (-${INN_COST} gold)`,
+      },
+      poor: {
+        speaker: "NELL",
+        text: s => `It's ${INN_COST} gold, love, and you've only ${s.hero.gold}. The bank's just down the road, or Old Tom in Willowmere has a spare bed for nothing.`,
+      },
+      bye: { speaker: "NELL", text: "Mind how you go. The door's always open." },
+    },
+  },
+
+  // The campfire at Goblin Rocks, kept going by Oakhollow's woodcutters: a free short rest. No monsters come near it.
+  campfire: {
+    start: "look",
+    nodes: {
+      look: {
+        text: "A ring of stones around a crackling fire. Woodcutters from Oakhollow keep it going. No monster comes near it.",
+        choices: [
+          { label: "Rest by the fire (short rest)", to: "rest" },
+          { label: "Not now", to: null },
+        ],
+      },
+      rest: {
+        enter: (s, ctx) => {
+          const r = shortRest(s.hero, companionStats(s.hero)?.maxHp);
+          ctx.remember("rest", r);
+          if (!r.healed && !r.secondWind && !r.companionHealed) ctx.goto("rested");
+        },
+        text: (s, ctx) => {
+          const r = ctx.recall("rest");
+          const got = [r.healed && `+${r.healed} HP`, r.companionHealed && `${companionStats(s.hero).name} +${r.companionHealed} HP`, r.secondWind && "Second Wind back"].filter(Boolean);
+          return `You warm your hands and catch your breath. ${got.join(", ")}. (A short rest brings you up to half your HP. For a full rest, find a bed.)`;
+        },
+      },
+      rested: { text: "You're as rested as a fire can make you. A short rest brings you up to half your HP; for more, you need a bed." },
     },
   },
 

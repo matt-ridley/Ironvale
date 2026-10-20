@@ -2,17 +2,16 @@
 // with the joystick (touch), arrow keys or WASD (hold Shift to run); the camera glides after the hero. Walk into
 // people, things or shop doors (or press Enter/Space facing them) to interact (people and things open the Meet
 // screen), into a house door to go inside, and onto an exit (a doormat, the daylight in the cave) to go to another
-// map. Q opens the quest log and M the world map (which can fast-travel you). Wild areas can start a fight as you walk; Oakhollow heals you. A Potion of Speed makes
-// you faster and fights rarer for a number of steps. A companion in your party walks along behind you. The HUD lives
-// in the Hud scene on top.
+// map. Q opens the quest log and M the world map (which can fast-travel you from a town or a camp). Wild areas can
+// start a fight as you walk, except near a camp. A Potion of Speed makes you faster and fights rarer for a number of
+// steps. A companion in your party walks along behind you. The HUD lives in the Hud scene on top.
 import { TILE, WORLD_ZOOM, FONT, COLORS } from "../config.js";
 import { zoneAt, tileAt, objectAt, activeObjects, exitAt, doorAt } from "../world/map.js";
 import { moveBody, velocity, facingFor, tileOf, tileAhead, feetAt, WALK_SPEED, SPEED_POTION_BOOST } from "../world/movement.js";
 import { MAPS } from "../world/maps.js";
-import { markSeen } from "../world/travel.js";
+import { markSeen, safePlace } from "../world/travel.js";
 import { state, autosave } from "../state/game.js";
 import { rollEncounter } from "../world/encounters.js";
-import { rest } from "../rules/character.js";
 import { stick } from "../ui/joystick.js";
 import { animKey, groundTexture } from "../art/pixels.js";
 import { playMusic, sfx } from "../audio/sound.js";
@@ -255,11 +254,12 @@ export class World extends Phaser.Scene {
     autosave();
     const t = tileOf(state.pos);
     const zone = zoneAt(this.map, t.x, t.y);
-    const foes = rollEncounter(zone?.id, tileAt(this.map, t.x, t.y).name, state.stepsSinceFight, Math.random, { fast });
+    const safe = !!safePlace(state); // no monsters come near a camp
+    const foes = rollEncounter(zone?.id, tileAt(this.map, t.x, t.y).name, state.stepsSinceFight, Math.random, { fast, safe });
     if (foes) this.startBattle(foes, zone.id);
   }
 
-  /* On reaching a new tile (moved = true) and on entering the scene: area names, music, resting, the cave. */
+  /* On reaching a new tile (moved = true) and on entering the scene: area names, music, the last town, the cave. */
   enteredTile(moved) {
     const t = tileOf(state.pos);
     const zone = zoneAt(this.map, t.x, t.y);
@@ -267,14 +267,9 @@ export class World extends Phaser.Scene {
       this.zoneId = zone.id;
       markSeen(state.flags, zone.id); // for the map
       this.say("banner", zone.name, 1800);
-      // Until the inn opens, coming home to the village is a full rest.
-      const h = state.hero;
-      if (zone.id === "village" && (h.hp < h.maxHp || !h.secondWind || h.companion?.hurt)) {
-        rest(h);
-        this.hud?.refresh();
-        this.say("note", h.companion ? "You rest in Oakhollow. Everyone's HP and your Second Wind restored." : "You rest in Oakhollow. HP and Second Wind restored.", 2200);
-      }
     }
+    const place = safePlace(state);
+    if (place?.kind === "hub") state.lastHub = place.id; // where you wake if you faint, and where a feather goes
     playMusic(["village", "indoors"].includes(this.zoneId) || !this.zoneId ? "village" : "wild");
     const above = tileAt(this.map, t.x, t.y - 1);
     if (PLACE_NOTES[above?.place]) this.say("note", PLACE_NOTES[above.place], 2200);

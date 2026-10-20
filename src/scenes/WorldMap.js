@@ -1,6 +1,7 @@
 // The world map, opened over the world (the MAP button or M). The overworld is drawn small, one block per tile, with
 // the parts you haven't been to yet under fog; a blinking marker shows where you are (or the door you went in by).
-// On the right, the places you've found: tap one to fast-travel there. That works from anywhere out in the open.
+// On the right, the places you've found: tap one to fast-travel there. That works only from a safe place: standing in
+// a town (or one of its houses) or at a camp.
 import { WIDTH, HEIGHT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
 import { MAPS } from "../world/maps.js";
@@ -68,7 +69,7 @@ export class WorldMap extends Phaser.Scene {
       }
     });
     const found = points.filter(p => p.found).length;
-    const note = !open ? "Step outside to travel."
+    const note = !open ? "You can only travel from a town or a camp: Oakhollow, Old Tom's hut or the Goblin Rocks campfire."
       : found < points.length ? "Find more places to travel to them. White squares are places you can go."
         : "White squares are places you can go.";
     text(this, px + 8, MAP_Y + 34 + points.length * 26, note, { color: COLORS.dim, wordWrap: { width: pw - 16 }, lineSpacing: 4 });

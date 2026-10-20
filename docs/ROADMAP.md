@@ -1,6 +1,6 @@
 # Ironvale roadmap
 
-The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Nothing here is built yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
+The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Step 1 of the build order is built (0.18.0); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
 
 ## The shape of the game
 
@@ -194,7 +194,7 @@ Today the hero has only Second Wind. Add, from the SRD fighter (Champion): **Act
 
 One pull request each, with a minor version bump.
 
-1. **Safe places:** hubs and camps, paid inn rest, short and long rests, `lastHub`, the Homeward Feather, the Act 1 changes.
+1. ~~**Safe places:** hubs and camps, paid inn rest, short and long rests, `lastHub`, the Homeward Feather, the Act 1 changes.~~ **Built in 0.18.0.** Oakhollow's inn is the Sleeping Fox (Nell, 10 gold a night). A short rest brings you up to half your HP and back, so resting twice does nothing more and a free campfire is never as good as a bed. Zones don't have `safe` or `music` fields yet: safe places are `TRAVEL_POINTS` in `travel.js` (a hub's zone and rooms, or within 3 tiles of a camp's centre), which is enough until step 7 adds more maps.
 2. **Fighter features** (L2-8), the Potion of Dexterity rework, saving throws.
 3. **Magic engine:** slots, cantrips, multi-target spells, conditions, scrolls. Rules only and unit-tested, built for both companions and hero runes.
 4. **Companion roster** and tactics (option C); Megan moves onto it.

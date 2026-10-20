@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { makeItem, equip, unequip, upgradeItem, upgradeCost, itemName } from "../src/rules/items.js";
+import { makeItem, equip, unequip, upgradeItem, upgradeCost, itemName, useItem, cantDrink, describeItem } from "../src/rules/items.js";
 import { createCharacter } from "../src/rules/character.js";
 
 const carry = (c, base, opts) => { const i = makeItem(base, opts); c.inventory.push(i); return i; };
@@ -63,4 +63,16 @@ test("no upgrade without enough gold", () => {
   assert.equal(r.ok, false);
   assert.equal(c.gold, 49);
   assert.equal(c.equipment.armour.upgrade, 0);
+});
+
+test("a Homeward Feather is used up out in the open, but not indoors or underground", () => {
+  const c = createCharacter({ potions: 0 });
+  const f = carry(c, "homewardFeather");
+  assert.match(cantDrink(c, f), /out in the open/);
+  assert.equal(useItem(c, f.uid).ok, false);
+  assert.equal(c.inventory.length, 1);
+  assert.equal(cantDrink(c, f, { outdoors: true }), null);
+  assert.deepEqual(useItem(c, f.uid, Math.random, { outdoors: true }), { ok: true, item: f, effect: "homeward" });
+  assert.equal(c.inventory.length, 0);
+  assert.match(describeItem(f), /last town/);
 });

@@ -32,6 +32,7 @@ export function describeItem(item) {
   if (b.heal) return `Drink to heal ${b.heal} HP.`;
   if (b.effect === "speed") return `Move faster and meet fewer monsters for ${b.steps} steps.`;
   if (b.effect === "dexterity") return "Attack twice each turn for one fight. Drink it before or during a battle.";
+  if (b.effect === "homeward") return "Out in the open, it flies you back to the last town you were in. Not indoors or underground.";
   return "";
 }
 
@@ -48,23 +49,26 @@ export function groupPack(inventory) {
   return [...groups.values()];
 }
 
-/* Why a potion can't be drunk right now, or null if it can. */
-export function cantDrink(char, item) {
+/* Why a potion (or a Homeward Feather) can't be used right now, or null if it can. `outdoors`: you're out in the open. */
+export function cantDrink(char, item, { outdoors = false } = {}) {
   const b = baseOf(item);
+  if (b.effect === "homeward" && !outdoors) return "The feather only works out in the open, not indoors or underground.";
   if (b.heal && char.hp >= char.maxHp) return "You're already at full health.";
   if (b.effect === "dexterity" && char.effects?.dexterity) return "You've already drunk one. It lasts until your next fight.";
   return null;
 }
 
 /* Drinks a potion from the pack. Healing heals now; the others set an effect in char.effects:
-   speed (steps left) or dexterity (true until the next fight starts). */
-export function useItem(char, uid, rng = Math.random) {
+   speed (steps left) or dexterity (true until the next fight starts). A Homeward Feather is used up and returns
+   effect "homeward": the world screen does the trip. */
+export function useItem(char, uid, rng = Math.random, { outdoors = false } = {}) {
   const item = char.inventory.find(i => i.uid === uid);
   if (!item || !isPotion(item)) return { ok: false, reason: "You can't use that." };
-  const reason = cantDrink(char, item);
+  const reason = cantDrink(char, item, { outdoors });
   if (reason) return { ok: false, reason };
   char.inventory = char.inventory.filter(i => i !== item);
   const b = baseOf(item);
+  if (b.effect === "homeward") return { ok: true, item, effect: "homeward" };
   if (b.heal) {
     const before = char.hp;
     char.hp = Math.min(char.maxHp, char.hp + roll(b.heal, rng).total);
