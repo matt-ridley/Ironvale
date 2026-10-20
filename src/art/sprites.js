@@ -392,6 +392,25 @@ export const SPRITES = {
     "..kbbbk..kbbbk..",
     "..kkkkk..kkkkk..",
   ],
+  // Fallen rock blocking the goblins' back passage.
+  rubble: [
+    "................",
+    "................",
+    "................",
+    "................",
+    "......kkkk......",
+    ".....kssssk.....",
+    "....ksSsssk.kk..",
+    "..kkkssssskksik.",
+    ".ksSkkkskkssiiik",
+    ".kssssk.ksSssiik",
+    "kssSsssk.kssiik.",
+    "ksssssiikkksik..",
+    "kissiiiik.kiiik.",
+    ".kkiiiikkkiiiik.",
+    "..kkkkk..kkkkk..",
+    "................",
+  ],
   // Old Tom's spare bed.
   bed: [
     "................",

@@ -26,7 +26,7 @@ export function markSeen(flags, zoneId) {
   return true;
 }
 
-// Safe places, which are also where you fast-travel to and from. Each is found by setting foot in its zone, and `at`
+// Safe places, which are also where you fast-travel to and from, anywhere in the world (`map` is where they are). Each is found by setting foot in its zone, and `at`
 // is the tile out in the open where fast travel lands you.
 // - A hub (one per act) is a whole town: no monsters, an inn for a long rest (for gold), and the shops. You wake in
 //   your last hub's inn if you faint, and a Homeward Feather takes you back to it. `rooms` are its houses.
@@ -56,6 +56,21 @@ export function safePlace(state) {
     ? zoneAt(MAPS[p.map], t.x, t.y)?.id === p.zone
     : Math.max(Math.abs(t.x - p.centre.x), Math.abs(t.y - p.centre.y)) <= CAMP_RADIUS))) || null;
 }
+
+// The world, region by region: each act opens one, and the world map has a page for each. A region with no `map` yet
+// isn't built: the map shows it as a dark shape marked ???, with a `hint` (a function of the quest flags).
+export const REGIONS = [
+  { id: "vale", name: "Oakhollow Vale", tab: "THE VALE", act: 1, map: "overworld" },
+  { id: "ironvale", name: "Ironvale", act: 2, shape: "keep",
+    hint: f => (f.askedBrannoc ? "Ironvale Keep, east past the marshes. Brannoc is clearing the goblins' passage behind the King's throne."
+      : f.signetShown ? "Ironvale Keep lies east, past the marshes, empty for a hundred years."
+        : "Somewhere east, past the marshes.") },
+  { id: "pass", name: "The Mountain Pass", act: 3, shape: "mountains", hint: () => "High mountains to the north." },
+  { id: "beyond", name: "Beyond the Door", act: 4, shape: "door", hint: () => "No one knows." },
+];
+export const regionOpen = region => !!region.map;
+/* The region a map belongs to (every map says, in its `region`). */
+export const regionOf = mapName => REGIONS.find(r => r.id === MAPS[mapName]?.region) || REGIONS[0];
 
 /* Fast travel only works from a safe place: a hub or a camp. */
 export const canFastTravel = state => !!safePlace(state);

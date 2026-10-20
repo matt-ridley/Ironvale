@@ -6,8 +6,9 @@
 function house({ name, title, door, mat, objects = [], rows }) {
   return {
     name,
+    region: "vale",
     spawn: { x: mat.x, y: mat.y - 1 },
-    zones: [{ id: "indoors", name: title, x0: 0, y0: 0, x1: rows[0].length - 1, y1: rows.length - 1 }],
+    zones: [{ id: "indoors", name: title, x0: 0, y0: 0, x1: rows[0].length - 1, y1: rows.length - 1, music: "village", safe: true }],
     exits: [{ x: mat.x, y: mat.y, to: "overworld", at: { x: door.x, y: door.y + 1 }, facing: "down" }],
     objects,
     rows,

@@ -40,7 +40,8 @@ export class World extends Phaser.Scene {
     this.pendingHud = [];
     this.hudUp = false; // until the Hud scene (re)starts and says it's ready
     this.lastTile = tileOf(state.pos);
-    this.zoneId = data.quiet ? zoneAt(this.map, this.lastTile.x, this.lastTile.y)?.id ?? null : null;
+    this.zone = zoneAt(this.map, this.lastTile.x, this.lastTile.y); // for its music (tiles in no zone keep the last)
+    this.zoneId = data.quiet ? this.zone?.id ?? null : null;
 
     this.add.image(0, 0, groundTexture(this, this.map)).setOrigin(0);
 
@@ -268,7 +269,7 @@ export class World extends Phaser.Scene {
     autosave();
     const t = tileOf(state.pos);
     const zone = zoneAt(this.map, t.x, t.y);
-    const safe = !!safePlace(state); // no monsters come near a camp
+    const safe = !!zone?.safe || !!safePlace(state); // no monsters in a town, indoors or near a camp
     const foes = rollEncounter(zone?.id, tileAt(this.map, t.x, t.y).name, state.stepsSinceFight, Math.random, { fast, safe });
     if (foes) this.startBattle(foes, zone.id);
   }
@@ -284,7 +285,8 @@ export class World extends Phaser.Scene {
     }
     const place = safePlace(state);
     if (place?.kind === "hub") state.lastHub = place.id; // where you wake if you faint, and where a feather goes
-    playMusic(["village", "indoors"].includes(this.zoneId) || !this.zoneId ? "village" : "wild");
+    if (zone) this.zone = zone;
+    playMusic(this.zone?.music ?? "village");
     const above = tileAt(this.map, t.x, t.y - 1);
     if (PLACE_NOTES[above?.place]) this.say("note", PLACE_NOTES[above.place], 2200);
     const door = moved && doorAt(this.map, t.x, t.y - 1); // not when you've just come out of it
