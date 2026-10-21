@@ -6,7 +6,9 @@
 // - save: as attack, but cantrips only, so spell slots last.
 // When you lead them (battle.leadAlly), their turn waits for allyAction() with what you picked.
 // Rachel's owl, Quill, flies at a monster once per fight (quillFlyby): your next attack has advantage. It costs her
-// nothing: by herself she sends him on her first turn; when you lead her, it's the FLYBY button.
+// nothing: by herself she sends him on her first turn; when you lead her, it's the FLYBY button. Megan, once her father
+// has taught her, can VOLLEY once per fight: one shot at every monster (by herself, when there's more than one). A cleric
+// who knows Turn Undead turns the undead first, by herself.
 // No Phaser here, so it can be tested.
 import { SPELLS } from "../data/spells.js";
 import { roll } from "./dice.js";
@@ -51,6 +53,10 @@ export function chooseAllyAction(battle) {
   const a = battle.ally, focus = battle.monsters[battle.focus];
   const target = focus?.hp > 0 ? battle.focus : battle.monsters.indexOf(living(battle)[0]);
   const spells = castable(battle);
+  if (canVolley(battle) && living(battle).length > 1) return { type: "volley" };
+  const turn = spells.find(s => s.id === "turnUndead");
+  const untouched = living(battle).filter(m => m.type === "undead" && !battle.conditions?.[battle.monsters.indexOf(m)]?.turned);
+  if (turn && a.tactics !== "save" && untouched.length) return { type: "cast", spell: "turnUndead", slotLevel: turn.slotLevel };
   if (a.tactics === "heal") {
     const who = neediest(battle);
     const heal = spells.filter(s => s.spell.kind === "heal").sort((x, y) => x.spell.level - y.spell.level)[0];
@@ -75,12 +81,14 @@ function doAllyAction(battle, action, rng) {
   if (action.type === "shoot") {
     const target = battle.monsters[action.target]?.hp > 0 ? battle.monsters[action.target] : living(battle)[0];
     if (!target) return { ok: false, reason: "There's nothing left to shoot." };
-    const t = battle.monsters.indexOf(target);
-    const r = adjustRoll(resolveAttack(a.attack, acOf(battle, t), rng, attackMods(battle, "ally", t, { melee: false })), target, a.attack);
-    const woke = hurt(battle, t, r.damage);
-    say(battle, "ally-attack", `${a.name} attacks the ${target.name} with a ${a.attack.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t });
-    tellWoken(battle, t, woke);
-    if (target.hp === 0) say(battle, "defeat", `The ${target.name} falls.`, { target: t });
+    shoot(battle, target, rng);
+    return { ok: true };
+  }
+  if (action.type === "volley") {
+    if (!canVolley(battle)) return { ok: false, reason: "No volley left this fight." };
+    battle.volleyUsed = true;
+    say(battle, "volley", `${a.name} nocks three arrows at once and looses them in one breath!`);
+    for (const m of living(battle)) shoot(battle, m, rng);
     return { ok: true };
   }
   if (action.type === "potion") {
@@ -124,6 +132,19 @@ export function quillFlyby(battle) {
   say(battle, "flyby", `Quill swoops at the ${t.name}'s eyes, hooting! Your next attack has advantage.`, { target: battle.monsters.indexOf(t) });
   return { ok: true, events: battle.log.slice(start) };
 }
+
+/* One shot (or sling stone, or bolt) from your companion at a monster. */
+function shoot(battle, target, rng) {
+  const a = battle.ally, t = battle.monsters.indexOf(target);
+  const r = adjustRoll(resolveAttack(a.attack, acOf(battle, t), rng, attackMods(battle, "ally", t, { melee: false })), target, a.attack);
+  const woke = hurt(battle, t, r.damage);
+  say(battle, "ally-attack", `${a.name} attacks the ${target.name} with a ${a.attack.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t });
+  tellWoken(battle, t, woke);
+  if (target.hp === 0) say(battle, "defeat", `The ${target.name} falls.`, { target: t });
+}
+
+/* True if your companion can still VOLLEY this fight (Megan, once Matthew has taught her). */
+export const canVolley = battle => !!battle.player.companion?.volley && battle.ally?.hp > 0 && !battle.volleyUsed && living(battle).length > 0;
 
 /* Your companion's turn when they act by themselves. */
 export function allyTurn(battle, rng = Math.random) {

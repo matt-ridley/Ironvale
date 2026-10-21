@@ -66,7 +66,10 @@ function targetsFor(battle, spell, caster, target) {
     const t = target ?? battle.monsters.indexOf(living(battle)[0]);
     return battle.monsters[t]?.hp > 0 ? { keys: [t] } : { reason: "Pick a monster that's still standing." };
   }
-  if (spell.targets === "all") return { keys: living(battle).map(m => battle.monsters.indexOf(m)) };
+  if (spell.targets === "all") {
+    const keys = living(battle).filter(m => !spell.onlyType || m.type === spell.onlyType).map(m => battle.monsters.indexOf(m));
+    return keys.length ? { keys } : { reason: `There's nothing here for ${spell.name} to touch.` };
+  }
   if (spell.targets === "self") return { keys: [caster.key] };
   if (spell.targets === "party") return { keys: ["player", ...(battle.ally?.hp > 0 ? ["ally"] : [])] };
   const t = target ?? caster.key;

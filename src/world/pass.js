@@ -42,6 +42,15 @@ export const PASS = {
     { id: "thorneFire", x: 40, y: 19, sprite: "campfire", script: "thorneFire", still: true },
     { id: "thorneNotes", x: 37, y: 14, sprite: "journal", script: "thorneNotes", still: true },
     { id: "thorneMirror", x: 44, y: 19, sprite: "mirror", script: "thorneMirror", goneWhen: "mirrorTaken", still: true },
+    // Matthew's Arrows: three of his arrows lead up to the old watchtower, where he lives (until Megan finds him).
+    { id: "arrow1", x: 6, y: 56, sprite: "arrow", script: "matthewArrow", flag: "matthewArrow1", shownWhen: "matthewQuest", goneWhen: "matthewArrow1", still: true },
+    { id: "arrow2", x: 4, y: 35, sprite: "arrow", script: "matthewArrow", flag: "matthewArrow2", shownWhen: "matthewQuest", goneWhen: "matthewArrow2", still: true },
+    { id: "arrow3", x: 6, y: 23, sprite: "arrow", script: "matthewArrow", flag: "matthewArrow3", shownWhen: "matthewQuest", goneWhen: "matthewArrow3", still: true },
+    { id: "matthew", x: 5, y: 18, sprite: "matthew", script: "matthew", goneWhen: "matthewFound" },
+    { id: "towerFire", x: 8, y: 20, sprite: "campfire", script: "campfire", shownWhen: "matthewFound", still: true },
+    // The Frozen Chapel: Robyn's quest. Its braziers make it a camp once she's lit it.
+    { id: "iceAltar", x: 40, y: 30, sprite: "iceAltar", script: "iceAltar", still: true },
+    { id: "chapelBrazier", x: 40, y: 33, sprite: "campfire", script: "campfire", shownWhen: "chapelLit", still: true },
     // A cairn of bones on the snowfield, with half of a sun charm in it.
     { id: "boneCairn", x: 6, y: 30, sprite: "boneCairn", script: "boneCairn", still: true },
     { id: "gatehouseDoor", x: 24, y: 4, sprite: "runeDoor", script: "gatehouseDoor", still: true },

@@ -106,7 +106,7 @@ test("the ice: you slide until you hit something, and the only way north is to s
   assert.deepEqual(slide(pass, { x: 24, y: 39 }, "up"), { x: 24, y: 38 }); // through the gap, off the ice
   assert.deepEqual(slide(pass, { x: 24, y: 45 }, "up"), { x: 24, y: 43 }); // straight up the middle doesn't work
   const from = reachableSliding(pass, pass.spawn);
-  for (const [x, y, what] of [[24, 37], [24, 5], [5, 18], [40, 17], [40, 32]].map(([x, y], i) => [x, y, ["north of the ice", "the gatehouse door", "the watchtower", "Thorne's camp", "the chapel"][i]])) {
+  for (const [x, y, what] of [[24, 37], [24, 5], [5, 19], [40, 17], [40, 32]].map(([x, y], i) => [x, y, ["north of the ice", "the gatehouse door", "the watchtower", "Thorne's camp", "the chapel"][i]])) {
     assert.ok(from.has(`${x},${y}`), `${what} can't be reached`);
   }
   // Nowhere on the ice leaves you stuck.

@@ -10,7 +10,7 @@ import { itemName } from "../rules/items.js";
 import {
   KB_STAKE, kbNew, kbRoll, kbPlace, kbBestColumn, kbColumnScore, kbScores, kbWinner,
   awNew, awTick, awTap, AW_ZONE,
-  ARROWS, MEGAN_SCORE, RINGS, archNew, archAim, archTick, archShoot, archTotal, archDone,
+  ARROWS, MEGAN_SCORE, MATTHEW_SCORE, RINGS, archNew, archAim, archTick, archShoot, archTotal, archDone,
   fishNew, fishTick, fishTap, fishLeft, landFish, FISHING_SPOTS,
   winPrize,
 } from "../rules/minigames.js";
@@ -232,12 +232,15 @@ const TGT_X = 150, TGT_Y = 145, TGT_R = 90;
 export class Archery extends Minigame {
   constructor() { super("Archery"); }
 
-  create() {
+  /* data.rival: "matthew" for Matthew's rematches at the keep (a higher score to beat, and his prize); else Megan. */
+  create(data = {}) {
+    const m = data.rival === "matthew";
+    this.rival = { name: m ? "Matthew" : "Megan", score: m ? MATTHEW_SCORE : MEGAN_SCORE, game: m ? "archeryMatthew" : "archery" };
     this.setup("ARCHERY CONTEST");
     this.g = this.add.graphics();
     this.marks = this.add.graphics();
     panel(this, 290, 40, 180, 180);
-    text(this, 300, 50, `MEGAN: ${MEGAN_SCORE}`, { color: COLORS.dim });
+    text(this, 300, 50, `${this.rival.name.toUpperCase()}: ${this.rival.score}`, { color: COLORS.dim });
     this.scoreText = text(this, 300, 70, "", { color: COLORS.gold, lineSpacing: 4, wordWrap: { width: 160 } });
     this.msg = text(this, 300, 130, "", { wordWrap: { width: 160 }, lineSpacing: 4 });
     this.again = button(this, 380, 204, 100, 20, "AGAIN", () => this.start());
@@ -291,10 +294,10 @@ export class Archery extends Minigame {
   }
 
   end() {
-    const total = archTotal(this.round), won = total > MEGAN_SCORE;
+    const { name, score, game } = this.rival, total = archTotal(this.round), won = total > score;
     sfx(won ? "coin" : "back");
-    this.msg.setText(won ? `${total} beats ${MEGAN_SCORE}! Megan laughs and claps.${this.prize("archery", "Megan")}`
-      : total === MEGAN_SCORE ? `${total}: a tie! "Doesn't count," says Megan. "Again!"` : `${total}. "Ha! Not bad," says Megan. "Not good, either."`);
+    this.msg.setText(won ? `${total} beats ${score}! ${name} laughs and claps.${this.prize(game, "Megan")}`
+      : total === score ? `${total}: a tie! "Doesn't count," says ${name}. "Again!"` : `${total}. "Ha! Not bad," says ${name}. "Not good, either."`);
     this.again.setVisible(true);
   }
 }

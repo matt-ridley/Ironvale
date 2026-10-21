@@ -12,7 +12,8 @@
 // - sleep: rolls `pool` and sends monsters to sleep, the weakest first, while it lasts.
 // - heal: `heal` + the caster's spellcasting modifier, to one friend. `bonusAction`: it doesn't use up your turn.
 // - buff: gives `condition` to `targets` ("self" or "party").
-// targets: "one" (a monster you pick), "all" (every monster), "friend" (you or your companion), "self" or "party".
+// targets: "one" (a monster you pick), "all" (every monster; `onlyType` narrows it to one creature type), "friend" (you
+// or your companion), "self" or "party".
 // condition: { id (in CONDITIONS), rounds, untilTurnStart, saveEnds: ability (the same DC as the spell) }.
 // classes: which casters can learn it (scrolls work for anyone). short: its name on a battle button.
 
@@ -38,6 +39,11 @@ export const SPELLS = {
   faerieFire:     { name: "Faerie Fire", short: "FAERIE", level: 1, classes: ["druid", "bard"], kind: "save", save: "DEX", targets: "all", condition: { id: "outlined", rounds: 10 } },
 
   // Level 2
+  spiritualWeapon: { name: "Spiritual Weapon", short: "SPIRIT", level: 2, classes: ["cleric"], kind: "attack", targets: "one", damage: "2d8", damageType: "force", upcast: { dice: 1 } },
+  // Channel Divinity, here as a level 2 spell: every undead monster makes a WIS save or flees in terror (loses its turns
+  // until it's hurt). `onlyType`: an area spell that only touches that kind of creature.
+  turnUndead:     { name: "Turn Undead", short: "TURN", level: 2, classes: ["cleric"], kind: "save", save: "WIS", targets: "all", onlyType: "undead",
+    condition: { id: "turned", rounds: 10 } },
   mistyStep:      { name: "Misty Step", short: "MIST", level: 2, classes: ["wizard"], kind: "buff", targets: "self", bonusAction: true,
     condition: { id: "blinked", untilTurnStart: true } },
 

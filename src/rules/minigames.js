@@ -102,6 +102,7 @@ export function awTap(g) {
 // to loose. Rings score 10, 8, 6, 4 and 2. Beat Megan's score to win.
 export const ARROWS = 5;
 export const MEGAN_SCORE = 34;
+export const MATTHEW_SCORE = 40; // Matthew's rematches at the keep
 export const RINGS = [[0.12, 10], [0.3, 8], [0.5, 6], [0.72, 4], [1, 2]]; // [radius as a share of the target, score]
 
 export function archNew(hero) {
@@ -189,6 +190,7 @@ export const PRIZES = {
   knucklebones: { flag: "wonKnucklebones", item: "luckyDie" },
   armWrestle: { flag: "wonArmWrestle", item: "oswinBelt" },
   archery: { flag: "wonArchery", item: "willowBow" },
+  archeryMatthew: { flag: "wonMatthewArchery", item: "griffonBow", upgrade: 2 }, // Matthew's rematch at the keep
 };
 
 /* A win: the prize the first time (returns the item), nothing after. Megan's bow goes straight to her, wherever she is. */
@@ -197,8 +199,8 @@ export function winPrize(hero, flags, game) {
   if (flags[p.flag]) return null;
   flags[p.flag] = true;
   const item = makeItem(p.item);
-  if (game === "archery") {
-    item.upgrade = 1;
+  if (game === "archery" || game === "archeryMatthew") {
+    item.upgrade = p.upgrade ?? 1;
     const megan = hero.companion?.id === "megan" ? hero.companion : hero.roster?.find(r => r.id === "megan");
     if (megan) {
       const old = megan.gear?.bow;

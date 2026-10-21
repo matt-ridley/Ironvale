@@ -1,5 +1,5 @@
 // Game-wide settings. Bump VERSION with every change, and keep sw.js's VERSION the same (a test checks).
-export const VERSION = "0.34.0";
+export const VERSION = "0.35.0";
 export const TITLE = "Ironvale"; // placeholder name
 
 // Menus and text are laid out on a 480 x 270 grid. The canvas has twice that many pixels (ZOOM), so the world and

@@ -6,7 +6,7 @@ import { ENCOUNTERS } from "../world/encounters.js";
 const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willowmere", warrens: "The Deep Warrens", fen: "Greywater Fen", keepGrounds: "Ironvale Keep's grounds",
   courtyard: "Ironvale Keep's courtyard", chapel: "Ironvale Keep's chapel", armoury: "Ironvale Keep's armoury",
   slopes: "The pass's slopes", snowfield: "The snowfield", heights: "The heights", watchtower: "The old watchtower", thorneCamp: "Thorne's camp",
-  gatehouseApproach: "Below the gatehouse" };
+  gatehouseApproach: "Below the gatehouse", frozenChapel: "The Frozen Chapel" };
 const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall", motherSallow: "Her hut in Greywater Fen", lordVarric: "His tomb, under Ironvale Keep",
   kobold: "Digging in the Deep Warrens" }; // bosses (and Pip's kobolds) don't roam
 
@@ -36,6 +36,8 @@ export const LORE = {
   stoneGiant: "Grey as the mountain and nearly as big. It throws boulders for fun, and clubs anything that isn't a boulder.",
   gargoyle: "A stone thing with wings that sits so still you'd swear it was carved. Thorne's runes are burned into these. Only magic weapons bite deep.",
   earthElemental: "The mountain, walking. Ordinary weapons only chip it; a magic blade does the job.",
+  wraith: "A Warden who died in the cold and stayed: a hooded shadow with eyes like coals. Its touch drains the warmth from you, and the courage.",
+  specter: "The pale, wailing shape of someone lost on the pass. Weak alone, but they come in twos.",
   kobold: "A little rust-red lizard-dog with a pick and a candle on its head. It digs for \"the Great One beyond the mountain\", and won't say who that is.",
   motherSallow: "A marsh hag with weed in her hair and a laugh like a drain. She keeps the causeway under water, and she loves a bargain.",
 };

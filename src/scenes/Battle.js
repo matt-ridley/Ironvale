@@ -8,7 +8,7 @@
 import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { createBattle, playerAction, isPlayerTurn, isAllyTurn, isReacting, reactAction } from "../rules/combat.js";
 import { readScroll } from "../rules/magic.js";
-import { allyAction, castable, canFlyby, quillFlyby } from "../rules/tactics.js";
+import { allyAction, castable, canFlyby, quillFlyby, canVolley } from "../rules/tactics.js";
 import { TACTICS } from "../rules/party.js";
 import { groupPack, baseOf } from "../rules/items.js";
 import { SPELLS } from "../data/spells.js";
@@ -164,7 +164,8 @@ export class Battle extends Phaser.Scene {
         { label: "AUTO", on: hers, run: () => this.actAlly({ type: "auto" }) },
         { label: `YOU x${heals}`, on: hers && heals > 0 && h.hp < h.maxHp, run: () => this.actAlly({ type: "potion", on: "player" }) },
         { label: `${a.name.toUpperCase()} x${heals}`, on: hers && heals > 0 && a.hp < a.maxHp, run: () => this.actAlly({ type: "potion", on: "ally" }) },
-        a.casting ? { label: "SPELLS", on: hers && castable(b).length > 0, run: () => this.showPage("allySpells") } : null,
+        a.casting ? { label: "SPELLS", on: hers && castable(b).length > 0, run: () => this.showPage("allySpells") }
+          : h.companion?.volley ? { label: "VOLLEY", on: hers && canVolley(b), run: () => this.actAlly({ type: "volley" }) } : null,
         a.id === "rachel" ? { label: "FLYBY", on: hers && canFlyby(b), run: () => this.flyby() } : null,
       ];
     }
@@ -295,7 +296,7 @@ export class Battle extends Phaser.Scene {
 
   showEvent(e) {
     const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again",
-      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived"].includes(e.type);
+      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived", "volley"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -319,6 +320,10 @@ export class Battle extends Phaser.Scene {
         sfx("sword");
         if (e.roll.hit) { this.slash(foe, e.roll.crit); this.hit(foe, e.roll.damage, e.roll.crit); this.time.delayedCall(90, () => sfx(e.roll.crit ? "crit" : "hit")); }
         else { this.float(foe, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
+        break;
+      case "volley":
+        sfx("sword");
+        this.float(this.allyView.sprite, "VOLLEY!", COLORS.gold);
         break;
       case "ally-level-up":
         this.float(this.allyView.sprite, "LEVEL UP!", COLORS.gold);
