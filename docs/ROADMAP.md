@@ -75,7 +75,7 @@ His old apprentice, **Rachel**, came after him and got stuck at the rockslide. W
 | **Q6 The Scholar at the Rockslide** | Hild says the keep shook in the night. At the rockslide you find Rachel and her owl, Quill, camped in the snow and reading a rune burned into the rocks: a Breaking Rune, used from the far side. She can read it but can't undo it alone. She needs three rune-stones the blast threw down the slopes (a small hunt, like Megan's bow) and then the Wardenblade laid against the rune while she reads it backwards. The rocks split, and she joins you. About 4,000 XP. |
 | **Q7 The Warden's Road** | Three **waystones** up the pass. At the first, the ghost of **Warden Esk** appears. She's the last Warden, who held the door when the garrison fell, and "my blood" when she sees your sword. (Her son was sent south as a baby with the crested sword: that's how it reached Oakhollow.) Each waystone has a trial and teaches a rune. **Iron:** hold out for three rounds against Thorne's gargoyles; the reward is **Iron Ward**. **The Call:** keep your companion standing through a fight; the reward is **Warden's Call**. **Binding:** the stone is already stripped bare. Thorne got there first, so you track him to his camp on the heights and take the **Rune of Binding** back from his guardian. About 2,000 XP a waystone and 2,000 at the end. The first waystone makes you **Warden-in-training**. |
 | **Q8 The Wardens' Gatehouse** | A fortress cut into the mountain in front of the door: the Act 3 dungeon. Rune doors, a frozen forge, the Wardens' barracks, then Thorne at the door with a **shield guardian** bound to his amulet (two monsters, so it fits the battle screen). He fights with stolen runes, including the Breaking Rune that hits everyone. When he's beaten, you choose: **spare him** (chained in the keep's cells, and he knows things about what's behind the door: Act 4) or **leave him to the mountain**. About 12,000 XP. |
-| **Ending: The Oath** | Thorne's last rune cracks the door. Heat pours out, and a golden eye the size of a cartwheel looks through. Esk: *"Now. Swear it, while I can still hold it."* The Oath screen (see the hero's arc). The door's runes light up again, the crack holds, and Esk fades: *"Hold it better than I did."* ACT 3 COMPLETE. |
+| **Ending: The Oath** | Thorne's last rune cracks the door. Heat pours out, and a golden eye the size of a cartwheel looks through. Esk: *"Now. Swear it, while I can still hold it."* The Oath screen (see the hero's arc). The door's runes light up again, the crack holds, and Esk fades: *"Hold it better than I did."* Just before the crack closes, a voice from the other side shouts **"Rae?"**: Rachel's nickname, and Claire's first appearance. ACT 3 COMPLETE. |
 
 **The rule for companion gates:** the main quest never *needs* a particular companion. Rachel joins as part of Q6, but once she's on the roster you can swap her out, and the main quest still has a way through for anyone (a harder check, a longer route). The *side* quests are where a particular friend is required, and that's what makes the roster matter.
 
@@ -104,7 +104,7 @@ Her stats: INT +3 casting, a staff, padded armour. She starts with Fire Bolt, Ma
 | **Rachel** | The college, Thorne as he used to be, what she worked out about runes, and why Quill won't go near Thorne. | Her quest *is* the main quest. In the final fight, with her in the party, Thorne hesitates the first time she speaks (he loses his first turn), and sparing him gets a line from her. | Thorne's notes go to the keep's library: more scrolls for her book. |
 | **Brannoc** (not a companion) | | **Rune-Iron.** The gatehouse's frozen forge still has rune-iron in its ore bins. Bring him some. | The **Wardenblade's second form**: one more rune slot. (The final form is Act 4.) |
 
-Claire stays open for Act 4.
+Claire is Rachel's twin and joins in Act 4; her hints in Act 3 are under **Companions: Claire, Rachel's twin**.
 
 ### Choices come back
 
@@ -215,8 +215,42 @@ As built: the rules are `src/rules/minigames.js` (tested), the screens `src/scen
 Companions to add:
 
 - **Megan** (built): the archer. Keeps her place.
-- **Claire, Rachel and Robyn**: the owner wants all three. **Rachel is planned for Act 3** (the wizard; see Act 3). **Robyn is built (0.26.0):** a cleric from Fenwatch's shrine, recruited through The Restless Dead. Claire's role is still **open** (Act 4): her class, a recruit quest (like Megan's bow) and a walking sprite (like `megan.js`).
+- **Claire, Rachel and Robyn**: the owner wants all three. **Rachel is planned for Act 3** (the wizard; see Act 3). **Robyn is built (0.26.0):** a cleric from Fenwatch's shrine, recruited through The Restless Dead. **Claire** is Rachel's twin, a druid, and joins in Act 4 (see below).
 - **Candidates:** Brannoc (dwarf tank with a warhammer; *protect* gives you disadvantage against the next hit), Snik (goblin scout; *sneak attack* adds damage to a target someone else has already hit), Wren (fen herbalist who heals instead of attacking).
+
+### Claire, Rachel's twin (decided: she joins in Act 4; the hints start in Act 3)
+
+**Decided:** Claire is Rachel's twin sister, her opposite in everything, like the two halves of a yin and yang. Act 3 only hints at her. She joins in Act 4, beyond the door, and she's the one who **brings every companion together** for the dragon.
+
+| | **Rachel** | **Claire** |
+|---|---|---|
+| Sign | The moon (her half of a broken charm) | The sun (the other half) |
+| Magic | Learned from books: a wizard (INT), spells copied into a spellbook | Instinct: a **druid** (WIS), spells from wild places, and she can't read a word |
+| In a fight | At the back, fragile (padded armour) | **Up close**, the first companion who is: **Wild Shape** turns her into a bear or a great cat with its own HP bar, and she turns back when it runs out |
+| Animal | Quill, an owl (night) | No pet: she *becomes* the animals, and wild beasts won't attack while she's with you |
+| Around the world | Reads runes and carvings | Hears the land: finds hidden paths and talks to animals (an animal can be a quest-giver) |
+| Against magic | COUNTER stops spells | Shrugs them off (good saves) and breaks curses and charms |
+| Around people | Quiet and solitary; trusts books more than people | Loud and warm; collects friends wherever she goes |
+
+**The story:** the twins grew up near the foothills. When they were twelve, Claire chased a wolf cub up the pass, went through a gap at the foot of the door (it wasn't sealed so tightly then) and never came back. Rachel has spent her life on runes for one reason: to open a way through. That's how Thorne got her to work for him: he promised to find her sister. Claire has spent the years beyond the door living wild, and she knows that land the way Rachel knows books.
+
+**Hints in Act 3** (none of them names Claire until the very end):
+
+- **Rachel's campfire talks:** "My sister would have climbed this without a rope." Later: "She'd have liked you. She liked everyone. I never understood how." In the third talk she admits *why* she studies runes, without saying "twin".
+- **The broken charm:** Rachel wears half of a moon-and-sun charm. In the pass you find a cairn of animal bones with the **sun half** wound into it, years old. Rachel goes very quiet. It's a key item that goes back together in Act 4.
+- **Matthew at the watchtower:** "A girl came down the pass once, years back. Wild hair, a wolf pelt, ran with the pack on all fours. Had your face, scholar." Rachel brushes it off.
+- **Animals that help:** once on the heights, a wolf pack drives off the monsters attacking you and then vanishes. Someone sent them.
+- **Thorne, if spared:** "I told her I'd find her sister. I wasn't lying, Rachel. I just wasn't going to stop there."
+- **The last line of Act 3:** as the crack in the door closes, a voice from the other side shouts **"Rae?"** Rachel's nickname. (If Rachel isn't in your party, she hears about it at the keep and comes running.)
+
+**Bringing everyone together (Act 4):** Claire gathers the whole cast the way Rachel never could.
+
+- **Her recruit quest is a reunion:** find the twins' lost charm halves and put them back together. That's when she joins.
+- **She knows everyone's missing piece.** Beyond the door she has met something tied to each companion's story: Megan's father's old survey partner, a shrine of the Dawn for Robyn, the Wardens' lost forge for Brannoc, Esk's son's grave for the hero. She leads each companion to theirs, one quest each, and each one ends with that companion pledging to stand at the final fight. That makes every companion's story pay off before the end.
+- **The final battle is the one fight with the whole party.** Normally it's one companion at a time; for the dragon, everyone you've recruited comes. Two stand beside you at a time (the battle screen needs room for a second companion: Act 4 work) and you can tag in the others between the dragon's phases. Anyone you never recruited isn't there, so recruiting everyone is worth it. Claire's **rally** brings a fallen companion back once per phase.
+- **The roster screen remembers:** every pledge shows as a banner in the keep's hall, so you can see who's coming.
+
+**Build notes for Act 4:** a battle screen with a second companion, Wild Shape (a second HP bar on a companion), druid spells (Produce Flame, Entangle and Faerie Fire are already in `spells.js`; she'd add Moonbeam, Call Lightning and Conjure Animals), and `art/claire.js` with a bear form as well.
 
 ## Magic
 
@@ -261,13 +295,26 @@ Today the hero has only Second Wind. Add, from the SRD fighter (Champion): **Act
 - **First rune (Act 2), Rune Strike:** after you hit, spend a slot for extra damage (2d8, more against undead). One button.
 - **More runes come from the story, not shops:** carvings in the keep, the mentor, boss rewards. Ideas: *Iron Ward* (a reaction: +5 AC once), *Warden's Call* (heals and steadies the party), *Rune of Binding* (a monster loses its turn), *Breaking Rune* (an attack that hits every monster).
 
-### The Oath (end of Act 3; open: three or one. Act 3 has the scene)
+### The Oath (end of Act 3; decided: three to choose from)
 
-| Oath | Style | Signature |
-|---|---|---|
-| Oath of Iron | The unbreakable defender | Heavy armour mastery, protects allies |
-| Oath of Storm | The spellblade | More rune slots, lightning runes that hit every monster |
-| Oath of Dawn | The holy warrior (like the SRD paladin) | Healing, smiting, crushing undead |
+At the door you pick one of three Oaths. It's permanent (no respec), and it changes how the rest of the game plays: your powers, your look and title, some of the people around you, and which monsters feel easy or hard. Each Oath has monsters that **fall to it**, so it feels powerful, and monsters that **test it**, so you can't just press the same button every fight. Act 4 mixes all of them, so every Oath gets easy fights and hard ones, and any of them can beat the dragon.
+
+| | **Oath of Iron** | **Oath of Storm** | **Oath of Dawn** |
+|---|---|---|---|
+| Style | The unbreakable defender | The spellblade | The holy warrior (like the SRD paladin) |
+| Colours and title | Grey steel and a tower on the cape; *Sworn of Iron* | Blue, with sparks along the blade; *Sworn of Storm* | Gold and white, a faint glow; *Sworn of Dawn* |
+| Signature rune | **Unbroken:** once per long rest, drop to 1 HP instead of 0 | **Chain Lightning:** hits both monsters (a DEX save halves it) | **Dawnstrike:** a smite after you hit; double damage against undead and fiends |
+| Always on | Heavy armour mastery (weapon hits on you do 3 less damage); one free Iron Ward per fight | +2 rune slots; **Blink** (once per fight, the next attack on you misses) | A healing aura (you and your companion heal a little at the start of your turn); immune to fear and disease |
+| Companion bonus | **Shield Ally:** your companion takes half damage while you're standing | Half your rune slots come back on a short rest | Your companion's healing spells heal more |
+| **Falls to it** | Big hitters that rely on weapons: giants, ogres, golems' fists, hell hounds' bites, the dragon's claws | Pairs and flyers: kobold packs, wyverns, griffons, imps; anything with weak saves | Undead and fiends: wraiths, vampire spawn, hell hounds, the dragon's undead servants |
+| **Tests it** | Magic and saves that get round armour: casters, breath weapons, curses | Things that shrug off magic: golems (lightning does nothing), high-HP brutes that soak up big spells | Beasts and constructs that radiant damage doesn't hurt extra; long fights that use up your smites |
+| How the world changes | Brannoc forges **Warden plate** (AC 20); the keep raises a **garrison**: guards on the walls, and the training yard becomes a sparring ring | Rachel's **rune library** grows a tower; Act 4's rune doors open with no check; Quill takes to you | Robyn's shrine in Fenwatch becomes a **temple**; the restless dead across the map go quiet; the ghosts in the keep start talking to you |
+| An Act 4 path only it opens | Hold up a collapsing bridge while the party crosses (a strength trial) | Blink across a chasm to a hidden vault | Walk through a cursed gate that burns anyone else |
+| Who's proudest | Brannoc (*"Now that's a Warden."*) | Rachel | Robyn |
+
+**The hard fights stay fair:** every Act 4 zone mixes monster types, the bounty board keeps offering hunts that suit your Oath, and the companion you bring covers your gap: Rachel's COUNTER for Iron against casters, a hard hitter for Storm against golems, Claire for Dawn against beasts. That keeps the roster useful right to the end.
+
+**Act 3 sets it up:** Maren has three Oath fragments (one per Oath), Esk talks about one at each waystone, and the companions' campfire talks each lean toward one (Brannoc to Iron, Rachel to Storm, Robyn to Dawn). On the Oath screen the companion with you gives a one-line opinion, but you choose.
 
 ### The world notices
 
@@ -320,13 +367,15 @@ One pull request each, with a minor version bump.
 19. **The Wardens' Gatehouse (Q8):** `gatehouse.js`, rune doors, the frozen forge and rune-iron (the blade's second form), COUNTER, Thorne and his shield guardian, and the choice to spare him. Tune with `npm run sim`.
 20. **The Oath and the end of Act 3:** the cracked door and the eye, the Oath screen and titles, Oath colours on the hero, and the keep's new rooms (the library, the training yard rematches, the cells).
 
+Claire's hints go in with the step they belong to: the moon charm with Rachel (14), the sun half and the wolves with the pass (16), Matthew's line (17), Thorne's line (19), "Rae?" with the ending (20). Each Oath's world changes (the garrison, the library tower, the temple) also come in step 20.
+
 ## Open questions
 
 1. **The hero's secret:** leaning to the last Warden heir: Act 2's opening (0.23.0) hints at the bloodline without saying it. Still open: confirm it, and when it's said out loud (built in 0.28.0 as Varric's "Warden's blood... at last").
-2. **Oaths:** three to choose from, or one fixed path that's simpler to build?
+2. ~~**Oaths:**~~ Decided: three to choose from, each changing the rest of the game (see The Oath).
 3. ~~**A name for the hero:**~~ Decided and built in 0.22.0: picked at NEW GAME (or RENAME in the bag), "Hero" if left empty.
-4. **Claire, Rachel and Robyn:** Robyn is decided (a cleric, met at Fenwatch). Rachel is proposed for Act 3: the wizard, Thorne's old apprentice (see Act 3). Claire is still open: Act 4, and maybe the bard or druid.
+4. **Claire, Rachel and Robyn:** Robyn is decided (a cleric, met at Fenwatch). Rachel is proposed for Act 3: the wizard, Thorne's old apprentice (see Act 3). Claire is decided: Rachel's twin and opposite, a druid, joining in Act 4 and bringing the whole party together for the dragon.
 5. **Inn prices:** about 10 gold in Act 1 and 25 in Act 2 is a guess; tune once the economy is clearer.
-6. **Act 3's cast:** Megan's father is **Matthew** (decided). Still to agree: Aldric Thorne as the rival and the ghost of Warden Esk as the mentor (and the hero's ancestor), and their names.
+6. **Act 3's cast:** Megan's father is **Matthew** (decided). Aldric Thorne as the rival is agreed. Still to agree: the ghost of Warden Esk as the mentor (and the hero's ancestor), and her name.
 7. ~~**Sparing Thorne:**~~ Decided: a real choice, and it matters in Act 4.
 8. ~~**Ice tiles:**~~ Decided: in, as short sliding puzzles on the pass.
