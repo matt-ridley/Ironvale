@@ -20,6 +20,9 @@ import { allyTurn, canCounter, counter } from "./tactics.js"; // (tactics.js use
 
 export const DEFEND_AC_BONUS = 2;
 export const CALL_ENDS = ["paralyzed", "frightened", "asleep", "restrained"]; // what Warden's Call shakes off
+export const IRON_SKIN = 3; // the Oath of Iron: weapon hits on you do this much less
+export const DAWN_AURA = "1d6"; // the Oath of Dawn: healing at the start of your turn
+const oathOf = battle => battle.player.oath || null;
 export const FLEE_DC = 10;
 
 export function spawnMonster(id, rng = Math.random) {
@@ -178,10 +181,12 @@ export function playerAction(battle, action, rng = Math.random) {
   const start = battle.log.length;
   const p = battle.player;
 
-  if (action.type === "attack" || action.type === "runeStrike") {
-    // Rune Strike: an ATTACK whose first hit also burns a rune slot for radiant damage (none spent on a miss).
-    let rune = action.type === "runeStrike";
-    if (rune && !knowsRune(p, "runeStrike")) return { ok: false, reason: "You don't know that rune." };
+  if (action.type === "attack" || action.type === "runeStrike" || action.type === "dawnstrike") {
+    // Rune Strike (or the Oath of Dawn's Dawnstrike): an ATTACK whose first hit also burns a rune slot for radiant
+    // damage (none spent on a miss).
+    const dawn = action.type === "dawnstrike";
+    let rune = action.type !== "attack";
+    if (rune && !knowsRune(p, action.type)) return { ok: false, reason: "You don't know that rune." };
     if (rune && !runesLeft(p)) return { ok: false, reason: "No rune slots left. A long rest brings them back." };
     let target = battle.monsters[action.target ?? battle.monsters.indexOf(living(battle)[0])];
     if (!target || target.hp <= 0) return { ok: false, reason: "Pick a monster that's still standing." };
@@ -198,11 +203,13 @@ export function playerAction(battle, action, rng = Math.random) {
       }
       let flare = "";
       if (rune && r.hit) {
-        const extra = adjustDamage(target, roll(target.type === "undead" ? "3d8" : "2d8", rng).total, "radiant").damage;
+        const dice = dawn ? "3d8" : target.type === "undead" ? "3d8" : "2d8";
+        let extra = adjustDamage(target, roll(dice, rng).total, "radiant").damage;
+        if (dawn && ["undead", "fiend"].includes(target.type)) extra *= 2; // the Dawn burns the dead
         r.damage += extra;
         p.runes.used = (p.runes.used || 0) + 1;
         rune = false;
-        flare = ` The rune on your blade flares: +${extra} radiant!`;
+        flare = dawn ? ` The Dawn blazes through your blade: +${extra} radiant!` : ` The rune on your blade flares: +${extra} radiant!`;
       }
       const woke = hurt(battle, t, r.damage);
       say(battle, "attack", `${n ? "Again! You swing" : "You swing"} your ${atk.name} at ${target.the}: ${rollText(r, atk.bonus)} ${hitText(r)}${flare}`, { roll: r, target: t, rune: !!flare });
@@ -226,6 +233,21 @@ export function playerAction(battle, action, rng = Math.random) {
       const freed = CALL_ENDS.filter(id => battle.conditions?.[key]?.[id]);
       for (const id of freed) removeCondition(battle, key, id);
       say(battle, "call-heal", `${nameOf(battle, key)} ${key === "player" ? "recover" : "recovers"} ${healed} HP${down && healed ? " and gets back up" : ""}${freed.length ? `, no longer ${freed.map(id => CONDITIONS[id].name).join(" or ")}` : ""}.`, { who: key, heal: healed, revived: down && healed > 0 });
+    }
+  } else if (action.type === "chainLightning") {
+    // The Oath of Storm: lightning leaps to every monster. A DEX save against your rune halves it.
+    if (!knowsRune(p, "chainLightning")) return { ok: false, reason: "You don't know that rune." };
+    if (!runesLeft(p)) return { ok: false, reason: "No rune slots left. A long rest brings them back." };
+    p.runes.used = (p.runes.used || 0) + 1;
+    say(battle, "chain", "You raise the Wardenblade, and lightning leaps from it, monster to monster!");
+    const dc = runeDc(p);
+    for (const m of living(battle)) {
+      const t = battle.monsters.indexOf(m), s = battleSave(battle, t, "DEX", dc, rng), full = roll("6d8", rng).total;
+      const dmg = adjustDamage(m, s.success ? Math.floor(full / 2) : full, "lightning").damage;
+      const woke = hurt(battle, t, dmg);
+      say(battle, "spell-save", `${m.The} ${s.success ? "dodges half of it" : "is caught"} (DEX save ${s.total} vs DC ${dc}): ${dmg} lightning damage.`, { target: t, save: s, damage: dmg });
+      tellWoken(battle, t, woke);
+      if (m.hp === 0) say(battle, "defeat", `${m.The} falls.`, { target: t });
     }
   } else if (action.type === "binding") {
     // The Rune of Binding: a CON save against your rune, or the monster loses its next turn.
@@ -356,7 +378,10 @@ function runMonsterTurns(battle, rng) {
         const why = Object.keys(battle.conditions[key]).filter(id => CONDITIONS[id].skips).map(id => CONDITIONS[id].name).join(" and ");
         say(battle, "skip", `${nameOf(battle, key)} ${isAre(key)} ${why} and can't act.`, { who: key });
         finishTurn(battle, key, rng);
-      } else if (key === "player" || (key === "ally" && battle.leadAlly)) break; // your turn, or one you lead
+      } else if (key === "player" || (key === "ally" && battle.leadAlly)) { // your turn, or one you lead
+        if (key === "player") dawnLight(battle, rng);
+        break;
+      }
       else {
         if (key === "ally") allyTurn(battle, rng);
         else if (monsterTurn(battle, key, rng)) return; // a blow is waiting on your Iron Ward
@@ -368,6 +393,21 @@ function runMonsterTurns(battle, rng) {
   }
   if (battle.state === "active") battle.defending = false; // the guard lasts until the start of the player's turn
 }
+
+/* The Oath of Dawn: a little healing light for you and your companion at the start of your turn, when you're hurt. */
+function dawnLight(battle, rng) {
+  if (oathOf(battle) !== "dawn") return;
+  for (const key of ["player", "ally"]) {
+    const c = combatant(battle, key);
+    if (!c || c.hp <= 0 || c.hp >= c.maxHp) continue;
+    const healed = Math.min(c.maxHp - c.hp, roll(DAWN_AURA, rng).total);
+    c.hp += healed;
+    say(battle, "dawn-light", `The Dawn's light warms ${key === "player" ? "you" : c.name}: +${healed} HP.`, { who: key, heal: healed });
+  }
+}
+
+/* True if this condition can't touch them (the Oath of Dawn: no fear). */
+export const immuneTo = (battle, key, id) => key === "player" && id === "frightened" && oathOf(battle) === "dawn";
 
 /* A troll's regeneration, at the start of its turn: back up by `regen.hp`, unless it took fire (or whatever stops it)
    since its last turn. */
@@ -384,7 +424,8 @@ function regenerate(battle, i) {
 /* True if you could turn this blow aside with Iron Ward: you know it, have a slot, can act, and +5 AC is enough. */
 function canWard(battle, r) {
   const p = battle.player;
-  return knowsRune(p, "ironWard") && runesLeft(p) > 0 && !skipsTurn(battle, "player") && !r.crit && r.total < r.targetAc + IRON_WARD_AC;
+  const free = oathOf(battle) === "iron" && !battle.freeWardUsed; // the Oath of Iron: one free Iron Ward a fight
+  return knowsRune(p, "ironWard") && (runesLeft(p) > 0 || free) && !skipsTurn(battle, "player") && !r.crit && r.total < r.targetAc + IRON_WARD_AC;
 }
 
 /* A monster's turn: each of its attacks (from attack number `from`), at one of you (with a companion standing, it picks
@@ -405,6 +446,11 @@ function monsterTurn(battle, i, rng, from = 0, onAllyChoice = null) {
     if (combatant(battle, key).hp <= 0) break;
     const atk = m.attacks[n];
     const r = resolveAttack(atk, acOf(battle, key), rng, attackMods(battle, i, key));
+    if (key === "player" && r.hit && oathOf(battle) === "storm" && !battle.blinked) { // the Oath of Storm: Blink
+      battle.blinked = true;
+      Object.assign(r, { hit: false, crit: false, damage: 0 });
+      say(battle, "blink", `You BLINK, a step sideways through the air: ${m.the}'s ${atk.name} finds nothing.`, { actor: i });
+    }
     if (key === "player" && r.hit && canWard(battle, r)) {
       battle.pending = { kind: "ironWard", monster: i, attack: n, onAlly, roll: r };
       say(battle, "ward-prompt", `${m.The}'s ${atk.name} is going to hit you (${r.total} vs AC ${r.targetAc})! Iron Ward? (+${IRON_WARD_AC} AC, a rune slot)`, { actor: i });
@@ -450,7 +496,7 @@ export function castMonsterSpell(battle, i, spell, rng) {
     const who = key === "player" ? "You" : a.name, are = key === "player" ? "are" : "is";
     say(battle, "monster-spell", `${who} ${s.success ? (key === "player" ? "resist" : "resists") : (key === "player" ? "are caught" : "is caught")} (${spell.save} save ${s.total} vs DC ${spell.dc})${dmg ? `: ${dmg} ${spell.damageType} damage` : ""}.`, { who: key, damage: dmg });
     tellWoken(battle, key, woke);
-    if (!s.success && spell.condition && combatant(battle, key).hp > 0) {
+    if (!s.success && spell.condition && combatant(battle, key).hp > 0 && !immuneTo(battle, key, spell.condition.id)) {
       addCondition(battle, key, spell.condition.id, { rounds: spell.condition.rounds });
       say(battle, "condition", `${who} ${are} ${CONDITIONS[spell.condition.id].name}!`, { who: key, condition: spell.condition.id });
     }
@@ -461,6 +507,10 @@ export function castMonsterSpell(battle, i, spell, rng) {
 /* One monster attack landing (or missing), with what it does after. */
 function landAttack(battle, i, key, atk, r, rng) {
   const m = battle.monsters[i], a = battle.ally;
+  if (r.hit && oathOf(battle) === "iron") {
+    if (key === "player") r.damage = Math.max(0, r.damage - IRON_SKIN); // heavy armour mastery
+    else if (battle.player.hp > 0) r.damage = Math.floor(r.damage / 2); // Shield Ally: you cover your companion
+  }
   const woke = hurt(battle, key, r.damage);
   if (key === "ally") say(battle, "monster-attack", `${m.The} attacks ${a.name} with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, actor: i, onAlly: true });
   else say(battle, "monster-attack", `${m.The} attacks with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r, true)}`, { roll: r, actor: i });
@@ -495,7 +545,8 @@ export function reactAction(battle, useWard, rng = Math.random) {
   const start = battle.log.length, p = battle.player, m = battle.monsters[pend.monster], atk = m.attacks[pend.attack], r = pend.roll;
   battle.pending = null;
   if (useWard) {
-    p.runes.used = (p.runes.used || 0) + 1;
+    if (oathOf(battle) === "iron" && !battle.freeWardUsed) battle.freeWardUsed = true; // free, once a fight
+    else p.runes.used = (p.runes.used || 0) + 1;
     say(battle, "ward", `Iron Ward! The rune on your blade flares, and ${m.the}'s ${atk.name} glances off (${r.total} vs AC ${r.targetAc + IRON_WARD_AC}).`, { actor: pend.monster });
   } else landAttack(battle, pend.monster, "player", atk, r, rng);
   if (!monsterTurn(battle, pend.monster, rng, pend.attack + 1, pend.onAlly) && !checkEnd(battle, rng)) {
@@ -508,6 +559,7 @@ export function reactAction(battle, useWard, rng = Math.random) {
 
 /* An attack's lingering effect: a saving throw, or the condition. */
 function afflict(battle, key, { condition, save, dc, rounds }, rng) {
+  if (immuneTo(battle, key, condition)) return say(battle, "save", "The Dawn steadies you: fear can't take hold.", { who: key });
   const s = resistSave(battle, key, save, dc, rng);
   const who = nameOf(battle, key), are = key === "player" ? "are" : "is";
   if (s.success) return say(battle, "save", `${who} shake${key === "player" ? "" : "s"} it off (${save} save ${s.total} vs DC ${dc}).`, { who: key });
@@ -536,6 +588,12 @@ function nextTurn(battle) {
 }
 
 export function checkEnd(battle, rng) {
+  const p = battle.player;
+  if (p.hp <= 0 && p.oath === "iron" && !p.unbrokenUsed) { // the Oath of Iron: Unbroken, once per long rest
+    p.unbrokenUsed = true;
+    p.hp = 1;
+    say(battle, "unbroken", "You fall... and you don't. UNBROKEN! You stand up out of the blow with 1 HP.");
+  }
   if (battle.player.hp <= 0) {
     battle.state = "lost";
     afterBattle(battle.player, battle.ally);

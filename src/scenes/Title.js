@@ -6,7 +6,7 @@ import { state } from "../state/game.js";
 import { loadGame } from "../state/save.js";
 import { objective } from "../story/scripts.js";
 import { text, panel, button, uiCamera } from "../ui/widgets.js";
-import { heroFrame } from "../art/pixels.js";
+import { heroFrame, paintHero } from "../art/pixels.js";
 import { playMusic, isMuted, toggleMuted, sfx } from "../audio/sound.js";
 import { MONSTER_SCALE } from "../art/monsters.js";
 
@@ -20,6 +20,7 @@ export class Title extends Phaser.Scene {
     this.add.text(WIDTH / 2, 18, TITLE.toUpperCase(), { fontFamily: FONT, fontSize: "24px", color: COLORS.gold }).setOrigin(0.5, 0);
     text(this, WIDTH / 2, 45, "A d20 pixel adventure", { color: COLORS.dim }).setOrigin(0.5, 0);
 
+    paintHero(this, state.hero.oath);
     const knight = this.add.image(120, 152, "hero", heroFrame("side")).setOrigin(0.5, 1).setScale(1.5);
     const goblin = this.add.image(360, 152, "goblin").setOrigin(0.5, 1).setScale(MONSTER_SCALE).setFlipX(true);
     this.tweens.add({ targets: [knight, goblin], y: "-=3", duration: 600, yoyo: true, repeat: -1, ease: "Sine.inOut" });

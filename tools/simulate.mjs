@@ -36,7 +36,9 @@ export function playFight(hero, foes, rng) {
     if (!isPlayerTurn(b)) break;
     const p = b.player, low = p.hp <= p.maxHp / 3;
     const potion = ["potionGreaterHealing", "potionHealing"].find(base => p.inventory.some(it => it.base === base));
-    let action = { type: knowsRune(p, "runeStrike") && runesLeft(p) > (knowsRune(p, "ironWard") ? 1 : 0) ? "runeStrike" : "attack" };
+    const strike = knowsRune(p, "dawnstrike") ? "dawnstrike" : "runeStrike";
+    let action = { type: knowsRune(p, strike) && runesLeft(p) > (knowsRune(p, "ironWard") ? 1 : 0) ? strike : "attack" };
+    if (knowsRune(p, "chainLightning") && runesLeft(p) > 1 && b.monsters.filter(m => m.hp > 0).length > 1) action = { type: "chainLightning" };
     if (b.round === 1 && p.actionSurge && p.level >= 2 && !b.surging) action = { type: "actionSurge" };
     else if (low && p.secondWind) action = { type: "secondWind" };
     else if (low && potion) action = { type: "potion", base: potion };

@@ -8,6 +8,7 @@ import { MEGAN_COLOURS, MEGAN_FRAMES } from "./megan.js";
 import { ROBYN_COLOURS, ROBYN_FRAMES } from "./robyn.js";
 import { RACHEL_COLOURS, RACHEL_FRAMES } from "./rachel.js";
 import { drawTerrain } from "./terrain.js";
+import { OATH_COLOURS } from "../rules/oaths.js";
 import { TILE } from "../config.js";
 
 export const R = 2;
@@ -55,21 +56,34 @@ const SHEETS = { hero: [HERO_FRAMES, HERO_COLOURS], megan: [MEGAN_FRAMES, MEGAN_
 export const heroFrame = (facing, i = 0) => FACINGS.indexOf(facing) * 4 + i;
 export const animKey = (key, kind, facing) => `${key === "hero" ? "" : `${key}-`}${kind}-${facing}`;
 
+/* Draws a sheet's 12 frames side by side. */
+function drawSheet(ctx, frames, colours) {
+  FACINGS.forEach((facing, f) => frames[facing].forEach((rows, i) => drawPixels(ctx, rows, colours, { x: (f * 4 + i) * HERO_W * R, outline: "o" })));
+}
+
 function makeSheet(scene, key, frames, colours) {
   const fw = HERO_W * R, fh = HERO_H * R;
   const tex = scene.textures.createCanvas(key, fw * 12, fh);
-  const ctx = tex.getContext();
-  FACINGS.forEach((facing, f) => frames[facing].forEach((rows, i) => {
-    const n = f * 4 + i;
-    drawPixels(ctx, rows, colours, { x: n * fw, outline: "o" });
-    tex.add(n, 0, n * fw, 0, fw, fh);
-  }));
+  drawSheet(tex.getContext(), frames, colours);
+  for (let n = 0; n < 12; n++) tex.add(n, 0, n * fw, 0, fw, fh);
   tex.refresh();
   for (const facing of FACINGS) {
     const start = heroFrame(facing);
     scene.anims.create({ key: animKey(key, "walk", facing), frames: [0, 1, 2, 3].map(i => ({ key, frame: start + i })), frameRate: 8, repeat: -1 });
     scene.anims.create({ key: animKey(key, "idle", facing), frames: [{ key, frame: start }], frameRate: 1 });
   }
+}
+
+/* Repaints the hero in their Oath's colours (or the ones they started with), on the same texture, so every sprite and
+   animation using it changes at once. Does nothing if it's already in those colours. */
+let painted = null;
+export function paintHero(scene, oath = null) {
+  if (painted === (oath || "none") || !scene.textures.exists("hero")) return;
+  painted = oath || "none";
+  const tex = scene.textures.get("hero"), ctx = tex.getContext();
+  ctx.clearRect(0, 0, tex.width, tex.height);
+  drawSheet(ctx, HERO_FRAMES, { ...HERO_COLOURS, ...(OATH_COLOURS[oath] || {}) });
+  tex.refresh();
 }
 
 /* The ground of a map as one picture (see terrain.js), made the first time you visit it and kept after that. */

@@ -22,7 +22,8 @@ const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE"
   pipShield: "SHIELD", chalk: "CHALK MARK", waystone: "WAYSTONE", waystoneLit: "WAYSTONE", boneCairn: "CAIRN", mirror: "MIRROR", earthElemental: "GUARDIAN",
   kobold: "KOBOLDS", colleen: "WARDEN COLLEEN", arrow: "ARROW", iceAltar: "ALTAR", matthew: "MATTHEW", rachel: "RACHEL", hut: "GOBLIN CAMP",
   ferryman: "OLD VOSK", boat: "PUNT", mineMouth: "OLD MINE", hagHut: "CROOKED HUT", crownedSallow: "QUEEN SALLOW",
-  thorne: "ALDRIC THORNE", shieldGuardian: "ALDRIC THORNE", greatDoor: "THE DOOR", frozenForge: "FORGE", oreBin: "ORE BIN" };
+  thorne: "ALDRIC THORNE", shieldGuardian: "ALDRIC THORNE", greatDoor: "THE DOOR", frozenForge: "FORGE", oreBin: "ORE BIN",
+  bookcase: "RUNE LIBRARY", dummy: "TRAINING YARD", knight: "GARRISON" };
 const TEXT_W = 290;
 const BTN_X = 394, BTN_W = 152, BTN_H = 28, BTN_GAP = 6; // the answer buttons: centre x, size, gap
 const SLIM_H = 18, SLIM_GAP = 3; // with more than three answers, slimmer buttons (keep those labels to one line)
@@ -151,6 +152,7 @@ export class Meet extends Phaser.Scene {
     const travel = this.events_.find(e => e.type === "travel");
     const shop = this.events_.find(e => e.type === "shop"); // a person who keeps a shop (Brannoc in the keep)
     const game = this.events_.find(e => e.type === "minigame"); // knucklebones, arm wrestling, archery, fishing
+    const oath = this.events_.find(e => e.type === "oath"); // the Oath screen, at the Door
     this.cameras.main.fadeOut(200);
     this.cameras.main.once("camerafadeoutcomplete", () => {
       if (battle) {
@@ -162,6 +164,9 @@ export class Meet extends Phaser.Scene {
         state.stepsSinceFight = 0;
         this.scene.stop("World");
         this.scene.start("World");
+      } else if (oath) {
+        this.scene.launch("Oath"); // the world stays paused until it's sworn
+        this.scene.stop();
       } else if (shop || game) {
         this.scene.launch(game ? game.key : "Shop", game ? game.data : { shop: shop.shop }); // the world stays paused until it closes
         this.scene.stop();

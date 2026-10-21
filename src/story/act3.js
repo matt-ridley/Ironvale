@@ -15,10 +15,13 @@
 // Old Vosk the ferryman, with treasure hints and a row out to the island in the south lake. Quest 8, the Wardens'
 // Gatehouse: the door opens to a Warden who knows all three runes; three rune doors inside (Rachel reads which rune each
 // wants); rune-iron in the frozen forge (Brannoc makes the Wardenblade's second form of it); Thorne and his shield
-// guardian at the Door; and what to do with him after.
+// guardian at the Door; and what to do with him after. The end of Act 3: Thorne's last rune cracks the Door, a golden eye
+// looks through, and you swear your Oath (scenes/Oath.js) while Colleen holds it shut; then "Rae?". Back at the keep:
+// Rachel's rune library, the training yard, Thorne in the old crypt if you spared him, and each Oath's mark on the world.
 // No Phaser here. scripts.js adds these to SCRIPTS.
 import { joinParty, COMPANIONS } from "../rules/party.js";
 import { learnRune, knowsRune } from "../rules/character.js";
+import { OATHS } from "../rules/oaths.js";
 import { makeItem, itemName } from "../rules/items.js";
 import { pay, paid } from "./rewards.js";
 import { callName, titleOf, actOf } from "./hero.js";
@@ -951,11 +954,118 @@ export const ACT3_SCRIPTS = {
     },
   },
 
-  // The Door itself.
+  // The Door itself. Once Thorne is dealt with, facing it ends Act 3: his last rune, the crack, the eye, and the Oath.
   greatDoor: {
-    start: "look",
-    nodes: { look: { text: "The Door. Black iron, taller than the keep, carved with every rune the Wardens ever knew. It's cold to the touch. And from the other side, very faintly, something is breathing." } },
+    start: s => (s.flags.oathSworn ? "held" : s.flags.gatehouseDone ? "crack" : "look"),
+    nodes: {
+      look: { text: "The Door. Black iron, taller than the keep, carved with every rune the Wardens ever knew. It's cold to the touch. And from the other side, very faintly, something is breathing." },
+      crack: {
+        text: s => (s.flags.thorneSpared
+          ? "Behind you, Thorne laughs, his bound hands raised. \"It promised,\" he whispers, and speaks the one rune he kept back: the Breaking Rune. It hits the Door like a hammer."
+          : "From where he lies, Thorne lifts one hand and speaks the one rune he kept back: the Breaking Rune. It hits the Door like a hammer."),
+        to: "eye",
+      },
+      eye: {
+        text: "The Door CRACKS. Heat pours out of the gap, and the smell of hot stone, and through the crack something looks at you: a golden eye the size of a cartwheel, its slit of a pupil narrowing.",
+        to: "colleen",
+      },
+      colleen: {
+        speaker: COLLEEN,
+        text: "Colleen is there, both hands flat against the iron, holding the crack shut with everything she has left. \"Now. Swear it, while I can still hold it!\"",
+        choices: [{ label: "Swear the Oath", to: "swear" }],
+      },
+      swear: { enter: (s, ctx) => ctx.emit({ type: "oath" }) },
+      held: { text: s => `The Door, whole again, its runes glowing ${{ iron: "steel-grey", storm: "storm-blue", dawn: "dawn-gold" }[s.flags.oath] || "softly"}. It's warm to the touch now. On the other side, something is waiting.` },
+    },
   },
+
+  // What happens once you've sworn (played by the World after the Oath screen).
+  afterOath: {
+    start: "sworn",
+    nodes: {
+      sworn: {
+        text: s => `You swear it: "${OATHS[s.flags.oath].words}" The runes on the Door blaze up one by one, ${{ iron: "grey as steel", storm: "blue as lightning", dawn: "gold as morning" }[s.flags.oath]}, and the crack begins to close.`,
+        to: "fade",
+      },
+      fade: { speaker: COLLEEN, text: "\"Hold it better than I did.\" She smiles at you, the first time you've seen it, and fades into the light of the runes.", to: "rae" },
+      rae: {
+        text: "Just before the crack seals, a voice shouts from the other side: a girl's voice, wild and furious and glad. \"RAE?\"",
+        to: "rachel",
+      },
+      rachel: {
+        enter: (s, ctx) => { if (withRachel(s)) s.flags.raeHeard = true; else ctx.goto("end"); },
+        speaker: RACHEL,
+        text: "\"...Claire?\" She runs at the Door, but it's whole again, cold and silent. She stands there with her hand on it for a long time. Then she takes your half of the sun charm and holds it against her moon, and doesn't say anything at all.",
+        to: "end",
+      },
+      end: {
+        enter: s => { s.flags.act3Complete = true; },
+        text: s => `ACT 3 COMPLETE. You are ${callName(s.hero) ? `${callName(s.hero)}, ` : ""}${OATHS[s.flags.oath].title}. ${s.flags.thorneSpared ? "Thorne is on his way to the keep, in chains." : "Thorne is the mountain's now."} Beyond the Door something huge is awake, and someone there knows Rachel's name. Act 4 is coming. (Go home to the keep: things have changed.)`,
+      },
+    },
+  },
+  // If Rachel wasn't with you at the Door, she hears about it at the keep.
+  raeNews: {
+    start: "run",
+    nodes: {
+      run: {
+        speaker: RACHEL,
+        enter: s => { s.flags.raeHeard = true; },
+        text: "Rachel runs into the courtyard with Quill flapping behind her. \"They said a voice. From behind the Door. They said it called... Rae.\" She sits down on the cold stones. \"Nobody's called me that since I was twelve.\"",
+      },
+    },
+  },
+
+  // Rachel's rune library in the keep: scrolls for her book (more once Thorne's notes are in), and runes.
+  runeLibrary: {
+    start: "look",
+    nodes: {
+      look: {
+        text: s => `Rachel's rune library: bookcases, rubbings of Warden carvings, and an owl's perch made of a broken telescope.${s.flags.oath === "storm" ? " Since your Oath it's grown a tower (she won't say how), and Quill has taken to sleeping on your chair." : ""}${s.flags.gatehouseDone ? " Thorne's notes are here now, in a locked box." : ""}`,
+        choices: [{ label: "Browse the scrolls", to: "shop" }, { label: "Leave", to: null }],
+      },
+      shop: { enter: (s, ctx) => ctx.emit({ type: "shop", shop: s.flags.gatehouseDone ? "libraryFull" : "library" }) },
+    },
+  },
+
+  // The keep's training yard, in the old armoury: Brannoc's arm-wrestling table (and a sparring ring, for Iron).
+  trainingYard: {
+    start: "look",
+    nodes: {
+      look: {
+        text: s => (s.flags.oath === "iron"
+          ? "The training yard is a sparring ring now: the new garrison drills here every morning. Brannoc keeps his arm-wrestling table in the corner. \"Best of one, Warden?\""
+          : "The keep's training yard, in the old armoury: straw dummies, a target, and Brannoc's arm-wrestling table. \"Best of one?\" he says. \"Beat me and you can have my bracer.\""),
+        choices: [{ label: "Arm wrestle Brannoc", to: "play" }, { label: "Not now", to: null }],
+      },
+      play: { enter: (s, ctx) => ctx.emit({ type: "minigame", key: "ArmWrestle", data: { rival: "brannoc" } }) },
+    },
+  },
+
+  // Thorne, in the old crypt under the keep, if you spared him: a line for every visit.
+  thorneCell: {
+    start: s => (withRachel(s) ? "rachel" : "visit"),
+    nodes: {
+      visit: {
+        speaker: THORNE,
+        enter: s => { s.flags.thorneVisits = ((s.flags.thorneVisits ?? -1) + 1) % 3; },
+        text: s => ["The voice is quieter here. I don't know if that's the stone, or you. Either way, I'm grateful. Don't tell Rachel.",
+          "It used to tell me stories about the Wardens. Jailers, it said. It never said what they were keeping in. I never asked. A scholar, and I never asked.",
+          "When it speaks to you, and it will, Warden, ask it its name. It never told me. I think that matters."][s.flags.thorneVisits],
+      },
+      rachel: {
+        speaker: THORNE,
+        text: "\"Rachel.\" He doesn't look up. \"I told you I'd find your sister. I wasn't lying. I just wasn't going to stop there.\"",
+        to: "rachel2",
+      },
+      rachel2: { speaker: RACHEL, text: "\"I know, Aldric. That's the part I can't forgive.\"" },
+    },
+  },
+
+  // Each Oath's mark on the world: Iron's garrison on the keep's walls, Dawn's Warden ghosts who talk to you now.
+  garrison: { start: "hello", nodes: { hello: { speaker: "GUARD", text: "Warden! Ironvale's first garrison in a hundred years, reporting. Fenwatch lads, mostly. And a goblin. He insisted." } } },
+  wardenGhost: { start: "hello", nodes: { hello: { speaker: "WARDEN'S GHOST", text: "A pale knight in old mail nods to you. \"Sworn of Dawn. The garrison remembers you, Warden. We'll keep watch with you, when the dark comes.\"" } } },
+
 
 };
 
@@ -997,6 +1107,7 @@ export function zoneEvent(state, zoneId) {
     f.queenHeard = true;
     return { note: "Fenwatch folk are grumbling: Mother Sallow's set up a toll on the causeway. She calls herself the Queen of the Fen now." };
   }
+  if (zoneId === "courtyard" && f.act3Complete && f.rachelJoined && !f.raeHeard && !withRachel(state)) return { script: "raeNews" };
   if (zoneId === "heights" && !f.sawWolves) {
     f.sawWolves = true;
     return { script: "wolves" };

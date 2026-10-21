@@ -15,6 +15,7 @@ import { asiEarned, RUNES, FIGHTING_STYLES } from "../rules/character.js";
 import { cleanName } from "../story/hero.js";
 import { cleanBounty } from "../story/bounties.js";
 import { SPELLS } from "../data/spells.js";
+import { OATHS } from "../rules/oaths.js";
 
 export const SAVE_KEY = "ironvale-save";
 export const SAVE_FORMAT = 6;
@@ -84,6 +85,8 @@ export function deserialize(json) {
   if (!FIGHTING_STYLES[hero.fightingStyle]) delete hero.fightingStyle;
   if (typeof hero.indomitableUsed !== "boolean") delete hero.indomitableUsed;
   if (hero.bladeForm !== 2) delete hero.bladeForm; // the Wardenblade's second form (Act 3)
+  if (!OATHS[hero.oath]) delete hero.oath; // the Oath, sworn at the end of Act 3
+  if (typeof hero.unbrokenUsed !== "boolean") delete hero.unbrokenUsed;
   hero.name = cleanName(h.name);
   if (data.format < 5) { // the crest goes on the sword you've had longest: your first longsword, worn or carried
     const all = [hero.equipment.weapon, ...hero.inventory].filter(Boolean);

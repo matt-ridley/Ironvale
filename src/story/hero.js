@@ -1,12 +1,15 @@
 // Who the hero is: the name the player picks at NEW GAME (or later, from the bag), and the title they've earned,
 // which people use as the story moves on. The roadmap's titles run Traveller, Hero of Oakhollow, Ironvale's Heir,
-// Warden-in-training, Warden of Ironvale; up to Warden-in-training (the first waystone, Act 3) exist so far. No Phaser here.
+// Warden-in-training, the Oath's (Sworn of Iron, Storm or Dawn), Warden of Ironvale; all but the last exist so far. No Phaser here.
 
 export const DEFAULT_NAME = "Hero";
 export const MAX_NAME = 10;
 
 // Highest first: the first one whose `earned` is true is the hero's title.
 export const TITLES = [
+  { id: "swornIron", name: "Sworn of Iron", earned: f => f.oath === "iron" },
+  { id: "swornStorm", name: "Sworn of Storm", earned: f => f.oath === "storm" },
+  { id: "swornDawn", name: "Sworn of Dawn", earned: f => f.oath === "dawn" },
   { id: "trainee", name: "Warden-in-training", earned: f => !!f.wardenTraining },
   { id: "heir", name: "Ironvale's Heir", earned: f => !!f.varricDefeated },
   { id: "heroOfOakhollow", name: "Hero of Oakhollow", earned: f => !!f.kingDefeated },

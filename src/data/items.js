@@ -31,6 +31,7 @@ export const ITEMS = {
   chainMail:   { name: "Chain Mail",     type: "armour", category: "heavy",  baseAc: 16, cost: 75 },
   splint:      { name: "Splint Armour",  type: "armour", category: "heavy",  baseAc: 17, cost: 200 },
   plate:       { name: "Plate Armour",   type: "armour", category: "heavy",  baseAc: 18, cost: 1500 },
+  wardenPlate: { name: "Warden Plate",   type: "armour", category: "heavy",  baseAc: 20, cost: 3000 }, // Brannoc, for a Warden sworn of Iron
 
   shield:      { name: "Shield", type: "shield", ac: 2, cost: 10 },
 
@@ -47,6 +48,8 @@ export const ITEMS = {
   // Minigame prizes (rules/minigames.js), won once and never sold. Trinkets work from your pack.
   luckyDie: { name: "Lucky Die", type: "trinket", prize: true, cost: 0,
     about: "A bone die from the knucklebones table, worn smooth. In a fight, the first time you roll a natural 1 to attack, you roll again. Once per rest. Works from your pack." },
+  brannocBracer: { name: "Brannoc's Bracer", type: "trinket", prize: true, cost: 0,
+    about: "A dwarf's iron bracer, won in an arm wrestle in the keep's yard. +2 CON while it's in your pack." },
   oswinBelt: { name: "Oswin's Belt", type: "trinket", prize: true, cost: 0,
     about: "Big Oswin's wide leather belt, won in an arm wrestle. +2 STR while it's in your pack." },
   willowBow: { name: "Willow Longbow", type: "bow", prize: true, damage: "1d8", damageType: "piercing", cost: 50 },
@@ -107,6 +110,23 @@ export const SHOPS = {
   },
   // Act 3: Grub's stall (the goblin refugees' trader: cheap, and doesn't ask where things came from), and Sallow's
   // Sundries at the rockslide camp (the pass's only pedlar, at hag prices). `markup` multiplies the price.
+  // Brannoc's forge, for a Warden sworn of Iron: the same, and Warden plate.
+  forgeIron: {
+    title: "BRANNOC'S FORGE", tabs: ["upgrade", "silver", "buy", "sell"], maxUpgrade: 5, tint: 0xd0684e,
+    greeting: "Sworn of Iron! Now THAT'S a Warden. I've made you something: Warden plate, the first in a hundred years.",
+    stock: ["wardenPlate", "longsword", "warhammer", "greatsword", "chainMail", "splint", "plate", "shield", "longbow", "lightCrossbow", "potionHealing"],
+  },
+  // Rachel's rune library in the keep: scrolls for her book, at cost. Thorne's notes (after the gatehouse) add more.
+  library: {
+    title: "THE RUNE LIBRARY", tabs: ["buy"], tint: 0x4a4f9a,
+    greeting: "Rachel's library! Scrolls I've copied out of the Wardens' books. You can't read them all. She can.",
+    stock: ["scrollMagicMissile", "scrollBurningHands", "scrollSleep", "scrollMistyStep", "scrollLightningBolt"],
+  },
+  libraryFull: {
+    title: "THE RUNE LIBRARY", tabs: ["buy"], tint: 0x4a4f9a,
+    greeting: "With Thorne's notes, Rachel's worked out a few more. She won't say it, but she's pleased.",
+    stock: ["scrollMagicMissile", "scrollBurningHands", "scrollSleep", "scrollMistyStep", "scrollLightningBolt", "scrollFireball", "scrollCounterspell"],
+  },
   goblinTrader: {
     title: "GRUB'S GOODS", tabs: ["buy", "sell"], tint: 0x6aa84f, markup: 0.8,
     greeting: "Grub's goods! Cheap! Don't ask where from. Grub doesn't ask either.",

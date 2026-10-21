@@ -2,7 +2,7 @@
    - Game files (this site): network first, so a new version shows up as soon as there is signal,
      falling back to the saved copy after a few seconds or when offline.
    - Phaser and the pixel font: saved copy first. Phaser's URL includes its version, so it never changes. */
-const VERSION = "0.37.0"; // keep the same as src/config.js (a test checks)
+const VERSION = "0.38.0"; // keep the same as src/config.js (a test checks)
 const SHELL = `ironvale-shell-${VERSION}`;
 const STATIC = "ironvale-static-v1";
 const PHASER = "https://cdnjs.cloudflare.com/ajax/libs/phaser/3.90.0/phaser.min.js";
@@ -13,7 +13,7 @@ const APP_FILES = [
   "src/audio/sound.js", "src/audio/tracks.js",
   "src/data/items.js", "src/data/monsters.js",
   "src/rules/character.js", "src/rules/checks.js", "src/rules/combat.js", "src/rules/dice.js", "src/rules/items.js", "src/rules/gear.js", "src/rules/bank.js", "src/rules/party.js", "src/rules/bestiary.js", "src/rules/conditions.js", "src/rules/magic.js", "src/rules/tactics.js", "src/world/ironvale.js", "src/world/keep.js", "src/world/pass.js", "src/world/gatehouse.js", "src/story/hero.js", "src/story/bounties.js", "src/story/talks.js", "src/story/rewards.js", "src/story/act3.js", "src/art/robyn.js", "src/art/rachel.js", "src/data/spells.js",
-  "src/scenes/Boot.js", "src/scenes/Title.js", "src/scenes/World.js", "src/scenes/Battle.js", "src/scenes/Inventory.js", "src/scenes/Shop.js", "src/scenes/Bank.js", "src/scenes/Dialogue.js", "src/scenes/Meet.js", "src/scenes/Hud.js", "src/scenes/Quests.js", "src/scenes/WorldMap.js", "src/scenes/LevelUp.js", "src/scenes/NameEntry.js", "src/scenes/minigames.js", "src/rules/minigames.js", "src/story/minigames.js",
+  "src/scenes/Boot.js", "src/scenes/Title.js", "src/scenes/World.js", "src/scenes/Battle.js", "src/scenes/Inventory.js", "src/scenes/Shop.js", "src/scenes/Bank.js", "src/scenes/Dialogue.js", "src/scenes/Meet.js", "src/scenes/Hud.js", "src/scenes/Quests.js", "src/scenes/WorldMap.js", "src/scenes/LevelUp.js", "src/scenes/NameEntry.js", "src/scenes/minigames.js", "src/scenes/Oath.js", "src/rules/minigames.js", "src/rules/oaths.js", "src/story/minigames.js",
   "src/story/dialogue.js", "src/story/scripts.js", "src/story/quests.js",
   "src/state/game.js", "src/state/save.js", "src/ui/joystick.js", "src/ui/widgets.js", "src/ui/stage.js", "src/world/map.js", "src/world/maps.js", "src/world/overworld.js", "src/world/cave.js", "src/world/houses.js", "src/world/travel.js", "src/world/encounters.js", "src/world/movement.js",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png",

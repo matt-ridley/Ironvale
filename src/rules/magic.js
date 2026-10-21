@@ -11,6 +11,8 @@ import { addCondition, attackMods, CONDITIONS } from "./conditions.js";
 import { combatant, nameOf, acOf, battleSave, hurt, tellWoken, say, living, resolveAttack, adjustRoll, adjustDamage, rollText, hitText, isPlayerTurn, endPlayerAction } from "./combat.js";
 import { companionStats } from "./party.js";
 
+export const DAWN_HEAL_BONUS = 5; // the Oath of Dawn: your companion's healing spells heal this much more
+
 /* Spell slots a full caster of this level has, by slot level (index 0 = level 1 slots). */
 export const slotsFor = level => SLOT_TABLE[Math.min(Math.max(level, 0), SLOT_TABLE.length - 1)];
 
@@ -143,7 +145,8 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
     if (!any) say(battle, "spell-fizzle", "A drowsy haze drifts over them, but no one is weak enough to drop off.", { spell: spellId });
   } else if (spell.kind === "heal") {
     const t = keys[0], c = combatant(battle, t), down = c.hp === 0;
-    const amount = Math.max(1, roll(spellDice(spell, "heal", caster.level, slot), rng).total + caster.mod);
+    const dawn = caster.key === "ally" && battle.player.oath === "dawn" ? DAWN_HEAL_BONUS : 0; // the Oath of Dawn
+    const amount = Math.max(1, roll(spellDice(spell, "heal", caster.level, slot), rng).total + caster.mod + dawn);
     const healed = Math.min(c.maxHp - c.hp, amount);
     c.hp += healed;
     say(battle, "spell-heal", `${nameOf(battle, t)} ${t === "player" ? "recover" : "recovers"} ${healed} HP (${c.hp}/${c.maxHp})${down && healed ? " and gets back up!" : "."}`, { who: t, heal: healed, revived: down && healed > 0, spell: spellId });

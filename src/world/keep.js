@@ -33,6 +33,14 @@ export const KEEP = {
     { id: "keepCarving", x: 8, y: 11, sprite: "carving", script: "carving", still: true,
       lore: "\"Iron to hold, the Call to stand, Binding to keep: three runes on the road, and the Oath at the door.\" Rachel whispers it twice. \"The waystones. And a cache behind this stone.\"",
       cache: { gold: 150, items: ["scrollMistyStep"] } },
+    // Act 3's new rooms: Rachel's rune library in the old chapel, the training yard in the armoury, Thorne in the crypt.
+    { id: "runeLibrary", x: 4, y: 14, sprite: "bookcase", script: "runeLibrary", shownWhen: "rachelJoined", still: true },
+    { id: "trainingYard", x: 32, y: 26, sprite: "dummy", script: "trainingYard", shownWhen: "rockslideOpen", still: true },
+    { id: "thorneCell", x: 14, y: 8, sprite: "thorne", script: "thorneCell", shownWhen: ["thorneSpared", "oathSworn"] },
+    // Each Oath's mark: Iron raises a garrison, and with the Dawn the keep's old dead talk to you.
+    { id: "guard1", x: 14, y: 30, sprite: "knight", script: "garrison", shownWhen: "oathIron" },
+    { id: "guard2", x: 24, y: 31, sprite: "knight", script: "garrison", shownWhen: "oathIron" },
+    { id: "keepGhost", x: 22, y: 22, sprite: "colleen", script: "wardenGhost", ghost: true, shownWhen: "oathDawn" },
     { id: "grubKeep", x: 16, y: 26, sprite: "goblin", script: "grub", shownWhen: ["refugeesHelped", "rockslideOpen"] },
     { id: "matthewKeep", x: 25, y: 26, sprite: "matthew", script: "matthewKeep", shownWhen: "matthewFound" },
     { id: "brannocTools", x: 35, y: 29, sprite: "chest", script: "brannocTools", goneWhen: "toolsFound", still: true },
