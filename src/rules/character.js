@@ -1,6 +1,7 @@
 // The player character: ability scores, HP, armour class, attacks, levelling up, and the fighter's features from the
-// SRD (Champion): Second Wind (L1), Action Surge (L2), Improved Critical (L3), ability score increases (L4, L6, L8...)
-// and Extra Attack (L5).
+// SRD (Champion): Second Wind (L1), Action Surge (L2), Improved Critical (L3), ability score increases (L4, L6, L8...),
+// Extra Attack (L5), Indomitable (L9), a Fighting Style (L10: the Champion's Additional Fighting Style) and Extra
+// Attack (2) (L11).
 import { roll } from "./dice.js";
 import { baseOf, makeItem } from "./items.js";
 
@@ -17,13 +18,33 @@ export const FEATURES = [
   { id: "actionSurge", level: 2, name: "Action Surge", about: "Once per rest, take one more action on your turn." },
   { id: "improvedCritical", level: 3, name: "Improved Critical", about: "Your attacks score a critical hit on a 19 or 20." },
   { id: "extraAttack", level: 5, name: "Extra Attack", about: "Attack twice whenever you take the ATTACK action." },
+  { id: "indomitable", level: 9, name: "Indomitable", about: "Once per long rest, roll a failed saving throw again." },
+  { id: "fightingStyle", level: 10, name: "Fighting Style", about: "Pick a style: Defense (+1 AC in armour) or Dueling (+2 damage with a one-handed weapon)." },
+  { id: "extraAttack2", level: 11, name: "Extra Attack (2)", about: "Attack three times whenever you take the ATTACK action." },
 ];
 export const hasFeature = (char, id) => char.level >= FEATURES.find(f => f.id === id).level;
 export const featuresAt = level => FEATURES.filter(f => f.level === level);
 /* The lowest d20 roll that's a critical hit: 19 with Improved Critical, otherwise 20. */
 export const critOn = char => (hasFeature(char, "improvedCritical") ? 19 : 20);
 /* Attacks each time you take the ATTACK action (before any potion). */
-export const attacksPerAction = char => (hasFeature(char, "extraAttack") ? 2 : 1);
+export const attacksPerAction = char => (hasFeature(char, "extraAttack2") ? 3 : hasFeature(char, "extraAttack") ? 2 : 1);
+
+// The fighting styles the level 10 pick offers (the level-up screen asks once you reach it).
+export const FIGHTING_STYLES = {
+  defense: { name: "Defense", about: "+1 AC while you wear armour." },
+  dueling: { name: "Dueling", about: "+2 damage with a one-handed weapon." },
+};
+/* True once you've reached level 10 and haven't picked your fighting style yet. */
+export const needsFightingStyle = char => hasFeature(char, "fightingStyle") && !FIGHTING_STYLES[char.fightingStyle];
+export function pickFightingStyle(char, style) {
+  if (!hasFeature(char, "fightingStyle")) return { ok: false, reason: "You pick a fighting style at level 10." };
+  if (!FIGHTING_STYLES[style]) return { ok: false, reason: `Unknown fighting style: ${style}` };
+  if (FIGHTING_STYLES[char.fightingStyle]) return { ok: false, reason: "You've already picked your fighting style." };
+  char.fightingStyle = style;
+  return { ok: true, style };
+}
+/* Indomitable (level 9): a failed save can be rolled again, once per long rest. */
+export const canIndomitable = char => hasFeature(char, "indomitable") && !char.indomitableUsed;
 // Warden runes: the hero's own magic, learned from the story. Rune slots come back with a long rest, like spell slots.
 export const RUNES = {
   runeStrike: { name: "Rune Strike", about: "After you hit, your blade's rune flares: 2d8 radiant damage, 3d8 against the undead." },
@@ -102,6 +123,7 @@ export function armourClass(char) {
     const a = baseOf(armour);
     ac = a.category === "heavy" ? a.baseAc : a.category === "medium" ? a.baseAc + Math.min(dex, 2) : a.baseAc + dex;
     ac += armour.upgrade;
+    if (char.fightingStyle === "defense") ac += 1;
   }
   if (shield) ac += baseOf(shield).ac + shield.upgrade;
   return ac;
@@ -114,11 +136,12 @@ export function weaponAttack(char) {
   if (!w) return { name: "Fist", bonus: str + proficiencyBonus(char.level), damage: "1", damageBonus: str, damageType: "bludgeoning" };
   const base = baseOf(w);
   const ability = base.properties.includes("finesse") ? Math.max(str, dex) : str;
+  const dueling = char.fightingStyle === "dueling" && !base.properties.includes("two-handed") ? 2 : 0;
   return {
     name: base.name,
     bonus: ability + proficiencyBonus(char.level) + w.upgrade,
     damage: base.damage,
-    damageBonus: ability + w.upgrade,
+    damageBonus: ability + w.upgrade + dueling,
     damageType: base.damageType, silvered: !!w.silvered,
   };
 }
@@ -185,6 +208,7 @@ export function rest(char) {
   char.actionSurge = true;
   if (char.slotsUsed) char.slotsUsed = [];
   if (char.runes) char.runes.used = 0;
+  char.indomitableUsed = false;
   char.luckUsed = false; // the Lucky Die
   char.fishCaught = 0; // the fish bite again
   if (char.companion) char.companion.hurt = 0;

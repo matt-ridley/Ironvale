@@ -13,6 +13,7 @@ import { callName, titleOf } from "./hero.js";
 import { hubById } from "../world/travel.js";
 import { GAME_SCRIPTS } from "./minigames.js";
 import { BOUNTIES, currentBounty, takeBounty, claimBounty, dropBounty, bountyLine } from "./bounties.js";
+import { talkNodes, afterRest } from "./talks.js";
 
 /* ", Mary" when the hero has a name, else nothing: for lines like `You did it${comma(s)}!`. */
 const comma = s => (callName(s.hero) ? `, ${callName(s.hero)}` : "");
@@ -824,7 +825,9 @@ export const SCRIPTS = {
       sleep: {
         enter: s => rest(s.hero),
         text: s => (s.hero.companion ? "You both sleep like logs. Everyone's HP and your Second Wind restored." : "You sleep like a log. HP and Second Wind restored."),
+        choices: afterRest,
       },
+      ...talkNodes(),
     },
   },
 
@@ -931,8 +934,10 @@ export const SCRIPTS = {
           const got = [r.healed && `+${r.healed} HP`, r.companionHealed && `${companionStats(s.hero).name} +${r.companionHealed} HP`, r.secondWind && "Second Wind back", r.actionSurge && "Action Surge back"].filter(Boolean);
           return `You warm your hands and catch your breath. ${got.join(", ")}. (A short rest brings you up to half your HP. For a full rest, find a bed.)`;
         },
+        choices: afterRest,
       },
-      rested: { text: "You're as rested as a fire can make you. A short rest brings you up to half your HP; for more, you need a bed." },
+      rested: { text: "You're as rested as a fire can make you. A short rest brings you up to half your HP; for more, you need a bed.", choices: afterRest },
+      ...talkNodes(),
     },
   },
 
@@ -1044,7 +1049,9 @@ function innScript({ keeper, hub, welcome, famous, poor, bye, stayLabel, onHello
       },
       slept: {
         text: s => `${s.hero.companion ? "You both sleep like logs. Everyone's HP" : "You sleep like a log. HP"} and Second Wind restored.${cost() ? ` (-${cost()} gold)` : ""}`,
+        choices: afterRest,
       },
+      ...talkNodes(),
       poor: { speaker: keeper, text: s => poor(s, cost()) },
       bye: { speaker: keeper, text: bye },
     },

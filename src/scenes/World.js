@@ -11,7 +11,12 @@ import { moveBody, velocity, facingFor, tileOf, tileAhead, feetAt, WALK_SPEED, S
 import { MAPS } from "../world/maps.js";
 import { markSeen, safePlace } from "../world/travel.js";
 import { state, autosave } from "../state/game.js";
-import { rollEncounter } from "../world/encounters.js";
+import { rollEncounter, runsAway, RUN_AWAY_XP } from "../world/encounters.js";
+import { actOf } from "../story/hero.js";
+import { remarkFor } from "../story/talks.js";
+import { COMPANIONS } from "../rules/party.js";
+import { MONSTERS } from "../data/monsters.js";
+import { gainXp, needsFightingStyle } from "../rules/character.js";
 import { stick } from "../ui/joystick.js";
 import { animKey, groundTexture } from "../art/pixels.js";
 import { playMusic, sfx } from "../audio/sound.js";
@@ -94,9 +99,10 @@ export class World extends Phaser.Scene {
     this.time.delayedCall(400, () => this.offerLevelUp());
   }
 
-  /* An ability score increase to spend (from a fight, a quest reward or an old save) opens the level-up screen. */
+  /* An ability score increase to spend (from a fight, a quest reward or an old save), or the fighting style to pick
+     at level 10, opens the level-up screen. */
   offerLevelUp() {
-    if (state.hero.asi > 0 && !this.frozen) this.openOverlay("LevelUp");
+    if ((state.hero.asi > 0 || needsFightingStyle(state.hero)) && !this.frozen) this.openOverlay("LevelUp");
   }
 
   /* The Hud scene starts a moment after this one; messages wait for it. (After a trip to another map the old Hud is
@@ -278,7 +284,23 @@ export class World extends Phaser.Scene {
     const zone = zoneAt(this.map, t.x, t.y);
     const safe = !!zone?.safe || !!safePlace(state); // no monsters in a town, indoors or near a camp
     const foes = rollEncounter(zone?.id, tileAt(this.map, t.x, t.y).name, state.stepsSinceFight, Math.random, { fast, safe });
-    if (foes) this.startBattle(foes, zone.id);
+    if (!foes) return;
+    if (runsAway(zone.id, state.hero.level, actOf(state.flags))) return this.scareOff(foes);
+    this.startBattle(foes, zone.id);
+  }
+
+  /* Monsters far too weak for you (Act 3, back in the old places) take one look and run, for a few XP. */
+  scareOff(foes) {
+    state.stepsSinceFight = 0;
+    const xp = Math.max(1, Math.floor(foes.reduce((n, id) => n + MONSTERS[id].xp, 0) * RUN_AWAY_XP));
+    const before = state.hero.level;
+    gainXp(state.hero, xp);
+    const w = state.hero.equipment.weapon, at = w?.base === "wardenblade" ? "the Wardenblade" : "you";
+    const name = MONSTERS[foes[0]].name, plural = name === "Wolf" ? "Wolves" : `${name}s`;
+    const who = foes.length > 1 ? `${foes.length} ${plural} take` : `A ${name} takes`;
+    this.say("note", `${who} one look at ${at} and bolt${foes.length > 1 ? "" : "s"}. (+${xp} XP${state.hero.level > before ? `, level ${state.hero.level}!` : ""})`, 2400);
+    this.hud?.refresh();
+    if (state.hero.level > before) this.time.delayedCall(400, () => this.offerLevelUp());
   }
 
   /* On reaching a new tile (moved = true) and on entering the scene: area names, music, the last town, the cave. */
@@ -289,6 +311,11 @@ export class World extends Phaser.Scene {
       this.zoneId = zone.id;
       markSeen(state.flags, zone.id); // for the map
       this.say("banner", zone.name, 1800);
+      const remark = remarkFor(state, zone.id, Object.fromEntries(Object.entries(COMPANIONS).map(([id, c]) => [id, c.name])));
+      if (remark) {
+        state.flags[remark.flag] = true;
+        this.time.delayedCall(1200, () => this.say("note", `${remark.name}: "${remark.line}"`, 3200));
+      }
     }
     const place = safePlace(state);
     if (place?.kind === "hub") state.lastHub = place.id; // where you wake if you faint, and where a feather goes

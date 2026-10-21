@@ -9,7 +9,7 @@
 // A battle is a plain object. The player acts with playerAction(); monsters then take their turns until it is the
 // player's turn again or the battle is over. Every step is written to battle.log for the screen to show.
 import { d20, roll } from "./dice.js";
-import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND, critOn, attacksPerAction, hasFeature, SAVE_PROFICIENCIES, proficiencyBonus, runesLeft, knowsRune } from "./character.js";
+import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND, critOn, attacksPerAction, hasFeature, SAVE_PROFICIENCIES, proficiencyBonus, runesLeft, knowsRune, canIndomitable } from "./character.js";
 import { abilityCheck } from "./checks.js";
 import { baseOf, makeItem, itemName, useItem, cantDrink } from "./items.js";
 import { MONSTERS } from "../data/monsters.js";
@@ -91,6 +91,16 @@ export function saveBonusOf(battle, key, ability) {
 
 /* A saving throw in a fight, with conditions (Bless, restrained) counted. */
 export const battleSave = (battle, key, ability, dc, rng = Math.random) => conditionSave(battle, key, ability, dc, saveBonusOf(battle, key, ability), rng);
+
+/* A saving throw against something a monster does to you: from level 9, Indomitable rolls a failed one again (once
+   per long rest), and says so in the log. */
+export function resistSave(battle, key, ability, dc, rng = Math.random) {
+  const s = battleSave(battle, key, ability, dc, rng);
+  if (s.success || key !== "player" || !canIndomitable(battle.player)) return s;
+  battle.player.indomitableUsed = true;
+  say(battle, "indomitable", `${ability} save ${s.total} vs DC ${dc}... Indomitable! You refuse to give in, and roll again.`);
+  return battleSave(battle, key, ability, dc, rng);
+}
 
 /* Takes HP off someone (never below 0) and wakes them if they were asleep. Call it before logging the hit (each log
    entry records everyone's HP), then tellWoken() after. Returns the names of conditions the damage ended. */
@@ -320,7 +330,7 @@ function monsterTurn(battle, i, rng) {
 
 /* An attack's lingering effect: a saving throw, or the condition. */
 function afflict(battle, key, { condition, save, dc, rounds }, rng) {
-  const s = battleSave(battle, key, save, dc, rng);
+  const s = resistSave(battle, key, save, dc, rng);
   const who = nameOf(battle, key), are = key === "player" ? "are" : "is";
   if (s.success) return say(battle, "save", `${who} shake${key === "player" ? "" : "s"} it off (${save} save ${s.total} vs DC ${dc}).`, { who: key });
   addCondition(battle, key, condition, { rounds, saveEnds: { ability: save, dc } });
