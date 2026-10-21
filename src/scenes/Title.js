@@ -1,4 +1,4 @@
-// Title screen: CONTINUE your saved hero, or start a NEW GAME (with a check first if that would replace a save), which
+// Title screen: CONTINUE your saved hero, CHEATS (codes for XP or gold), or start a NEW GAME (with a check first if that would replace a save), which
 // asks for the hero's name first (the NameEntry screen starts the game).
 import { TITLE, VERSION, WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { armourClass } from "../rules/character.js";
@@ -36,12 +36,13 @@ export class Title extends Phaser.Scene {
     if (saved) {
       this.primary = button(this, WIDTH / 2 - 64, 186, 116, 24, "CONTINUE", () => this.play());
       button(this, WIDTH / 2 + 64, 186, 116, 24, "NEW GAME", () => this.confirmNew());
+      button(this, WIDTH / 2, 214, 96, 18, "CHEATS", () => { if (!this.confirming) this.scene.start("Cheats", { step: "code" }); }); // Phaser would reuse the last step otherwise
     } else {
       this.primary = button(this, WIDTH / 2, 186, 140, 24, "NEW GAME", () => this.startNew());
     }
     this.input.keyboard.on("keydown-ENTER", () => { if (!this.confirming) this.primary.bg.emit("pointerup"); });
 
-    text(this, WIDTH / 2, 214, "Your progress saves automatically.", { color: COLORS.dim }).setOrigin(0.5, 0);
+    text(this, WIDTH / 2, saved ? 232 : 214, "Your progress saves automatically.", { color: COLORS.dim }).setOrigin(0.5, 0);
     text(this, 6, HEIGHT - 2, "Rules: SRD 5.1, CC-BY-4.0", { color: COLORS.dim }).setOrigin(0, 1);
     text(this, WIDTH - 6, HEIGHT - 2, `v${VERSION}`, { color: COLORS.dim }).setOrigin(1, 1);
     const snd = button(this, WIDTH - 30, 14, 48, 18, isMuted() ? "MUTE" : "SND", () => { toggleMuted(); snd.setLabel(isMuted() ? "MUTE" : "SND"); sfx("select"); });

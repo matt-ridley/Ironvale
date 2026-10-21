@@ -13,6 +13,7 @@ import { Quests } from "./scenes/Quests.js";
 import { WorldMap } from "./scenes/WorldMap.js";
 import { LevelUp } from "./scenes/LevelUp.js";
 import { NameEntry } from "./scenes/NameEntry.js";
+import { Cheats } from "./scenes/Cheats.js";
 import { Hud } from "./scenes/Hud.js";
 import { Knucklebones, ArmWrestle, Archery, Fishing } from "./scenes/minigames.js";
 import { Oath } from "./scenes/Oath.js";
@@ -37,7 +38,7 @@ window.game = new Phaser.Game({
   backgroundColor: COLORS.bg,
   pixelArt: true,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  scene: [Boot, Title, World, Hud, Battle, Inventory, Shop, Bank, Dialogue, Meet, Quests, WorldMap, LevelUp, NameEntry, Knucklebones, ArmWrestle, Archery, Fishing, Oath], // later ones draw on top
+  scene: [Boot, Title, World, Hud, Battle, Inventory, Shop, Bank, Dialogue, Meet, Quests, WorldMap, LevelUp, NameEntry, Cheats, Knucklebones, ArmWrestle, Archery, Fishing, Oath], // later ones draw on top
 });
 
 // Browsers only allow sound after a tap or key press.
