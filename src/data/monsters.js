@@ -64,6 +64,9 @@ export const MONSTERS = {
     xp: 2300, gold: "20d10",
     type: "undead", saves: { STR: 4, DEX: 1, CON: 3, WIS: 2 }, resistant: ["necrotic"], weaponResist: "silver",
     loot: [{ base: "potionGreaterHealing", chance: 1 }] },
+  // Kobolds, digging in the empty Deep Warrens in Act 3, "for the Great One beyond the mountain" (no match for you now).
+  kobold:      { name: "Kobold",       ac: 12, hp: "2d6",   dexMod: 2, attack: { name: "Dagger",   bonus: 4, damage: "1d4+2" }, xp: 25,  gold: "1d6",
+    type: "humanoid", saves: { STR: -2, DEX: 2, CON: -1, WIS: -2 } },
   // The green hag of the SRD, keeper of the drowned causeway. A bit lighter than the SRD's (82 HP), as she's met at level 5.
   motherSallow: { name: "Mother Sallow", ac: 17, hp: "9d8+27", dexMod: 1, attack: { name: "Claws", bonus: 6, damage: "2d8+4" }, xp: 700, gold: "6d10",
     type: "fey", saves: { STR: 4, DEX: 1, CON: 3, WIS: 2 },

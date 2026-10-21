@@ -30,7 +30,12 @@ export const OVERWORLD = {
   // (Megan is drawn on a walking sheet like the hero's; frame 0 is her facing you).
   objects: [
     { id: "elder", x: 17, y: 18, sprite: "elder", script: "elder" },
-    { id: "pip", x: 10, y: 29, sprite: "villager", script: "villager" },
+    { id: "pip", x: 10, y: 29, sprite: "villager", script: "villager", goneWhen: "pipRanAway" },
+    // Act 3, going back: Pip home again after his big adventure, his statue of you in the square, and his trail.
+    { id: "pipBack", x: 10, y: 29, sprite: "villager", script: "villager", shownWhen: "pipFound" },
+    { id: "statue", x: 18, y: 21, sprite: "statue", script: "statue", shownWhen: "keepHome", still: true },
+    { id: "pipShield", x: 39, y: 18, sprite: "pipShield", script: "pipShield", shownWhen: "pipRanAway", goneWhen: "pipShieldFound", still: true },
+    { id: "pipChalk", x: 51, y: 30, sprite: "chalk", script: "pipChalk", shownWhen: "pipRanAway", still: true },
     // By the smithy once you've freed him, until he moves to his forge in Fenwatch (when you first get there).
     { id: "brannoc", x: 12, y: 17, sprite: "brannoc", script: "brannocTown", shownWhen: "brannocFreed", goneWhen: "seenFenwatch" },
     { id: "campfire", x: 50, y: 31, sprite: "campfire", script: "campfire", still: true },

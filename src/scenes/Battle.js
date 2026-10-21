@@ -277,7 +277,7 @@ export class Battle extends Phaser.Scene {
 
   showEvent(e) {
     const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again",
-      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby"].includes(e.type);
+      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -366,6 +366,10 @@ export class Battle extends Phaser.Scene {
         this.float(this.heroSprite, "FLYBY!", COLORS.gold);
         break;
       }
+      case "badge":
+        sfx("coin");
+        this.float(this.heroSprite, "+1!", COLORS.gold);
+        break;
       case "indomitable":
         sfx("heal");
         this.float(this.heroSprite, "INDOMITABLE!", COLORS.gold);

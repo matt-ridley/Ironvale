@@ -15,6 +15,7 @@ import { state, autosave } from "../state/game.js";
 import { rollEncounter, runsAway, RUN_AWAY_XP } from "../world/encounters.js";
 import { actOf } from "../story/hero.js";
 import { remarkFor } from "../story/talks.js";
+import { zoneEvent } from "../story/act3.js";
 import { COMPANIONS } from "../rules/party.js";
 import { MONSTERS } from "../data/monsters.js";
 import { gainXp, needsFightingStyle } from "../rules/character.js";
@@ -343,10 +344,14 @@ export class World extends Phaser.Scene {
       this.zoneId = zone.id;
       markSeen(state.flags, zone.id); // for the map
       this.say("banner", zone.name, 1800);
-      const remark = remarkFor(state, zone.id, Object.fromEntries(Object.entries(COMPANIONS).map(([id, c]) => [id, c.name])));
-      if (remark) {
-        state.flags[remark.flag] = true;
-        this.time.delayedCall(1200, () => this.say("note", `${remark.name}: "${remark.line}"`, 3200));
+      const event = zoneEvent(state, zone.id);
+      if (event) { this.time.delayedCall(900, () => this.say("note", event, 3600)); this.syncObjects(); }
+      if (!event) {
+        const remark = remarkFor(state, zone.id, Object.fromEntries(Object.entries(COMPANIONS).map(([id, c]) => [id, c.name])));
+        if (remark) {
+          state.flags[remark.flag] = true;
+          this.time.delayedCall(1200, () => this.say("note", `${remark.name}: "${remark.line}"`, 3200));
+        }
       }
     }
     const place = safePlace(state);

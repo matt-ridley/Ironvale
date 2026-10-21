@@ -9,13 +9,13 @@ import { makeItem, itemName } from "../rules/items.js";
 import { joinParty, companionStats, benchCompanion, takeCompanion, arcaneRecovery, COMPANIONS } from "../rules/party.js";
 import { tileOf, feetAt } from "../world/movement.js";
 import { DEEP_CAVE } from "../world/cave.js";
-import { callName, titleOf } from "./hero.js";
+import { callName, titleOf, actOf } from "./hero.js";
 import { hubById } from "../world/travel.js";
 import { GAME_SCRIPTS } from "./minigames.js";
 import { BOUNTIES, currentBounty, takeBounty, claimBounty, dropBounty, bountyLine } from "./bounties.js";
 import { talkNodes, afterRest } from "./talks.js";
 import { pay, paid } from "./rewards.js";
-import { ACT3_SCRIPTS, tremorNode, scoutNode, withRachel, stonesFound } from "./act3.js";
+import { ACT3_SCRIPTS, tremorNode, scoutNode, withRachel, stonesFound, PIP_REWARD, GNASHER_REWARD } from "./act3.js";
 
 /* ", Mary" when the hero has a name, else nothing: for lines like `You did it${comma(s)}!`. */
 const comma = s => (callName(s.hero) ? `, ${callName(s.hero)}` : "");
@@ -175,6 +175,20 @@ export const SCRIPTS = {
           : s.flags.askedBrannoc
           ? "If the goblins fled from Ironvale, something worse lives there now. When the way opens, go carefully. And keep that ring close."
           : s.flags.brannocFreed ? "Ask Brannoc about the road to Ironvale. Smiths remember." : "The goblins kept a smith down in the King's hall, I've heard. Smiths remember the old roads."),
+        choices: [{ label: "Do you know the Wardens' Oath?", if: s => actOf(s.flags) >= 3, to: "oath" }, { label: "Goodbye.", to: null }],
+      },
+      // Act 3: the old Warden's Oath, which Maren has in three pieces.
+      oath: {
+        speaker: ELDER,
+        text: "The Oath? I have it in three pieces, from three different books, and they don't agree. Listen. The first: \"I am the wall. What comes against the door comes first against me.\" They called that the Oath of Iron.",
+        to: "oath2",
+      },
+      oath2: { speaker: ELDER, text: "The second: \"I am the spark in the stone. The runes answer when I call.\" The Oath of Storm.", to: "oath3" },
+      oath3: { speaker: ELDER, text: "And the third: \"I am the light at the threshold. What is dead shall not pass.\" The Oath of Dawn.", to: "oath4" },
+      oath4: {
+        speaker: ELDER,
+        enter: s => { s.flags.oathFragments = true; },
+        text: "Three Oaths, and no book says which a Warden swore. Perhaps each one chose for themselves. Perhaps, one day soon, you will.",
       },
       afterAll: {
         speaker: ELDER,
@@ -184,8 +198,20 @@ export const SCRIPTS = {
   },
 
   villager: {
-    start: "hello",
+    start: s => (actOf(s.flags) < 3 ? "hello" : s.flags.pipFound ? "home" : "juniors"),
     nodes: {
+      // Act 3: the Junior Wardens, and after his big adventure, lines that follow the story.
+      juniors: {
+        speaker: "PIP",
+        enter: s => { s.flags.pipJuniors = true; },
+        text: "Look! A Wardenblade! Well, it's wood. I've started the Junior Wardens: me, the miller's twins and a goat. The goat's still a recruit. When I'm big I'm going to be a real Warden, like you!",
+      },
+      home: {
+        speaker: "PIP",
+        text: s => (!s.flags.pipRewarded ? "Mum's got something to say to you. And to me. Mostly to me."
+          : s.flags.wardenTraining ? `Are you a REAL Warden now${comma(s)}? Does the sword glow? Can I hold it? Just for a second? Mum says no.`
+            : "I'm grounded until I'm thirty. Worth it! The goat got promoted while I was away."),
+      },
       hello: {
         speaker: "PIP",
         text: s => (s.flags.kingDefeated
@@ -691,8 +717,23 @@ export const SCRIPTS = {
   },
 
   fisher: {
-    start: s => (s.flags.metTom ? "again" : "hello"),
+    start: s => (s.hero.inventory.some(i => i.base === "oldGnasher") ? "gnasher" : s.flags.gnasherQuest && !s.flags.gnasherCaught ? "biting" : s.flags.metTom ? "again" : "hello"),
     nodes: {
+      // Act 3: Old Gnasher, the legendary pike.
+      biting: {
+        speaker: "OLD TOM",
+        enter: s => { s.flags.metTom = true; },
+        text: "You got my letter! Old Gnasher's biting at last: he took a duck off the lake this morning, the brute. Use my rod by the jetty, and when he bites, reel like your life depends on it.",
+      },
+      gnasher: {
+        speaker: "OLD TOM",
+        enter: (s, ctx) => {
+          s.hero.inventory = s.hero.inventory.filter(i => i.base !== "oldGnasher");
+          s.flags.gnasherCaught = true;
+          pay(s, ctx, GNASHER_REWARD);
+        },
+        text: (s, ctx) => `OLD GNASHER! Sixty years I've fished for him! Here, here: take this, and I'll mount him over my fireplace where he can't bite anyone ever again. ${paid(ctx, GNASHER_REWARD)}`,
+      },
       hello: {
         speaker: "OLD TOM",
         enter: s => { s.flags.metTom = true; },
@@ -782,8 +823,39 @@ export const SCRIPTS = {
 
   // Pip's mum, at home. She gives you a Potion of Healing the first time, and knows a thing or two.
   hazel: {
-    start: s => (s.flags.metHazel ? "again" : "hello"),
+    start: s => {
+      const f = s.flags;
+      if (f.pipRanAway && !f.pipFound) return "pipGone";
+      if (f.pipFound && !f.pipRewarded) return "pipHome";
+      if (actOf(f) >= 3 && !f.gnasherQuest) return "letter";
+      return f.metHazel ? "again" : "hello";
+    },
     nodes: {
+      // Act 3: a letter from Old Tom, Pip's Big Adventure, and Pip's badge.
+      letter: {
+        speaker: "HAZEL",
+        enter: s => { s.flags.gnasherQuest = true; s.flags.metHazel = true; },
+        text: "There you are! Old Tom sent a letter up with the miller's boy; his knees won't do the hill. It says: \"OLD GNASHER IS BITING. Biggest pike in Willowmere, older than me. Bring a strong arm. Tom.\"",
+      },
+      pipGone: {
+        speaker: "HAZEL",
+        enter: s => { s.flags.hazelPipNews = true; },
+        text: "Pip's gone! He left a note: \"GONE TO BE A WARDEN. DON'T WORRY. BACK FOR TEA.\" He took his wooden sword and his shield, and the miller saw him go off into the Whispering Wood. Please find him!",
+      },
+      pipHome: {
+        speaker: "HAZEL",
+        text: "You found him! In the goblin tunnels, with KOBOLDS! He's grounded until he's thirty. But... thank you. He's got something for you. He made it himself.",
+        to: "badge",
+      },
+      badge: {
+        speaker: "PIP",
+        enter: (s, ctx) => {
+          s.hero.inventory.push(makeItem("juniorBadge"));
+          s.flags.pipRewarded = true;
+          pay(s, ctx, PIP_REWARD);
+        },
+        text: (s, ctx) => `A Junior Warden badge! It's tin. I scratched the letters with a nail. It means you're one of us. Well, you're the big one. (+${PIP_REWARD.xp} XP${ctx.recall("newLevel") ? `, level ${ctx.recall("newLevel")}!` : ""}. Once per rest, a saving throw you only just fail is +1.)`,
+      },
       hello: {
         speaker: "HAZEL",
         enter: s => { s.flags.metHazel = true; },
@@ -796,7 +868,8 @@ export const SCRIPTS = {
       },
       again: {
         speaker: "HAZEL",
-        text: s => (s.flags.kingDefeated
+        text: s => (actOf(s.flags) >= 3 ? "Pip's been building something in the square all week. I'm told it's you. Be kind about the head."
+          : s.flags.kingDefeated
           ? "Pip has made himself a wooden crown and says he's the Goblin King now. You're welcome for tea any time."
           : s.flags.chiefDefeated
             ? "Down in Willowmere, Old Tom has a spare bed. Handy if you're hurt and a long way from Oakhollow."
@@ -1118,6 +1191,7 @@ function obstacle({ look, checks, flag, passedFlag, shoveLabel, climbLabel, hurt
 export function sideObjective(flags, state = {}) {
   if (flags.meganQuest && !flags.meganJoined) return flags.bowFound ? "Bring the bow back to Megan" : "Find Megan's bow in the Whispering Wood";
   if (flags.robynQuest && !flags.robynJoined) return flags.gravesAtRest ? "Tell Robyn the graves are quiet" : "Lay the restless graves in the fen to rest";
+  if (flags.pipRanAway && !flags.pipRewarded) return flags.pipFound ? "See Pip and Hazel in Oakhollow" : flags.hazelPipNews ? "Find Pip: his trail goes into the wood" : "Ask Hazel what's happened to Pip";
   return bountyLine(state);
 }
 
