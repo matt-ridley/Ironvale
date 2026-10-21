@@ -85,8 +85,11 @@ export function createMap(def) {
 }
 
 /* Objects on the map now, given the quest flags: `goneWhen` takes one away once its flag is set, `shownWhen` only
-   puts one there once its flag is set (the Iron Signet, after the Goblin King falls). */
-export const activeObjects = (map, flags = {}) => map.objects.filter(o => !(o.goneWhen && flags[o.goneWhen]) && !(o.shownWhen && !flags[o.shownWhen]));
+   puts one there once its flag is set (the Iron Signet, after the Goblin King falls). Either can be a list of flags,
+   which all have to be set; `goneWhenAny` takes one away once any of its flags is set. */
+const allSet = (flags, f) => (Array.isArray(f) ? f.every(k => flags[k]) : !!flags[f]);
+export const activeObjects = (map, flags = {}) => map.objects.filter(o => !(o.goneWhen && allSet(flags, o.goneWhen)) && !(o.shownWhen && !allSet(flags, o.shownWhen))
+  && !o.goneWhenAny?.some(k => flags[k]));
 export const objectAt = (map, x, y, flags = {}) => activeObjects(map, flags).find(o => o.x === x && o.y === y) || null;
 
 export const inBounds = (map, x, y) => x >= 0 && y >= 0 && x < map.width && y < map.height;

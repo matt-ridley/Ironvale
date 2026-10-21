@@ -4,7 +4,9 @@
 // humanoid, undead...), which some spells care about. A monster with several `attacks` makes them all each turn
 // (multiattack); an attack's `onHit` is an effect that a saving throw resists (the ghoul's paralysis). Damage types:
 // `vulnerable` ones do double, `resistant` ones half, and `weaponResist: "silver"` halves weapon damage unless the
-// weapon is silvered (wights).
+// weapon is silvered (wights). A monster with `spells` may cast one on its turn instead of attacking: each is a saving
+// throw ({ name, save, dc, damage, damageType, half, targets: "one" | "all", condition: { id, rounds }, uses (per
+// fight), chance (of casting it, when it's left) }); "all" means you and your companion.
 
 export const MONSTERS = {
   giantRat:    { name: "Giant Rat",    ac: 12, hp: "2d6",   dexMod: 2, attack: { name: "Bite",     bonus: 4, damage: "1d4+2" }, xp: 25,  gold: "1d4",
@@ -58,7 +60,7 @@ export const MONSTERS = {
     loot: [{ base: "plate", chance: 0.1 }] },
   // Not in the SRD: Lord Varric, the Ironbound, a wight knight in black plate, the boss of Act 2. Tuned with the battle
   // simulator (tools/simulate.mjs): see the roadmap for the numbers.
-  lordVarric:  { name: "Lord Varric",  ac: 18, hp: "13d8+39", dexMod: 1,
+  lordVarric:  { name: "Lord Varric", proper: true,  ac: 18, hp: "13d8+39", dexMod: 1,
     attacks: [{ name: "Longsword", bonus: 7, damage: "1d8+4" }, { name: "Longsword", bonus: 7, damage: "1d8+4" },
       { name: "Grave Touch", bonus: 7, damage: "2d6+2", onHit: { condition: "paralyzed", save: "CON", dc: 12, rounds: 3 } }],
     xp: 2300, gold: "20d10",
@@ -104,11 +106,26 @@ export const MONSTERS = {
     loot: [{ base: "potionGreaterHealing", chance: 0.4 }] },
   specter:     { name: "Specter",      ac: 12, hp: "9d8",    dexMod: 2, attack: { name: "Life Drain", bonus: 9, damage: "4d6" }, xp: 200, gold: "0",
     type: "undead", saves: { STR: -5, DEX: 2, CON: 0, WIS: 0 }, resistant: ["necrotic"], weaponResist: "silver" },
+  // Act 3: Mother Sallow, if you made the bargain, crowned and calling herself the Queen of the Fen (tougher than before,
+  // with a spell of swamp gas); and if you fought her, her sister Auntie Nettle, a night hag, haunting the pass.
+  crownedSallow: { name: "Queen Sallow", proper: true, ac: 18, hp: "14d8+56", dexMod: 1,
+    attacks: [{ name: "Claws", bonus: 10, damage: "2d8+5" }, { name: "Claws", bonus: 10, damage: "2d8+5" }], xp: 1800, gold: "10d10",
+    type: "fey", saves: { STR: 4, DEX: 1, CON: 4, WIS: 3 },
+    spells: [{ name: "Swamp Gas", save: "CON", dc: 15, damage: "4d8", damageType: "poison", half: true, targets: "all", uses: 2, chance: 0.35 }],
+    loot: [{ base: "potionGreaterHealing", chance: 1 }] },
+  nightHag:    { name: "Auntie Nettle", proper: true, ac: 17, hp: "15d8+60", dexMod: 2,
+    attacks: [{ name: "Claws", bonus: 10, damage: "2d8+5" }, { name: "Claws", bonus: 10, damage: "2d8+5" }], xp: 1800, gold: "12d10",
+    type: "fiend", saves: { STR: 4, DEX: 2, CON: 4, WIS: 3 },
+    spells: [
+      { name: "Ray of Sickness", save: "CON", dc: 15, damage: "5d8", damageType: "poison", half: true, targets: "one", uses: 2, chance: 0.4 },
+      { name: "Nightmare", save: "WIS", dc: 15, damage: "3d8", damageType: "psychic", half: true, targets: "all", condition: { id: "frightened", rounds: 2 }, uses: 1, chance: 0.5 },
+    ],
+    loot: [{ base: "potionGreaterHealing", chance: 1 }, { base: "scrollLightningBolt", chance: 1 }] },
   // Kobolds, digging in the empty Deep Warrens in Act 3, "for the Great One beyond the mountain" (no match for you now).
   kobold:      { name: "Kobold",       ac: 12, hp: "2d6",   dexMod: 2, attack: { name: "Dagger",   bonus: 4, damage: "1d4+2" }, xp: 25,  gold: "1d6",
     type: "humanoid", saves: { STR: -2, DEX: 2, CON: -1, WIS: -2 } },
   // The green hag of the SRD, keeper of the drowned causeway. A bit lighter than the SRD's (82 HP), as she's met at level 5.
-  motherSallow: { name: "Mother Sallow", ac: 17, hp: "9d8+27", dexMod: 1, attack: { name: "Claws", bonus: 6, damage: "2d8+4" }, xp: 700, gold: "6d10",
+  motherSallow: { name: "Mother Sallow", proper: true, ac: 17, hp: "9d8+27", dexMod: 1, attack: { name: "Claws", bonus: 6, damage: "2d8+4" }, xp: 700, gold: "6d10",
     type: "fey", saves: { STR: 4, DEX: 1, CON: 3, WIS: 2 },
     loot: [{ base: "scrollSleep", chance: 1 }, { base: "potionHealing", chance: 1 }] },
 };

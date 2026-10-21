@@ -51,6 +51,13 @@ export const PASS = {
     // The Frozen Chapel: Robyn's quest. Its braziers make it a camp once she's lit it.
     { id: "iceAltar", x: 40, y: 30, sprite: "iceAltar", script: "iceAltar", still: true },
     { id: "chapelBrazier", x: 40, y: 33, sprite: "campfire", script: "campfire", shownWhen: "chapelLit", still: true },
+    // Snik's shortcut through the old Warden mines (if you helped the refugees): in on the slopes, out above the ice, with
+    // a cache on the way. And Auntie Nettle's hut (if you fought Sallow), once she's spoiled a rest.
+    { id: "mineMouth", x: 4, y: 52, sprite: "mineMouth", script: "mineMouth", still: true },
+    { id: "snikPass", x: 5, y: 51, sprite: "goblin", script: "mineMouth", shownWhen: ["refugeesHelped", "rockslideOpen"] },
+    { id: "mineExit", x: 3, y: 30, sprite: "mineMouth", script: "mineExit", still: true },
+    { id: "mineCache", x: 2, y: 29, sprite: "chest", script: "chest", shownWhen: "snikShortcut", goneWhen: "mineCacheOpened", still: true, loot: { gold: 250, items: ["potionGreaterHealing", "scrollLightningBolt"] } },
+    { id: "hagHut", x: 42, y: 58, sprite: "hagHut", script: "hagHut", shownWhen: "nettleMet", still: true },
     // A cairn of bones on the snowfield, with half of a sun charm in it.
     { id: "boneCairn", x: 6, y: 30, sprite: "boneCairn", script: "boneCairn", still: true },
     { id: "gatehouseDoor", x: 24, y: 4, sprite: "runeDoor", script: "gatehouseDoor", still: true },

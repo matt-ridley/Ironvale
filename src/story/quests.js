@@ -2,7 +2,8 @@
 // from the quest flags every time, so there's nothing extra to save. No Phaser here, so it can be tested; the Quests
 // screen shows what questLog returns.
 import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD } from "./scripts.js";
-import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD, WAYSTONE_REWARD, ROAD_REWARD, MATTHEW_REWARD, CHAPEL_REWARD, arrowsFound } from "./act3.js";
+import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD, WAYSTONE_REWARD, ROAD_REWARD, MATTHEW_REWARD, CHAPEL_REWARD, arrowsFound,
+  REFUGEE_REWARD, QUEEN_REWARD, NETTLE_REWARD } from "./act3.js";
 import { actOf } from "./hero.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
@@ -152,6 +153,35 @@ export const QUESTS = [
     steps: [
       { text: "Find the Frozen Chapel, east of the snowfield", done: f => f.seenFrozenChapel || f.chapelLit },
       { text: "Let Robyn light the altar (she must be with you)", done: f => f.chapelLit },
+    ],
+  },
+  {
+    id: "refugees", title: "The Goblin Refugees", kind: "side",
+    known: f => f.refugeeQuest || f.refugeesRefused || f.refugeesHelped,
+    about: "Goblins camp outside Fenwatch's walls: the ones who fled the risen dead. Lizardfolk keep stealing their fish traps.",
+    reward: `${REFUGEE_REWARD.xp} XP, and Grub's stall`,
+    steps: [
+      { text: "Chase off the lizardfolk raiders, north of the camp", done: f => f.refugeesHelped || f.refugeesRefused },
+    ],
+  },
+  {
+    id: "queen", title: "The Queen of the Fen", kind: "side",
+    known: f => f.queenHeard || f.queenMet,
+    about: "Mother Sallow wore the Goblin King's crown and decided she's a queen. Now there's a toll on the causeway, and Fenwatch is fed up.",
+    reward: `${QUEEN_REWARD.xp} XP`,
+    steps: [
+      { text: "Find the Queen of the Fen on the causeway", done: f => f.queenMet || f.queenSettled },
+      { text: "Make her stop: something shiny, or a fight", done: f => f.queenSettled },
+    ],
+  },
+  {
+    id: "nettle", title: "Auntie Nettle", kind: "side",
+    known: f => f.nettleMet,
+    about: "Mother Sallow's sister, a night hag, won't let you rest on the pass. She says Sallow owed her money.",
+    reward: `${NETTLE_REWARD.xp} XP, and rest on the pass again`,
+    steps: [
+      { text: "Find her crooked hut on the slopes, east", done: f => f.nettleDefeated },
+      { text: "Beat Auntie Nettle", done: f => f.nettleDefeated },
     ],
   },
   {

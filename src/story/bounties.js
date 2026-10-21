@@ -4,12 +4,18 @@
 import { MONSTERS } from "../data/monsters.js";
 import { gainXp } from "../rules/character.js";
 
+// `act`: the board shows Act 2's hunts until Act 3 begins, then the pass's.
 export const BOUNTIES = [
   { id: "frogs", title: "Frogs in the cistern", label: "Frogs", monster: "giantFrog", count: 6, gold: 120, xp: 300 },
   { id: "lizardfolk", title: "Lizardfolk raiders", label: "Lizardfolk", monster: "lizardfolk", count: 5, gold: 200, xp: 500 },
   { id: "ghouls", title: "Ghouls on the causeway", label: "Ghouls", monster: "ghoul", count: 4, gold: 300, xp: 600 },
   { id: "wisps", title: "Lights over the water", label: "Wisps", monster: "willOWisp", count: 2, gold: 300, xp: 700 },
+  { id: "griffons", title: "Griffons on the slopes", label: "Griffons", monster: "griffon", count: 4, gold: 500, xp: 2000, act: 3 },
+  { id: "trolls", title: "Trolls on the snowfield", label: "Trolls", monster: "troll", count: 3, gold: 600, xp: 3000, act: 3 },
+  { id: "wyverns", title: "Wyverns over the heights", label: "Wyverns", monster: "wyvern", count: 2, gold: 700, xp: 3500, act: 3 },
 ];
+/* The hunts on the board in this act. */
+export const boardFor = act => BOUNTIES.filter(b => (b.act || 2) === (act >= 3 ? 3 : 2));
 export const bountyById = id => BOUNTIES.find(b => b.id === id) || null;
 
 const beaten = (state, monster) => state.bestiary?.[monster]?.beaten || 0;

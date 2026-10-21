@@ -29,9 +29,12 @@ export function averageDamage(attack) {
   return d.count * (d.sides + 1) / 2 + d.bonus + attack.damageBonus;
 }
 
-export function buyItem(char, base, stock = STOCK) {
+/* What a shop charges: the item's cost, times the shop's `markup` (Sallow charges half again; Grub, a bit less). */
+export const buyPrice = (base, markup = 1) => Math.round(ITEMS[base].cost * markup);
+
+export function buyItem(char, base, stock = STOCK, markup = 1) {
   if (!stock.includes(base)) return { ok: false, reason: "The shop doesn't sell that." };
-  const cost = ITEMS[base].cost;
+  const cost = buyPrice(base, markup);
   if (char.gold < cost) return { ok: false, reason: `That costs ${cost} gold. You have ${char.gold}.` };
   char.gold -= cost;
   const item = makeItem(base);

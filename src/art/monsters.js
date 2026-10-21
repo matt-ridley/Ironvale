@@ -6,6 +6,38 @@ export const MONSTER_SCALE = 1.25; // on the battle and meeting stage; the hero 
 
 export const MONSTER_ART = {
   // The Mountain Pass (Act 3): drawn from simple shapes rather than traced, in their own palettes.
+  // Auntie Nettle, a night hag: blue-black skin, hair like a dandelion clock, a grin full of teeth (20 x 26).
+  nightHag: {
+    colours: { k: "#0a0a14", w: "#e8e6f0", h: "#3a3a6a", e: "#ff4a6a", t: "#efe6cf", r: "#4a2a4a", R: "#6a3a5a", c: "#d8d0b0" },
+    rows: [
+      "........kkkkk.......",
+      ".......kwwwwwk......",
+      "......kwwwwwwwk.....",
+      ".....kwwwwwwwwwk....",
+      "....kwwwwhhhwwwwk...",
+      "....kwwwhhhhhwwwk...",
+      "....kwwhhehehhwwk...",
+      "....kwwhhhhhhhwwk...",
+      "....kwwhhhhhhhwwk...",
+      ".....kwwhttthwwk....",
+      "......kwwhhhwwk.....",
+      ".......kRRRRRk......",
+      ".....kkRRRRRRRkk....",
+      "....khRRRRRRRRRhk...",
+      "...khkRRRRRRRRRkhk..",
+      "...khkRRRRRRRRRkhk..",
+      "..khkkRRRRRRRRRkkhk.",
+      ".khk.kRRRRRRRRRk.khk",
+      ".khk..kRRRRRRRk..khk",
+      "khk...krRRRRRrk...kh",
+      "cck...krrrrrrrk..kcc",
+      "kk...krrrrrrrrrk..kk",
+      ".....krrrrrrrrrk....",
+      "....krrrrrrrrrrrk...",
+      "....krrrrrrrrrrrk...",
+      "...krrrrrrrrrrrrrk..",
+    ],
+  },
   // A wraith: a hooded shadow with eyes like coals and long, cold claws (18 x 26).
   wraith: {
     colours: { k: "#08060c", c: "#2a2238", C: "#3d3252", e: "#ff6a3a", w: "#c8c0e0" },

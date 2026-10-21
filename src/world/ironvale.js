@@ -27,7 +27,7 @@ export const IRONVALE = {
   ],
   objects: [
     { id: "fenCampfire", x: 6, y: 48, sprite: "campfire", script: "campfire", still: true },
-    { id: "sallow", x: 30, y: 44, sprite: "motherSallow", script: "sallow", goneWhen: "sallowDefeated" },
+    { id: "sallow", x: 30, y: 44, sprite: "motherSallow", script: "sallow", goneWhenAny: ["sallowDefeated", "keepHome"] }, // Act 3: off to be a queen
     // The flooded stretch of the causeway: Sallow's water, until she raises it (or falls).
     { id: "flood1", x: 31, y: 34, sprite: "flood", script: "flood", goneWhen: "causewayRaised", still: true },
     { id: "flood2", x: 31, y: 35, sprite: "flood", script: "flood", goneWhen: "causewayRaised", still: true },
@@ -52,6 +52,18 @@ export const IRONVALE = {
     { id: "runeStone1", x: 12, y: 16, sprite: "runeStone", script: "runeStone", flag: "runeStone1", shownWhen: "keepHome", goneWhen: "runeStone1", still: true },
     { id: "runeStone2", x: 52, y: 18, sprite: "runeStone", script: "runeStone", flag: "runeStone2", shownWhen: "keepHome", goneWhen: "runeStone2", still: true },
     { id: "runeStone3", x: 44, y: 29, sprite: "runeStone", script: "runeStone", flag: "runeStone3", shownWhen: "keepHome", goneWhen: "runeStone3", still: true },
+    // Act 2's gap, built in Act 3: the goblin refugees' camp outside Fenwatch, the lizardfolk raiding it, and Grub's stall.
+    { id: "refugeeHut", x: 40, y: 46, sprite: "hut", script: "snik", still: true },
+    { id: "snik", x: 42, y: 47, sprite: "goblin", script: "snik", goneWhen: ["refugeesHelped", "rockslideOpen"] },
+    { id: "grub", x: 38, y: 48, sprite: "goblin", script: "grub", shownWhen: "refugeesHelped", goneWhen: "rockslideOpen" },
+    { id: "raiders", x: 48, y: 42, sprite: "lizardfolk", script: "raiders", shownWhen: "refugeeQuest", goneWhen: "raidersBeaten" },
+    // Old Vosk the ferryman on Fenwatch's jetty, and his punt at the island in the south lake (and its chest).
+    { id: "ferryman", x: 48, y: 57, sprite: "ferryman", script: "ferryman" },
+    { id: "ferryBack", x: 22, y: 53, sprite: "boat", script: "ferryBack", still: true },
+    { id: "islandChest", x: 24, y: 53, sprite: "chest", script: "chest", goneWhen: "islandChestOpened", still: true, loot: { gold: 300, items: ["potionGreaterHealing", "potionGreaterHealing", "scrollFireball"] } },
+    // Mother Sallow, Queen of the Fen, on the causeway (if you bargained with her), and later her shop at the rockslide.
+    { id: "queenSallow", x: 30, y: 44, sprite: "crownedSallow", script: "queenSallow", shownWhen: ["sallowBargain", "keepHome"], goneWhen: "queenSettled" },
+    { id: "sundries", x: 34, y: 10, sprite: "motherSallow", script: "sundries", shownWhen: "queenSettled" },
     { id: "fenCarving", x: 9, y: 44, sprite: "carving", script: "carving", still: true,
       lore: "\"The fen was a field once, and the Wardens' oxen grazed it.\" Rachel snorts. \"Times change. It says there's a cache under the reeds.\"",
       cache: { gold: 80, items: ["potionHealing", "potionHealing"] } },
@@ -111,7 +123,7 @@ export const IRONVALE = {
   "^^EbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbLT",
   "^^^gggggrggggg;ggggYqqqq~qqqqqrgggggggggrrggggLqqqqbbbbqqqqqqqLT",
   "^^^ggggggrggggggggqq~~~~~~~~~qqggg;rggqgggggggLRRRRRqqbqRRRRRqLT",
-  "^^^ggggggggg;Ygggqq~~~~;~~~~~~qqgrgqqY~qqqggggLRRRRRqqbqRRRRRqLT",
+  "^^^ggggggggg;Ygggqq~~~g;g~~~~~qqgrgqqY~qqqggggLRRRRRqqbqRRRRRqLT",
   "^^^ggggrqYggggggggqqY~~~~~~~~qqgggqq~;~~~qqgggLHJHHHqqbqHH$HHqLT",
   "^^ggqqqq~qqqqrrggggqqqqq~qq;qqgggqq~~~Y~~~qqgrLqbqqqqqbqqqbqqqLT",
   "^^gqY~~~~~~~qqggggggggggqgggggrgggqqY~~~~qqggrLbbbbbbbbbbbbbbbLT",

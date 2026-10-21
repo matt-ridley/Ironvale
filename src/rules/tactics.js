@@ -129,7 +129,7 @@ export function quillFlyby(battle) {
   battle.flyby = true;
   addCondition(battle, "player", "helped", {});
   const t = battle.monsters[battle.focus]?.hp > 0 ? battle.monsters[battle.focus] : living(battle)[0];
-  say(battle, "flyby", `Quill swoops at the ${t.name}'s eyes, hooting! Your next attack has advantage.`, { target: battle.monsters.indexOf(t) });
+  say(battle, "flyby", `Quill swoops at ${t.the}'s eyes, hooting! Your next attack has advantage.`, { target: battle.monsters.indexOf(t) });
   return { ok: true, events: battle.log.slice(start) };
 }
 
@@ -138,9 +138,9 @@ function shoot(battle, target, rng) {
   const a = battle.ally, t = battle.monsters.indexOf(target);
   const r = adjustRoll(resolveAttack(a.attack, acOf(battle, t), rng, attackMods(battle, "ally", t, { melee: false })), target, a.attack);
   const woke = hurt(battle, t, r.damage);
-  say(battle, "ally-attack", `${a.name} attacks the ${target.name} with a ${a.attack.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t });
+  say(battle, "ally-attack", `${a.name} attacks ${target.the} with a ${a.attack.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t });
   tellWoken(battle, t, woke);
-  if (target.hp === 0) say(battle, "defeat", `The ${target.name} falls.`, { target: t });
+  if (target.hp === 0) say(battle, "defeat", `${target.The} falls.`, { target: t });
 }
 
 /* True if your companion can still VOLLEY this fight (Megan, once Matthew has taught her). */

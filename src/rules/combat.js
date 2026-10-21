@@ -27,8 +27,11 @@ export function spawnMonster(id, rng = Math.random) {
   if (!m) throw new Error(`Unknown monster: ${id}`);
   const hp = Math.max(1, roll(m.hp, rng).total);
   const attacks = attacksOf(m).map(a => ({ ...a, damageBonus: 0 }));
-  return { id, name: m.name, type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: attacks[0], attacks, xp: m.xp, gold: m.gold,
-    vulnerable: m.vulnerable || [], resistant: m.resistant || [], weaponResist: m.weaponResist || null, ...(m.regen && { regen: { ...m.regen } }) };
+  // How the log names it: "the Troll", but a monster with a name of its own (`proper`) is just "Auntie Nettle".
+  const the = m.proper ? m.name : `the ${m.name}`;
+  return { id, name: m.name, the, The: the[0].toUpperCase() + the.slice(1), type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: attacks[0], attacks, xp: m.xp, gold: m.gold,
+    vulnerable: m.vulnerable || [], resistant: m.resistant || [], weaponResist: m.weaponResist || null, ...(m.regen && { regen: { ...m.regen } }),
+    ...(m.spells && { spells: m.spells, spellsLeft: Object.fromEntries(m.spells.map(sp => [sp.name, sp.uses])) }) };
 }
 
 export const WEAPON_DAMAGE = ["slashing", "piercing", "bludgeoning"];
@@ -83,7 +86,7 @@ const playerAc = battle => armourClass(battle.player) + (battle.defending ? DEFE
 // Everyone in a fight has a key: "player", "ally" or a monster's index.
 /* The hero, companion or monster with this key. */
 export const combatant = (battle, key) => (key === "player" ? battle.player : key === "ally" ? battle.ally : battle.monsters[key]);
-export const nameOf = (battle, key) => (key === "player" ? "You" : key === "ally" ? battle.ally.name : `The ${battle.monsters[key].name}`);
+export const nameOf = (battle, key) => (key === "player" ? "You" : key === "ally" ? battle.ally.name : `${battle.monsters[key].The}`);
 export const acOf = (battle, key) => (key === "player" ? playerAc(battle) : combatant(battle, key).ac + conditionAc(battle, key));
 
 /* Someone's saving throw bonus: the hero's ability modifier (+ proficiency in a fighter's STR and CON saves), a
@@ -192,10 +195,10 @@ export function playerAction(battle, action, rng = Math.random) {
         flare = ` The rune on your blade flares: +${extra} radiant!`;
       }
       const woke = hurt(battle, t, r.damage);
-      say(battle, "attack", `${n ? "Again! You swing" : "You swing"} your ${atk.name} at the ${target.name}: ${rollText(r, atk.bonus)} ${hitText(r)}${flare}`, { roll: r, target: t, rune: !!flare });
+      say(battle, "attack", `${n ? "Again! You swing" : "You swing"} your ${atk.name} at ${target.the}: ${rollText(r, atk.bonus)} ${hitText(r)}${flare}`, { roll: r, target: t, rune: !!flare });
       tellWoken(battle, t, woke);
       if (target.hp === 0) {
-        say(battle, "defeat", `The ${target.name} falls.`, { target: t });
+        say(battle, "defeat", `${target.The} falls.`, { target: t });
         target = living(battle)[0]; // the second attack goes to the next monster
       }
     }
@@ -222,10 +225,10 @@ export function playerAction(battle, action, rng = Math.random) {
     if (!(battle.monsters[t]?.hp > 0)) return { ok: false, reason: "Pick a monster that's still standing." };
     p.runes.used = (p.runes.used || 0) + 1;
     const dc = runeDc(p), s = battleSave(battle, t, "CON", dc, rng), m = battle.monsters[t];
-    if (s.success) say(battle, "spell-save", `Chains of light snap round the ${m.name}, and it tears free (CON save ${s.total} vs DC ${dc}).`, { target: t, save: s, damage: 0 });
+    if (s.success) say(battle, "spell-save", `Chains of light snap round ${m.the}, and it tears free (CON save ${s.total} vs DC ${dc}).`, { target: t, save: s, damage: 0 });
     else {
       addCondition(battle, t, "bound", { rounds: 1 });
-      say(battle, "condition", `Chains of light lock round the ${m.name}: it's bound and loses its next turn! (CON save ${s.total} vs DC ${dc})`, { who: t, condition: "bound" });
+      say(battle, "condition", `Chains of light lock round ${m.the}: it's bound and loses its next turn! (CON save ${s.total} vs DC ${dc})`, { who: t, condition: "bound" });
     }
   } else if (action.type === "defend") {
     battle.defending = true;
@@ -361,11 +364,11 @@ function runMonsterTurns(battle, rng) {
 function regenerate(battle, i) {
   const m = battle.monsters[i];
   if (!m.regen || m.hp <= 0) return;
-  if (m.regenBlocked) { m.regenBlocked = false; return say(battle, "regen-stop", `The ${m.name}'s burns don't knit.`, { target: i }); }
+  if (m.regenBlocked) { m.regenBlocked = false; return say(battle, "regen-stop", `${m.The}'s burns don't knit.`, { target: i }); }
   const healed = Math.min(m.maxHp - m.hp, m.regen.hp);
   if (!healed) return;
   m.hp += healed;
-  say(battle, "regen", `The ${m.name}'s wounds knit closed before your eyes (+${healed} HP). Fire would stop that.`, { target: i, heal: healed });
+  say(battle, "regen", `${m.The}'s wounds knit closed before your eyes (+${healed} HP). Fire would stop that.`, { target: i, heal: healed });
 }
 
 /* True if you could turn this blow aside with Iron Ward: you know it, have a slot, can act, and +5 AC is enough. */
@@ -382,6 +385,7 @@ function canWard(battle, r) {
    reaction: returns true then (battle.pending says which blow). */
 function monsterTurn(battle, i, rng, from = 0, onAllyChoice = null) {
   const m = battle.monsters[i], a = battle.ally;
+  if (from === 0 && onAllyChoice === null && monsterCasts(battle, i, rng)) return false; // a spell instead of its attacks
   const onAlly = onAllyChoice ?? !!(a && a.hp > 0 && rng() < 0.5);
   const key = onAlly ? "ally" : "player";
   for (let n = from; n < m.attacks.length; n++) {
@@ -390,7 +394,7 @@ function monsterTurn(battle, i, rng, from = 0, onAllyChoice = null) {
     const r = resolveAttack(atk, acOf(battle, key), rng, attackMods(battle, i, key));
     if (key === "player" && r.hit && canWard(battle, r)) {
       battle.pending = { kind: "ironWard", monster: i, attack: n, onAlly, roll: r };
-      say(battle, "ward-prompt", `The ${m.name}'s ${atk.name} is going to hit you (${r.total} vs AC ${r.targetAc})! Iron Ward? (+${IRON_WARD_AC} AC, a rune slot)`, { actor: i });
+      say(battle, "ward-prompt", `${m.The}'s ${atk.name} is going to hit you (${r.total} vs AC ${r.targetAc})! Iron Ward? (+${IRON_WARD_AC} AC, a rune slot)`, { actor: i });
       return true;
     }
     landAttack(battle, i, key, atk, r, rng);
@@ -402,12 +406,46 @@ function monsterTurn(battle, i, rng, from = 0, onAllyChoice = null) {
   return false;
 }
 
+/* A monster with spells may cast one instead of attacking: the first with uses left whose `chance` comes up. Returns
+   true if it cast. */
+function monsterCasts(battle, i, rng) {
+  const m = battle.monsters[i];
+  const spell = (m.spells || []).find(sp => m.spellsLeft[sp.name] > 0 && rng() < sp.chance);
+  if (!spell) return false;
+  m.spellsLeft[spell.name]--;
+  castMonsterSpell(battle, i, spell, rng);
+  return true;
+}
+
+/* A monster's spell: everyone it touches makes a saving throw (you with Indomitable and Pip's badge), for damage
+   (halved on a save, if `half`) and maybe a condition. */
+export function castMonsterSpell(battle, i, spell, rng) {
+  const m = battle.monsters[i], a = battle.ally;
+  say(battle, "monster-cast", `${m.The} casts ${spell.name}!`, { actor: i, spell: spell.name });
+  const allyUp = !!(a && a.hp > 0);
+  const keys = spell.targets === "all" ? ["player", ...(allyUp ? ["ally"] : [])] : [allyUp && rng() < 0.5 ? "ally" : "player"];
+  for (const key of keys) {
+    const s = key === "player" ? resistSave(battle, key, spell.save, spell.dc, rng) : battleSave(battle, key, spell.save, spell.dc, rng);
+    const full = spell.damage ? roll(spell.damage, rng).total : 0;
+    const dmg = s.success ? (spell.half ? Math.floor(full / 2) : 0) : full;
+    const woke = hurt(battle, key, dmg);
+    const who = key === "player" ? "You" : a.name, are = key === "player" ? "are" : "is";
+    say(battle, "monster-spell", `${who} ${s.success ? (key === "player" ? "resist" : "resists") : (key === "player" ? "are caught" : "is caught")} (${spell.save} save ${s.total} vs DC ${spell.dc})${dmg ? `: ${dmg} ${spell.damageType} damage` : ""}.`, { who: key, damage: dmg });
+    tellWoken(battle, key, woke);
+    if (!s.success && spell.condition && combatant(battle, key).hp > 0) {
+      addCondition(battle, key, spell.condition.id, { rounds: spell.condition.rounds });
+      say(battle, "condition", `${who} ${are} ${CONDITIONS[spell.condition.id].name}!`, { who: key, condition: spell.condition.id });
+    }
+    if (key === "ally" && a.hp === 0) { battle.allyFell = true; say(battle, "ally-down", `${a.name} is knocked down! ${a.name} will be back up after the fight.`); }
+  }
+}
+
 /* One monster attack landing (or missing), with what it does after. */
 function landAttack(battle, i, key, atk, r, rng) {
   const m = battle.monsters[i], a = battle.ally;
   const woke = hurt(battle, key, r.damage);
-  if (key === "ally") say(battle, "monster-attack", `The ${m.name} attacks ${a.name} with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, actor: i, onAlly: true });
-  else say(battle, "monster-attack", `The ${m.name} attacks with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r, true)}`, { roll: r, actor: i });
+  if (key === "ally") say(battle, "monster-attack", `${m.The} attacks ${a.name} with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, actor: i, onAlly: true });
+  else say(battle, "monster-attack", `${m.The} attacks with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r, true)}`, { roll: r, actor: i });
   tellWoken(battle, key, woke);
   if (r.hit && atk.poison && combatant(battle, key).hp > 0) {
     const { save, dc, damage } = atk.poison, s = resistSave(battle, key, save, dc, rng), full = roll(damage, rng).total;
@@ -427,7 +465,7 @@ export function reactAction(battle, useWard, rng = Math.random) {
   battle.pending = null;
   if (useWard) {
     p.runes.used = (p.runes.used || 0) + 1;
-    say(battle, "ward", `Iron Ward! The rune on your blade flares, and the ${m.name}'s ${atk.name} glances off (${r.total} vs AC ${r.targetAc + IRON_WARD_AC}).`, { actor: pend.monster });
+    say(battle, "ward", `Iron Ward! The rune on your blade flares, and ${m.the}'s ${atk.name} glances off (${r.total} vs AC ${r.targetAc + IRON_WARD_AC}).`, { actor: pend.monster });
   } else landAttack(battle, pend.monster, "player", atk, r, rng);
   if (!monsterTurn(battle, pend.monster, rng, pend.attack + 1, pend.onAlly) && !checkEnd(battle, rng)) {
     finishTurn(battle, pend.monster, rng);

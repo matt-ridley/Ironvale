@@ -88,7 +88,8 @@ export const TRINKET_BONUS = { oswinBelt: { STR: 2 } };
 export const trinketBonus = (char, ability) => Object.entries(TRINKET_BONUS)
   .reduce((sum, [base, b]) => sum + (b[ability] && char.inventory?.some(i => i.base === base) ? b[ability] : 0), 0);
 /* An ability score with any trinket bonus. */
-export const abilityScore = (char, ability) => char.abilities[ability] + trinketBonus(char, ability);
+// The hero only has STR, DEX and CON; anything else (a WIS save against a hag's curse) counts as an ordinary 10.
+export const abilityScore = (char, ability) => (char.abilities[ability] ?? 10) + trinketBonus(char, ability);
 export const mod = (char, ability) => abilityMod(abilityScore(char, ability));
 
 export function levelForXp(xp) {

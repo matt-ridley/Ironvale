@@ -6,7 +6,7 @@ import { state } from "../state/game.js";
 import { ITEMS, SHOPS, MAX_UPGRADE, SILVER_COST } from "../data/items.js";
 import { upgradeItem, upgradeCost, silverItem, canSilver, describeItem, itemName, groupPack, makeItem, baseOf, isUpgradable, SLOTS } from "../rules/items.js";
 import { companionGear, COMPANIONS } from "../rules/party.js";
-import { buyItem, sellItem, sellPrice } from "../rules/gear.js";
+import { buyItem, buyPrice, sellItem, sellPrice } from "../rules/gear.js";
 import { text, panel, button, ListView, uiCamera } from "../ui/widgets.js";
 import { heroFrame } from "../art/pixels.js";
 import { sfx } from "../audio/sound.js";
@@ -71,7 +71,7 @@ export class Shop extends Phaser.Scene {
       }));
     }
     if (this.tab === "buy") {
-      return this.shop.stock.map(base => ({ base, item: makeItem(base), label: ITEMS[base].name, right: `${ITEMS[base].cost}g`, color: ITEMS[base].cost > gold ? COLORS.dim : COLORS.text }));
+      return this.shop.stock.map(base => ({ base, item: makeItem(base), label: ITEMS[base].name, right: `${buyPrice(base, this.shop.markup)}g`, color: buyPrice(base, this.shop.markup) > gold ? COLORS.dim : COLORS.text }));
     }
     return groupPack(h.inventory).filter(g => baseOf(g.item).type !== "key").map(g => ({ item: g.item, label: g.name + (g.count > 1 ? ` x${g.count}` : ""), right: `${sellPrice(g.item)}g` }));
   }
@@ -112,7 +112,7 @@ export class Shop extends Phaser.Scene {
       this.desc.setText(`${describeItem(row.item)}\n${row.item.silvered ? "Already silvered." : "Silvered, it bites the undead that shrug off plain steel."}`);
       this.action.setLabel(row.item.silvered ? "SILVERED" : `SILVER ${SILVER_COST}g`).setEnabled(!row.item.silvered && SILVER_COST <= gold);
     } else if (this.tab === "buy") {
-      const cost = ITEMS[row.base].cost;
+      const cost = buyPrice(row.base, this.shop.markup);
       this.desc.setText(describeItem(row.item));
       this.action.setLabel(`BUY ${cost}g`).setEnabled(cost <= gold);
     } else {
@@ -132,7 +132,7 @@ export class Shop extends Phaser.Scene {
       r = silverItem(h, row.item.uid);
       line = r.ok ? `Molten silver, worked into the edge. Your ${itemName(r.item)} will bite the dead now. (${r.cost} gold)` : r.reason;
     } else if (this.tab === "buy") {
-      r = buyItem(h, row.base, this.shop.stock);
+      r = buyItem(h, row.base, this.shop.stock, this.shop.markup);
       line = r.ok ? `A fine ${itemName(r.item)}. It's in your pack. (${r.cost} gold)` : r.reason;
     } else {
       r = sellItem(h, row.item.uid);
