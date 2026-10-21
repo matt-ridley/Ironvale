@@ -14,6 +14,7 @@ import { hubById } from "../world/travel.js";
 import { asiEarned, RUNES, FIGHTING_STYLES } from "../rules/character.js";
 import { cleanName } from "../story/hero.js";
 import { cleanBounty } from "../story/bounties.js";
+import { SPELLS } from "../data/spells.js";
 
 export const SAVE_KEY = "ironvale-save";
 export const SAVE_FORMAT = 6;
@@ -44,6 +45,8 @@ function loadCompanion(c) {
     ...(tacticsFor(c.id).includes(c.tactics) && { tactics: c.tactics }),
     ...(c.lead === true && { lead: true }), // you pick their actions in a fight
     ...(isInt(c.talks) && c.talks > 0 && { talks: c.talks }), // campfire talks heard (story/talks.js)
+    ...(Array.isArray(c.spells) && { spells: c.spells.filter(id => SPELLS[id]) }), // a wizard's spellbook
+    ...(c.recovered === true && { recovered: true }), // Arcane Recovery, used since the last long rest
   };
   return { id: c.id, hurt: isInt(c.hurt) && c.hurt > 0 ? c.hurt : 0, gear, ...extra };
 }

@@ -29,6 +29,13 @@ export const TRACKS = {
     bass: "A1 - - - - - - - | A1 - - - - - - - | F1 - - - - - - - | E1 - - - - - - - | A1 - - - - - - - | C2 - - - - - - - | E1 - - - - - - - | A1 - - - - - - -",
     drums: "k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . h .",
   },
+  // The Mountain Pass: high and cold, sparse bell-like notes (a sine lead with a long echo) over a slow open fifth.
+  pass: {
+    bpm: 84, lead: "sine", echo: 0.55,
+    melody: "E6 - . . B5 - . . | G5 - A5 - B5 - . . | E6 - . . D6 - B5 - | A5 - - - . . . . | G5 - . . A5 - B5 - | D6 - . . B5 - A5 - | G5 - E5 - F#5 - G5 - | E5 - - - . . . .",
+    bass: "E2 - - - B2 - - - | E2 - - - B2 - - - | C2 - - - G2 - - - | D2 - - - A2 - - - | E2 - - - B2 - - - | G2 - - - D3 - - - | C2 - - - D2 - - - | E2 - - - B2 - - -",
+    drums: ". . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . k . h .",
+  },
   battle: {
     bpm: 150, lead: "sawtooth", echo: 0.25,
     melody: "E5 . E5 G5 . E5 B5 - | A5 - G5 - F#5 - D5 - | E5 . E5 G5 . E5 B5 - | C6 - B5 - A5 - B5 - | E5 . E5 G5 . E5 B5 - | A5 - G5 - F#5 - D5 - | G5 - F#5 - E5 - D#5 - | E5 - - - . . . .",

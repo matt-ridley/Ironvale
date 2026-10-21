@@ -43,6 +43,9 @@ export const OVERWORLD = {
     { id: "lostBow", x: 58, y: 21, sprite: "bow", script: "lostBow", goneWhen: "bowFound", still: true },
     { id: "isleChest", x: 33, y: 49, sprite: "chest", script: "chest", goneWhen: "isleChestOpened", still: true, loot: { gold: 40, items: ["potionSpeed", "potionHealing"] } },
     { id: "gardenChest", x: 7, y: 52, sprite: "chest", script: "chest", goneWhen: "gardenChestOpened", still: true, loot: { gold: 25, items: ["potionHealing", "potionHealing"] } },
+    { id: "gardenCarving", x: 9, y: 51, sprite: "carving", script: "carving", still: true,
+      lore: "\"A garden for the Warden's son, sent south with the crested sword.\" Rachel looks at you, then at your sword, for a long moment. \"There's something buried by the gate.\"",
+      cache: { gold: 100, items: ["potionGreaterHealing"] } },
     { id: "groveChest", x: 57, y: 43, sprite: "chest", script: "chest", goneWhen: "groveChestOpened", still: true, loot: { gold: 60, items: ["potionDexterity"] } },
   ],
   rows: [

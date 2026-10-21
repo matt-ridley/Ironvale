@@ -6,9 +6,13 @@
 // an inn. Each has TACTICS for when they act by themselves: attack, heal (look after whoever's badly hurt first) or,
 // for casters, save magic (cantrips only, keeping spell slots). In a fight you can also lead them yourself
 // (companion.lead): rules/tactics.js plays their turns.
+// A wizard (Rachel) keeps a spellbook that grows: give her a spell scroll and she copies it in for good (copySpell), and
+// a short rest at a camp brings back some of her spell slots (arcaneRecovery).
 import { proficiencyBonus } from "./character.js";
 import { makeItem, baseOf, isPotion } from "./items.js";
 import { roll } from "./dice.js";
+import { SPELLS } from "../data/spells.js";
+import { ITEMS } from "../data/items.js";
 
 export const COMPANIONS = {
   // Megan, a young ranger from Willowmere: light armour, a bow and quick hands.
@@ -17,6 +21,10 @@ export const COMPANIONS = {
   // Robyn, a cleric from Fenwatch's shrine: a sling for when the magic runs out, and her prayers (WIS +3).
   robyn: { name: "Robyn", dexMod: 1, hpBase: 9, hpPerLevel: 6, startGear: { bow: "sling", armour: "leather" },
     casting: { mod: 3, spells: ["sacredFlame", "cureWounds", "healingWord", "bless"] } },
+  // Rachel, a scholar of the Wardens' runes and Thorne's old apprentice: a wizard (INT +3) in padded armour, with a light
+  // crossbow for when the magic runs out, a spellbook that grows (`wizard`), and Quill, her owl.
+  rachel: { name: "Rachel", dexMod: 2, hpBase: 7, hpPerLevel: 4, startGear: { bow: "lightCrossbow", armour: "padded" },
+    casting: { mod: 3, spells: ["fireBolt", "magicMissile", "shield", "sleep"], wizard: true } },
 };
 
 export const TACTICS = { attack: "ATTACK", heal: "HEAL", save: "SAVE MAGIC" };
@@ -49,8 +57,53 @@ export function companionStats(hero) {
     hp: Math.max(1, maxHp - (c.hurt || 0)),
     ...gearStats(base, c.gear || {}, hero.level),
     tactics: tacticsFor(c.id).includes(c.tactics) ? c.tactics : "attack",
-    casting: base.casting || null,
+    casting: base.casting ? { ...base.casting, spells: knownSpells(c) } : null,
   };
+}
+
+/* The spells a caster companion knows: their class's to start with, and for a wizard, whatever they've copied in. */
+export const knownSpells = c => c.spells || COMPANIONS[c.id]?.casting?.spells || [];
+export const COPY_COST = 50; // gold of ink per spell level, as in the SRD
+
+/* Why your wizard can't copy this scroll into their book, or null if they can. */
+export function cantCopy(hero, item) {
+  const c = hero.companion, base = COMPANIONS[c?.id];
+  if (!base?.casting?.wizard) return "Only a wizard can copy a scroll into a spellbook.";
+  const spell = SPELLS[ITEMS[item.base]?.spell];
+  if (!spell) return "That isn't a spell scroll.";
+  if (!spell.classes.includes("wizard")) return `${spell.name} isn't a wizard's spell.`;
+  if (knownSpells(c).includes(ITEMS[item.base].spell)) return `${base.name} already knows ${spell.name}.`;
+  if (hero.gold < COPY_COST * spell.level) return `Copying it takes ${COPY_COST * spell.level} gold of ink.`;
+  return null;
+}
+
+/* Your wizard copies a scroll from your pack into their spellbook, for good (the scroll is used up, and the ink costs
+   COPY_COST gold per spell level). Returns { ok, spell, cost } or { ok: false, reason }. */
+export function copySpell(hero, uid) {
+  const item = hero.inventory.find(i => i.uid === uid);
+  if (!item) return { ok: false, reason: "That isn't in your pack." };
+  const reason = cantCopy(hero, item);
+  if (reason) return { ok: false, reason };
+  const id = ITEMS[item.base].spell, cost = COPY_COST * SPELLS[id].level;
+  hero.inventory = hero.inventory.filter(i => i !== item);
+  hero.gold -= cost;
+  hero.companion.spells = [...knownSpells(hero.companion), id];
+  return { ok: true, spell: SPELLS[id], cost };
+}
+
+/* Arcane Recovery: once between long rests, a short rest gives your wizard back spell slots whose levels add up to half
+   their level (rounded up), the highest first, none above level 5. Returns how many slots came back. */
+export function arcaneRecovery(hero) {
+  const c = hero.companion;
+  if (!COMPANIONS[c?.id]?.casting?.wizard || c.recovered || !c.slotsUsed?.some(n => n > 0)) return 0;
+  let budget = Math.ceil(hero.level / 2), got = 0;
+  const used = [...c.slotsUsed];
+  for (let lvl = Math.min(5, used.length); lvl >= 1; lvl--) {
+    while (used[lvl - 1] > 0 && budget >= lvl) { used[lvl - 1]--; budget -= lvl; got++; }
+  }
+  c.slotsUsed = used;
+  c.recovered = true;
+  return got;
 }
 
 /* Switches your companion to their next tactic. Returns it. */
@@ -80,6 +133,7 @@ export function takeCompanion(hero, id) {
   if (hero.companion) hero.roster.push(hero.companion);
   c.hurt = 0;
   if (c.slotsUsed) c.slotsUsed = [];
+  delete c.recovered;
   hero.companion = c;
   return { ok: true, id };
 }

@@ -2,13 +2,16 @@
 // would change your stats, then equip it, take it off, or drink it. With a friend in your party, HERO / the friend's
 // name switch whose gear you're looking at: a friend wears a bow and light armour from your pack. With nothing
 // picked, a friend's tab shows their TACTICS (what they do in a fight by themselves) and a button to change them, and
-// the hero's tab shows your name and title, with RENAME.
+// the hero's tab shows your name and title, with RENAME. A wizard's tab (Rachel) also lists her spellbook, and picking a
+// spell scroll in your pack there offers COPY: she copies it into her book for good (50 gold of ink per spell level).
 import { WIDTH, HEIGHT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
 import { armourClass, weaponAttack } from "../rules/character.js";
 import { equip, unequip, useItem, cantDrink, drinkText, describeItem, itemName, groupPack, baseOf, isPotion, SLOTS } from "../rules/items.js";
 import { compareEquip, compareUnequip, averageDamage } from "../rules/gear.js";
-import { companionStats, companionCantDrink, companionDrink, equipCompanion, unequipCompanion, compareCompanionEquip, compareCompanionUnequip, COMPANION_SLOTS, TACTICS, cycleTactics } from "../rules/party.js";
+import { companionStats, companionCantDrink, companionDrink, equipCompanion, unequipCompanion, compareCompanionEquip, compareCompanionUnequip, COMPANION_SLOTS, TACTICS, cycleTactics, cantCopy, copySpell, COPY_COST } from "../rules/party.js";
+import { SPELLS } from "../data/spells.js";
+import { ITEMS } from "../data/items.js";
 import { text, panel, button, ListView, uiCamera } from "../ui/widgets.js";
 import { heroFrame } from "../art/pixels.js";
 import { sfx } from "../audio/sound.js";
@@ -133,6 +136,7 @@ export class Inventory extends Phaser.Scene {
       const f = companionStats(h);
       this.name.setText(`${f.name.toUpperCase()}'S TACTICS: ${TACTICS[f.tactics]}`);
       this.desc.setText(TACTICS_ABOUT[f.tactics]);
+      if (f.casting?.wizard) this.msg.setText(`BOOK: ${f.casting.spells.map(id => SPELLS[id].name).join(", ")}. Pick a scroll to COPY it in.`).setColor(COLORS.dim);
       this.action.setVisible(true).setLabel("CHANGE").setEnabled(true);
       return;
     }
@@ -164,6 +168,10 @@ export class Inventory extends Phaser.Scene {
     } else if (baseOf(row.item).type === "fish") {
       this.action.setVisible(false);
       this.msg.setText("Sell it at any shop.").setColor(COLORS.dim);
+    } else if (baseOf(row.item).type === "scroll" && friend && companionStats(h).casting?.wizard) {
+      const reason = cantCopy(h, row.item), spell = SPELLS[ITEMS[row.item.base].spell];
+      this.action.setLabel("COPY").setEnabled(!reason);
+      this.msg.setText(reason || `Copy it into ${companionStats(h).name}'s book for good: ${COPY_COST * spell.level} gold of ink.`).setColor(reason ? COLORS.bad : COLORS.dim);
     } else if (baseOf(row.item).type === "scroll") {
       this.action.setLabel("READ").setEnabled(false);
       this.msg.setText("Read it in a fight: ITEMS, then SCROLL.").setColor(COLORS.dim);
@@ -196,7 +204,11 @@ export class Inventory extends Phaser.Scene {
     if (!row?.item) return;
     let msg, ok = true;
     const friend = this.who === "friend", name = friend ? companionStats(h).name : "You";
-    if (row.kind === "worn") {
+    if (friend && baseOf(row.item).type === "scroll") {
+      const r = copySpell(h, row.item.uid);
+      ok = r.ok;
+      msg = r.ok ? `${companionStats(h).name} copies ${r.spell.name} into her book. (-${r.cost} gold)` : r.reason;
+    } else if (row.kind === "worn") {
       if (friend) unequipCompanion(h, row.slot); else unequip(h, row.slot);
       msg = `${name} ${friend ? "takes" : "take"} off the ${itemName(row.item)}.`;
     } else if (isPotion(row.item)) {

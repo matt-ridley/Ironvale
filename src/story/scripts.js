@@ -6,7 +6,7 @@
 // ring's crest is the one on the hero's sword: the first hints that the hero is of the Wardens' blood.
 import { gainXp, rest, shortRest, reforgeBlade, learnRune } from "../rules/character.js";
 import { makeItem, itemName } from "../rules/items.js";
-import { joinParty, companionStats, benchCompanion, takeCompanion, COMPANIONS } from "../rules/party.js";
+import { joinParty, companionStats, benchCompanion, takeCompanion, arcaneRecovery, COMPANIONS } from "../rules/party.js";
 import { tileOf, feetAt } from "../world/movement.js";
 import { DEEP_CAVE } from "../world/cave.js";
 import { callName, titleOf } from "./hero.js";
@@ -14,6 +14,8 @@ import { hubById } from "../world/travel.js";
 import { GAME_SCRIPTS } from "./minigames.js";
 import { BOUNTIES, currentBounty, takeBounty, claimBounty, dropBounty, bountyLine } from "./bounties.js";
 import { talkNodes, afterRest } from "./talks.js";
+import { pay, paid } from "./rewards.js";
+import { ACT3_SCRIPTS, tremorNode, scoutNode, withRachel, stonesFound } from "./act3.js";
 
 /* ", Mary" when the hero has a name, else nothing: for lines like `You did it${comma(s)}!`. */
 const comma = s => (callName(s.hero) ? `, ${callName(s.hero)}` : "");
@@ -29,14 +31,6 @@ export const SIGNET_REWARD = { gold: 150, xp: 1500 }; // quest 3, for reaching G
 export const CAUSEWAY_REWARD = { gold: 200, xp: 3000 }; // quest 4, when the causeway rises
 export const SALLOW_FIGHT = ["motherSallow"];
 
-/* Pays a quest reward and remembers any new level for the line that says so. */
-function pay(s, ctx, reward) {
-  const before = s.hero.level;
-  s.hero.gold += reward.gold;
-  gainXp(s.hero, reward.xp, ctx.rng);
-  ctx.remember("newLevel", s.hero.level > before ? s.hero.level : null);
-}
-const paid = (ctx, reward) => `(+${reward.gold} gold, +${reward.xp} XP${ctx.recall("newLevel") ? `, level ${ctx.recall("newLevel")}!` : ""})`;
 
 const ELDER = "ELDER MAREN";
 const BRANNOC = "BRANNOC";
@@ -55,6 +49,7 @@ export const CHAIN_CHECKS = { smash: { ability: "STR", dc: 12 }, pick: { ability
 
 export const SCRIPTS = {
   ...GAME_SCRIPTS, // knucklebones, arm wrestling, archery and fishing (story/minigames.js)
+  ...ACT3_SCRIPTS, // the pass: Rachel, the rune-stones, the carvings (story/act3.js)
   elder: {
     start: s => {
       const f = s.flags;
@@ -887,7 +882,13 @@ export const SCRIPTS = {
   // aren't with you wait in the hall. Talking to her makes the keep your home.
   keepHall: innScript({
     keeper: "HILD", hub: "keep", stayLabel: "Sleep in your own bed",
-    onHello: (s, ctx) => { ctx.remember("first", !s.flags.keepHome); s.flags.keepHome = true; },
+    onHello: (s, ctx) => {
+      const first = !s.flags.keepHome;
+      ctx.remember("first", first);
+      s.flags.keepHome = true;
+      if (!first && !s.flags.heardTremor && !s.flags.metRachel) ctx.goto("tremor"); // Act 3 begins: the keep shook
+    },
+    extra: { tremor: tremorNode },
     welcome: () => "Welcome home.",
     famous: (s, cost, ctx) => `${!ctx.recall("first") ? "Welcome home" : "So you're the one who put the old lord to bed. I kept the Duck's kitchen for thirty years; Gully says this place needs a steward more than he does. Welcome home"}, ${callName(s.hero) || "my lord"}. Your bed's made, and your friends can wait in the hall.`,
     poor: () => "It's your own bed. It's free.",
@@ -920,18 +921,21 @@ export const SCRIPTS = {
         text: "A ring of stones around a crackling fire. Woodcutters from Oakhollow keep it going. No monster comes near it.",
         choices: [
           { label: "Rest by the fire (short rest)", to: "rest" },
+          { label: "Send Quill to scout", if: withRachel, to: "scout" },
           { label: "Not now", to: null },
         ],
       },
+      scout: scoutNode,
       rest: {
         enter: (s, ctx) => {
-          const r = shortRest(s.hero, companionStats(s.hero)?.maxHp);
+          const r = { ...shortRest(s.hero, companionStats(s.hero)?.maxHp), recovered: arcaneRecovery(s.hero) };
           ctx.remember("rest", r);
-          if (!r.healed && !r.secondWind && !r.actionSurge && !r.companionHealed) ctx.goto("rested");
+          if (!r.healed && !r.secondWind && !r.actionSurge && !r.companionHealed && !r.recovered) ctx.goto("rested");
         },
         text: (s, ctx) => {
           const r = ctx.recall("rest");
-          const got = [r.healed && `+${r.healed} HP`, r.companionHealed && `${companionStats(s.hero).name} +${r.companionHealed} HP`, r.secondWind && "Second Wind back", r.actionSurge && "Action Surge back"].filter(Boolean);
+          const got = [r.healed && `+${r.healed} HP`, r.companionHealed && `${companionStats(s.hero).name} +${r.companionHealed} HP`, r.secondWind && "Second Wind back", r.actionSurge && "Action Surge back",
+            r.recovered && `Rachel's Arcane Recovery: ${r.recovered} spell slot${r.recovered > 1 ? "s" : ""} back`].filter(Boolean);
           return `You warm your hands and catch your breath. ${got.join(", ")}. (A short rest brings you up to half your HP. For a full rest, find a bed.)`;
         },
         choices: afterRest,
@@ -999,7 +1003,7 @@ function signetNodes() {
 
 /* An inn: its keeper lets a bed for the night (a long rest, for the hub's innCost), and keeps the companions who aren't
    travelling with you (the roster: one choice per companion to leave them or bring them along). */
-function innScript({ keeper, hub, welcome, famous, poor, bye, stayLabel, onHello }) {
+function innScript({ keeper, hub, welcome, famous, poor, bye, stayLabel, onHello, extra = {} }) {
   const cost = () => hubById(hub).innCost;
   return {
     start: "hello",
@@ -1054,6 +1058,7 @@ function innScript({ keeper, hub, welcome, famous, poor, bye, stayLabel, onHello
       ...talkNodes(),
       poor: { speaker: keeper, text: s => poor(s, cost()) },
       bye: { speaker: keeper, text: bye },
+      ...extra,
     },
   };
 }
@@ -1118,7 +1123,8 @@ export function sideObjective(flags, state = {}) {
 
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
    counted until it can be finished. */
-export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported, flags.causewayRaised, flags.signetReturned].filter(Boolean).length;
+export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported, flags.causewayRaised, flags.signetReturned,
+  flags.rockslideOpen].filter(Boolean).length;
 
 /* The line under the HP box saying what to do next. */
 export function objective(flags) {
@@ -1139,7 +1145,10 @@ export function objective(flags) {
     if (!flags.signetReturned) return "Put the Iron Signet back on Varric's tomb";
     if (!flags.bladeReforged) return "Tell Brannoc what Varric called you";
     if (!flags.keepHome) return "Go home to Ironvale Keep: Hild is waiting";
-    return "Act 3 is coming: the door in the mountain pass";
+    if (!flags.heardTremor && !flags.metRachel) return "Hild has news: talk to her again";
+    if (!flags.metRachel) return "Go to the rockslide, north of the keep";
+    if (!flags.rockslideOpen) return stonesFound(flags) < 3 ? `Find the rune-stones near the keep (${stonesFound(flags)}/3)` : "Take the rune-stones to Rachel";
+    return "Climb the Mountain Pass";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";

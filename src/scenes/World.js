@@ -4,7 +4,8 @@
 // screen), into a house door to go inside, and onto an exit (a doormat, the daylight in the cave) to go to another
 // map. Q opens the quest log and M the world map (which can fast-travel you from a town or a camp). Wild areas can
 // start a fight as you walk, except near a camp. A Potion of Speed makes you faster and fights rarer for a number of
-// steps. A companion in your party walks along behind you. The HUD lives in the Hud scene on top.
+// steps. A companion in your party walks along behind you. The HUD lives in the Hud scene on top. On ice you slide in
+// a straight line (up, down, left or right) until you hit something or reach the end of the ice.
 import { TILE, WORLD_ZOOM, FONT, COLORS } from "../config.js";
 import { zoneAt, tileAt, objectAt, activeObjects, exitAt, doorAt } from "../world/map.js";
 import { moveBody, velocity, facingFor, tileOf, tileAhead, feetAt, WALK_SPEED, SPEED_POTION_BOOST } from "../world/movement.js";
@@ -26,6 +27,8 @@ const sheetFacing = f => (f === "left" || f === "right" ? "side" : f);
 const px = n => Math.round(n * TILE);
 const key = t => `${t.x},${t.y}`;
 const FOLLOW_GAP = 9; // trail points (about a tenth of a tile apart) between you and your companion
+const SLIDE_SPEED = 6; // tiles per second, sliding on ice
+const SLIDES = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const PLACE_NOTES = {
   blacksmith: "The blacksmith's forge. Walk into the door to go in.",
   apothecary: "The apothecary: potions! Walk into the door to go in.",
@@ -47,6 +50,7 @@ export class World extends Phaser.Scene {
     this.frozen = false;
     this.bumped = null; // the tile last walked into, so holding a direction doesn't reopen a door
     this.walked = 0; // distance since the last "step" (a tile's worth of walking)
+    this.sliding = null; // on ice: the direction you're sliding in
     this.pendingHud = [];
     this.hudUp = false; // until the Hud scene (re)starts and says it's ready
     this.lastTile = tileOf(state.pos);
@@ -128,6 +132,7 @@ export class World extends Phaser.Scene {
       f.sprite.anims.timeScale = this.player.anims.timeScale;
       f.sprite.setPosition(fx, fy - bob).setDepth(fy);
       f.shadow.setPosition(fx, fy - 1).setDepth(fy - 1);
+      if (f.owl) f.owl.setPosition(fx + (f.facing === "left" ? 10 : -10), fy - 54 - bob + Math.sin(this.time.now / 300) * 2).setFlipX(f.facing === "left").setDepth(fy + 1);
     }
   }
 
@@ -137,6 +142,7 @@ export class World extends Phaser.Scene {
     if (this.follower && this.follower.key !== c?.id) {
       this.follower.sprite.destroy();
       this.follower.shadow.destroy();
+      this.follower.owl?.destroy();
       this.follower = null;
     }
     if (!c || this.follower || !this.textures.exists(c.id)) return;
@@ -145,6 +151,7 @@ export class World extends Phaser.Scene {
       sprite: this.add.sprite(0, 0, c.id, 0).setOrigin(0.5, 1),
       key: c.id,
       facing: state.facing,
+      owl: c.id === "rachel" ? this.add.image(0, 0, "quill") : null, // Quill flies along above her
     };
   }
 
@@ -228,10 +235,30 @@ export class World extends Phaser.Scene {
     return v;
   }
 
+  /* On ice you can't steer: you slide straight on until you hit something or the ice ends. Returns the velocity to
+     use, or null when you're standing still on the ice (and nothing pushes you off). */
+  iceVelocity(vx, vy, speed) {
+    if (!this.sliding) {
+      if (!speed) return null;
+      this.sliding = Math.abs(vx) >= Math.abs(vy) ? (vx < 0 ? "left" : "right") : (vy < 0 ? "up" : "down");
+      const t = tileOf(state.pos), centre = feetAt(t.x, t.y); // line up with the tile, so you slide straight
+      state.pos = this.sliding === "left" || this.sliding === "right" ? { x: state.pos.x, y: centre.y } : { x: centre.x, y: state.pos.y };
+      state.facing = this.sliding;
+    }
+    const [dx, dy] = SLIDES[this.sliding];
+    return { vx: dx * SLIDE_SPEED, vy: dy * SLIDE_SPEED, speed: SLIDE_SPEED };
+  }
+
   update(time, delta) {
     if (this.frozen) return;
     const dt = Math.min(delta, 50) / 1000;
-    const { vx, vy, speed } = this.readInput();
+    let { vx, vy, speed } = this.readInput();
+    const here = tileOf(state.pos), onIce = !!tileAt(this.map, here.x, here.y)?.ice;
+    if (!onIce) this.sliding = null;
+    else {
+      const v = this.iceVelocity(vx, vy, speed);
+      ({ vx, vy, speed } = v || { vx: 0, vy: 0, speed: 0 });
+    }
     if (!speed) {
       this.player.play(`idle-${sheetFacing(state.facing)}`, true);
       this.placePlayer(Math.round(Math.sin(time / 450) * 0.6 + 0.4)); // breathing
@@ -239,12 +266,17 @@ export class World extends Phaser.Scene {
     }
     state.facing = facingFor(vx, vy, state.facing);
     this.player.setFlipX(state.facing === "left");
-    this.player.play(`walk-${sheetFacing(state.facing)}`, true);
+    if (this.sliding) this.player.play(`idle-${sheetFacing(state.facing)}`, true); // gliding, feet still
+    else this.player.play(`walk-${sheetFacing(state.facing)}`, true);
     this.player.anims.timeScale = speed / WALK_SPEED;
 
     const before = state.pos;
     const moved = moveBody(this.map, before, vx * dt, vy * dt, state.flags);
     state.pos = { x: moved.x, y: moved.y };
+    if (this.sliding && (moved.blockedX || moved.blockedY)) { // bump
+      if (Math.hypot(moved.x - before.x, moved.y - before.y) > 0.02) this.cameras.main.shake(80, 0.002);
+      this.sliding = null;
+    }
     this.placePlayer();
     const dist = Math.hypot(moved.x - before.x, moved.y - before.y);
     const last = this.trail.at(-1);

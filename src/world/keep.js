@@ -30,6 +30,9 @@ export const KEEP = {
     // Once the dead sleep, the keep is home: Hild the steward (your bed, and the companions who wait), and Brannoc's forge.
     { id: "hild", x: 17, y: 28, sprite: "steward", script: "keepHall", shownWhen: "signetReturned" },
     { id: "keepBrannoc", x: 22, y: 28, sprite: "brannoc", script: "keepForge", shownWhen: "bladeReforged" },
+    { id: "keepCarving", x: 8, y: 11, sprite: "carving", script: "carving", still: true,
+      lore: "\"Iron to hold, the Call to stand, Binding to keep: three runes on the road, and the Oath at the door.\" Rachel whispers it twice. \"The waystones. And a cache behind this stone.\"",
+      cache: { gold: 150, items: ["scrollMistyStep"] } },
     { id: "brannocTools", x: 35, y: 29, sprite: "chest", script: "brannocTools", goneWhen: "toolsFound", still: true },
     { id: "chapelChest", x: 3, y: 29, sprite: "chest", script: "chest", goneWhen: "chapelChestOpened", still: true, loot: { gold: 150, items: ["potionGreaterHealing", "scrollFireball"] } },
     { id: "courtyardChest", x: 24, y: 30, sprite: "chest", script: "chest", goneWhen: "courtyardChestOpened", still: true, loot: { gold: 120, items: ["potionGreaterHealing", "potionGreaterHealing"] } },

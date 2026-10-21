@@ -37,7 +37,12 @@ export const SPELLS = {
     condition: { id: "restrained", rounds: 10, saveEnds: "STR" } },
   faerieFire:     { name: "Faerie Fire", short: "FAERIE", level: 1, classes: ["druid", "bard"], kind: "save", save: "DEX", targets: "all", condition: { id: "outlined", rounds: 10 } },
 
+  // Level 2
+  mistyStep:      { name: "Misty Step", short: "MIST", level: 2, classes: ["wizard"], kind: "buff", targets: "self", bonusAction: true,
+    condition: { id: "blinked", untilTurnStart: true } },
+
   // Level 3
+  lightningBolt:  { name: "Lightning Bolt", short: "LIGHTNING", level: 3, classes: ["wizard"], kind: "save", save: "DEX", half: true, targets: "all", damage: "8d6", damageType: "lightning", upcast: { dice: 1 } },
   fireball:       { name: "Fireball", short: "BLAST", level: 3, classes: ["wizard"], kind: "save", save: "DEX", half: true, targets: "all", damage: "8d6", damageType: "fire", upcast: { dice: 1 } },
 };
 

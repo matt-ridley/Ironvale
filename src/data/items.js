@@ -68,6 +68,8 @@ export const ITEMS = {
   scrollSleep:        { name: "Scroll of Sleep",         type: "scroll", spell: "sleep", cost: 50 },
   scrollCureWounds:   { name: "Scroll of Cure Wounds",   type: "scroll", spell: "cureWounds", cost: 50 },
   scrollFireball:     { name: "Scroll of Fireball",      type: "scroll", spell: "fireball", cost: 300 },
+  scrollMistyStep:    { name: "Scroll of Misty Step",    type: "scroll", spell: "mistyStep", cost: 100 },
+  scrollLightningBolt: { name: "Scroll of Lightning Bolt", type: "scroll", spell: "lightningBolt", cost: 300 },
 };
 
 export const SILVER_COST = 100; // silvering a weapon at Brannoc's forge (the SRD's price)

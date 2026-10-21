@@ -11,8 +11,12 @@ import { seededRng } from "../rules/dice.js";
 const T = TILE;
 const WET = new Set(["water", "bridge", "shallow", "boardwalk"]);
 const GREEN = new Set(["grass", "flowers", "tree", "fence", "rock"]); // ground a path frays into
-const TALL = new Set(["wall", "door", "smithy", "apothecary", "bank", "cavewall", "cavetorch", "backwall", "hearth", "shelf", "keepwall", "palisade", "forge", "herbalist"]);
+const TALL = new Set(["wall", "door", "smithy", "apothecary", "bank", "cavewall", "cavetorch", "backwall", "hearth", "shelf", "keepwall", "palisade", "forge", "herbalist", "cliff"]);
 const SIDES = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] };
+const SNOWY = new Set(["snow", "deepsnow", "ice"]);
+const THAWED = new Set(["grass", "flowers", "scree", "causeway", "tree"]); // ground that snow peters out into
+// Snowy pines and rocks stand on whichever ground is around them: grass on the lower slopes, snow higher up.
+const ON_SNOW = new Set(["snowpine", "snowrock"]);
 const CORNERS = { nw: ["n", "w", -1, -1], ne: ["n", "e", 1, -1], se: ["s", "e", 1, 1], sw: ["s", "w", -1, 1] };
 const TURN = { n: 0, e: 1, s: 2, w: 3, nw: 0, ne: 1, se: 2, sw: 3 }; // quarter turns from the top (or top-left corner)
 
@@ -23,11 +27,12 @@ export const nameAt = (map, x, y) => (inBounds(map, x, y) ? TILES[map.rows[y][x]
    - verge: a path's sides that fray into grass; vergeCorners: grass only diagonally
    - shade: "n" under something tall (a wall, a cave wall), "w" just right of one
    - roof: { ridge, eave, w, e } where a roof ends
-   - ledge: a cave wall with open floor below it */
+   - ledge: a cave wall with open floor below it
+   - drift: snow's sides that peter out into grass or stones (a ragged edge) */
 export function joins(map, x, y) {
   const name = nameAt(map, x, y);
   const at = (dx, dy) => nameAt(map, x + dx, y + dy) ?? name;
-  const out = { bank: [], bankCorners: [], verge: [], vergeCorners: [], shade: [], roof: null, ledge: false };
+  const out = { bank: [], bankCorners: [], verge: [], vergeCorners: [], shade: [], roof: null, ledge: false, drift: [] };
   if (name === "water") {
     for (const [side, [dx, dy]] of Object.entries(SIDES)) if (!WET.has(at(dx, dy))) out.bank.push({ side, next: at(dx, dy) });
     for (const [corner, [a, b, dx, dy]] of Object.entries(CORNERS)) {
@@ -48,6 +53,9 @@ export function joins(map, x, y) {
   }
   if (name === "roof") out.roof = { ridge: at(0, -1) !== "roof", eave: at(0, 1) !== "roof", w: at(-1, 0) !== "roof", e: at(1, 0) !== "roof" };
   if ((name === "cavewall" || name === "cavetorch") && !["cavewall", "cavetorch"].includes(at(0, 1))) out.ledge = true;
+  if (name === "snow" || name === "deepsnow") {
+    for (const [side, [dx, dy]] of Object.entries(SIDES)) if (THAWED.has(at(dx, dy))) out.drift.push({ side, next: at(dx, dy) });
+  }
   return out;
 }
 
@@ -103,6 +111,16 @@ function drawJoins(ctx, j, rng) {
     box(ctx, C.grass, 0, 0, 3, 2); box(ctx, C.grass, 0, 0, 2, 3);
     box(ctx, C.pathDark, 3, 1, 1, 1); box(ctx, C.pathDark, 2, 2, 1, 1); box(ctx, C.pathDark, 1, 3, 1, 1);
   });
+  for (const { side, next } of j.drift) turned(ctx, side, () => { // the snow thins out into the ground beside it
+    const [ground, dark] = next === "scree" ? [C.scree, C.screeDark] : next === "causeway" ? [C.flag, C.flagDark] : [C.grass, C.grassDark];
+    let d = 1 + Math.floor(rng() * 3);
+    for (let x = 0; x < T; x++) {
+      if (rng() < 0.5) d = Math.max(1, Math.min(5, d + (rng() < 0.5 ? -1 : 1)));
+      box(ctx, ground, x, 0, 1, d);
+      if (rng() < 0.3) box(ctx, dark, x, d - 1, 1, 1);
+      if (rng() < 0.4) box(ctx, C.snowLight, x, d + 1, 1, 1); // speckles of snow on the edge
+    }
+  });
   if (j.shade.includes("n")) { box(ctx, "rgba(0, 0, 0, 0.22)", 0, 0, T, 4); box(ctx, "rgba(0, 0, 0, 0.1)", 0, 4, T, 4); }
   if (j.shade.includes("w")) box(ctx, "rgba(0, 0, 0, 0.12)", 0, 0, 3, T);
   if (j.roof) {
@@ -128,10 +146,12 @@ export function drawTerrain(ctx, map) {
     let name = nameAt(map, x, y);
     const rng = seededRng(seed(map, x, y));
     if (name === "grass" && rng() < 0.2) name = "grass2";
+    let ground = name;
+    if (ON_SNOW.has(name) && !Object.values(SIDES).some(([dx, dy]) => SNOWY.has(nameAt(map, x + dx, y + dy)))) ground = "grass";
     ctx.save();
     ctx.translate(x * T, y * T);
     ctx.beginPath(); ctx.rect(0, 0, T, T); ctx.clip();
-    DRAW[name](ctx, rng);
+    DRAW[ground](ctx, rng);
     drawJoins(ctx, joins(map, x, y), rng);
     ctx.restore();
     if (PROPS[name]) props.push([x, y, name, rng]);

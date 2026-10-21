@@ -47,13 +47,16 @@ test("Hild the steward: a free bed, the companions who wait, and the keep is hom
   let c = startConversation(SCRIPTS.keepHall, s);
   assert.match(view(c).text, /steward.*Welcome home, Robin/);
   assert.equal(flags.keepHome, true);
-  assert.equal(objective(flags), "Act 3 is coming: the door in the mountain pass");
+  assert.equal(objective(flags), "Hild has news: talk to her again");
   assert.ok(labels(c).includes("Your companions"));
   pick(c, "Sleep in your own bed");
   assert.equal(hero.hp, hero.maxHp);
   assert.equal(hero.gold, 7);
   assert.doesNotMatch(view(c).text, /gold/);
   c = startConversation(SCRIPTS.keepHall, s);
+  assert.match(view(c).text, /^Robin, the keep shook last night/); // Act 3 begins
+  assert.equal(objective(flags), "Go to the rockslide, north of the keep");
+  choose(c, 0);
   assert.match(view(c).text, /^Welcome home, Robin/);
   pick(c, "Your companions");
   pick(c, "Megan: wait here");

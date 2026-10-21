@@ -2,6 +2,8 @@
 // from the quest flags every time, so there's nothing extra to save. No Phaser here, so it can be tested; the Quests
 // screen shows what questLog returns.
 import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD } from "./scripts.js";
+import { ROCKSLIDE_REWARD, stonesFound } from "./act3.js";
+import { actOf } from "./hero.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
 
@@ -72,6 +74,18 @@ export const QUESTS = [
       { text: "Face Lord Varric", done: f => f.varricDefeated },
       { text: "Put the Iron Signet back on his tomb", done: f => f.signetReturned },
       { text: "Tell Brannoc what Varric called you", done: f => f.bladeReforged },
+    ],
+  },
+  {
+    id: "rockslide", title: "The Scholar at the Rockslide", kind: "main",
+    known: f => actOf(f) >= 3,
+    about: "The keep shook in the night, and the shaking came from the Mountain Pass, where the old road is buried under a rockslide.",
+    reward: reward(ROCKSLIDE_REWARD),
+    steps: [
+      { text: "Hear Hild's news", done: f => f.heardTremor || f.metRachel },
+      { text: "Go to the rockslide, north of the keep", done: f => f.metRachel },
+      { text: "Find the three rune-stones on the keep's grounds", done: f => stonesFound(f) === 3 },
+      { text: "Lay the Wardenblade against the rune with Rachel", done: f => f.rockslideOpen },
     ],
   },
   {
