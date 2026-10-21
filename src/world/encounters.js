@@ -149,6 +149,16 @@ export const ENCOUNTERS = {
       { weight: 1, foes: ["wraith", "wraith"] },
     ],
   },
+  gatehouse: {
+    level: 12,
+    chance: 0.07,
+    table: [
+      { weight: 2, foes: ["helmedHorror", "helmedHorror"] },
+      { weight: 2, foes: ["chimera"] },
+      { weight: 2, foes: ["shieldGuardian"] },
+      { weight: 1, foes: ["chimera", "helmedHorror"] },
+    ],
+  },
   watchtower: {
     level: 10,
     chance: 0.06,
@@ -175,6 +185,8 @@ export const ENCOUNTERS = {
     ],
   },
 };
+
+ENCOUNTERS.frozenForge = ENCOUNTERS.barracks = ENCOUNTERS.gatehouse; // the gatehouse's side rooms
 
 export const QUIET_STEPS = 12; // no fights for this many steps after one
 export const SAFE_TILES = ["cave", "caveexit", "passage", "ice"]; // a cave mouth, or sliding on ice, never starts a fight

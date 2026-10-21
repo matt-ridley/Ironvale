@@ -36,6 +36,20 @@ export const TRACKS = {
     bass: "E2 - - - B2 - - - | E2 - - - B2 - - - | C2 - - - G2 - - - | D2 - - - A2 - - - | E2 - - - B2 - - - | G2 - - - D3 - - - | C2 - - - D2 - - - | E2 - - - B2 - - -",
     drums: ". . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . k . h .",
   },
+  // The Wardens' Gatehouse: the keep's organ in a lower, colder key, and a slow march.
+  gatehouse: {
+    bpm: 60, lead: "square", echo: 0.5,
+    melody: "E4 - - - G4 - F#4 - | E4 - - - B3 - - - | C4 - - - D4 - E4 - | B3 - - - - - . . | E4 - - - G4 - A4 - | B4 - - - A4 - G4 - | F#4 - - - D#4 - F#4 - | E4 - - - - - . .",
+    bass: "E1 - - - - - - - | E1 - - - - - - - | C1 - - - - - - - | B0 - - - - - - - | E1 - - - - - - - | G1 - - - - - - - | B0 - - - - - - - | E1 - - - - - - -",
+    drums: "k . . . . . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . h .",
+  },
+  // Aldric Thorne: fast and wrong-footed, the pass's bells turned sour.
+  thorne: {
+    bpm: 168, lead: "sawtooth", echo: 0.3,
+    melody: "B4 - D5 - F5 - E5 - | D5 - B4 - A#4 - B4 - | C5 - E5 - G5 - F#5 - | E5 - C5 - B4 - - - | B4 - D5 - F5 - A5 - | G5 - F5 - E5 - D5 - | C5 - D5 - E5 - F5 - | B4 - - - . . . .",
+    bass: "B1 B1 B1 B1 B1 B1 B1 B1 | G1 G1 G1 G1 F#1 F#1 F#1 F#1 | A1 A1 A1 A1 A1 A1 A1 A1 | E1 E1 E1 E1 F#1 F#1 F#1 F#1 | B1 B1 B1 B1 B1 B1 B1 B1 | G1 G1 G1 G1 G1 G1 G1 G1 | A1 A1 A1 A1 F#1 F#1 F#1 F#1 | B1 B1 B1 B1 B1 . . .",
+    drums: "k h s h k h s h | k h s h k k s h | k h s h k h s h | k h s s k s s s | k h s h k h s h | k h s h k k s h | k h s h k h s h | k s k s k s k .",
+  },
   battle: {
     bpm: 150, lead: "sawtooth", echo: 0.25,
     melody: "E5 . E5 G5 . E5 B5 - | A5 - G5 - F#5 - D5 - | E5 . E5 G5 . E5 B5 - | C6 - B5 - A5 - B5 - | E5 . E5 G5 . E5 B5 - | A5 - G5 - F#5 - D5 - | G5 - F#5 - E5 - D#5 - | E5 - - - . . . .",

@@ -23,7 +23,7 @@ SKY.warrens = SKY.cave;
 SKY.throne = SKY.cave;
 SKY.drowned = SKY.keepGrounds = SKY.fenwatch = SKY.fen;
 SKY.pass = SKY.slopes = SKY.snowfield = SKY.heights = SKY.gatehouseApproach = SKY.thorneCamp = SKY.watchtower = SKY.mountain;
-SKY.frozenChapel = SKY.keep;
+SKY.frozenChapel = SKY.gatehouse = SKY.frozenForge = SKY.barracks = SKY.door = SKY.keep;
 SKY.courtyard = SKY.chapel = SKY.armoury = SKY.tomb = SKY.keep;
 
 /* A zone id the stage knows, or `fallback`. */

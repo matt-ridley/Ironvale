@@ -978,11 +978,26 @@ export const SCRIPTS = {
         choices: [
           { label: "Let's see the forge", to: "shop" },
           { label: "Give Brannoc his tools", if: s => s.hero.inventory.some(i => i.base === "brannocTools"), to: "tools" },
+          { label: "Show Brannoc the rune-iron", if: s => s.hero.inventory.some(i => i.base === "runeIron"), to: "runeIron" },
           { label: "Goodbye.", to: null },
         ],
       },
       shop: { enter: (s, ctx) => ctx.emit({ type: "shop", shop: "forge" }) },
       tools: toolsNode(),
+      // The Wardenblade's second form: one more rune slot.
+      runeIron: {
+        speaker: BRANNOC,
+        text: "\"Rune-iron. From the Wardens' own forge. I haven't seen this since... I've never seen this. My granddad had a nail of it. Give me the blade. And a day.\"",
+        to: "secondForm",
+      },
+      secondForm: {
+        enter: s => {
+          s.hero.inventory = s.hero.inventory.filter(i => i.base !== "runeIron");
+          s.hero.bladeForm = 2;
+          s.flags.bladeSecondForm = true;
+        },
+        text: s => `Brannoc works the rune-iron into the Wardenblade's fuller, and when he hands it back a second rune-channel runs down the steel, faintly blue. The Wardenblade's second form: one more rune slot. "The last form's beyond that Door, ${callName(s.hero) || "lad"}. Somewhere. I can feel it."`,
+      },
     },
   },
 
@@ -1200,6 +1215,7 @@ export function sideObjective(flags, state = {}) {
   if (flags.refugeeQuest && !flags.refugeesHelped) return "Chase off the lizardfolk raiding the goblins' camp";
   if (flags.nettleMet && !flags.nettleDefeated) return "Find Auntie Nettle's hut on the pass's slopes";
   if (flags.queenMet && !flags.queenSettled) return "Deal with the Queen of the Fen on the causeway";
+  if (flags.runeIronFound && !flags.bladeSecondForm) return "Take the rune-iron to Brannoc at the keep";
   if (flags.matthewQuest && !flags.matthewFound) return "Follow Matthew's arrows up the pass, with Megan";
   if (flags.chapelQuest && !flags.chapelLit) return "Take Robyn to the Frozen Chapel on the pass";
   if (flags.pipRanAway && !flags.pipRewarded) return flags.pipFound ? "See Pip and Hazel in Oakhollow" : flags.hazelPipNews ? "Find Pip: his trail goes into the wood" : "Ask Hazel what's happened to Pip";
@@ -1209,7 +1225,7 @@ export function sideObjective(flags, state = {}) {
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
    counted until it can be finished. */
 export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported, flags.causewayRaised, flags.signetReturned,
-  flags.rockslideOpen, flags.wardensRoad].filter(Boolean).length;
+  flags.rockslideOpen, flags.wardensRoad, flags.gatehouseDone].filter(Boolean).length;
 
 /* The line under the HP box saying what to do next. */
 export function objective(flags) {
@@ -1239,7 +1255,11 @@ export function objective(flags) {
     if (!flags.bindingStolen && !flags.bindingRecovered) return "Climb to the third waystone, over the chasm";
     if (!flags.bindingRecovered) return "Take the Binding back from Thorne's camp, east";
     if (!flags.wardensRoad) return "Take the Binding back to Colleen";
-    return "Open the Wardens' gatehouse, at the top";
+    if (!flags.gatehouseOpen) return "Open the Wardens' gatehouse, at the top";
+    if (!flags.runeDoor3) return "Get through the gatehouse's rune doors";
+    if (!flags.thorneDefeated) return "Stop Thorne at the Door";
+    if (!flags.gatehouseDone) return "Decide what to do with Thorne";
+    return "Face the Door";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";

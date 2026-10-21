@@ -3,7 +3,7 @@
 // screen shows what questLog returns.
 import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD } from "./scripts.js";
 import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD, WAYSTONE_REWARD, ROAD_REWARD, MATTHEW_REWARD, CHAPEL_REWARD, arrowsFound,
-  REFUGEE_REWARD, QUEEN_REWARD, NETTLE_REWARD } from "./act3.js";
+  REFUGEE_REWARD, QUEEN_REWARD, NETTLE_REWARD, GATEHOUSE_REWARD } from "./act3.js";
 import { actOf } from "./hero.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
@@ -133,6 +133,28 @@ export const QUESTS = [
     steps: [
       { text: "Find the toolbox in the keep's armoury", done: f => f.toolsFound },
       { text: "Bring it to Brannoc's forge in Fenwatch", done: f => f.toolsReturned },
+    ],
+  },
+  {
+    id: "gatehouse", title: "The Wardens' Gatehouse", kind: "main",
+    known: f => f.wardensRoad,
+    about: "A fortress cut into the mountain in front of the Door, sealed with three runes. Thorne is already inside.",
+    reward: reward(GATEHOUSE_REWARD),
+    steps: [
+      { text: "Open the gatehouse door with all three runes", done: f => f.gatehouseOpen },
+      { text: "Get through the three rune doors", done: f => f.runeDoor1 && f.runeDoor2 && f.runeDoor3 },
+      { text: "Stop Thorne at the Door", done: f => f.thorneDefeated },
+      { text: "Decide what to do with him", done: f => f.gatehouseDone },
+    ],
+  },
+  {
+    id: "runeIron", title: "Rune-Iron", kind: "side",
+    known: f => f.runeIronFound,
+    about: "Blue-black ore from the Wardens' frozen forge. Brannoc might be able to work it into the Wardenblade.",
+    reward: "The Wardenblade's second form: one more rune slot",
+    steps: [
+      { text: "Find rune-iron in the gatehouse's frozen forge", done: f => f.runeIronFound },
+      { text: "Take it to Brannoc's forge at the keep", done: f => f.bladeSecondForm },
     ],
   },
   {

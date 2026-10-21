@@ -27,6 +27,7 @@ export const CONDITIONS = {
   helped:     { name: "helped", attacksWith: "advantage", once: true }, // Quill's flyby
   bound:      { name: "bound", skips: true }, // the Rune of Binding
   turned:     { name: "turned", skips: true, wakesOnDamage: true }, // Turn Undead: it flees until it's hurt
+  hesitant:   { name: "frozen with doubt", skips: true }, // Thorne, faced with Rachel
   frightened: { name: "frightened", attacksWith: "disadvantage" },
 };
 

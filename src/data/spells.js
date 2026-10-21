@@ -49,6 +49,9 @@ export const SPELLS = {
 
   // Level 3
   lightningBolt:  { name: "Lightning Bolt", short: "LIGHTNING", level: 3, classes: ["wizard"], kind: "save", save: "DEX", half: true, targets: "all", damage: "8d6", damageType: "lightning", upcast: { dice: 1 } },
+  // A reaction (Rachel's COUNTER, when a monster starts casting): stops a spell of 3rd level or lower outright; a higher
+  // one needs a check (d20 + her INT against 10 + its level). Never cast on your own turn.
+  counterspell:   { name: "Counterspell", short: "COUNTER", level: 3, classes: ["wizard"], kind: "reaction" },
   fireball:       { name: "Fireball", short: "BLAST", level: 3, classes: ["wizard"], kind: "save", save: "DEX", half: true, targets: "all", damage: "8d6", damageType: "fire", upcast: { dice: 1 } },
 };
 

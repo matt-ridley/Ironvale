@@ -16,7 +16,7 @@ import { MONSTERS } from "../data/monsters.js";
 import { companionStats, afterBattle } from "./party.js";
 import { attackMods, conditionAc, skipsTurn, startTurn, endTurn, onDamage, conditionSave, addCondition, removeCondition, CONDITIONS } from "./conditions.js";
 import { ITEMS } from "../data/items.js";
-import { allyTurn } from "./tactics.js"; // (tactics.js uses this file's helpers too; nothing runs until a fight)
+import { allyTurn, canCounter, counter } from "./tactics.js"; // (tactics.js uses this file's helpers too; nothing runs until a fight)
 
 export const DEFEND_AC_BONUS = 2;
 export const CALL_ENDS = ["paralyzed", "frightened", "asleep", "restrained"]; // what Warden's Call shakes off
@@ -29,9 +29,10 @@ export function spawnMonster(id, rng = Math.random) {
   const attacks = attacksOf(m).map(a => ({ ...a, damageBonus: 0 }));
   // How the log names it: "the Troll", but a monster with a name of its own (`proper`) is just "Auntie Nettle".
   const the = m.proper ? m.name : `the ${m.name}`;
-  return { id, name: m.name, the, The: the[0].toUpperCase() + the.slice(1), type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: attacks[0], attacks, xp: m.xp, gold: m.gold,
+  return { id, name: m.name, label: m.label || m.name, the, The: the[0].toUpperCase() + the.slice(1), type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: attacks[0], attacks, xp: m.xp, gold: m.gold,
     vulnerable: m.vulnerable || [], resistant: m.resistant || [], weaponResist: m.weaponResist || null, ...(m.regen && { regen: { ...m.regen } }),
-    ...(m.spells && { spells: m.spells, spellsLeft: Object.fromEntries(m.spells.map(sp => [sp.name, sp.uses])) }) };
+    ...(m.spells && { spells: m.spells, spellsLeft: Object.fromEntries(m.spells.map(sp => [sp.name, sp.uses])) }),
+    ...(m.guardedBy !== undefined && { guardedBy: m.guardedBy }), ...(m.hesitates && { hesitates: true }) };
 }
 
 export const WEAPON_DAMAGE = ["slashing", "piercing", "bludgeoning"];
@@ -87,7 +88,10 @@ const playerAc = battle => armourClass(battle.player) + (battle.defending ? DEFE
 /* The hero, companion or monster with this key. */
 export const combatant = (battle, key) => (key === "player" ? battle.player : key === "ally" ? battle.ally : battle.monsters[key]);
 export const nameOf = (battle, key) => (key === "player" ? "You" : key === "ally" ? battle.ally.name : `${battle.monsters[key].The}`);
-export const acOf = (battle, key) => (key === "player" ? playerAc(battle) : combatant(battle, key).ac + conditionAc(battle, key));
+export const acOf = (battle, key) => (key === "player" ? playerAc(battle) : combatant(battle, key).ac + conditionAc(battle, key) + guardAc(battle, key));
+/* A monster warded by its shield guardian (`guardedBy`): +3 AC while the guardian stands. */
+export const GUARD_AC = 3;
+const guardAc = (battle, key) => { const g = battle.monsters[key]?.guardedBy; return g !== undefined && battle.monsters[g]?.hp > 0 ? GUARD_AC : 0; };
 
 /* Someone's saving throw bonus: the hero's ability modifier (+ proficiency in a fighter's STR and CON saves), a
    companion's DEX (other saves +0), or a monster's listed save. */
@@ -148,6 +152,12 @@ export function createBattle(player, monsterIds, rng = Math.random, { surviveRou
   const names = entries.map(e => (e.who === "player" ? "You" : e.who === "ally" ? ally.name : monsters[e.who].name) + ` (${e.init})`);
   say(battle, "start", `${monsters.map(m => m.name).join(", ")} ${monsters.length > 1 ? "appear" : "appears"}! Initiative: ${names.join(", ")}.`);
   if (quick) say(battle, "quick", "Your Potion of Dexterity makes you quick: one extra attack each time you ATTACK.");
+  // Thorne, faced with his old apprentice, can't move at first.
+  monsters.forEach((m, i) => {
+    if (!m.hesitates || ally?.id !== "rachel") return;
+    addCondition(battle, i, "hesitant", { rounds: 1 });
+    say(battle, "hesitate", `${ally.name}: "Aldric. Stop." ${m.The} flinches, and for a moment he can't move.`, { who: i });
+  });
   runMonsterTurns(battle, rng);
   return battle;
 }
@@ -385,7 +395,10 @@ function canWard(battle, r) {
    reaction: returns true then (battle.pending says which blow). */
 function monsterTurn(battle, i, rng, from = 0, onAllyChoice = null) {
   const m = battle.monsters[i], a = battle.ally;
-  if (from === 0 && onAllyChoice === null && monsterCasts(battle, i, rng)) return false; // a spell instead of its attacks
+  if (from === 0 && onAllyChoice === null) { // a spell instead of its attacks, which Rachel may COUNTER
+    const cast = monsterCasts(battle, i, rng);
+    if (cast) return cast === "paused";
+  }
   const onAlly = onAllyChoice ?? !!(a && a.hp > 0 && rng() < 0.5);
   const key = onAlly ? "ally" : "player";
   for (let n = from; n < m.attacks.length; n++) {
@@ -407,12 +420,17 @@ function monsterTurn(battle, i, rng, from = 0, onAllyChoice = null) {
 }
 
 /* A monster with spells may cast one instead of attacking: the first with uses left whose `chance` comes up. Returns
-   true if it cast. */
+   false if it doesn't, true if it cast, or "paused" if Rachel could COUNTER it (battle.pending waits for reactAction). */
 function monsterCasts(battle, i, rng) {
   const m = battle.monsters[i];
   const spell = (m.spells || []).find(sp => m.spellsLeft[sp.name] > 0 && rng() < sp.chance);
   if (!spell) return false;
   m.spellsLeft[spell.name]--;
+  if (!spell.breath && canCounter(battle)) {
+    battle.pending = { kind: "counter", monster: i, spell };
+    say(battle, "counter-prompt", `${m.The} begins to cast ${spell.name}! ${battle.ally.name} could COUNTER it (a level 3 slot).`, { actor: i });
+    return "paused";
+  }
   castMonsterSpell(battle, i, spell, rng);
   return true;
 }
@@ -456,11 +474,24 @@ function landAttack(battle, i, key, atk, r, rng) {
   if (r.hit && atk.onHit && combatant(battle, key).hp > 0) afflict(battle, key, atk.onHit, rng);
 }
 
-/* Your answer when Iron Ward could stop a blow: use it (a rune slot, +5 AC against this attack, so it misses) or take
-   the hit. Then the monster's turn carries on. Returns { ok, events } like playerAction. */
+/* Your answer to a reaction prompt: `use` it or not. Iron Ward (a blow that would hit you): a rune slot for +5 AC
+   against it, so it misses, or take the hit; the monster's turn then carries on. COUNTER (a monster starting a spell):
+   Rachel spends a slot to stop it, or lets it go off; either way that's the monster's turn. Returns { ok, events } like
+   playerAction. */
 export function reactAction(battle, useWard, rng = Math.random) {
   const pend = battle.pending;
   if (!isReacting(battle)) return { ok: false, reason: "There's nothing to react to." };
+  if (pend.kind === "counter") {
+    const start = battle.log.length;
+    battle.pending = null;
+    if (!useWard || !counter(battle, pend.spell, rng)) castMonsterSpell(battle, pend.monster, pend.spell, rng);
+    if (!checkEnd(battle, rng)) {
+      finishTurn(battle, pend.monster, rng);
+      nextTurn(battle);
+      runMonsterTurns(battle, rng);
+    }
+    return { ok: true, events: battle.log.slice(start) };
+  }
   const start = battle.log.length, p = battle.player, m = battle.monsters[pend.monster], atk = m.attacks[pend.attack], r = pend.roll;
   battle.pending = null;
   if (useWard) {

@@ -83,6 +83,7 @@ export function deserialize(json) {
   if (!hero.companion) delete hero.companion;
   if (!FIGHTING_STYLES[hero.fightingStyle]) delete hero.fightingStyle;
   if (typeof hero.indomitableUsed !== "boolean") delete hero.indomitableUsed;
+  if (hero.bladeForm !== 2) delete hero.bladeForm; // the Wardenblade's second form (Act 3)
   hero.name = cleanName(h.name);
   if (data.format < 5) { // the crest goes on the sword you've had longest: your first longsword, worn or carried
     const all = [hero.equipment.weapon, ...hero.inventory].filter(Boolean);

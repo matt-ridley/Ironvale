@@ -161,6 +161,7 @@ export function readScroll(battle, uid, { target, slotLevel } = {}, rng = Math.r
   const item = p.inventory.find(i => i.uid === uid);
   const spell = item && SPELLS[ITEMS[item.base].spell];
   if (!spell) return { ok: false, reason: "That isn't a scroll." };
+  if (spell.kind === "reaction") return { ok: false, reason: `${spell.name} answers someone else's spell: give it to a wizard to copy.` };
   const check = targetsFor(battle, spell, { key: "player" }, target);
   if (!check.keys) return { ok: false, reason: check.reason };
   p.inventory = p.inventory.filter(i => i !== item);
