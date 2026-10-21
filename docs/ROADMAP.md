@@ -99,7 +99,7 @@ Her stats: INT +3 casting, a staff, padded armour. She starts with Fire Bolt, Ma
 
 | Companion | What the talks reveal | Their quest (needs them in the party) | Reward |
 |---|---|---|---|
-| **Megan** | Her da, Garret, was a Fenwatch archer who went up the pass with a survey party ten years ago and never came back. She's afraid of heights. Her bow was his. | **Garret's Arrows.** Arrows with his fletching mark lie along the pass, but only Megan recognises them. They lead to an old Warden watchtower where Garret has lived as a hermit since the survey party was lost, hunting griffons. He shoots at strangers and only comes out for Megan. | Garret teaches her **Volley** (one shot at each monster, once per fight). Garret moves into the keep and runs archery rematches in the training yard. The watchtower becomes a camp. |
+| **Megan** | Her da, Matthew, was a Fenwatch archer who went up the pass with a survey party ten years ago and never came back. She's afraid of heights. Her bow was his. | **Matthew's Arrows.** Arrows with his fletching mark lie along the pass, but only Megan recognises them. They lead to an old Warden watchtower where Matthew has lived as a hermit since the survey party was lost, hunting griffons. He shoots at strangers and only comes out for Megan. | Matthew teaches her **Volley** (one shot at each monster, once per fight). Matthew moves into the keep and runs archery rematches in the training yard. The watchtower becomes a camp. |
 | **Robyn** | She was left on the shrine's step as a baby. For years her prayers felt unanswered, until the night you laid the graves to rest. The light she prays to has an old name: the Wardens' **Dawn**. | **The Frozen Chapel.** A Warden chapel high on the pass, full of wraiths. Only Robyn can consecrate it. | Robyn learns **Turn Undead** and **Spiritual Weapon**. The chapel becomes a camp. Her lines hint at the Oath of Dawn. |
 | **Rachel** | The college, Thorne as he used to be, what she worked out about runes, and why Quill won't go near Thorne. | Her quest *is* the main quest. In the final fight, with her in the party, Thorne hesitates the first time she speaks (he loses his first turn), and sparing him gets a line from her. | Thorne's notes go to the keep's library: more scrolls for her book. |
 | **Brannoc** (not a companion) | | **Rune-Iron.** The gatehouse's frozen forge still has rune-iron in its ore bins. Bring him some. | The **Wardenblade's second form**: one more rune slot. (The final form is Act 4.) |
@@ -111,27 +111,27 @@ Claire stays open for Act 4.
 - **Mother Sallow, if you made the bargain:** she wore the Goblin King's crown, decided she's **Queen of the Fen**, and charges a toll on the causeway (one copper, then a song, then a pretty pebble). Fenwatch asks you to sort it out. You can bargain again with something shiny from Thorne's camp, or fight a crowned Sallow who's tougher than before. Either way she then turns up at the rockslide camp as **Sallow's Sundries**, the pass's only pedlar, selling cold charms at hag prices.
 - **Mother Sallow, if you fought her:** her sister **Auntie Nettle** (the SRD night hag, played comic: *"You killed my sister? She owed me money."*) haunts the pass at night. Short rests at the pass's camps keep getting interrupted until you find her lair and beat her. COUNTER matters in this fight.
 - **The goblin refugees** (the Act 2 side quest that isn't built yet, so it comes first): if you helped them, they remember the old Warden mine tunnels under the pass. **Snik** guides you through a shortcut round the hardest slope to a hidden cache, and their trader moves into the keep's courtyard. If you didn't help, there's no shortcut.
-- **Thorne, if spared:** chained in the keep's cells. He has a line for every visit, and something to offer in Act 4.
+- **Thorne, if spared (decided: it matters in Act 4):** chained in the keep's cells. He has a line for every visit, and in Act 4 he knows the voice behind the door and can help against it. Leave him to the mountain and Act 4 goes on without that help.
 
 ### Going back: what's new in the old places
 
 Once Act 3 begins (`bladeReforged` and `keepHome`), the places from Acts 1 and 2 change. The aim is to be fun, not to make you grind.
 
-- **Weak monsters run away.** In a zone where you're five or more levels too strong, encounters end at once: *"A wolf takes one look at the Wardenblade and bolts."* You still get a few XP, and no fight.
+- **Weak monsters sometimes run away (decided).** In a zone where you're five or more levels too strong, about half the encounters end at once: *"A wolf takes one look at the Wardenblade and bolts."* You get a few XP and no fight. The rest still fight, so the old places never feel empty.
 - **Pip and the Junior Wardens.** Pip has a wooden "Wardenblade" and has signed up the village kids. Then he runs away to be a Warden like you. **Pip's Big Adventure:** follow his trail through the wood to the empty Deep Warrens, where he has found something new: **kobolds** digging, scouting "for the Great One beyond the mountain". It's the first plant for Act 4's dragon. The kobolds aren't a real fight at your level; Pip is fine, just very proud. His reward is his Junior Warden badge (a trinket: +1 to your next failed save each rest). After that, Pip's lines follow the act.
 - **Oakhollow:** a (lumpy) statue of you in the square, built by Pip, which improves over time. The Sleeping Fox has a "The Hero Slept Here" plaque, and a travelling bard sings a terrible song about you that uses your name and title. Hazel has a letter for you. Elder Maren has the old **Warden's Oath** in three pieces in her books, which is lore for choosing your Oath.
 - **Willowmere:** Old Tom says **Old Gnasher**, a legendary pike, only bites now. It's a rare catch in the fishing minigame, and Tom pays handsomely and mounts it.
 - **The Deep Warrens and the keep:** Warden carvings that Rachel can read (see her mechanics), each with lore or a hidden cache.
 - **Goblin Rocks:** if you helped the refugees, they move back home and the camp turns into a little goblin village.
 - **Fenwatch:** the ferryman (an Act 2 gap) finally runs, with treasure hints for the fen and the pass. The Drowned Duck has rumours about the pass and new bounties. Sallow's toll trouble starts here (above).
-- **The keep fills up:** Rachel's **rune library** (scrolls for her book, rune lore), the **training yard** (minigame rematches with better prizes), **Garret's** room, the goblin trader, and the **cells** if you spared Thorne.
+- **The keep fills up:** Rachel's **rune library** (scrolls for her book, rune lore), the **training yard** (minigame rematches with better prizes), **Matthew's** room, the goblin trader, and the **cells** if you spared Thorne.
 
 ### The region
 
-- **`src/world/pass.js`** (about 48 x 80, tall): the rockslide and Rachel's camp at the bottom, pine slopes, snowfields, the heights (Thorne's camp), the waystones up the old Warden road, Garret's watchtower, the Frozen Chapel, and the gatehouse's face at the top. Zones: `slopes`, `snowfield`, `heights`, `gatehouseApproach`. The `pass` region in `REGIONS` gets its `map`.
+- **`src/world/pass.js`** (about 48 x 80, tall): the rockslide and Rachel's camp at the bottom, pine slopes, snowfields, the heights (Thorne's camp), the waystones up the old Warden road, Matthew's watchtower, the Frozen Chapel, and the gatehouse's face at the top. Zones: `slopes`, `snowfield`, `heights`, `gatehouseApproach`. The `pass` region in `REGIONS` gets its `map`.
 - **`src/world/gatehouse.js`**: the dungeon. Zones: `gatehouse`, `door`.
-- **Camps:** the rockslide (Rachel's camp), each waystone once its trial is done, the watchtower (after Garret), the Frozen Chapel (after Robyn). The hub is still the keep.
-- **New tiles:** snow, deep snow (slow), **ice** (you slide until you hit something: the pass's puzzles), pine, scree, cliff, rope bridge, waystone, rune door.
+- **Camps:** the rockslide (Rachel's camp), each waystone once its trial is done, the watchtower (after Matthew), the Frozen Chapel (after Robyn). The hub is still the keep.
+- **New tiles:** snow, deep snow (slow), **ice** (decided: in. You slide until you hit something: the pass's puzzles, in short stretches so the joystick stays comfortable), pine, scree, cliff, rope bridge, waystone, rune door.
 - **New music:** `pass` (high, cold, sparse bells), `gatehouse` (low, heavy, the keep's organ in a minor key), and a `thorne` boss track.
 
 ### Monsters and XP
@@ -315,7 +315,7 @@ One pull request each, with a minor version bump.
 14. **Rachel and the rockslide (Q6):** `art/rachel.js` and Quill's sprite, `pass.js` with only its lower slopes and Rachel's camp, the rune-stone hunt, the rockslide opening, and Rachel's mechanics (copying scrolls, Arcane Recovery, FLYBY, SEND QUILL, reading runes). The rune carvings in the Act 1 and 2 maps come here too.
 15. **Going back, part 1:** Pip's Big Adventure and the kobolds in the Warrens, the statue, the plaque and the bard, Hazel, Maren's Oath fragments, Old Gnasher.
 16. **The Warden's Road (Q7):** the rest of `pass.js`, snow and ice, the `pass` track, the slope and snowfield monsters, Warden Esk, the three waystones, Iron Ward (with the reaction prompt), Warden's Call, Thorne's camp and the Rune of Binding. Title: Warden-in-training.
-17. **Companion quests:** Garret's Arrows (Volley, the watchtower, Garret at the keep) and the Frozen Chapel (Turn Undead, Spiritual Weapon, wraiths).
+17. **Companion quests:** Matthew's Arrows (Volley, the watchtower, Matthew at the keep) and the Frozen Chapel (Turn Undead, Spiritual Weapon, wraiths).
 18. **Choices come back:** the goblin refugee camp at Fenwatch first (the Act 2 gap), then the mine shortcut and Snik, the Queen of the Fen or Auntie Nettle, the ferryman, and Sallow's Sundries.
 19. **The Wardens' Gatehouse (Q8):** `gatehouse.js`, rune doors, the frozen forge and rune-iron (the blade's second form), COUNTER, Thorne and his shield guardian, and the choice to spare him. Tune with `npm run sim`.
 20. **The Oath and the end of Act 3:** the cracked door and the eye, the Oath screen and titles, Oath colours on the hero, and the keep's new rooms (the library, the training yard rematches, the cells).
@@ -327,6 +327,6 @@ One pull request each, with a minor version bump.
 3. ~~**A name for the hero:**~~ Decided and built in 0.22.0: picked at NEW GAME (or RENAME in the bag), "Hero" if left empty.
 4. **Claire, Rachel and Robyn:** Robyn is decided (a cleric, met at Fenwatch). Rachel is proposed for Act 3: the wizard, Thorne's old apprentice (see Act 3). Claire is still open: Act 4, and maybe the bard or druid.
 5. **Inn prices:** about 10 gold in Act 1 and 25 in Act 2 is a guess; tune once the economy is clearer.
-6. **Act 3's cast:** Aldric Thorne as the rival, the ghost of Warden Esk as the mentor (and the hero's ancestor), and Garret as Megan's father. Agree the people and their names.
-7. **Sparing Thorne:** keep it as a real choice that matters in Act 4, or make his ending fixed?
-8. **Ice tiles:** sliding puzzles are fun but fiddly with the joystick. Keep them to a few short stretches, or leave them out?
+6. **Act 3's cast:** Megan's father is **Matthew** (decided). Still to agree: Aldric Thorne as the rival and the ghost of Warden Esk as the mentor (and the hero's ancestor), and their names.
+7. ~~**Sparing Thorne:**~~ Decided: a real choice, and it matters in Act 4.
+8. ~~**Ice tiles:**~~ Decided: in, as short sliding puzzles on the pass.
