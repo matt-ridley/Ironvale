@@ -49,6 +49,13 @@ export const TRAVEL_POINTS = [
     centre: { x: 6, y: 48 } }, // the campfire by the goblins' passage
   { id: "rockslide", name: "The Rockslide", kind: "camp", map: "ironvale", zone: "pass", at: { x: 31, y: 11 },
     centre: { x: 30, y: 9 } }, // Rachel's camp at the foot of the pass
+  // The waystones on the Warden's Road, once each trial is done (Colleen lights a fire).
+  { id: "waystone1", name: "First Waystone", kind: "camp", map: "pass", zone: "slopes", at: { x: 13, y: 66 },
+    centre: { x: 14, y: 65 }, opensWhen: f => !!f.waystoneIron },
+  { id: "waystone2", name: "Second Waystone", kind: "camp", map: "pass", zone: "snowfield", at: { x: 24, y: 32 },
+    centre: { x: 22, y: 31 }, opensWhen: f => !!f.waystoneCall },
+  { id: "waystone3", name: "Third Waystone", kind: "camp", map: "pass", zone: "heights", at: { x: 24, y: 18 },
+    centre: { x: 22, y: 18 }, opensWhen: f => !!f.waystoneBinding },
 ];
 export const CAMP_RADIUS = 3;
 export const FIRST_HUB = "oakhollow";

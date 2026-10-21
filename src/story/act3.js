@@ -3,15 +3,25 @@
 // grounds, and the Wardenblade laid against the Breaking Rune while she reads it backwards. Then the Warden carvings
 // all over the old maps, which only Rachel can read, and the sealed door of the Wardens' gatehouse. Going back:
 // Pip's Big Adventure (he runs off to be a Warden and finds kobolds digging in the Deep Warrens), his statue of you in
-// Oakhollow, the bard and the plaque at the Sleeping Fox, and Old Gnasher's mount in Tom's hut.
+// Oakhollow, the bard and the plaque at the Sleeping Fox, and Old Gnasher's mount in Tom's hut. Quest 7, the Warden's
+// Road: the ghost of Warden Colleen at three waystones, each with a trial and a rune (Iron Ward, Warden's Call, and the
+// Rune of Binding, which Thorne stole: take it back from his camp), the sun half of a charm in a cairn of bones, and
+// the wolves on the heights that someone sent.
 // No Phaser here. scripts.js adds these to SCRIPTS.
 import { joinParty, COMPANIONS } from "../rules/party.js";
+import { learnRune } from "../rules/character.js";
 import { makeItem, itemName } from "../rules/items.js";
 import { pay, paid } from "./rewards.js";
 import { callName, titleOf, actOf } from "./hero.js";
 import { MAPS } from "../world/maps.js";
 
-const RACHEL = "RACHEL", PIP = "PIP";
+const RACHEL = "RACHEL", PIP = "PIP", COLLEEN = "WARDEN COLLEEN";
+export const WAYSTONE_REWARD = { gold: 200, xp: 2000 }; // each of the three trials
+export const ROAD_REWARD = { gold: 200, xp: 2000 }; // quest 7, once all three runes are won
+export const IRON_TRIAL = ["gargoyle", "gargoyle"];
+export const CALL_TRIAL = ["griffon", "griffon"];
+export const GUARDIAN_FIGHT = ["earthElemental", "gargoyle"];
+const friendName = s => (s.hero.companion ? COMPANIONS[s.hero.companion.id].name : null);
 export const PIP_REWARD = { gold: 0, xp: 1000 }; // and his Junior Warden badge
 export const GNASHER_REWARD = { gold: 300, xp: 1000 };
 export const KOBOLD_FIGHT = ["kobold", "kobold"];
@@ -238,6 +248,235 @@ export const ACT3_SCRIPTS = {
   // Old Gnasher on Tom's wall.
   gnasherMount: { start: "look", nodes: { look: { text: "Old Gnasher, mounted on a board over Tom's fireplace, still looking grumpy about it. A label in Tom's wobbly hand: CAUGHT BY THE HERO. LET GO OF THE DUCK." } } },
 
+  // Warden Colleen and her three waystones (the map object says which `stone`; the stone and her ghost share this).
+  colleen: {
+    start: (s, { object }) => {
+      const f = s.flags;
+      if (object.stone === 1) return f.waystoneIron ? "after1" : f.metColleen ? "trial1" : "meet1";
+      if (object.stone === 2) return !f.waystoneIron ? "silent" : f.waystoneCall ? "after2" : "trial2";
+      if (!f.waystoneCall) return "bare";
+      return f.wardensRoad ? "after3" : f.bindingRecovered ? "return3" : f.bindingStolen ? "hunt3" : "bare3";
+    },
+    nodes: {
+      silent: { text: "A tall waystone, carved with runes gone dark. It's waiting for something. Perhaps for whoever passes the first stone's trial." },
+      bare: { text: "A waystone stripped bare: its carving is gone, smooth as river ice, as if someone had lifted it out whole." },
+      // The first stone: Iron.
+      meet1: {
+        text: "The waystone hums as you come near. Frost races across it, and a woman steps out of the cold air: a knight in old Warden mail, pale as moonlight, with your crest on her shield.",
+        to: "blood",
+      },
+      blood: {
+        speaker: COLLEEN,
+        text: "\"So the blade came home.\" She looks at your sword, then at you, for a long time. \"That crest was my son's. I sent him south with it the night the garrison fell, wrapped in my cloak. My blood. After a hundred years.\"",
+        choices: [{ label: "Who are you?", to: "who" }, { label: "Your son?", to: "who" }],
+      },
+      who: {
+        speaker: COLLEEN,
+        enter: s => { s.flags.metColleen = true; },
+        text: "Colleen, last Warden of Ironvale. I held the door when the others fell, and I'm holding it still, what's left of me. Now a thief climbs my road, tearing my runes out of the stones.",
+        to: "road",
+      },
+      road: {
+        speaker: COLLEEN,
+        text: "Three waystones on this road, and a rune in each, for a Warden who passes its trial. This one is Iron: the rune that turns a blow aside. Thorne's stone creatures are coming up the road. Hold this stone for three rounds.",
+        choices: [{ label: "I'm ready.", to: "fight1" }, { label: "Not yet.", to: null }],
+      },
+      trial1: {
+        speaker: COLLEEN,
+        text: "Hold the stone for three rounds against Thorne's gargoyles, and Iron is yours. You needn't win. Only stand.",
+        choices: [{ label: "I'm ready.", to: "fight1" }, { label: "Not yet.", to: null }],
+      },
+      fight1: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...IRON_TRIAL], zone: "slopes", surviveRounds: 3, afterWin: "ironTrial" }) },
+      after1: { speaker: COLLEEN, text: "Rest by my fire if you need it: it turns out ghosts can light one. The next stone is above the snowfield. Mind the ice. It doesn't care who you are." },
+      // The second stone: the Call.
+      trial2: {
+        speaker: COLLEEN,
+        text: s => (friendName(s)
+          ? `The Call. A Warden never holds a door alone: this rune keeps your people standing. Keep ${friendName(s)} on their feet through one fight, and the Call is yours.`
+          : "The Call keeps a Warden's people standing. You walk alone? Then the Call must answer to you alone: hold the stone for five rounds."),
+        choices: [{ label: "I'm ready.", to: "fight2" }, { label: "Not yet.", to: null }],
+      },
+      fight2: {
+        enter: (s, ctx) => ctx.emit(s.hero.companion
+          ? { type: "battle", foes: [...CALL_TRIAL], zone: "snowfield", guardAlly: true, afterWin: "callTrial", afterFail: "callFail" }
+          : { type: "battle", foes: [...CALL_TRIAL], zone: "snowfield", surviveRounds: 5, afterWin: "callTrial" }),
+      },
+      after2: { speaker: COLLEEN, text: "The last stone is on the heights, over the chasm. Go carefully. I can't feel its rune any more, and I don't like that." },
+      // The third stone: the Binding, stolen.
+      bare3: {
+        text: "The third waystone has been stripped bare: the carving's smooth as river ice, as if someone lifted it out whole.",
+        to: "stolen",
+      },
+      stolen: {
+        speaker: COLLEEN,
+        enter: s => { s.flags.bindingStolen = true; },
+        text: "Thorne. He took the Binding. I can feel it burning east of here, on the heights, like a coal in the snow: his camp. He's left something to guard it. Take it back.",
+      },
+      hunt3: { speaker: COLLEEN, text: "The Binding burns in Thorne's camp, east along the heights. Take it back." },
+      return3: {
+        text: "You touch the Wardenblade to the bare stone, and the Binding flows into it too. The carving fills in, line by line, and glows.",
+        to: "dawn",
+      },
+      dawn: {
+        speaker: COLLEEN,
+        text: "Iron, the Call and the Binding. I stood like a wall, and called it Iron. Some of us loved the runes, and called it Storm. And some swore to the light at the threshold: Dawn. The dead don't pass a Warden of the Dawn.",
+        to: "road3",
+      },
+      road3: {
+        speaker: COLLEEN,
+        enter: (s, ctx) => {
+          s.flags.waystoneBinding = true;
+          s.flags.wardensRoad = true;
+          pay(s, ctx, { gold: WAYSTONE_REWARD.gold + ROAD_REWARD.gold, xp: WAYSTONE_REWARD.xp + ROAD_REWARD.xp });
+        },
+        text: (s, ctx) => `That's all three: the runes the gatehouse door wants. Thorne is already up there. Go, before he opens what I've held shut for a hundred years. ${paid(ctx, { gold: WAYSTONE_REWARD.gold + ROAD_REWARD.gold, xp: WAYSTONE_REWARD.xp + ROAD_REWARD.xp })}`,
+      },
+      after3: { speaker: COLLEEN, text: "The gatehouse is at the top of the road. Go. I'll be at the door." },
+    },
+  },
+
+  // After the trial of Iron.
+  ironTrial: {
+    start: "rune",
+    nodes: {
+      rune: {
+        enter: (s, ctx) => {
+          learnRune(s.hero, "ironWard");
+          s.flags.waystoneIron = true;
+          s.flags.wardenTraining = true;
+          pay(s, ctx, WAYSTONE_REWARD);
+        },
+        text: (s, ctx) => `The waystone blazes, and a rune lifts out of it like a spark and settles into your blade. You've learned IRON WARD! (When a monster's blow is going to hit you, the fight asks: spend a rune slot for +5 AC, and it may miss.) ${paid(ctx, WAYSTONE_REWARD)}`,
+        to: "trainee",
+      },
+      trainee: {
+        speaker: COLLEEN,
+        text: "Warden-in-training. It's a start. Iron is how I held the door: like a wall, nothing passing while I stood. There are other ways. You'll find yours. The next stone is above the snowfield.",
+      },
+    },
+  },
+
+  // After the trial of the Call, passed...
+  callTrial: {
+    start: "rune",
+    nodes: {
+      rune: {
+        enter: (s, ctx) => {
+          learnRune(s.hero, "wardensCall");
+          s.flags.waystoneCall = true;
+          pay(s, ctx, WAYSTONE_REWARD);
+        },
+        text: (s, ctx) => `The second waystone rings like a bell, and its rune flies to your blade. You've learned WARDEN'S CALL! (SKILLS in a fight: you and your companion heal 2d8 + your level and shake off paralysis, fear and sleep.) ${paid(ctx, WAYSTONE_REWARD)}`,
+        to: "storm",
+      },
+      storm: {
+        speaker: COLLEEN,
+        text: "Some of us loved the runes more than the wall. Storm, they called them: blue fire down the blade, and the runes answering before they were asked. The last stone is on the heights, past the chasm.",
+      },
+    },
+  },
+  // ...or not: your companion fell.
+  callFail: {
+    start: "fell",
+    nodes: {
+      fell: {
+        speaker: COLLEEN,
+        text: s => `${friendName(s) || "Your friend"} fell. A Warden's people stand, or the Warden hasn't held. Rest, see to them, and try again.`,
+      },
+    },
+  },
+
+  // Thorne's camp on the heights: the guardian with the Binding in its chest, his tent, his notes and his mirror.
+  thorneGuardian: {
+    start: "look",
+    nodes: {
+      look: {
+        text: "A heap of rock and ice beside a cold fire stirs, and stands. An earth elemental, the Rune of Binding burning in its chest like a coal, Thorne's marks glowing on its arms. A gargoyle drops from the rocks beside it.",
+        choices: [{ label: "Fight!", to: "fight" }, { label: "Back away", to: null }],
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...GUARDIAN_FIGHT], zone: "thorneCamp", winFlag: "guardianBeaten", afterWin: "bindingTaken" }) },
+    },
+  },
+  bindingTaken: {
+    start: "rune",
+    nodes: {
+      rune: {
+        enter: s => {
+          learnRune(s.hero, "binding");
+          s.flags.bindingRecovered = true;
+        },
+        text: "The guardian falls apart into rubble and ice. The Rune of Binding hangs in the air, then flies to your blade. You've learned the RUNE OF BINDING! (SKILLS: a monster makes a CON save against your rune, or loses its next turn.) Colleen will want to know.",
+      },
+    },
+  },
+  thorneTent: { start: "look", nodes: { look: { text: "Thorne's tent: a bedroll, a dozen burnt-down candles, and rubbings of Warden carvings pinned up everywhere. Some are rubbings of carvings that don't exist any more." } } },
+  thorneFire: { start: "look", nodes: { look: { text: "A cold campfire. The ashes are still warm underneath. He left only hours ago." } } },
+  thorneNotes: {
+    start: "read",
+    nodes: {
+      read: {
+        enter: s => { s.flags.readThorneNotes = true; },
+        text: "Thorne's notes, in a cramped hand. \"The voice says the door was never meant to hold. That the Wardens were jailers, and those beyond were wronged. It promises me every rune ever carved, if I open it. Rachel would understand.\"",
+        to: "rachel",
+      },
+      rachel: {
+        enter: (s, ctx) => { if (!withRachel(s)) ctx.goto(null); },
+        speaker: RACHEL,
+        text: "That's his hand. He used to write in the margins of my essays: \"Excellent.\" \"Bolder.\" Now this. I think I'm going to be sick.",
+      },
+    },
+  },
+  thorneMirror: {
+    start: "look",
+    nodes: {
+      look: {
+        enter: s => { s.flags.mirrorTaken = true; s.hero.inventory.push(makeItem("thorneMirror")); },
+        text: "A silver hand mirror on a flat rock, polished bright: Thorne's. Something shiny. You take it; somebody might want it.",
+      },
+    },
+  },
+
+  // A cairn of bones on the snowfield, with the sun half of a charm wound into it: Claire's (Rachel's twin, Act 4).
+  boneCairn: {
+    start: s => (s.flags.sunCharmFound ? "taken" : "look"),
+    nodes: {
+      look: {
+        text: "A cairn of old animal bones, wolf and deer, stacked with care. Wound into the top on a strip of leather: half of a gold charm. A sun.",
+        choices: [{ label: "Take the charm", to: "take" }, { label: "Leave it", to: null }],
+      },
+      take: {
+        enter: (s, ctx) => {
+          s.flags.sunCharmFound = true;
+          s.hero.inventory.push(makeItem("sunCharm"));
+          if (!withRachel(s)) ctx.goto("taken1");
+        },
+        text: "Rachel goes very quiet. Her hand goes to the half-moon at her throat. \"Can I hold that? Just for a minute.\" She holds it a long time, then gives it back without a word.",
+      },
+      taken1: { text: "You take the half-charm. It's old, and someone wound it into those bones on purpose." },
+      taken: { text: "The cairn of bones, stacked with care. Whoever built it knew what they were doing." },
+    },
+  },
+
+  // The wolves on the heights, the first time you climb up: someone sent them.
+  wolves: {
+    start: "trolls",
+    nodes: {
+      trolls: {
+        text: "Two trolls lumber out of the rocks ahead, sniffing the wind. Before you can draw, a howl splits the air: a wolf pack pours down the slope, grey and silent, and drives the trolls snarling back over the edge.",
+        to: "gone",
+      },
+      gone: {
+        text: "The wolves stop. Their leader looks straight at you with pale gold eyes. Then the pack turns and is gone into the snow, as if someone had called them home.",
+        to: "rachel",
+      },
+      rachel: {
+        enter: (s, ctx) => { if (!withRachel(s)) ctx.goto(null); },
+        speaker: RACHEL,
+        text: "Wolves don't do that. She stares after them for a long time. \"Wolves don't DO that.\"",
+      },
+    },
+  },
+
   // The great door of the Wardens' gatehouse, at the top of the pass. Sealed with three runes.
   gatehouseDoor: {
     start: "look",
@@ -274,13 +513,18 @@ export const tremorNode = {
   to: "hello",
 };
 
-/* Things that happen as you walk into a zone: Pip runs away from Oakhollow once the pass is open. Returns a note for
-   the HUD, or null. (The World scene calls this on every new zone.) */
+/* Things that happen as you walk into a zone: Pip runs away from Oakhollow once the pass is open, and the wolves on
+   the heights. Returns { note } for the HUD or { script } to play, or null. (The World scene calls this on every new
+   zone.) */
 export function zoneEvent(state, zoneId) {
   const f = state.flags;
   if (zoneId === "village" && actOf(f) >= 3 && f.rockslideOpen && !f.pipRanAway) {
     f.pipRanAway = true;
-    return "Hazel runs up the path, white as flour: \"Have you seen Pip? He's gone!\"";
+    return { note: "Hazel runs up the path, white as flour: \"Have you seen Pip? He's gone!\"" };
+  }
+  if (zoneId === "heights" && !f.sawWolves) {
+    f.sawWolves = true;
+    return { script: "wolves" };
   }
   return null;
 }

@@ -82,7 +82,7 @@ test("quest 6: Hild's news, Rachel, three rune-stones, then the blade against th
   assert.deepEqual(hero.roster.map(r => r.id), ["megan"]);
   assert.equal(flags.rachelJoined, true);
   assert.ok(q().done);
-  assert.equal(objective(flags), "Climb the Mountain Pass");
+  assert.equal(objective(flags), "Climb the pass to the first waystone");
   // The road is open, and leads up into the pass.
   assert.ok(!activeObjects(fen, flags).some(o => o.id === "rockslide" || o.id === "rachel"));
   assert.ok(reachable(fen, fen.spawn, flags).has("31,5"));

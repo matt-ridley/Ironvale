@@ -101,6 +101,69 @@ export const ENCOUNTERS = {
       { weight: 1, foes: ["lizardfolk", "lizardfolk"] },
     ],
   },
+
+  // The Mountain Pass (Act 3): fights get tougher as the road climbs. Thorne's camp and the gatehouse are guarded by
+  // his rune-touched gargoyles and elementals; Matthew's watchtower is griffon country. Simulated (tools/simulate.mjs),
+  // a level 9 hero with +3 gear and Rachel wins the slopes' fights with 85-100% of their HP left, the snowfield's with
+  // 65-90%; the heights are for level 11 (a level 10 hero with +4 gear wins 95-100%, with 65-95% left).
+  slopes: {
+    level: 9,
+    chance: 0.05,
+    table: [
+      { weight: 2, foes: ["griffon"] },
+      { weight: 3, foes: ["griffon", "griffon"] },
+      { weight: 2, foes: ["manticore"] },
+      { weight: 2, foes: ["ettin"] },
+      { weight: 2, foes: ["griffon", "manticore"] },
+    ],
+  },
+  snowfield: {
+    level: 10,
+    chance: 0.05,
+    table: [
+      { weight: 2, foes: ["troll"] },
+      { weight: 2, foes: ["ettin", "griffon"] },
+      { weight: 2, foes: ["wyvern"] },
+      { weight: 2, foes: ["manticore", "manticore"] },
+      { weight: 2, foes: ["troll", "griffon"] },
+    ],
+  },
+  heights: {
+    level: 11,
+    chance: 0.05,
+    table: [
+      { weight: 2, foes: ["wyvern"] },
+      { weight: 2, foes: ["stoneGiant"] },
+      { weight: 2, foes: ["troll"] },
+      { weight: 1, foes: ["troll", "ettin"] },
+      { weight: 1, foes: ["wyvern", "griffon"] },
+    ],
+  },
+  watchtower: {
+    level: 10,
+    chance: 0.06,
+    table: [
+      { weight: 3, foes: ["griffon"] },
+      { weight: 2, foes: ["griffon", "griffon"] },
+    ],
+  },
+  thorneCamp: {
+    level: 11,
+    chance: 0.07,
+    table: [
+      { weight: 3, foes: ["gargoyle", "gargoyle"] },
+      { weight: 1, foes: ["earthElemental"] },
+    ],
+  },
+  gatehouseApproach: {
+    level: 12,
+    chance: 0.06,
+    table: [
+      { weight: 2, foes: ["gargoyle", "gargoyle"] },
+      { weight: 2, foes: ["stoneGiant"] },
+      { weight: 1, foes: ["earthElemental"] },
+    ],
+  },
 };
 
 export const QUIET_STEPS = 12; // no fights for this many steps after one
