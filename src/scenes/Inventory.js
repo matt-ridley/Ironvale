@@ -6,7 +6,7 @@
 // spell scroll in your pack there offers COPY: she copies it into her book for good (50 gold of ink per spell level).
 import { WIDTH, HEIGHT, COLORS } from "../config.js";
 import { state } from "../state/game.js";
-import { armourClass, weaponAttack } from "../rules/character.js";
+import { armourClass, weaponAttack, xpToNextLevel } from "../rules/character.js";
 import { equip, unequip, useItem, cantDrink, drinkText, describeItem, itemName, groupPack, baseOf, isPotion, SLOTS } from "../rules/items.js";
 import { compareEquip, compareUnequip, averageDamage } from "../rules/gear.js";
 import { companionStats, companionCantDrink, companionDrink, equipCompanion, unequipCompanion, compareCompanionEquip, compareCompanionUnequip, COMPANION_SLOTS, TACTICS, cycleTactics, cantCopy, copySpell, COPY_COST } from "../rules/party.js";
@@ -60,8 +60,9 @@ export class Inventory extends Phaser.Scene {
     } : null;
 
     panel(this, 6, 26, 192, 166);
-    this.portrait = this.add.image(36, 68, "hero", heroFrame("down"));
-    this.stats = text(this, 72, 36, "", { lineSpacing: 5 });
+    this.portrait = this.add.image(36, 64, "hero", heroFrame("down"));
+    this.stats = text(this, 72, 32, "", { lineSpacing: 5 });
+    this.xpText = text(this, 12, 94, ""); // the hero's XP and the next level's gate
     text(this, 12, 110, "WORN", { color: COLORS.dim });
     this.worn = new ListView(this, 10, 122, 184, 3, row => this.pick(row, this.pack));
 
@@ -105,9 +106,11 @@ export class Inventory extends Phaser.Scene {
     this.goldText.setText(`${h.gold} GOLD${h.bank ? ` (${h.bank} BANKED)` : ""}`);
     if (friend) {
       const f = companionStats(h);
+      this.xpText.setText("");
       this.stats.setText([`${f.name.toUpperCase()} LV ${f.level}`, `HP ${f.hp}/${f.maxHp}`, `AC ${f.ac}`, `HIT +${f.attack.bonus}`, `DMG ${damageText(f.attack)}`].join("\n"));
     } else {
       const a = weaponAttack(h);
+      this.xpText.setText(xpToNextLevel(h) > 0 ? `XP ${h.xp}  NEXT ${h.xp + xpToNextLevel(h)}` : `XP ${h.xp}  MAX LEVEL`);
       this.stats.setText([`LV ${h.level}`, `HP ${h.hp}/${h.maxHp}`, `AC ${armourClass(h)}`, `HIT +${a.bonus}`, `DMG ${damageText(a)}`].join("\n"));
     }
     const slots = friend ? COMPANION_SLOTS : SLOTS;

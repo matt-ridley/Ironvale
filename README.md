@@ -51,7 +51,7 @@ Each map's ground is baked into one picture the first time you visit it (`src/ar
 Music and effects are synthesised with Web Audio in an SNES-like style (a filtered lead with echo, soft bass, simple drums). Tracks are written as notes in `src/audio/tracks.js`: the village, the wild, battle and the boss, plus victory, level-up and defeat jingles. Browsers only allow sound after the first tap or key press.
 
 ## Saving
-The game saves itself to the browser's local storage: after every step, when a menu, conversation or battle ends, and when the app goes into the background (phones can close a home-screen app at any time). There is no save button. The title screen offers CONTINUE, and NEW GAME asks before replacing a saved hero, then asks your hero's name (tap the letters, or type; leave it empty to be called Hero). RENAME, on your tab in the bag, changes it later.
+The game saves itself to the browser's local storage: after every step, when a menu, conversation or battle ends, and when the app goes into the background (phones can close a home-screen app at any time). There is no save button. The title screen offers CONTINUE, and NEW GAME asks before replacing a saved hero, then asks your hero's name (tap the letters, or type; leave it empty to be called Hero). RENAME, on your tab in the bag, changes it later. With a saved hero, CHEATS on the title screen takes a cheat code, then asks how much XP or gold to add.
 
 Saves carry a format number. Loading drops anything the game no longer knows (an item removed in an update) and puts you back in the village if your saved spot is now a wall, rather than failing. A save lives in one browser on one device; clearing site data deletes it.
 
@@ -144,6 +144,7 @@ What comes next (Act 2 and beyond, magic, companions, hubs) is planned in [docs/
 - [x] 0.13.0 The meeting screen for people and things, and chests that open on screen
 - [x] 0.13.1 The HUD's gold and HP update straight after the bank, shops and the bag
 - [x] 0.38.0 The end of Act 3: the cracked Door and the golden eye, the Oath (Iron, Storm or Dawn: powers, colours, title), "Rae?", Rachel's rune library, Brannoc's arm-wrestling in the training yard, Thorne in the crypt, and each Oath's mark on the keep and Fenwatch
+- [x] 0.39.0 CHEATS on the title screen (a code, then how much XP or gold to add), and your XP and the next level's XP on your tab in the bag
 - [x] 0.37.0 Quest 8: the Wardens' Gatehouse, rune doors, rune-iron and the Wardenblade's second form, Rachel's COUNTER, Aldric Thorne and his shield guardian, spare him or leave him
 - [x] 0.36.0 Choices come back: the goblin refugees (Grub, Snik's shortcut, their village), the Queen of the Fen and Sallow's Sundries, or Auntie Nettle; the ferryman and the island; monsters that cast spells; the pass's bounties
 - [x] 0.35.0 Companion quests: Matthew's Arrows (Volley, archery rematches at the keep) and the Frozen Chapel (Turn Undead, Spiritual Weapon); wraiths and specters
