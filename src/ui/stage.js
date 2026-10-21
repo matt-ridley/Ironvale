@@ -17,10 +17,13 @@ const SKY = {
   indoors: { sky: 0x6b4f34, far: 0x4a3420, ground: 0xb07e4c, groundDark: 0x8a5e36 },
   fen: { sky: 0x3a4a48, far: 0x4a4238, ground: 0x5d7a3e, groundDark: 0x3c6e70 }, // mist, dead trees, marsh and pools
   keep: { sky: 0x1f1d26, far: 0x4a4652, ground: 0x6a6574, groundDark: 0x55505e }, // grey stone, in the dark
+  mountain: { sky: 0x7f9ab8, far: 0x5d6a80, ground: 0xe4ebf3, groundDark: 0xb4c2d6 }, // snowy peaks under a cold sky
 };
 SKY.warrens = SKY.cave;
 SKY.throne = SKY.cave;
-SKY.drowned = SKY.keepGrounds = SKY.pass = SKY.fenwatch = SKY.fen;
+SKY.drowned = SKY.keepGrounds = SKY.fenwatch = SKY.fen;
+SKY.pass = SKY.slopes = SKY.snowfield = SKY.heights = SKY.gatehouseApproach = SKY.thorneCamp = SKY.watchtower = SKY.mountain;
+SKY.frozenChapel = SKY.keep;
 SKY.courtyard = SKY.chapel = SKY.armoury = SKY.tomb = SKY.keep;
 
 /* A zone id the stage knows, or `fallback`. */
@@ -42,6 +45,11 @@ export function drawBackdrop(scene, zone) {
     for (let x = -10; x < WIDTH + 20; x += 26) {
       const h = 40 + ((x * 37) % 23);
       g.fillTriangle(x, 100, x + 14, 100 - h, x + 28, 100);
+    }
+  } else if (SKY[zone] === SKY.mountain) {
+    for (const [cx, top, half] of [[40, 30, 80], [150, 10, 95], [270, 40, 75], [380, 18, 100], [470, 45, 70]]) {
+      g.fillStyle(c.far).fillTriangle(cx - half, 100, cx, top, cx + half, 100);
+      g.fillStyle(0xf4f8fc).fillTriangle(cx - half * 0.32, top + (100 - top) * 0.32, cx, top, cx + half * 0.32, top + (100 - top) * 0.32); // snow caps
     }
   } else if (SKY[zone] === SKY.fen) {
     for (let x = 10; x < WIDTH; x += 70 + ((x * 11) % 30)) { // bare dead trees in the mist
@@ -68,7 +76,12 @@ export function stand(scene, x, key, frame, { scale = MONSTER_ART[key] ? MONSTER
 /* The hero, and the companion behind them (allyId, if you have one): { hero, ally } sprites, ally null without one. */
 export function standParty(scene, allyId) {
   const hero = stand(scene, HERO_X, "hero", heroFrame("side"));
-  return { hero, ally: allyId ? stand(scene, ALLY_X, allyId, heroFrame("side"), { shadow: 32 }) : null };
+  const ally = allyId ? stand(scene, ALLY_X, allyId, heroFrame("side"), { shadow: 32 }) : null;
+  if (allyId === "rachel") { // Quill, on her shoulder
+    const owl = scene.add.image(ALLY_X - 16, GROUND_Y - 64, "quill").setScale(0.6);
+    scene.tweens.add({ targets: owl, y: owl.y - 2, duration: 1100, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+  }
+  return { hero, ally };
 }
 
 /* Everyone breathes a little while waiting, out of step with each other. */

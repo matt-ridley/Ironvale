@@ -104,7 +104,7 @@ export const ENCOUNTERS = {
 };
 
 export const QUIET_STEPS = 12; // no fights for this many steps after one
-export const SAFE_TILES = ["cave", "caveexit", "passage"]; // standing in a cave mouth never starts a fight
+export const SAFE_TILES = ["cave", "caveexit", "passage", "ice"]; // a cave mouth, or sliding on ice, never starts a fight
 export const ROADS = ["path", "boardwalk", "causeway"]; // half the chance of a fight
 export const SPEED_ENCOUNTERS = 0.35; // a Potion of Speed leaves this much of the usual chance
 

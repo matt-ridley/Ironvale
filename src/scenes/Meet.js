@@ -49,6 +49,7 @@ export class Meet extends Phaser.Scene {
     let blank = 0;
     while (blank < art.length && !/[^.]/.test(art[art.length - 1 - blank])) blank++;
     this.them.y += blank * R * this.them.scaleY;
+    if (o.sprite === "rachel") this.add.image(THEM_X + 16, GROUND_Y - 64, "quill").setScale(0.6).setFlipX(true); // Quill, on her shoulder
     breathe(this, [party.hero, ...(party.ally ? [party.ally] : []), ...(o.still ? [] : [this.them])]);
     const first = view(this.convo);
     const top = this.them.y - this.them.displayHeight;

@@ -1,7 +1,7 @@
 // Ironvale, the Act 2 region: Greywater Fen in the south (reeds, pools, mud and dead trees, with a camp by the goblins'
 // passage, the old graves, and Fenwatch, a stilt-town behind a log palisade in the south-east: the Drowned Duck tavern,
 // Brannoc's forge, the herbalist, a bank and the shrine), the old causeway north through deep water to Ironvale Keep's
-// walls, and the Mountain Pass beyond, blocked by a rockslide until Act 3. Mother Sallow, a marsh hag, keeps the causeway
+// walls, and the Mountain Pass beyond, blocked by a rockslide until Act 3 (Rachel camps below it). Mother Sallow, a marsh hag, keeps the causeway
 // under water. You arrive up the goblins' back passage from the Deep Warrens.
 // One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 64 wide).
 
@@ -23,6 +23,7 @@ export const IRONVALE = {
   exits: [
     { x: 2, y: 50, to: "deepCave", at: { x: 44, y: 2 }, facing: "down" },
     { x: 31, y: 26, to: "keep", at: { x: 19, y: 31 }, facing: "up" }, // through the portcullis, once it's up
+    { x: 31, y: 5, to: "pass", at: { x: 24, y: 76 }, facing: "up" }, // up the old road, once the rockslide is open
   ],
   objects: [
     { id: "fenCampfire", x: 6, y: 48, sprite: "campfire", script: "campfire", still: true },
@@ -42,7 +43,18 @@ export const IRONVALE = {
     { id: "brannocForge", x: 59, y: 49, sprite: "brannoc", script: "brannocForge", shownWhen: "brannocFreed", goneWhen: "bladeReforged" }, // then he moves to the keep
     // The Restless Dead: the old graves in the fen where the ghouls crawl out.
     { id: "cairn", x: 12, y: 46, sprite: "cairn", script: "cairn", still: true },
-    { id: "rockslide", x: 31, y: 6, sprite: "rubble", script: "rockslide", still: true },
+    { id: "rockslide", x: 31, y: 6, sprite: "rubble", script: "rockslide", goneWhen: "rockslideOpen", still: true },
+    // Act 3: Rachel's camp at the foot of the rockslide (a camp, with a fire), and the three rune-stones the blast threw
+    // down onto the keep's grounds.
+    { id: "rachel", x: 33, y: 8, sprite: "rachel", frame: 0, script: "rachel", shownWhen: "keepHome", goneWhen: "rockslideOpen" },
+    { id: "rachelTent", x: 28, y: 8, sprite: "tent", script: "tent", still: true, shownWhen: "keepHome" },
+    { id: "rockslideFire", x: 29, y: 10, sprite: "campfire", script: "campfire", still: true },
+    { id: "runeStone1", x: 12, y: 16, sprite: "runeStone", script: "runeStone", flag: "runeStone1", shownWhen: "keepHome", goneWhen: "runeStone1", still: true },
+    { id: "runeStone2", x: 52, y: 18, sprite: "runeStone", script: "runeStone", flag: "runeStone2", shownWhen: "keepHome", goneWhen: "runeStone2", still: true },
+    { id: "runeStone3", x: 44, y: 29, sprite: "runeStone", script: "runeStone", flag: "runeStone3", shownWhen: "keepHome", goneWhen: "runeStone3", still: true },
+    { id: "fenCarving", x: 9, y: 44, sprite: "carving", script: "carving", still: true,
+      lore: "\"The fen was a field once, and the Wardens' oxen grazed it.\" Rachel snorts. \"Times change. It says there's a cache under the reeds.\"",
+      cache: { gold: 80, items: ["potionHealing", "potionHealing"] } },
     { id: "fenChest", x: 42, y: 57, sprite: "chest", script: "chest", goneWhen: "fenChestOpened", still: true, loot: { gold: 90, items: ["scrollBurningHands", "potionHealing"] } },
   ],
   rows: [
@@ -51,14 +63,14 @@ export const IRONVALE = {
   "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
   "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
   "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^c^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
   "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ggcgg^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ggcgg^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ggcgg^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ggcgg^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ggcgg^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ggcgg^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ggcgg^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^gggggcggggg^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^gggggcggggg^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^gggggcggggg^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^gggggcggggg^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^gggggcggggg^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^gggggcggggg^^^^^^^^^^^^^^^^^^^^^^^^^^^",
   "TTggggggggggggggrgggggggrgggggggggggggggggggggggggggggggggggggTT",
   "TTggggggggggggggggggKKKKKKKKKKKKKKKKKKKKKKKYggggggggggggggggggTT",
   "TTgg;grggggYggggggggKKKKKKKKKKKKKKKKKKKKKKKgggggggggggggggggggTT",

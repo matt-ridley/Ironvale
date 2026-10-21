@@ -1,14 +1,16 @@
 // The world map, opened over the world (the MAP button or M). Tabs along the top pick a region (travel.js REGIONS).
 // A region you can reach is drawn small, one block per tile, with the parts you haven't been to yet under fog and a
 // blinking marker where you are (or the door you went in by). A region that isn't open yet is a dark shape marked ???,
-// with a hint. On the right, the places you've found: tap one to fast-travel there. That works only from a safe
-// place: standing in a town (or one of its houses) or at a camp.
+// with a hint. On the right, the places you've found on that page (and every town): tap one to fast-travel there. That
+// works only from a safe place: standing in a town (or one of its houses) or at a camp. A map Quill has scouted
+// (Rachel's owl, sent from a camp) shows its unopened chests and unread carvings as gold diamonds.
 import { WIDTH, HEIGHT, COLORS, FONT } from "../config.js";
 import { state } from "../state/game.js";
 import { MAPS } from "../world/maps.js";
 import { zoneAt, tileAt } from "../world/map.js";
 import { tileOf } from "../world/movement.js";
 import { zoneSeen, travelPoints, canFastTravel, REGIONS, regionOpen, regionOf } from "../world/travel.js";
+import { secretsOn, scoutedFlag } from "../story/act3.js";
 import { MAP_COLOURS } from "../art/tiles.js";
 import { text, panel, button, uiCamera } from "../ui/widgets.js";
 import { sfx } from "../audio/sound.js";
@@ -69,7 +71,7 @@ export class WorldMap extends Phaser.Scene {
       this.add.text(MAP_X + MAP_W / 2, MAP_Y + 36, "???", { fontFamily: FONT, fontSize: "24px", color: COLORS.dim }).setOrigin(0.5);
       text(this, MAP_X + 8, MAP_Y + MAP_H - 30, region.hint(state.flags), { color: COLORS.text, wordWrap: { width: MAP_W - 16 }, lineSpacing: 4, stroke: "#000000", strokeThickness: 3 });
     }
-    this.drawTravel();
+    this.drawTravel(region);
   }
 
   /* An open region: its map, fogged where you haven't been, with the places to travel to and you. */
@@ -84,8 +86,11 @@ export class WorldMap extends Phaser.Scene {
       ctx.fillRect(x, y, 1, 1);
     }
     tex.refresh();
-    this.add.image(MAP_X, MAP_Y, "worldmap").setOrigin(0).setScale(SCALE);
-    const at = (x, y) => [MAP_X + (x + 0.5) * SCALE, MAP_Y + (y + 0.5) * SCALE];
+    // A map too big for the frame (the tall pass) is drawn smaller, and centred.
+    const scale = Math.min(SCALE, MAP_W / world.width, MAP_H / world.height);
+    const ox = MAP_X + (MAP_W - world.width * scale) / 2;
+    this.add.image(ox, MAP_Y, "worldmap").setOrigin(0).setScale(scale);
+    const at = (x, y) => [ox + (x + 0.5) * scale, MAP_Y + (y + 0.5) * scale];
     for (const z of world.zones) {
       if (!zoneSeen(state.flags, z.id)) continue;
       const [cx, cy] = at((z.x0 + z.x1) / 2, z.y0 + 1);
@@ -98,6 +103,12 @@ export class WorldMap extends Phaser.Scene {
       const [tx, ty] = at(spot.x, spot.y);
       this.add.rectangle(tx, ty, 4, 4, 0xffffff).setStrokeStyle(1, 0x000000);
     }
+    if (state.flags[scoutedFlag(world.name)]) { // Quill's finds
+      for (const o of secretsOn(world, state.flags)) {
+        const [sx, sy] = at(o.x, o.y);
+        this.add.rectangle(sx, sy, 4, 4, 0xe8b923).setAngle(45).setStrokeStyle(1, 0x000000);
+      }
+    }
     if (!youreHere) return;
     // You are here (on top of everything).
     const me = whereOn(region);
@@ -106,22 +117,23 @@ export class WorldMap extends Phaser.Scene {
     this.tweens.add({ targets: marker, alpha: 0.2, duration: 400, yoyo: true, repeat: -1 });
   }
 
-  /* Fast travel: every place you can go, in any region. */
-  drawTravel() {
+  /* Fast travel: the places on this page's region, and every town. */
+  drawTravel(region) {
     const px = MAP_X + MAP_W + 12, pw = WIDTH - px - 6;
     panel(this, px, MAP_Y - 2, pw, MAP_H + 4);
     text(this, px + 8, MAP_Y + 6, "FAST TRAVEL", { color: COLORS.gold });
     const open = canFastTravel(state);
-    const points = travelPoints(state.flags);
+    const points = travelPoints(state.flags).filter(p => p.kind === "hub" || regionOf(p.map).id === region.id);
+    const gap = points.length > 6 ? 20 : 26;
     points.forEach((p, i) => {
-      const b = button(this, px + pw / 2, MAP_Y + 34 + i * 26, pw - 16, 20, p.found ? p.name.toUpperCase() : "???", () => this.go(p));
+      const b = button(this, px + pw / 2, MAP_Y + 30 + i * gap, pw - 16, gap - 6, p.found ? p.name.toUpperCase() : "???", () => this.go(p));
       b.setEnabled(open && p.found);
     });
     const found = points.filter(p => p.found).length;
-    const note = !open ? "You can only travel from a town or a camp: Oakhollow, Old Tom's hut or the Goblin Rocks campfire."
+    const note = !open ? "You can only travel from a town or a camp (a campfire, or Old Tom's hut)."
       : found < points.length ? "Find more places to travel to them. White squares are places you can go."
         : "White squares are places you can go.";
-    text(this, px + 8, MAP_Y + 34 + points.length * 26, note, { color: COLORS.dim, wordWrap: { width: pw - 16 }, lineSpacing: 4 });
+    text(this, px + 8, MAP_Y + 26 + points.length * gap, note, { color: COLORS.dim, wordWrap: { width: pw - 16 }, lineSpacing: 4 });
   }
 
   /* Closes the map and has the world take you there. */

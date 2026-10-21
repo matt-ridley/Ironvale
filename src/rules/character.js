@@ -213,6 +213,7 @@ export function rest(char) {
   char.fishCaught = 0; // the fish bite again
   if (char.companion) char.companion.hurt = 0;
   if (char.companion?.slotsUsed) char.companion.slotsUsed = [];
+  if (char.companion) delete char.companion.recovered; // Arcane Recovery
 }
 
 /* A short rest (a camp's fire): back up to at least half your maximum HP, and Second Wind and Action Surge back.

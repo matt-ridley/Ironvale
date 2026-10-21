@@ -49,6 +49,16 @@ export const TILES = {
   "*": { name: "rubble", solid: true },
   "P": { name: "pew", solid: true },
   "Q": { name: "rack", solid: true }, // an empty weapon rack
+  // The Mountain Pass (Act 3)
+  "S": { name: "snow", solid: false },
+  "Z": { name: "deepsnow", solid: false, slow: 0.6 }, // wading through drifts
+  "I": { name: "ice", solid: false, ice: true }, // you slide until you hit something (World.js)
+  "v": { name: "scree", solid: false },
+  "V": { name: "cliff", solid: true },
+  "X": { name: "chasm", solid: true },
+  "+": { name: "ropebridge", solid: false },
+  "p": { name: "snowpine", solid: true },
+  "j": { name: "snowrock", solid: true },
 };
 
 export const DIRS = {
@@ -108,6 +118,35 @@ export const exitAt = (map, x, y) => map.exits.find(e => e.x === x && e.y === y)
 export const doorAt = (map, x, y) => map.doors.find(d => d.x === x && d.y === y) || null;
 
 export const zoneAt = (map, x, y) => map.zones.find(z => x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1) || null;
+
+/* Sliding on ice, tile by tile: from `pos`, moving `dir`, where you stop: the last tile before something solid, or the
+   first tile that isn't ice. (The World scene slides smoothly; this is the same rule, for tests and puzzles.) */
+export function slide(map, pos, dir, flags = {}) {
+  let at = { x: pos.x, y: pos.y };
+  for (;;) {
+    const n = step(map, at, dir, flags);
+    if (!n.moved) return at;
+    at = { x: n.x, y: n.y };
+    if (!tileAt(map, at.x, at.y).ice) return at;
+  }
+}
+
+/* Every tile you can get to from `from`, where stepping onto ice slides you on until something stops you. */
+export function reachableSliding(map, from, flags = {}) {
+  const seen = new Set([`${from.x},${from.y}`]);
+  const queue = [from];
+  while (queue.length) {
+    const p = queue.shift();
+    for (const dir of Object.keys(DIRS)) {
+      let n = step(map, p, dir, flags);
+      if (!n.moved) continue;
+      if (tileAt(map, n.x, n.y).ice) n = slide(map, n, dir, flags);
+      const key = `${n.x},${n.y}`;
+      if (!seen.has(key)) { seen.add(key); queue.push(n); }
+    }
+  }
+  return seen;
+}
 
 /* Every tile you can walk to from `from`, as "x,y" strings. */
 export function reachable(map, from, flags = {}) {

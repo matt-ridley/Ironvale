@@ -27,6 +27,9 @@ export const DEEP_CAVE = {
     { id: "rubble", x: 45, y: 1, sprite: "rubble", script: "rubble", still: true, goneWhen: "passageCleared" },
     { id: "grottoChest", x: 3, y: 6, sprite: "chest", script: "chest", goneWhen: "grottoChestOpened", still: true, loot: { gold: 50, items: ["potionHealing", "potionSpeed"] } },
     { id: "barracksChest", x: 44, y: 19, sprite: "chest", script: "chest", goneWhen: "barracksChestOpened", still: true, loot: { gold: 80, items: ["potionDexterity", "potionHealing"] } },
+    { id: "warrensCarving", x: 7, y: 7, sprite: "carving", script: "carving", still: true,
+      lore: "\"Dug by the Wardens to bring iron down from the mountain.\" Rachel squints. \"These were Warden mines before they were goblin tunnels. And a cache: under the third mushroom.\"",
+      cache: { gold: 90, items: ["scrollLightningBolt"] } },
     { id: "nestChest", x: 44, y: 29, sprite: "chest", script: "chest", goneWhen: "nestChestOpened", still: true, loot: { gold: 30, items: ["potionHealing", "potionHealing"] } },
   ],
   rows: [

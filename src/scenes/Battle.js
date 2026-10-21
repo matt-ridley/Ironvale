@@ -6,7 +6,7 @@
 import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { createBattle, playerAction, isPlayerTurn, isAllyTurn } from "../rules/combat.js";
 import { readScroll } from "../rules/magic.js";
-import { allyAction, castable } from "../rules/tactics.js";
+import { allyAction, castable, canFlyby, quillFlyby } from "../rules/tactics.js";
 import { TACTICS } from "../rules/party.js";
 import { groupPack, baseOf } from "../rules/items.js";
 import { SPELLS } from "../data/spells.js";
@@ -160,6 +160,7 @@ export class Battle extends Phaser.Scene {
         { label: `YOU x${heals}`, on: hers && heals > 0 && h.hp < h.maxHp, run: () => this.actAlly({ type: "potion", on: "player" }) },
         { label: `${a.name.toUpperCase()} x${heals}`, on: hers && heals > 0 && a.hp < a.maxHp, run: () => this.actAlly({ type: "potion", on: "ally" }) },
         a.casting ? { label: "SPELLS", on: hers && castable(b).length > 0, run: () => this.showPage("allySpells") } : null,
+        a.id === "rachel" ? { label: "FLYBY", on: hers && canFlyby(b), run: () => this.flyby() } : null,
       ];
     }
     if (page === "skills") {
@@ -247,9 +248,15 @@ export class Battle extends Phaser.Scene {
     this.then(allyAction(this.battle, action));
   }
 
-  then(r) {
+  /* Quill flies at the monster (free: Rachel's turn goes on). */
+  flyby() {
+    if (this.busy || !isAllyTurn(this.battle)) return;
+    this.then(quillFlyby(this.battle), "ally");
+  }
+
+  then(r, page = "main") {
     if (!r.ok) return this.addLine(r.reason, COLORS.bad);
-    this.page = "main";
+    this.page = page;
     this.play(r.events);
   }
 
@@ -270,7 +277,7 @@ export class Battle extends Phaser.Scene {
 
   showEvent(e) {
     const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again",
-      "ally-heal", "spell-heal", "spell", "scroll", "indomitable"].includes(e.type);
+      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -352,6 +359,13 @@ export class Battle extends Phaser.Scene {
       case "skip":
         this.float(this.spriteOf(e.who), "...", COLORS.dim);
         break;
+      case "flyby": {
+        const owl = this.add.image(ALLY_X, GROUND_Y - 70, "quill").setScale(0.8).setDepth(22);
+        this.tweens.add({ targets: owl, x: this.foeViews[e.target]?.x ?? 360, y: GROUND_Y - 40, duration: 260, yoyo: true, ease: "Sine.inOut", onComplete: () => owl.destroy() });
+        sfx("select");
+        this.float(this.heroSprite, "FLYBY!", COLORS.gold);
+        break;
+      }
       case "indomitable":
         sfx("heal");
         this.float(this.heroSprite, "INDOMITABLE!", COLORS.gold);

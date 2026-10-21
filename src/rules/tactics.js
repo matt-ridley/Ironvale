@@ -5,11 +5,13 @@
 //   Healing from your pack); otherwise as attack, but a caster keeps their slots for healing (cantrips only).
 // - save: as attack, but cantrips only, so spell slots last.
 // When you lead them (battle.leadAlly), their turn waits for allyAction() with what you picked.
+// Rachel's owl, Quill, flies at a monster once per fight (quillFlyby): your next attack has advantage. It costs her
+// nothing: by herself she sends him on her first turn; when you lead her, it's the FLYBY button.
 // No Phaser here, so it can be tested.
 import { SPELLS } from "../data/spells.js";
 import { roll } from "./dice.js";
 import { baseOf } from "./items.js";
-import { attackMods } from "./conditions.js";
+import { attackMods, addCondition } from "./conditions.js";
 import { acOf, hurt, tellWoken, say, living, resolveAttack, adjustRoll, rollText, hitText, isAllyTurn, endAllyAction } from "./combat.js";
 import { makeCaster, castSpell, slotsLeft, spendForSpell } from "./magic.js";
 
@@ -108,8 +110,24 @@ function doAllyAction(battle, action, rng) {
   return { ok: false, reason: `Unknown action: ${action.type}` };
 }
 
+/* True if Quill can still fly at a monster this fight. */
+export const canFlyby = battle => battle.ally?.id === "rachel" && battle.ally.hp > 0 && !battle.flyby && living(battle).length > 0;
+
+/* Quill swoops at the monster you're fighting: your next attack has advantage (the Help action). Once per fight, and it
+   doesn't use up Rachel's turn. Returns { ok, events } or { ok: false, reason }. */
+export function quillFlyby(battle) {
+  if (!canFlyby(battle)) return { ok: false, reason: battle.flyby ? "Quill has already flown this fight." : "Quill isn't here." };
+  const start = battle.log.length;
+  battle.flyby = true;
+  addCondition(battle, "player", "helped", {});
+  const t = battle.monsters[battle.focus]?.hp > 0 ? battle.monsters[battle.focus] : living(battle)[0];
+  say(battle, "flyby", `Quill swoops at the ${t.name}'s eyes, hooting! Your next attack has advantage.`, { target: battle.monsters.indexOf(t) });
+  return { ok: true, events: battle.log.slice(start) };
+}
+
 /* Your companion's turn when they act by themselves. */
 export function allyTurn(battle, rng = Math.random) {
+  if (canFlyby(battle)) quillFlyby(battle);
   doAllyAction(battle, chooseAllyAction(battle), rng);
 }
 

@@ -31,6 +31,10 @@ export const C = {
   reed: "#b0a052", reedDark: "#7a6e32", reedHead: "#5a3b22",
   flag: "#8f8a80", flagDark: "#6a655c", flagLight: "#b0aa9e",
   deadwood: "#6e6458", deadwoodDark: "#4a4238",
+  snow: "#e4ebf3", snowDark: "#b4c2d6", snowLight: "#ffffff", snowShadow: "#9fb0c8",
+  ice: "#a9d6ee", iceDark: "#7db3d6", iceLight: "#e2f5ff",
+  scree: "#8e8a92", screeDark: "#6a6670", screeLight: "#aeaab2",
+  cliff: "#6f6a78", cliffDark: "#4a4652", cliffLight: "#8f8a98",
 };
 
 export const box = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
@@ -306,6 +310,59 @@ export const DRAW = {
     blob(ctx, 16, 25, 9, 11, (dx, dy, d) => (d > 0.7 ? C.caveEdge : C.cave));
     box(ctx, C.cave, 7, 25, 18, 7);
   },
+  // The Mountain Pass
+  snow(ctx, rng) {
+    box(ctx, C.snow, 0, 0, T, T);
+    speckle(ctx, rng, C.snowDark, 10, 2, 1);
+    speckle(ctx, rng, C.snowLight, 14);
+    if (rng() < 0.3) { const x = 3 + Math.floor(rng() * 22), y = 4 + Math.floor(rng() * 22); box(ctx, C.snowDark, x, y + 2, 7, 1); box(ctx, C.snowLight, x + 1, y, 5, 2); } // a little drift
+  },
+  deepsnow(ctx, rng) {
+    box(ctx, C.snow, 0, 0, T, T);
+    for (let y = 2; y < T; y += 8) { // rolling drifts
+      const x = Math.floor(rng() * 10) - 4;
+      blob(ctx, x + 10, y + 4, 9, 3, (dx, dy) => (dy < -0.2 ? C.snowLight : dy > 0.4 ? C.snowShadow : C.snow));
+      blob(ctx, x + 26, y + 3, 8, 3, (dx, dy) => (dy < -0.2 ? C.snowLight : dy > 0.4 ? C.snowShadow : C.snow));
+    }
+  },
+  ice(ctx, rng) {
+    box(ctx, C.ice, 0, 0, T, T);
+    speckle(ctx, rng, C.iceDark, 6, 4, 1);
+    for (let i = 0; i < 3; i++) { // glints and cracks
+      const x = Math.floor(rng() * 24), y = Math.floor(rng() * 28);
+      box(ctx, C.iceLight, x, y, 6, 1); box(ctx, C.iceLight, x + 1, y + 1, 3, 1);
+    }
+    box(ctx, C.iceDark, Math.floor(rng() * 28), Math.floor(rng() * 20), 1, 6);
+  },
+  scree(ctx, rng) {
+    box(ctx, C.scree, 0, 0, T, T);
+    for (let i = 0; i < 14; i++) { // loose stones
+      const x = Math.floor(rng() * 29), y = Math.floor(rng() * 30);
+      box(ctx, C.screeDark, x, y + 1, 3, 2); box(ctx, C.screeLight, x, y, 2, 1);
+    }
+    speckle(ctx, rng, C.snowLight, 6); // a dusting of snow
+  },
+  cliff(ctx, rng) {
+    box(ctx, C.cliffDark, 0, 0, T, T);
+    for (const [x, y, w, h] of [[0, 3, 15, 12], [16, 1, 16, 11], [2, 16, 12, 9], [15, 13, 17, 12], [0, 26, 31, 6]]) {
+      box(ctx, C.cliff, x, y, w, h); box(ctx, C.cliffLight, x, y, w, 1); box(ctx, C.cliffLight, x, y, 1, h);
+    }
+    box(ctx, C.snow, 0, 0, T, 3); box(ctx, C.snowLight, 0, 0, T, 1); // snow on top
+    for (let x = 0; x < T; x += 4 + Math.floor(rng() * 4)) box(ctx, C.snow, x, 3, 2, 1 + Math.floor(rng() * 3));
+  },
+  chasm(ctx, rng) {
+    box(ctx, C.cave, 0, 0, T, T);
+    speckle(ctx, rng, "#1c2030", 10, 3, 2);
+    for (let i = 0; i < 3; i++) box(ctx, "rgba(200, 220, 255, 0.08)", Math.floor(rng() * 24), Math.floor(rng() * 28), 8, 2); // mist far below
+  },
+  ropebridge(ctx, rng) {
+    DRAW.chasm(ctx, rng);
+    box(ctx, C.woodDark, 5, 0, 22, T);
+    for (let y = 1; y < T; y += 5) { box(ctx, C.wood, 6, y, 20, 3); box(ctx, C.woodLight, 6, y, 20, 1); }
+    for (const x of [3, 27]) { box(ctx, C.reed, x, 0, 2, T); box(ctx, C.reedDark, x + 1, 0, 1, T); } // the ropes
+  },
+  snowpine: (ctx, rng) => DRAW.snow(ctx, rng), // the tree itself: PROPS.snowpine
+  snowrock: (ctx, rng) => DRAW.snow(ctx, rng), // the boulders: PROPS.snowrock
   fence(ctx, rng) {
     grass(ctx, rng);
     for (const y of [10, 20]) { box(ctx, C.woodDark, 0, y + 1, T, 3); box(ctx, C.wood, 0, y, T, 2); }
@@ -372,6 +429,24 @@ function boulder(ctx, x, y, rad) {
    canopy reaches over the tile above, and boulders spill into the next rock tile, so forests and rocky hills read as
    one mass. `next(dx, dy)` names the tile that far away. */
 export const PROPS = {
+  snowpine(ctx, rng) {
+    const look = Math.floor(rng() * 4);
+    const img = stamp(`snowpine${look}`, T + 2 * SPILL, T + 2 * SPILL, c => {
+      c.translate(SPILL, SPILL);
+      drawTree(c, seededRng(look * 13 + 5), "pine");
+      const r = seededRng(look * 7 + 1);
+      for (let tier = 0; tier < 3; tier++) { // snow along each tier's branches
+        const top = -4 + tier * 8, w = 8 + tier * 4;
+        for (let i = 0; i < 4 + tier; i++) box(c, i % 2 ? C.snow : C.snowLight, 16 - w + Math.floor(r() * w * 2), top + 6 + Math.floor(r() * 6), 3, 1);
+      }
+      box(c, C.snowLight, 15, -4, 3, 2);
+    });
+    ctx.drawImage(img, -SPILL, -SPILL);
+  },
+  snowrock(ctx, rng, next) {
+    PROPS.rock(ctx, rng, (dx, dy) => (next(dx, dy) === "snowrock" ? "rock" : null));
+    for (let i = 0; i < 3; i++) box(ctx, C.snowLight, 6 + Math.floor(rng() * 18), 2 + Math.floor(rng() * 14), 5, 2); // snow on the tops
+  },
   rubble(ctx, rng) {
     for (const [x, y, rad] of [[9 + rng() * 4, 14 + rng() * 4, 7], [21 + rng() * 4, 12 + rng() * 6, 8], [15 + rng() * 4, 22 + rng() * 3, 7]]) boulder(ctx, x, y, rad);
   },
@@ -412,6 +487,8 @@ export const MAP_COLOURS = {
   marsh: C.marsh, reeds: C.reed, shallow: C.shallow, mud: C.mud, boardwalk: C.wood, deadtree: C.deadwoodDark, causeway: C.flag,
   keepwall: C.flagDark, palisade: C.woodDark, passage: C.cave, forge: C.beam, herbalist: C.beam,
   flagstone: C.stone, rubble: C.rock, pew: C.wood, rack: C.woodDark,
+  snow: C.snow, deepsnow: C.snowDark, ice: C.ice, scree: C.scree, cliff: C.cliffDark, chasm: C.cave, ropebridge: C.wood,
+  snowpine: C.pineDark, snowrock: C.cliff,
 };
 
 export const missingTileArt = () => [...new Set(Object.values(TILES).map(t => t.name))].filter(n => !DRAW[n]);

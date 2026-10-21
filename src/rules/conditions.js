@@ -4,8 +4,9 @@
 //
 // Each condition says what it changes:
 // - skips: they lose their turns (asleep, paralyzed).
-// - attackedWith: "advantage" for attacks against them; `meleeCrits`: a melee hit on them is a critical hit.
-// - attacksWith: "disadvantage" on their own attacks; `once`: it ends after their next attack.
+// - attackedWith: "advantage" (or "disadvantage") for attacks against them; `meleeCrits`: a melee hit on them is a
+//   critical hit.
+// - attacksWith: "disadvantage" (or "advantage") on their own attacks; `once`: it ends after their next attack.
 // - bonusDice: added to their attack rolls and saving throws (Bless's 1d4).
 // - ac: added to their AC.
 // - badSaves: saving throws they make with disadvantage.
@@ -22,6 +23,8 @@ export const CONDITIONS = {
   mocked:     { name: "rattled", attacksWith: "disadvantage", once: true },
   blessed:    { name: "blessed", bonusDice: "1d4" },
   shielded:   { name: "shielded", ac: 5 },
+  blinked:    { name: "out of reach", attackedWith: "disadvantage" }, // Misty Step
+  helped:     { name: "helped", attacksWith: "advantage", once: true }, // Quill's flyby
 };
 
 const of = (battle, key) => (battle.conditions ||= {})[key] ||= {};
@@ -52,8 +55,8 @@ export const bonusDice = (battle, key) => active(battle, key).find(c => c.bonusD
 export function attackMods(battle, attacker, target, { melee = true } = {}) {
   const on = active(battle, target), by = active(battle, attacker);
   const mods = {
-    advantage: on.some(c => c.attackedWith === "advantage"),
-    disadvantage: by.some(c => c.attacksWith === "disadvantage"),
+    advantage: on.some(c => c.attackedWith === "advantage") || by.some(c => c.attacksWith === "advantage"),
+    disadvantage: by.some(c => c.attacksWith === "disadvantage") || on.some(c => c.attackedWith === "disadvantage"),
     critOnHit: melee && on.some(c => c.meleeCrits),
     bonusDice: bonusDice(battle, attacker),
   };

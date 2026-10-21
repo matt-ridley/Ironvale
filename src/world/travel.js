@@ -47,6 +47,8 @@ export const TRAVEL_POINTS = [
     centre: { x: 50, y: 31 } }, // the campfire
   { id: "fenCamp", name: "Greywater Fen", kind: "camp", map: "ironvale", zone: "fen", at: { x: 5, y: 49 },
     centre: { x: 6, y: 48 } }, // the campfire by the goblins' passage
+  { id: "rockslide", name: "The Rockslide", kind: "camp", map: "ironvale", zone: "pass", at: { x: 31, y: 11 },
+    centre: { x: 30, y: 9 } }, // Rachel's camp at the foot of the pass
 ];
 export const CAMP_RADIUS = 3;
 export const FIRST_HUB = "oakhollow";
@@ -75,7 +77,8 @@ export const REGIONS = [
     hint: f => (f.askedBrannoc ? "Ironvale Keep, east past the marshes. Brannoc is clearing the goblins' passage behind the King's throne."
       : f.signetShown ? "Ironvale Keep lies east, past the marshes, empty for a hundred years."
         : "Somewhere east, past the marshes.") },
-  { id: "pass", name: "The Mountain Pass", act: 3, shape: "mountains", hint: () => "High mountains to the north." },
+  { id: "pass", name: "The Mountain Pass", tab: "THE PASS", act: 3, map: "pass", reached: f => !!f.seenSlopes, shape: "mountains",
+    hint: f => (f.metRachel ? "The old Warden road, behind Thorne's rockslide. Rachel needs three rune-stones to open it." : "High mountains to the north, past Ironvale Keep.") },
   { id: "beyond", name: "Beyond the Door", act: 4, shape: "door", hint: () => "No one knows." },
 ];
 export const regionOpen = (region, flags = {}) => !!region.map && !!region.reached?.(flags);
