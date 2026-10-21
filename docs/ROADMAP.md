@@ -1,6 +1,6 @@
 # Ironvale roadmap
 
-The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 11 and step 12's minigames are done (0.18.0 to 0.30.0; Greywater Fen was built before Fenwatch); nothing else here is yet. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
+The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 11 and step 12's minigames are done (0.18.0 to 0.30.0; Greywater Fen was built before Fenwatch); nothing else here is yet. Act 3 (steps 13-20) is a proposal waiting for the owner's OK. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
 
 ## The shape of the game
 
@@ -57,6 +57,104 @@ Levels 5 to 8 take 6,500 to 34,000 XP. Act 1's monsters give 50-100 XP, so Act 2
 | Bosses | Mother Sallow (700), Lord Varric (about 2,300; custom, like the Goblin King) |
 
 Quest rewards of about 1,500, 3,000 and 5,000 XP cover about a third of the climb, and the bounty board (below) gives the rest a purpose. Add a battle simulator to `tools/` before tuning the bosses: the README quotes simulated win rates, but no simulator is in the repo.
+
+## Act 3: The Pass (proposed)
+
+Everything in this section is a **proposal** until the owner agrees it; the names are placeholders like "Ironvale" itself.
+
+### The story in one breath
+
+The rockslide in the pass wasn't nature. **Aldric Thorne**, a rune scholar, has learned to lift the Wardens' runes out of the old carvings and use them himself; every rune he takes is gone from the stone for good. He brought the mountain down behind him with a stolen Breaking Rune and is climbing to the door, taking the Wardens' magic as he goes. A voice on the other side of the door has been whispering to him through the runes, promising him the Wardens' power if he opens it.
+
+His old apprentice, **Rachel**, came after him and got stuck at the rockslide. With her help the hero opens the pass, climbs it waystone by waystone, and learns from the ghost of the last Warden, who turns out to be family. At the top, in the Wardens' gatehouse, the hero beats Thorne. With his last stolen rune he cracks the door open. Something huge with a golden eye looks through the gap. The hero swears the **Oath** at the door, the runes light up again and the crack holds, for now. That is Act 4's hook.
+
+### Main quests
+
+| Quest | What happens |
+|---|---|
+| **Q6 The Scholar at the Rockslide** | Hild says the keep shook in the night. At the rockslide you find Rachel and her owl, Quill, camped in the snow and reading a rune burned into the rocks: a Breaking Rune, used from the far side. She can read it but can't undo it alone. She needs three rune-stones the blast threw down the slopes (a small hunt, like Megan's bow) and then the Wardenblade laid against the rune while she reads it backwards. The rocks split, and she joins you. About 4,000 XP. |
+| **Q7 The Warden's Road** | Three **waystones** up the pass. At the first, the ghost of **Warden Esk** appears. She's the last Warden, who held the door when the garrison fell, and "my blood" when she sees your sword. (Her son was sent south as a baby with the crested sword: that's how it reached Oakhollow.) Each waystone has a trial and teaches a rune. **Iron:** hold out for three rounds against Thorne's gargoyles; the reward is **Iron Ward**. **The Call:** keep your companion standing through a fight; the reward is **Warden's Call**. **Binding:** the stone is already stripped bare. Thorne got there first, so you track him to his camp on the heights and take the **Rune of Binding** back from his guardian. About 2,000 XP a waystone and 2,000 at the end. The first waystone makes you **Warden-in-training**. |
+| **Q8 The Wardens' Gatehouse** | A fortress cut into the mountain in front of the door: the Act 3 dungeon. Rune doors, a frozen forge, the Wardens' barracks, then Thorne at the door with a **shield guardian** bound to his amulet (two monsters, so it fits the battle screen). He fights with stolen runes, including the Breaking Rune that hits everyone. When he's beaten, you choose: **spare him** (chained in the keep's cells, and he knows things about what's behind the door: Act 4) or **leave him to the mountain**. About 12,000 XP. |
+| **Ending: The Oath** | Thorne's last rune cracks the door. Heat pours out, and a golden eye the size of a cartwheel looks through. Esk: *"Now. Swear it, while I can still hold it."* The Oath screen (see the hero's arc). The door's runes light up again, the crack holds, and Esk fades: *"Hold it better than I did."* ACT 3 COMPLETE. |
+
+**The rule for companion gates:** the main quest never *needs* a particular companion. Rachel joins as part of Q6, but once she's on the roster you can swap her out, and the main quest still has a way through for anyone (a harder check, a longer route). The *side* quests are where a particular friend is required, and that's what makes the roster matter.
+
+### Rachel
+
+**Proposed:** Rachel is the **wizard**: a bookish scholar of the Wardens with a dry sense of humour, too many books and an owl smarter than she is. For six years she was Thorne's apprentice. The worst of it, which she admits at a campfire: **she** worked out how to lift a rune from stone. He just used it. Stopping him is her personal quest, so it runs through the main quest.
+
+Her stats: INT +3 casting, a staff, padded armour. She starts with Fire Bolt, Magic Missile, Shield and Sleep.
+
+**Her new mechanics:**
+
+- **A spellbook that grows.** Give Rachel a spell scroll and she *copies* it into her book for good instead of reading it once (50 gold of ink per spell level, as in the SRD). Scrolls finally have a second use, and the pass, the gatehouse and the keep's library hide new ones: Burning Hands, Misty Step, Fireball, **Counterspell**, Lightning Bolt. This needs a book view on her companion page.
+- **Arcane Recovery.** A short rest at a camp gives her one spell slot back, so camps matter to her as well as inns.
+- **Quill the owl.** Quill follows her on the map as a second little sprite. In battle, once per fight, a **FLYBY** gives the hero advantage on their next attack (the SRD Help action). At a camp, **SEND QUILL** marks the zone's unopened chests and secrets on the world map.
+- **Reading runes.** Warden carvings sit all over the game, Act 1 and 2 maps included (the Deep Warrens, the keep, Willowmere's old garden). Without Rachel they're "worn carvings you can't read". With her they give up lore, hidden caches, and in the gatehouse the answers to the rune doors.
+- **COUNTER.** When an enemy caster starts a spell (Thorne, the night hag, later Act 4), a COUNTER button lights up on Rachel's turn bar if she has a 3rd-level slot. It stops the spell automatically if the spell is 3rd level or lower; above that, she needs a check. It's the first time a companion acts *outside* their turn.
+
+### The companions, deeper
+
+**Campfire talks (new mechanic).** When you rest at a camp or in your bed at the keep, and the companion with you has something to say, a short scene plays. It's one talk per rest, three per companion in Act 3, and each needs a story flag (so nobody spills everything on the first night). After a companion's third talk, their personal quest opens. Companions also get one-line **remarks** at key places, like walking into the pass (Megan: *"I'm not looking down. Don't make me look down."*).
+
+| Companion | What the talks reveal | Their quest (needs them in the party) | Reward |
+|---|---|---|---|
+| **Megan** | Her da, Garret, was a Fenwatch archer who went up the pass with a survey party ten years ago and never came back. She's afraid of heights. Her bow was his. | **Garret's Arrows.** Arrows with his fletching mark lie along the pass, but only Megan recognises them. They lead to an old Warden watchtower where Garret has lived as a hermit since the survey party was lost, hunting griffons. He shoots at strangers and only comes out for Megan. | Garret teaches her **Volley** (one shot at each monster, once per fight). Garret moves into the keep and runs archery rematches in the training yard. The watchtower becomes a camp. |
+| **Robyn** | She was left on the shrine's step as a baby. For years her prayers felt unanswered, until the night you laid the graves to rest. The light she prays to has an old name: the Wardens' **Dawn**. | **The Frozen Chapel.** A Warden chapel high on the pass, full of wraiths. Only Robyn can consecrate it. | Robyn learns **Turn Undead** and **Spiritual Weapon**. The chapel becomes a camp. Her lines hint at the Oath of Dawn. |
+| **Rachel** | The college, Thorne as he used to be, what she worked out about runes, and why Quill won't go near Thorne. | Her quest *is* the main quest. In the final fight, with her in the party, Thorne hesitates the first time she speaks (he loses his first turn), and sparing him gets a line from her. | Thorne's notes go to the keep's library: more scrolls for her book. |
+| **Brannoc** (not a companion) | | **Rune-Iron.** The gatehouse's frozen forge still has rune-iron in its ore bins. Bring him some. | The **Wardenblade's second form**: one more rune slot. (The final form is Act 4.) |
+
+Claire stays open for Act 4.
+
+### Choices come back
+
+- **Mother Sallow, if you made the bargain:** she wore the Goblin King's crown, decided she's **Queen of the Fen**, and charges a toll on the causeway (one copper, then a song, then a pretty pebble). Fenwatch asks you to sort it out. You can bargain again with something shiny from Thorne's camp, or fight a crowned Sallow who's tougher than before. Either way she then turns up at the rockslide camp as **Sallow's Sundries**, the pass's only pedlar, selling cold charms at hag prices.
+- **Mother Sallow, if you fought her:** her sister **Auntie Nettle** (the SRD night hag, played comic: *"You killed my sister? She owed me money."*) haunts the pass at night. Short rests at the pass's camps keep getting interrupted until you find her lair and beat her. COUNTER matters in this fight.
+- **The goblin refugees** (the Act 2 side quest that isn't built yet, so it comes first): if you helped them, they remember the old Warden mine tunnels under the pass. **Snik** guides you through a shortcut round the hardest slope to a hidden cache, and their trader moves into the keep's courtyard. If you didn't help, there's no shortcut.
+- **Thorne, if spared:** chained in the keep's cells. He has a line for every visit, and something to offer in Act 4.
+
+### Going back: what's new in the old places
+
+Once Act 3 begins (`bladeReforged` and `keepHome`), the places from Acts 1 and 2 change. The aim is to be fun, not to make you grind.
+
+- **Weak monsters run away.** In a zone where you're five or more levels too strong, encounters end at once: *"A wolf takes one look at the Wardenblade and bolts."* You still get a few XP, and no fight.
+- **Pip and the Junior Wardens.** Pip has a wooden "Wardenblade" and has signed up the village kids. Then he runs away to be a Warden like you. **Pip's Big Adventure:** follow his trail through the wood to the empty Deep Warrens, where he has found something new: **kobolds** digging, scouting "for the Great One beyond the mountain". It's the first plant for Act 4's dragon. The kobolds aren't a real fight at your level; Pip is fine, just very proud. His reward is his Junior Warden badge (a trinket: +1 to your next failed save each rest). After that, Pip's lines follow the act.
+- **Oakhollow:** a (lumpy) statue of you in the square, built by Pip, which improves over time. The Sleeping Fox has a "The Hero Slept Here" plaque, and a travelling bard sings a terrible song about you that uses your name and title. Hazel has a letter for you. Elder Maren has the old **Warden's Oath** in three pieces in her books, which is lore for choosing your Oath.
+- **Willowmere:** Old Tom says **Old Gnasher**, a legendary pike, only bites now. It's a rare catch in the fishing minigame, and Tom pays handsomely and mounts it.
+- **The Deep Warrens and the keep:** Warden carvings that Rachel can read (see her mechanics), each with lore or a hidden cache.
+- **Goblin Rocks:** if you helped the refugees, they move back home and the camp turns into a little goblin village.
+- **Fenwatch:** the ferryman (an Act 2 gap) finally runs, with treasure hints for the fen and the pass. The Drowned Duck has rumours about the pass and new bounties. Sallow's toll trouble starts here (above).
+- **The keep fills up:** Rachel's **rune library** (scrolls for her book, rune lore), the **training yard** (minigame rematches with better prizes), **Garret's** room, the goblin trader, and the **cells** if you spared Thorne.
+
+### The region
+
+- **`src/world/pass.js`** (about 48 x 80, tall): the rockslide and Rachel's camp at the bottom, pine slopes, snowfields, the heights (Thorne's camp), the waystones up the old Warden road, Garret's watchtower, the Frozen Chapel, and the gatehouse's face at the top. Zones: `slopes`, `snowfield`, `heights`, `gatehouseApproach`. The `pass` region in `REGIONS` gets its `map`.
+- **`src/world/gatehouse.js`**: the dungeon. Zones: `gatehouse`, `door`.
+- **Camps:** the rockslide (Rachel's camp), each waystone once its trial is done, the watchtower (after Garret), the Frozen Chapel (after Robyn). The hub is still the keep.
+- **New tiles:** snow, deep snow (slow), **ice** (you slide until you hit something: the pass's puzzles), pine, scree, cliff, rope bridge, waystone, rune door.
+- **New music:** `pass` (high, cold, sparse bells), `gatehouse` (low, heavy, the keep's organ in a minor key), and a `thorne` boss track.
+
+### Monsters and XP
+
+Levels 9 to 12 run from 48,000 to 100,000 XP, so from the end of Act 2 (about 34,000) there are about 66,000 to earn. Quest rewards come to about 26,000 (Q6 4,000, Q7 8,000, Q8 12,000, plus the trials), companion quests are about 3,000 each, Pip's is 1,000, Sallow's or Nettle's about 2,000, and the rest comes from fights and bounties. Fights still come one or two monsters at a time.
+
+| Where | Monsters (XP) |
+|---|---|
+| Slopes | griffon (450), manticore (700), ettin (1,100) |
+| Snowfield and heights | troll (1,800), wyvern (2,300), stone giant (2,900) |
+| Waystones (Thorne's guards) | gargoyle pairs (450), earth elemental (1,800) |
+| Frozen Chapel | wraith (1,800), specter pairs (200) |
+| Gatehouse | helmed horror (1,100), chimera (2,300), the Wardens' old shield guardians (2,900) |
+| Bosses | Auntie Nettle, the night hag (1,800), crowned Sallow (about 1,800), Aldric Thorne (about 5,000; custom, with his shield guardian) |
+
+No dragons in Act 3: the eye at the door is the only one you see. Use `npm run sim` to tune Thorne before he's merged, as with Varric.
+
+### The hero in Act 3
+
+- **Fighter levels 9-12** (SRD Champion): **Indomitable** at L9 (reroll a failed save once per long rest), **Extra Attack (2)** at L11 (three attacks; the Potion of Dexterity makes it four), an ability score increase at L12. The Champion's extra Fighting Style at L10 is a pick on the LevelUp screen (Defense +1 AC, or Dueling +2 damage).
+- **Runes:** Iron Ward (a reaction: when a hit would land, spend a slot for +5 AC, which can turn it into a miss; it pops up as a prompt), Warden's Call (heals the hero and companion and ends fear and paralysis), Rune of Binding (a CON save or the monster loses its next turn, using the conditions engine). The **Breaking Rune** is the one Thorne uses on you; the hero learns it in Act 4.
+- **Titles:** Warden-in-training (first waystone), then the Oath's title at the end of the act (e.g. *Sworn of Iron*). *Warden of Ironvale* waits for Act 4.
+- **Looks:** the cape from Act 2, the blade's runes glowing (one more per rune), and the Oath's colours after the ending.
 
 ## Safe places, resting and travel (decided)
 
@@ -117,7 +215,7 @@ As built: the rules are `src/rules/minigames.js` (tested), the screens `src/scen
 Companions to add:
 
 - **Megan** (built): the archer. Keeps her place.
-- **Claire, Rachel and Robyn**: the owner wants all three. **Robyn is built (0.26.0):** a cleric from Fenwatch's shrine, recruited through The Restless Dead. Claire's and Rachel's roles are still **open**. Things to settle: their class (they could be the wizard, cleric and druid, or one could fight up close), when you meet them (one per act, or two in Act 2 and one in Act 3), a recruit quest each (like Megan's bow), and a walking sprite each (like `megan.js`). One of them could be the hero's rune mentor or the rival in Act 3.
+- **Claire, Rachel and Robyn**: the owner wants all three. **Rachel is planned for Act 3** (the wizard; see Act 3). **Robyn is built (0.26.0):** a cleric from Fenwatch's shrine, recruited through The Restless Dead. Claire's role is still **open** (Act 4): her class, a recruit quest (like Megan's bow) and a walking sprite (like `megan.js`).
 - **Candidates:** Brannoc (dwarf tank with a warhammer; *protect* gives you disadvantage against the next hit), Snik (goblin scout; *sneak attack* adds damage to a target someone else has already hit), Wren (fen herbalist who heals instead of attacking).
 
 ## Magic
@@ -163,7 +261,7 @@ Today the hero has only Second Wind. Add, from the SRD fighter (Champion): **Act
 - **First rune (Act 2), Rune Strike:** after you hit, spend a slot for extra damage (2d8, more against undead). One button.
 - **More runes come from the story, not shops:** carvings in the keep, the mentor, boss rewards. Ideas: *Iron Ward* (a reaction: +5 AC once), *Warden's Call* (heals and steadies the party), *Rune of Binding* (a monster loses its turn), *Breaking Rune* (an attack that hits every monster).
 
-### The Oath (end of Act 3; open: three or one)
+### The Oath (end of Act 3; open: three or one. Act 3 has the scene)
 
 | Oath | Style | Signature |
 |---|---|---|
@@ -175,7 +273,7 @@ Today the hero has only Second Wind. Add, from the SRD fighter (Champion): **Act
 
 - **Titles:** NPCs call you by the title you've earned (Traveller, Hero of Oakhollow, Ironvale's Heir, Warden-in-training, Warden of Ironvale). Pip's lines grow with you.
 - **Looks:** the hero's sprite changes with progress (a cape in Act 2, glowing runes on the sword, Oath colours), drawn in code in `hero.js`.
-- **Choices come back:** Mother Sallow's bargain and the goblin refugees return in Act 3.
+- **Choices come back:** Mother Sallow's bargain and the goblin refugees return in Act 3 (planned under Act 3: Choices come back).
 - **Ironvale Keep becomes your home** after Act 2: rescued NPCs and spare companions move in (the roster lives here), and rooms unlock over the acts (Brannoc's forge, a rune library, a training yard for the minigames). By the end, the traveller who walked into Oakhollow with nothing rules the keep.
 
 ## Code that has to change
@@ -211,10 +309,24 @@ One pull request each, with a minor version bump.
 11. ~~**The keep as your hub** (start of Act 3).~~ **Built in 0.29.0.** A travel point with `wholeMap: true` (safe anywhere on the keep's map, the tomb too) and `opensWhen: signetReturned`, `innCost` 0 and its own `music`. Hild the steward (`keepHall`, the shared `innScript`) appears with the Signet back; talking to her sets `keepHome`. Brannoc moves from Fenwatch to the keep's courtyard once he's reforged the blade (`keepForge`, which opens the forge shop through a new `shop` conversation event). The world map marks a place on a map of its own (the keep) at the way in. Not built yet: the keep's rooms unlocking over the acts (a rune library), the training yard (step 12's minigames), rescued NPCs moving in.
 12. ~~**Minigames**~~ **built in 0.30.0** (see Minigames above). **Later:** the other companions, one at a time.
 
+### Act 3 (proposed)
+
+13. **Act 3 groundwork:** an `act` helper from the flags (scripts branch on it for the "going back" lines), weak monsters running away, fighter levels 9-12 (Indomitable, the second Fighting Style, Extra Attack (2)), and campfire talks with remarks (a talk count saved on each companion, so the save format goes up). Megan's and Robyn's first talks come with it.
+14. **Rachel and the rockslide (Q6):** `art/rachel.js` and Quill's sprite, `pass.js` with only its lower slopes and Rachel's camp, the rune-stone hunt, the rockslide opening, and Rachel's mechanics (copying scrolls, Arcane Recovery, FLYBY, SEND QUILL, reading runes). The rune carvings in the Act 1 and 2 maps come here too.
+15. **Going back, part 1:** Pip's Big Adventure and the kobolds in the Warrens, the statue, the plaque and the bard, Hazel, Maren's Oath fragments, Old Gnasher.
+16. **The Warden's Road (Q7):** the rest of `pass.js`, snow and ice, the `pass` track, the slope and snowfield monsters, Warden Esk, the three waystones, Iron Ward (with the reaction prompt), Warden's Call, Thorne's camp and the Rune of Binding. Title: Warden-in-training.
+17. **Companion quests:** Garret's Arrows (Volley, the watchtower, Garret at the keep) and the Frozen Chapel (Turn Undead, Spiritual Weapon, wraiths).
+18. **Choices come back:** the goblin refugee camp at Fenwatch first (the Act 2 gap), then the mine shortcut and Snik, the Queen of the Fen or Auntie Nettle, the ferryman, and Sallow's Sundries.
+19. **The Wardens' Gatehouse (Q8):** `gatehouse.js`, rune doors, the frozen forge and rune-iron (the blade's second form), COUNTER, Thorne and his shield guardian, and the choice to spare him. Tune with `npm run sim`.
+20. **The Oath and the end of Act 3:** the cracked door and the eye, the Oath screen and titles, Oath colours on the hero, and the keep's new rooms (the library, the training yard rematches, the cells).
+
 ## Open questions
 
 1. **The hero's secret:** leaning to the last Warden heir: Act 2's opening (0.23.0) hints at the bloodline without saying it. Still open: confirm it, and when it's said out loud (built in 0.28.0 as Varric's "Warden's blood... at last").
 2. **Oaths:** three to choose from, or one fixed path that's simpler to build?
 3. ~~**A name for the hero:**~~ Decided and built in 0.22.0: picked at NEW GAME (or RENAME in the bag), "Hero" if left empty.
-4. **Claire, Rachel and Robyn:** Robyn is decided (a cleric, met at Fenwatch). Still open: Claire's and Rachel's roles, when you meet them, and whether one is the mentor or the rival.
+4. **Claire, Rachel and Robyn:** Robyn is decided (a cleric, met at Fenwatch). Rachel is proposed for Act 3: the wizard, Thorne's old apprentice (see Act 3). Claire is still open: Act 4, and maybe the bard or druid.
 5. **Inn prices:** about 10 gold in Act 1 and 25 in Act 2 is a guess; tune once the economy is clearer.
+6. **Act 3's cast:** Aldric Thorne as the rival, the ghost of Warden Esk as the mentor (and the hero's ancestor), and Garret as Megan's father. Agree the people and their names.
+7. **Sparing Thorne:** keep it as a real choice that matters in Act 4, or make his ending fixed?
+8. **Ice tiles:** sliding puzzles are fun but fiddly with the joystick. Keep them to a few short stretches, or leave them out?
