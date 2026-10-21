@@ -52,13 +52,16 @@ export const RUNES = {
   ironWard: { name: "Iron Ward", about: "When a monster's attack would hit you, spend a slot for +5 AC against it: it may miss." },
   wardensCall: { name: "Warden's Call", about: "Your action: you and your companion heal 2d8 + your level and shake off paralysis, fear and sleep." },
   binding: { name: "Rune of Binding", about: "Your action: a monster makes a CON save against your rune, or loses its next turn." },
+  // The Oaths' signature runes (rules/oaths.js), learned when you swear.
+  chainLightning: { name: "Chain Lightning", about: "Your action: lightning leaps to every monster (6d8, a DEX save halves it)." },
+  dawnstrike: { name: "Dawnstrike", about: "After you hit, the Dawn burns through your blade: 3d8 radiant, double against the undead and fiends." },
 };
 export const IRON_WARD_AC = 5;
 /* The DC of the hero's runes that monsters save against: 8 + proficiency + STR. */
 export const runeDc = char => 8 + proficiencyBonus(char.level) + mod(char, "STR");
 /* How many rune slots the hero has (none until they learn a rune): 2, 3 from level 9, and one more once Brannoc has
-   worked rune-iron into the Wardenblade (its second form, `bladeForm` 2). */
-export const runeSlots = char => (char.runes?.known?.length ? (char.level >= 9 ? 3 : 2) + (char.bladeForm >= 2 ? 1 : 0) : 0);
+   worked rune-iron into the Wardenblade (its second form, `bladeForm` 2), and two more for the Oath of Storm. */
+export const runeSlots = char => (char.runes?.known?.length ? (char.level >= 9 ? 3 : 2) + (char.bladeForm >= 2 ? 1 : 0) + (char.oath === "storm" ? 2 : 0) : 0);
 export const runesLeft = char => Math.max(0, runeSlots(char) - (char.runes?.used || 0));
 export const knowsRune = (char, id) => !!char.runes?.known?.includes(id);
 export function learnRune(char, id) {
@@ -85,7 +88,7 @@ export const XP_FOR_LEVEL = [0, 0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48
 export const abilityMod = score => Math.floor((score - 10) / 2);
 export const proficiencyBonus = level => 2 + Math.floor((level - 1) / 4);
 // Trinkets that raise an ability while they're in your pack (minigame prizes). Each counts once, however many you carry.
-export const TRINKET_BONUS = { oswinBelt: { STR: 2 } };
+export const TRINKET_BONUS = { oswinBelt: { STR: 2 }, brannocBracer: { CON: 2 } };
 export const trinketBonus = (char, ability) => Object.entries(TRINKET_BONUS)
   .reduce((sum, [base, b]) => sum + (b[ability] && char.inventory?.some(i => i.base === base) ? b[ability] : 0), 0);
 /* An ability score with any trinket bonus. */
@@ -219,6 +222,7 @@ export function rest(char) {
   if (char.runes) char.runes.used = 0;
   char.indomitableUsed = false;
   char.badgeUsed = false; // Pip's Junior Warden badge
+  char.unbrokenUsed = false; // the Oath of Iron
   char.luckUsed = false; // the Lucky Die
   char.fishCaught = 0; // the fish bite again
   if (char.companion) char.companion.hurt = 0;
@@ -236,6 +240,12 @@ export function shortRest(char, companionMax = 0) {
   char.secondWind = true;
   const actionSurge = hasFeature(char, "actionSurge") && !char.actionSurge;
   char.actionSurge = true;
+  // The Oath of Storm: half your rune slots come back.
+  let runes = 0;
+  if (char.oath === "storm" && char.runes?.used) {
+    runes = Math.min(char.runes.used, Math.ceil(runeSlots(char) / 2));
+    char.runes.used -= runes;
+  }
   let companionHealed = 0;
   const c = char.companion;
   if (c && companionMax) {
@@ -243,7 +253,7 @@ export function shortRest(char, companionMax = 0) {
     companionHealed = Math.max(0, hurt - cap);
     c.hurt = hurt - companionHealed;
   }
-  return { healed, secondWind, actionSurge, companionHealed };
+  return { healed, secondWind, actionSurge, companionHealed, runes };
 }
 
 export function heal(char, amount) {

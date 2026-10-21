@@ -581,7 +581,9 @@ export const SCRIPTS = {
   // Fenwatch's shrine, where Robyn keeps the candles lit.
   shrine: {
     start: "look",
-    nodes: { look: { text: "A little stone shrine on the boardwalk, candles guttering in the damp. Someone keeps them lit, every night." } },
+    nodes: { look: { text: s => (s.flags.oath === "dawn"
+      ? "The little shrine is a temple now: Fenwatch built it out in new timber, gold sun over the door, and the candles never gutter. The fen's dead haven't stirred since you swore."
+      : "A little stone shrine on the boardwalk, candles guttering in the damp. Someone keeps them lit, every night.") } },
   },
 
   // Robyn, a young cleric at the shrine. The Restless Dead: lay the fen's old graves to rest and she joins you.
@@ -974,7 +976,8 @@ export const SCRIPTS = {
     nodes: {
       hello: {
         speaker: BRANNOC,
-        text: "\"Ironvale's forge, lit again after a hundred years! The bellows still work. Same as ever: gear to +5, and silver.\"",
+        text: s => (s.flags.oath === "iron" ? "\"Sworn of Iron! Now THAT'S a Warden. Come and see what I've made you: Warden plate. First in a hundred years.\""
+          : "\"Ironvale's forge, lit again after a hundred years! The bellows still work. Same as ever: gear to +5, and silver.\""),
         choices: [
           { label: "Let's see the forge", to: "shop" },
           { label: "Give Brannoc his tools", if: s => s.hero.inventory.some(i => i.base === "brannocTools"), to: "tools" },
@@ -982,7 +985,7 @@ export const SCRIPTS = {
           { label: "Goodbye.", to: null },
         ],
       },
-      shop: { enter: (s, ctx) => ctx.emit({ type: "shop", shop: "forge" }) },
+      shop: { enter: (s, ctx) => ctx.emit({ type: "shop", shop: s.flags.oath === "iron" ? "forgeIron" : "forge" }) },
       tools: toolsNode(),
       // The Wardenblade's second form: one more rune slot.
       runeIron: {
@@ -1019,12 +1022,13 @@ export const SCRIPTS = {
           if (s.map === "pass" && nettleHaunting(s)) return ctx.goto("nettle"); // Auntie Nettle won't let you sleep
           const r = { ...shortRest(s.hero, companionStats(s.hero)?.maxHp), recovered: arcaneRecovery(s.hero) };
           ctx.remember("rest", r);
-          if (!r.healed && !r.secondWind && !r.actionSurge && !r.companionHealed && !r.recovered) ctx.goto("rested");
+          if (!r.healed && !r.secondWind && !r.actionSurge && !r.companionHealed && !r.recovered && !r.runes) ctx.goto("rested");
         },
         text: (s, ctx) => {
           const r = ctx.recall("rest");
           const got = [r.healed && `+${r.healed} HP`, r.companionHealed && `${companionStats(s.hero).name} +${r.companionHealed} HP`, r.secondWind && "Second Wind back", r.actionSurge && "Action Surge back",
-            r.recovered && `Rachel's Arcane Recovery: ${r.recovered} spell slot${r.recovered > 1 ? "s" : ""} back`].filter(Boolean);
+            r.recovered && `Rachel's Arcane Recovery: ${r.recovered} spell slot${r.recovered > 1 ? "s" : ""} back`,
+            r.runes && `the Storm gives back ${r.runes} rune slot${r.runes > 1 ? "s" : ""}`].filter(Boolean);
           return `You warm your hands and catch your breath. ${got.join(", ")}. (A short rest brings you up to half your HP. For a full rest, find a bed.)`;
         },
         choices: afterRest,
@@ -1225,7 +1229,7 @@ export function sideObjective(flags, state = {}) {
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
    counted until it can be finished. */
 export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported, flags.causewayRaised, flags.signetReturned,
-  flags.rockslideOpen, flags.wardensRoad, flags.gatehouseDone].filter(Boolean).length;
+  flags.rockslideOpen, flags.wardensRoad, flags.gatehouseDone, flags.oathSworn].filter(Boolean).length;
 
 /* The line under the HP box saying what to do next. */
 export function objective(flags) {
@@ -1259,7 +1263,8 @@ export function objective(flags) {
     if (!flags.runeDoor3) return "Get through the gatehouse's rune doors";
     if (!flags.thorneDefeated) return "Stop Thorne at the Door";
     if (!flags.gatehouseDone) return "Decide what to do with Thorne";
-    return "Face the Door";
+    if (!flags.oathSworn) return "Face the Door";
+    return "ACT 3 COMPLETE. Act 4 is coming: beyond the Door";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";

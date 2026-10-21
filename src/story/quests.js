@@ -148,6 +148,13 @@ export const QUESTS = [
     ],
   },
   {
+    id: "door", title: "The Door", kind: "main",
+    known: f => f.gatehouseDone,
+    about: "Something on the other side of the Door heard the fighting stop. Colleen is waiting there.",
+    reward: "Your Oath",
+    steps: [{ text: "Face the Door", done: f => f.oathSworn }],
+  },
+  {
     id: "runeIron", title: "Rune-Iron", kind: "side",
     known: f => f.runeIronFound,
     about: "Blue-black ore from the Wardens' frozen forge. Brannoc might be able to work it into the Wardenblade.",

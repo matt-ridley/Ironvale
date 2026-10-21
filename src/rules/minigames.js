@@ -70,8 +70,10 @@ export const AW_ZONE = 0.13; // half the green's width, as a share of the bar
 export const AW_SLIP = 4;
 export const AW_FOE_RATE = 12; // how hard Oswin pushes, per second
 
-export function awNew(hero) {
-  return { pos: 50, t: 0, cursor: 0, dir: 1, push: 8 + 2 * mod(hero, "STR"), result: null };
+export const AW_BRANNOC_RATE = 17; // Brannoc, in the keep's training yard, pushes harder than Oswin
+
+export function awNew(hero, foeRate = AW_FOE_RATE) {
+  return { pos: 50, t: 0, cursor: 0, dir: 1, push: 8 + 2 * mod(hero, "STR"), result: null, foe: foeRate };
 }
 export const awSpeed = g => 1.2 + g.t * 0.08; // bar widths per second
 
@@ -81,7 +83,7 @@ export function awTick(g, dt) {
   let c = g.cursor + g.dir * awSpeed(g) * dt;
   while (c > 1 || c < 0) { if (c > 1) { c = 2 - c; g.dir = -1; } else { c = -c; g.dir = 1; } }
   g.cursor = c;
-  g.pos -= AW_FOE_RATE * dt;
+  g.pos -= (g.foe ?? AW_FOE_RATE) * dt;
   if (g.pos <= 0) { g.pos = 0; g.result = "lost"; }
   return g;
 }
@@ -191,6 +193,7 @@ export const PRIZES = {
   armWrestle: { flag: "wonArmWrestle", item: "oswinBelt" },
   archery: { flag: "wonArchery", item: "willowBow" },
   archeryMatthew: { flag: "wonMatthewArchery", item: "griffonBow", upgrade: 2 }, // Matthew's rematch at the keep
+  armBrannoc: { flag: "wonBrannocArm", item: "brannocBracer" }, // Brannoc, in the keep's training yard
 };
 
 /* A win: the prize the first time (returns the item), nothing after. Megan's bow goes straight to her, wherever she is. */

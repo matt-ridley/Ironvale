@@ -10,7 +10,7 @@ import { itemName } from "../rules/items.js";
 import {
   KB_STAKE, kbNew, kbRoll, kbPlace, kbBestColumn, kbColumnScore, kbScores, kbWinner,
   awNew, awTick, awTap, AW_ZONE,
-  ARROWS, MEGAN_SCORE, MATTHEW_SCORE, RINGS, archNew, archAim, archTick, archShoot, archTotal, archDone,
+  ARROWS, MEGAN_SCORE, MATTHEW_SCORE, RINGS, AW_BRANNOC_RATE, archNew, archAim, archTick, archShoot, archTotal, archDone,
   fishNew, fishTick, fishTap, fishLeft, landFish, FISHING_SPOTS,
   winPrize,
 } from "../rules/minigames.js";
@@ -166,12 +166,16 @@ const BAR_X = 60, BAR_W = 360;
 export class ArmWrestle extends Minigame {
   constructor() { super("ArmWrestle"); }
 
-  create() {
+  /* data.rival: "brannoc" for the keep's training yard (he pushes harder, and has his own prize); else Big Oswin. */
+  create(data = {}) {
+    const b = data.rival === "brannoc";
+    this.rival = { name: b ? "Brannoc" : "Oswin", sprite: b ? "brannoc" : "woodcutter", rate: b ? AW_BRANNOC_RATE : undefined, game: b ? "armBrannoc" : "armWrestle",
+      win: b ? "You slam Brannoc's arm to the table! The yard roars, and Brannoc roars loudest." : "You slam Oswin's arm to the table! The inn roars." };
     this.setup("ARM WRESTLING");
     this.add.image(70, 124, "hero", heroFrame("side")).setOrigin(0.5, 1).setScale(2);
-    this.add.image(410, 124, "woodcutter").setOrigin(0.5, 1).setScale(2).setFlipX(true);
+    this.add.image(410, 124, this.rival.sprite).setOrigin(0.5, 1).setScale(2).setFlipX(true);
     text(this, 70, 128, "YOU", { color: COLORS.dim }).setOrigin(0.5, 0);
-    text(this, 410, 128, "OSWIN", { color: COLORS.dim }).setOrigin(0.5, 0);
+    text(this, 410, 128, this.rival.name.toUpperCase(), { color: COLORS.dim }).setOrigin(0.5, 0);
     this.g = this.add.graphics();
     this.msg = text(this, WIDTH / 2, 236, "", { wordWrap: { width: 400 }, align: "center" }).setOrigin(0.5, 0);
     this.again = button(this, WIDTH / 2, 100, 100, 22, "REMATCH", () => this.start());
@@ -179,7 +183,7 @@ export class ArmWrestle extends Minigame {
   }
 
   start() {
-    this.bout = awNew(state.hero);
+    this.bout = awNew(state.hero, this.rival.rate);
     this.again.setVisible(false);
     this.ready = 1.2; // a moment before GO
     this.flash = 0;
@@ -222,7 +226,7 @@ export class ArmWrestle extends Minigame {
   end() {
     const won = this.bout.result === "won";
     sfx(won ? "coin" : "hurt");
-    this.msg.setText(won ? `You slam Oswin's arm to the table! The inn roars.${this.prize("armWrestle")}` : "Oswin pins your arm with a grin. \"Again?\"");
+    this.msg.setText(won ? `${this.rival.win}${this.prize(this.rival.game)}` : `${this.rival.name} pins your arm with a grin. "Again?"`);
     this.again.setVisible(true);
   }
 }

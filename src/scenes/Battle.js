@@ -173,7 +173,8 @@ export class Battle extends Phaser.Scene {
     if (page === "skills") {
       const surge = { label: "SURGE", on: mine && hasFeature(h, "actionSurge") && h.actionSurge && !b.surging, run: () => this.act({ type: "actionSurge" }) };
       const rune = (id, label, type) => (knowsRune(h, id) ? { label, on: mine && runesLeft(h) > 0, run: () => this.act({ type }) } : null);
-      return [surge, rune("runeStrike", `RUNE x${runesLeft(h)}`, "runeStrike"), rune("wardensCall", "CALL", "wardensCall"), rune("binding", "BIND", "binding"), back("main")];
+      const oath = rune("chainLightning", "CHAIN", "chainLightning") || rune("dawnstrike", "DAWN", "dawnstrike");
+      return [surge, rune("runeStrike", `RUNE x${runesLeft(h)}`, "runeStrike"), rune("wardensCall", "CALL", "wardensCall"), rune("binding", "BIND", "binding"), oath, back("main")];
     }
     if (page === "react") {
       const on = !this.busy && isReacting(b), ward = b.pending?.kind !== "counter";
@@ -242,7 +243,7 @@ export class Battle extends Phaser.Scene {
 
   act(action) {
     if (this.busy || !isPlayerTurn(this.battle)) return;
-    if (["attack", "runeStrike", "binding"].includes(action.type)) action.target = this.target;
+    if (["attack", "runeStrike", "binding", "dawnstrike"].includes(action.type)) action.target = this.target;
     this.then(playerAction(this.battle, action));
   }
 
@@ -297,7 +298,7 @@ export class Battle extends Phaser.Scene {
 
   showEvent(e) {
     const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again",
-      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived", "volley", "counter"].includes(e.type);
+      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived", "volley", "counter", "unbroken", "blink", "chain", "dawn-light"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -402,6 +403,25 @@ export class Battle extends Phaser.Scene {
       case "monster-spell":
         if (e.damage) { this.hit(this.spriteOf(e.who), e.damage, false); this.cameras.main.shake(120, 0.006); }
         else this.float(this.spriteOf(e.who), "RESIST", COLORS.dim);
+        break;
+      case "unbroken":
+        sfx("crit");
+        this.cameras.main.flash(250, 200, 200, 220);
+        this.float(this.heroSprite, "UNBROKEN!", COLORS.gold);
+        break;
+      case "blink":
+        sfx("select");
+        this.float(this.heroSprite, "BLINK!", COLORS.gold);
+        this.tweens.add({ targets: this.heroSprite, alpha: 0.2, duration: 90, yoyo: true });
+        break;
+      case "chain":
+        sfx("crit");
+        this.cameras.main.flash(200, 160, 210, 255);
+        this.float(this.heroSprite, "CHAIN LIGHTNING!", COLORS.gold);
+        break;
+      case "dawn-light":
+        sfx("heal");
+        this.float(this.spriteOf(e.who), `+${e.heal}`, COLORS.good);
         break;
       case "counter-prompt":
         sfx("alert");

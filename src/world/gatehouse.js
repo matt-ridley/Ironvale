@@ -36,6 +36,7 @@ export const GATEHOUSE = {
     { id: "thorne", x: 20, y: 3, sprite: "thorne", script: "thorneBoss", goneWhen: "thorneDefeated" },
     { id: "guardian", x: 23, y: 3, sprite: "shieldGuardian", script: "thorneBoss", goneWhen: "thorneDefeated" },
     { id: "greatDoor", x: 20, y: 1, sprite: "greatDoor", script: "greatDoor", still: true },
+    { id: "colleenDoor", x: 17, y: 2, sprite: "colleen", script: "greatDoor", ghost: true, shownWhen: "gatehouseDone", goneWhen: "oathSworn" },
   ],
   rows: [
   "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK",

@@ -20,7 +20,7 @@ import { COMPANIONS } from "../rules/party.js";
 import { MONSTERS } from "../data/monsters.js";
 import { gainXp, needsFightingStyle } from "../rules/character.js";
 import { stick } from "../ui/joystick.js";
-import { animKey, groundTexture } from "../art/pixels.js";
+import { animKey, groundTexture, paintHero } from "../art/pixels.js";
 import { playMusic, sfx } from "../audio/sound.js";
 
 const KEYS = { up: ["UP", "W"], down: ["DOWN", "S"], left: ["LEFT", "A"], right: ["RIGHT", "D"] };
@@ -48,6 +48,7 @@ export class World extends Phaser.Scene {
     // boss's last words, and their reward, played again on every trip.
     this.sys.settings.data = {};
     this.map = MAPS[state.map];
+    paintHero(this, state.hero.oath); // in their Oath's colours, once sworn
     this.frozen = false;
     this.bumped = null; // the tile last walked into, so holding a direction doesn't reopen a door
     this.walked = 0; // distance since the last "step" (a tile's worth of walking)
@@ -180,6 +181,10 @@ export class World extends Phaser.Scene {
     const trip = this.pendingTravel;
     this.pendingTravel = null;
     if (trip) return this.travel(trip.map, trip.at, "down");
+    // A screen asked for a conversation to follow it (the Oath screen: what happens at the Door).
+    const script = this.pendingScript;
+    this.pendingScript = null;
+    if (script) { this.time.delayedCall(200, () => this.openOverlay("Dialogue", { script })); this.scene.resume("Hud"); return; }
     this.input.keyboard.resetKeys(); // keys let go while a menu was open would otherwise still read as held
     // A conversation can move you (climbing the oak) or change the map (shoving it away).
     this.syncFollower();

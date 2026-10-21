@@ -143,6 +143,7 @@ What comes next (Act 2 and beyond, magic, companions, hubs) is planned in [docs/
 - [x] 0.11.1 Megan redrawn to match the hero; she can drink Potions of Healing (from the bag or in battle) and rests in Oakhollow; a thumb held on the joystick no longer taps Close
 - [x] 0.13.0 The meeting screen for people and things, and chests that open on screen
 - [x] 0.13.1 The HUD's gold and HP update straight after the bank, shops and the bag
+- [x] 0.38.0 The end of Act 3: the cracked Door and the golden eye, the Oath (Iron, Storm or Dawn: powers, colours, title), "Rae?", Rachel's rune library, Brannoc's arm-wrestling in the training yard, Thorne in the crypt, and each Oath's mark on the keep and Fenwatch
 - [x] 0.37.0 Quest 8: the Wardens' Gatehouse, rune doors, rune-iron and the Wardenblade's second form, Rachel's COUNTER, Aldric Thorne and his shield guardian, spare him or leave him
 - [x] 0.36.0 Choices come back: the goblin refugees (Grub, Snik's shortcut, their village), the Queen of the Fen and Sallow's Sundries, or Auntie Nettle; the ferryman and the island; monsters that cast spells; the pass's bounties
 - [x] 0.35.0 Companion quests: Matthew's Arrows (Volley, archery rematches at the keep) and the Frozen Chapel (Turn Undead, Spiritual Weapon); wraiths and specters
