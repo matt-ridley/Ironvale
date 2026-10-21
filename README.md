@@ -125,6 +125,7 @@ What comes next (Act 2 and beyond, magic, companions, hubs) is planned in [docs/
 - [x] 0.11.1 Megan redrawn to match the hero; she can drink Potions of Healing (from the bag or in battle) and rests in Oakhollow; a thumb held on the joystick no longer taps Close
 - [x] 0.13.0 The meeting screen for people and things, and chests that open on screen
 - [x] 0.13.1 The HUD's gold and HP update straight after the bank, shops and the bag
+- [x] 0.30.1 A boss's last words (and the Signet's reward) no longer replay on every trip after the fight
 - [x] 0.30.0 Minigames: knucklebones, arm wrestling, Megan's archery contest and fishing, each with a prize
 - [x] 0.29.0 Ironvale Keep becomes your home (Act 3's hub): a free bed, Hild the steward, Brannoc's forge
 - [x] 0.28.0 The end of Act 2: Lord Varric, the Warden bloodline, the Signet's return, the Wardenblade and Rune Strike

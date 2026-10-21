@@ -35,6 +35,9 @@ export class World extends Phaser.Scene {
   /* data.quiet: coming back from a fight where you started it, so don't announce the area again. data.script: a
      conversation to play straight away (the Goblin King's last words). */
   create(data = {}) {
+    // Phaser keeps a scene's start data for any later restart that passes none (every map change), so without this a
+    // boss's last words, and their reward, played again on every trip.
+    this.sys.settings.data = {};
     this.map = MAPS[state.map];
     this.frozen = false;
     this.bumped = null; // the tile last walked into, so holding a direction doesn't reopen a door
