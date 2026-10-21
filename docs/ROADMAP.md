@@ -1,6 +1,6 @@
 # Ironvale roadmap
 
-The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 11 and step 12's minigames are done (0.18.0 to 0.30.0; Greywater Fen was built before Fenwatch); nothing else here is yet. Act 3 (steps 13-20) is a proposal waiting for the owner's OK. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
+The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 11 and step 12's minigames are done (0.18.0 to 0.30.0; Greywater Fen was built before Fenwatch). Act 3 (steps 13-20) is being built from 0.31.0. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
 
 ## The shape of the game
 
@@ -358,7 +358,7 @@ One pull request each, with a minor version bump.
 
 ### Act 3 (proposed)
 
-13. **Act 3 groundwork:** an `act` helper from the flags (scripts branch on it for the "going back" lines), weak monsters running away, fighter levels 9-12 (Indomitable, the second Fighting Style, Extra Attack (2)), and campfire talks with remarks (a talk count saved on each companion, so the save format goes up). Megan's and Robyn's first talks come with it.
+13. ~~**Act 3 groundwork:** an `act` helper from the flags (scripts branch on it for the "going back" lines), weak monsters running away, fighter levels 9-12 (Indomitable, the second Fighting Style, Extra Attack (2)), and campfire talks with remarks (a talk count saved on each companion, so the save format goes up). Megan's and Robyn's first talks come with it.~~ **Built in 0.31.0.** `actOf(flags)` in `story/hero.js` (3 once `bladeReforged` and `keepHome`). Each encounter area has a `level`; `runsAway()` in `encounters.js` (five levels over, half the time, a quarter of the XP). Indomitable is `resistSave()` in `combat.js` (monster effects' saves); the level-10 style is `hero.fightingStyle`, picked on the LevelUp screen. Talks and remarks are `story/talks.js`: all three talks for Megan, Robyn and Rachel are written, gated on `rockslideOpen` and `wardenTraining` (and Rachel's third on `bindingRecovered`); Megan's third sets `matthewQuest`, Robyn's `chapelQuest`. Save format 6.
 14. **Rachel and the rockslide (Q6):** `art/rachel.js` and Quill's sprite, `pass.js` with only its lower slopes and Rachel's camp, the rune-stone hunt, the rockslide opening, and Rachel's mechanics (copying scrolls, Arcane Recovery, FLYBY, SEND QUILL, reading runes). The rune carvings in the Act 1 and 2 maps come here too.
 15. **Going back, part 1:** Pip's Big Adventure and the kobolds in the Warrens, the statue, the plaque and the bard, Hazel, Maren's Oath fragments, Old Gnasher.
 16. **The Warden's Road (Q7):** the rest of `pass.js`, snow and ice, the `pass` track, the slope and snowfield monsters, Warden Colleen, the three waystones, Iron Ward (with the reaction prompt), Warden's Call, Thorne's camp and the Rune of Binding. Title: Warden-in-training.

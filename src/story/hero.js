@@ -14,6 +14,15 @@ export const TITLES = [
 
 export const titleOf = flags => TITLES.find(t => t.earned(flags || {})).name;
 
+/* Which act of the story you're in, from the quest flags: 1 (the goblins), 2 (Ironvale, from the Goblin King's fall)
+   or 3 (the pass: the blade is reforged and the keep is home). Scripts branch on it for the lines that change when
+   you go back to old places. */
+export function actOf(flags = {}) {
+  if (flags.bladeReforged && flags.keepHome) return 3;
+  if (flags.kingDefeated) return 2;
+  return 1;
+}
+
 /* A name as typed, made tidy: letters, spaces, hyphens and apostrophes only, at most MAX_NAME long, each word
    capitalised ("mARY-jane" becomes "Mary-Jane"). Empty means the default, "Hero". */
 export function cleanName(raw) {

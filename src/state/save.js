@@ -11,16 +11,18 @@ import { blockedAt, feetAt } from "../world/movement.js";
 import { OVERWORLD } from "../world/overworld.js";
 import { cleanBestiary } from "../rules/bestiary.js";
 import { hubById } from "../world/travel.js";
-import { asiEarned, RUNES } from "../rules/character.js";
+import { asiEarned, RUNES, FIGHTING_STYLES } from "../rules/character.js";
 import { cleanName } from "../story/hero.js";
 import { cleanBounty } from "../story/bounties.js";
 
 export const SAVE_KEY = "ironvale-save";
-export const SAVE_FORMAT = 5;
+export const SAVE_FORMAT = 6;
 // Format 1 (before 0.7.0) saved whole tiles; format 2 saves the hero's feet in fractions of a tile; format 3 (0.18.0)
 // adds lastHub, the town you wake in when you faint. Older saves get Oakhollow. Format 4 (0.19.0) adds the fighter's
 // Action Surge and ability score increases: a hero saved at level 4 or higher before then gets theirs to pick.
 // Format 5 (0.22.0) gives the hero's starting sword its crest: older saves put it on their first longsword.
+// Format 6 (0.31.0) adds Act 3's: how many campfire talks each companion has told (`talks`), the fighting style picked
+// at level 10 and Indomitable. Older saves have heard no talks and have Indomitable ready.
 const DIR_NAMES = ["up", "down", "left", "right"];
 
 export function serialize(state) {
@@ -41,6 +43,7 @@ function loadCompanion(c) {
     ...(Array.isArray(c.slotsUsed) && { slotsUsed: c.slotsUsed.map(n => (isInt(n) && n > 0 ? n : 0)) }), // a caster's spent slots
     ...(tacticsFor(c.id).includes(c.tactics) && { tactics: c.tactics }),
     ...(c.lead === true && { lead: true }), // you pick their actions in a fight
+    ...(isInt(c.talks) && c.talks > 0 && { talks: c.talks }), // campfire talks heard (story/talks.js)
   };
   return { id: c.id, hurt: isInt(c.hurt) && c.hurt > 0 ? c.hurt : 0, gear, ...extra };
 }
@@ -49,7 +52,7 @@ function loadCompanion(c) {
 export function deserialize(json) {
   let data;
   try { data = JSON.parse(json); } catch { return null; }
-  if (!data || ![1, 2, 3, 4, SAVE_FORMAT].includes(data.format) || !data.state?.hero) return null;
+  if (!data || ![1, 2, 3, 4, 5, SAVE_FORMAT].includes(data.format) || !data.state?.hero) return null;
   const s = data.state, h = s.hero;
   if (!h.abilities || !["STR", "DEX", "CON"].every(a => isInt(h.abilities[a]))) return null;
   for (const k of ["level", "xp", "gold", "maxHp", "hp"]) if (!isInt(h[k])) return null;
@@ -74,6 +77,8 @@ export function deserialize(json) {
     },
   };
   if (!hero.companion) delete hero.companion;
+  if (!FIGHTING_STYLES[hero.fightingStyle]) delete hero.fightingStyle;
+  if (typeof hero.indomitableUsed !== "boolean") delete hero.indomitableUsed;
   hero.name = cleanName(h.name);
   if (data.format < 5) { // the crest goes on the sword you've had longest: your first longsword, worn or carried
     const all = [hero.equipment.weapon, ...hero.inventory].filter(Boolean);

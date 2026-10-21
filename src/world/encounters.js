@@ -3,9 +3,12 @@
 // chance further (SPEED_ENCOUNTERS): you're past most monsters before they notice you.
 // On average that's a fight every 30 or so steps off the path and every 50 or so on it (the quiet spell plus one in
 // `chance`); before 0.15.1 it was about every 18 and 28, which was too often.
+// From Act 3, in an area you're RUN_AWAY_LEVELS or more levels too strong for, about half the fights end before they
+// start: the monsters take one look at you and bolt (runsAway), for a few XP. The rest still fight.
 
 export const ENCOUNTERS = {
   forest: {
+    level: 1, // about the level you'd be on your first visit (for monsters that run away)
     chance: 0.05,
     table: [
       { weight: 4, foes: ["giantRat"] },
@@ -15,6 +18,7 @@ export const ENCOUNTERS = {
     ],
   },
   rocks: {
+    level: 2,
     chance: 0.06,
     table: [
       { weight: 3, foes: ["goblin"] },
@@ -23,6 +27,7 @@ export const ENCOUNTERS = {
     ],
   },
   meadow: {
+    level: 2,
     chance: 0.045,
     table: [
       { weight: 3, foes: ["boar"] },
@@ -32,6 +37,7 @@ export const ENCOUNTERS = {
     ],
   },
   warrens: {
+    level: 3,
     chance: 0.05,
     table: [
       { weight: 3, foes: ["goblin"] },
@@ -42,6 +48,7 @@ export const ENCOUNTERS = {
     ],
   },
   fen: {
+    level: 5,
     chance: 0.05,
     table: [
       { weight: 3, foes: ["giantFrog"] },
@@ -56,6 +63,7 @@ export const ENCOUNTERS = {
   // Ironvale Keep: the risen garrison comes in pairs (the hero's armour is good by now). At level 5 with +2 gear the
   // simulator gives two wights about 77%, a wight and a ghast 81%, a helmed horror and a skeleton 87%.
   courtyard: {
+    level: 6,
     chance: 0.06,
     table: [
       { weight: 3, foes: ["skeleton", "skeleton"] },
@@ -65,6 +73,7 @@ export const ENCOUNTERS = {
     ],
   },
   chapel: {
+    level: 7,
     chance: 0.07,
     table: [
       { weight: 2, foes: ["ghast", "ghast"] },
@@ -73,6 +82,7 @@ export const ENCOUNTERS = {
     ],
   },
   armoury: {
+    level: 7,
     chance: 0.07,
     table: [
       { weight: 2, foes: ["skeleton", "skeleton"] },
@@ -81,6 +91,7 @@ export const ENCOUNTERS = {
     ],
   },
   keepGrounds: {
+    level: 6,
     chance: 0.06,
     table: [
       { weight: 3, foes: ["ghoul"] },
@@ -104,6 +115,16 @@ export function rollEncounter(zoneId, tileName, stepsSinceFight, rng = Math.rand
   const chance = (ROADS.includes(tileName) ? area.chance / 2 : area.chance) * (fast ? SPEED_ENCOUNTERS : 1);
   if (rng() >= chance) return null;
   return [...pickWeighted(area.table, rng).foes];
+}
+
+export const RUN_AWAY_LEVELS = 5;
+export const RUN_AWAY_CHANCE = 0.5;
+export const RUN_AWAY_XP = 0.25; // the share of the monsters' XP you still get
+
+/* True if these monsters run off instead of fighting: from Act 3, in an area far below the hero's level. */
+export function runsAway(zoneId, heroLevel, act, rng = Math.random) {
+  const area = ENCOUNTERS[zoneId];
+  return !!area && act >= 3 && heroLevel >= area.level + RUN_AWAY_LEVELS && rng() < RUN_AWAY_CHANCE;
 }
 
 export function pickWeighted(entries, rng = Math.random) {
