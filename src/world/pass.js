@@ -22,6 +22,28 @@ export const PASS = {
   // Down the road to the rockslide, back in Ironvale.
   exits: [{ x: 24, y: 78, to: "ironvale", at: { x: 31, y: 7 }, facing: "down" }],
   objects: [
+    // The Warden's Road: three waystones (dark until their trial is done, then lit), Warden Colleen's ghost beside the
+    // one you're at, and a campfire at each once its trial is done (a camp).
+    { id: "waystone1", x: 14, y: 64, sprite: "waystone", script: "colleen", stone: 1, goneWhen: "waystoneIron", still: true },
+    { id: "waystone1Lit", x: 14, y: 64, sprite: "waystoneLit", script: "colleen", stone: 1, shownWhen: "waystoneIron", still: true },
+    { id: "colleen1", x: 16, y: 64, sprite: "colleen", script: "colleen", stone: 1, ghost: true, goneWhen: "waystoneIron" },
+    { id: "fire1", x: 14, y: 67, sprite: "campfire", script: "campfire", shownWhen: "waystoneIron", still: true },
+    { id: "waystone2", x: 22, y: 31, sprite: "waystone", script: "colleen", stone: 2, goneWhen: "waystoneCall", still: true },
+    { id: "waystone2Lit", x: 22, y: 31, sprite: "waystoneLit", script: "colleen", stone: 2, shownWhen: "waystoneCall", still: true },
+    { id: "colleen2", x: 22, y: 33, sprite: "colleen", script: "colleen", stone: 2, ghost: true, shownWhen: "waystoneIron", goneWhen: "waystoneCall" },
+    { id: "fire2", x: 20, y: 31, sprite: "campfire", script: "campfire", shownWhen: "waystoneCall", still: true },
+    { id: "waystone3", x: 22, y: 18, sprite: "waystone", script: "colleen", stone: 3, goneWhen: "waystoneBinding", still: true },
+    { id: "waystone3Lit", x: 22, y: 18, sprite: "waystoneLit", script: "colleen", stone: 3, shownWhen: "waystoneBinding", still: true },
+    { id: "colleen3", x: 22, y: 20, sprite: "colleen", script: "colleen", stone: 3, ghost: true, shownWhen: "waystoneCall", goneWhen: "wardensRoad" },
+    { id: "fire3", x: 21, y: 16, sprite: "campfire", script: "campfire", shownWhen: "waystoneBinding", still: true },
+    // Thorne's camp on the heights: the guardian with the stolen Binding, his tent, his cold fire, notes and mirror.
+    { id: "thorneGuardian", x: 40, y: 16, sprite: "earthElemental", script: "thorneGuardian", goneWhen: "guardianBeaten" },
+    { id: "thorneTent", x: 43, y: 14, sprite: "tent", script: "thorneTent", still: true },
+    { id: "thorneFire", x: 40, y: 19, sprite: "campfire", script: "thorneFire", still: true },
+    { id: "thorneNotes", x: 37, y: 14, sprite: "journal", script: "thorneNotes", still: true },
+    { id: "thorneMirror", x: 44, y: 19, sprite: "mirror", script: "thorneMirror", goneWhen: "mirrorTaken", still: true },
+    // A cairn of bones on the snowfield, with half of a sun charm in it.
+    { id: "boneCairn", x: 6, y: 30, sprite: "boneCairn", script: "boneCairn", still: true },
     { id: "gatehouseDoor", x: 24, y: 4, sprite: "runeDoor", script: "gatehouseDoor", still: true },
     { id: "passCarving", x: 13, y: 70, sprite: "carving", script: "carving", still: true,
       lore: "\"Here the Wardens laid the first stone of the road, that the door should never stand alone.\" Rachel runs a finger along it. \"Look: there's a cache marked under it.\"",

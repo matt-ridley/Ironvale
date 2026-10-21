@@ -9,16 +9,17 @@
 // A battle is a plain object. The player acts with playerAction(); monsters then take their turns until it is the
 // player's turn again or the battle is over. Every step is written to battle.log for the screen to show.
 import { d20, roll } from "./dice.js";
-import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND, critOn, attacksPerAction, hasFeature, SAVE_PROFICIENCIES, proficiencyBonus, runesLeft, knowsRune, canIndomitable } from "./character.js";
+import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND, critOn, attacksPerAction, hasFeature, SAVE_PROFICIENCIES, proficiencyBonus, runesLeft, knowsRune, canIndomitable, runeDc, IRON_WARD_AC } from "./character.js";
 import { abilityCheck } from "./checks.js";
 import { baseOf, makeItem, itemName, useItem, cantDrink } from "./items.js";
 import { MONSTERS } from "../data/monsters.js";
 import { companionStats, afterBattle } from "./party.js";
-import { attackMods, conditionAc, skipsTurn, startTurn, endTurn, onDamage, conditionSave, addCondition, CONDITIONS } from "./conditions.js";
+import { attackMods, conditionAc, skipsTurn, startTurn, endTurn, onDamage, conditionSave, addCondition, removeCondition, CONDITIONS } from "./conditions.js";
 import { ITEMS } from "../data/items.js";
 import { allyTurn } from "./tactics.js"; // (tactics.js uses this file's helpers too; nothing runs until a fight)
 
 export const DEFEND_AC_BONUS = 2;
+export const CALL_ENDS = ["paralyzed", "frightened", "asleep", "restrained"]; // what Warden's Call shakes off
 export const FLEE_DC = 10;
 
 export function spawnMonster(id, rng = Math.random) {
@@ -27,17 +28,21 @@ export function spawnMonster(id, rng = Math.random) {
   const hp = Math.max(1, roll(m.hp, rng).total);
   const attacks = attacksOf(m).map(a => ({ ...a, damageBonus: 0 }));
   return { id, name: m.name, type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: attacks[0], attacks, xp: m.xp, gold: m.gold,
-    vulnerable: m.vulnerable || [], resistant: m.resistant || [], weaponResist: m.weaponResist || null };
+    vulnerable: m.vulnerable || [], resistant: m.resistant || [], weaponResist: m.weaponResist || null, ...(m.regen && { regen: { ...m.regen } }) };
 }
 
 export const WEAPON_DAMAGE = ["slashing", "piercing", "bludgeoning"];
 /* Damage after the target's weaknesses and resistances: { damage, note } where note is "weak", "resists" or null.
    `vulnerable` types do double, `resistant` ones half; `weaponResist: "silver"` (wights) halves weapon damage unless
-   the weapon is silvered. Only monsters have these. */
-export function adjustDamage(target, damage, type, { silvered = false } = {}) {
+   the weapon is silvered, and `weaponResist: "magic"` (gargoyles, elementals) unless it's magic (upgraded, or the
+   Wardenblade). Only monsters have these. Damage of a type that stops a monster's regeneration (a troll's fire) stops
+   it next turn. */
+export function adjustDamage(target, damage, type, { silvered = false, magic = false } = {}) {
   if (!damage || !type) return { damage, note: null };
+  if (target.regen?.stop?.includes(type)) target.regenBlocked = true;
   if (target.vulnerable?.includes(type)) return { damage: damage * 2, note: "weak" };
-  if (target.resistant?.includes(type) || (target.weaponResist === "silver" && WEAPON_DAMAGE.includes(type) && !silvered)) {
+  const weaponProof = WEAPON_DAMAGE.includes(type) && ((target.weaponResist === "silver" && !silvered) || (target.weaponResist === "magic" && !magic));
+  if (target.resistant?.includes(type) || weaponProof) {
     return { damage: Math.floor(damage / 2), note: "resists" };
   }
   return { damage, note: null };
@@ -45,7 +50,7 @@ export function adjustDamage(target, damage, type, { silvered = false } = {}) {
 /* Applies adjustDamage to an attack roll's result (in place), for the log and the screen. */
 export function adjustRoll(r, target, attack) {
   if (!r.hit) return r;
-  const a = adjustDamage(target, r.damage, attack.damageType, { silvered: attack.silvered });
+  const a = adjustDamage(target, r.damage, attack.damageType, { silvered: attack.silvered, magic: attack.magic });
   r.damage = a.damage;
   r.note = a.note;
   return r;
@@ -120,8 +125,9 @@ export function tellWoken(battle, key, ended) {
   for (const name of ended) say(battle, "condition-end", `${nameOf(battle, key)} ${key === "player" ? "are" : "is"} no longer ${name}.`);
 }
 
-/* Rolls initiative (d20 + DEX; ties go to the higher DEX, then the player) and plays monster turns up to the player's. */
-export function createBattle(player, monsterIds, rng = Math.random) {
+/* Rolls initiative (d20 + DEX; ties go to the higher DEX, then the player) and plays monster turns up to the player's.
+   opts.surviveRounds: a waystone's trial, where the monsters crumble once you've held out that many rounds. */
+export function createBattle(player, monsterIds, rng = Math.random, { surviveRounds = 0 } = {}) {
   const monsters = monsterIds.map(id => spawnMonster(id, rng));
   const ally = companionStats(player);
   const entries = [
@@ -134,7 +140,8 @@ export function createBattle(player, monsterIds, rng = Math.random) {
   const quick = !!player.effects?.dexterity;
   if (quick) player.effects = { ...player.effects, dexterity: false };
   const battle = { player, ally, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null, conditions: {},
-    leadAlly: !!player.companion?.lead }; // you pick your companion's actions
+    leadAlly: !!player.companion?.lead, // you pick your companion's actions
+    surviveRounds, allyFell: false, pending: null }; // pending: a reaction waiting for you (Iron Ward)
   const names = entries.map(e => (e.who === "player" ? "You" : e.who === "ally" ? ally.name : monsters[e.who].name) + ` (${e.init})`);
   say(battle, "start", `${monsters.map(m => m.name).join(", ")} ${monsters.length > 1 ? "appear" : "appears"}! Initiative: ${names.join(", ")}.`);
   if (quick) say(battle, "quick", "Your Potion of Dexterity makes you quick: one extra attack each time you ATTACK.");
@@ -142,13 +149,16 @@ export function createBattle(player, monsterIds, rng = Math.random) {
   return battle;
 }
 
-export const isPlayerTurn = battle => battle.state === "active" && battle.order[battle.turn].who === "player";
+export const isPlayerTurn = battle => battle.state === "active" && !battle.pending && battle.order[battle.turn].who === "player";
+/* A monster's blow would hit you and you know Iron Ward: the fight waits for reactAction(). */
+export const isReacting = battle => battle.state === "active" && !!battle.pending;
 /* Your companion's turn, waiting for you to pick their action (only when you lead them). */
 export const isAllyTurn = battle => battle.state === "active" && battle.order[battle.turn].who === "ally";
 
 /* action: { type: "attack", target } | { type: "defend" } | { type: "potion", base } | { type: "flee" } | { type: "secondWind" }
    | { type: "actionSurge" } | { type: "allyPotion" } (give your companion a Potion of Healing; it gets them back up if
-   they've been knocked down).
+   they've been knocked down) | { type: "runeStrike", target } | { type: "wardensCall" } | { type: "binding", target }
+   (the Warden's runes: each spends a rune slot).
    A potion's base defaults to the Potion of Healing. */
 export function playerAction(battle, action, rng = Math.random) {
   if (!isPlayerTurn(battle)) return { ok: false, reason: "It isn't your turn." };
@@ -190,6 +200,33 @@ export function playerAction(battle, action, rng = Math.random) {
       }
     }
     if (rune) say(battle, "rune-miss", "Your rune stays dark: no hit, no slot spent.");
+  } else if (action.type === "wardensCall") {
+    // Warden's Call: you and your companion heal, and shake off paralysis, fear and sleep (a fallen friend gets up).
+    if (!knowsRune(p, "wardensCall")) return { ok: false, reason: "You don't know that rune." };
+    if (!runesLeft(p)) return { ok: false, reason: "No rune slots left. A long rest brings them back." };
+    p.runes.used = (p.runes.used || 0) + 1;
+    say(battle, "call", "You raise the Wardenblade and call out: its rune rings like a bell across the field!");
+    for (const key of ["player", ...(battle.ally ? ["ally"] : [])]) {
+      const c = combatant(battle, key), down = c.hp === 0;
+      const healed = Math.min(c.maxHp - c.hp, roll("2d8", rng).total + p.level);
+      c.hp += healed;
+      const freed = CALL_ENDS.filter(id => battle.conditions?.[key]?.[id]);
+      for (const id of freed) removeCondition(battle, key, id);
+      say(battle, "call-heal", `${nameOf(battle, key)} ${key === "player" ? "recover" : "recovers"} ${healed} HP${down && healed ? " and gets back up" : ""}${freed.length ? `, no longer ${freed.map(id => CONDITIONS[id].name).join(" or ")}` : ""}.`, { who: key, heal: healed, revived: down && healed > 0 });
+    }
+  } else if (action.type === "binding") {
+    // The Rune of Binding: a CON save against your rune, or the monster loses its next turn.
+    if (!knowsRune(p, "binding")) return { ok: false, reason: "You don't know that rune." };
+    if (!runesLeft(p)) return { ok: false, reason: "No rune slots left. A long rest brings them back." };
+    const t = action.target ?? battle.monsters.indexOf(living(battle)[0]);
+    if (!(battle.monsters[t]?.hp > 0)) return { ok: false, reason: "Pick a monster that's still standing." };
+    p.runes.used = (p.runes.used || 0) + 1;
+    const dc = runeDc(p), s = battleSave(battle, t, "CON", dc, rng), m = battle.monsters[t];
+    if (s.success) say(battle, "spell-save", `Chains of light snap round the ${m.name}, and it tears free (CON save ${s.total} vs DC ${dc}).`, { target: t, save: s, damage: 0 });
+    else {
+      addCondition(battle, t, "bound", { rounds: 1 });
+      say(battle, "condition", `Chains of light lock round the ${m.name}: it's bound and loses its next turn! (CON save ${s.total} vs DC ${dc})`, { who: t, condition: "bound" });
+    }
   } else if (action.type === "defend") {
     battle.defending = true;
     say(battle, "defend", `You raise your guard (+${DEFEND_AC_BONUS} AC until your next turn).`);
@@ -297,16 +334,19 @@ function finishTurn(battle, key, rng) {
    Anyone whose conditions take their turn away (asleep, paralyzed) just has their conditions tick on, you included. */
 function runMonsterTurns(battle, rng) {
   while (battle.state === "active") {
+    if (checkEnd(battle, rng)) return; // a trial's monsters may have crumbled at the turn of the round
     const key = battle.order[battle.turn].who;
     if (combatant(battle, key).hp > 0) {
       for (const name of startTurn(battle, key)) say(battle, "condition-end", `${nameOf(battle, key)} ${isAre(key)} no longer ${name}.`, { who: key });
+      if (typeof key === "number") regenerate(battle, key);
       if (skipsTurn(battle, key)) {
         const why = Object.keys(battle.conditions[key]).filter(id => CONDITIONS[id].skips).map(id => CONDITIONS[id].name).join(" and ");
         say(battle, "skip", `${nameOf(battle, key)} ${isAre(key)} ${why} and can't act.`, { who: key });
         finishTurn(battle, key, rng);
       } else if (key === "player" || (key === "ally" && battle.leadAlly)) break; // your turn, or one you lead
       else {
-        if (key === "ally") allyTurn(battle, rng); else monsterTurn(battle, key, rng);
+        if (key === "ally") allyTurn(battle, rng);
+        else if (monsterTurn(battle, key, rng)) return; // a blow is waiting on your Iron Ward
         if (checkEnd(battle, rng)) return;
         finishTurn(battle, key, rng);
       }
@@ -316,23 +356,85 @@ function runMonsterTurns(battle, rng) {
   if (battle.state === "active") battle.defending = false; // the guard lasts until the start of the player's turn
 }
 
-/* A monster's turn: each of its attacks, at one of you (with a companion standing, it picks one of you at random). An
-   attack with `onHit` ({ condition, save, dc, rounds }) makes whoever it hits save or take that condition, with a
-   save at the end of each of their turns to shake it off (the ghoul's paralysing claws). */
-function monsterTurn(battle, i, rng) {
+/* A troll's regeneration, at the start of its turn: back up by `regen.hp`, unless it took fire (or whatever stops it)
+   since its last turn. */
+function regenerate(battle, i) {
+  const m = battle.monsters[i];
+  if (!m.regen || m.hp <= 0) return;
+  if (m.regenBlocked) { m.regenBlocked = false; return say(battle, "regen-stop", `The ${m.name}'s burns don't knit.`, { target: i }); }
+  const healed = Math.min(m.maxHp - m.hp, m.regen.hp);
+  if (!healed) return;
+  m.hp += healed;
+  say(battle, "regen", `The ${m.name}'s wounds knit closed before your eyes (+${healed} HP). Fire would stop that.`, { target: i, heal: healed });
+}
+
+/* True if you could turn this blow aside with Iron Ward: you know it, have a slot, can act, and +5 AC is enough. */
+function canWard(battle, r) {
+  const p = battle.player;
+  return knowsRune(p, "ironWard") && runesLeft(p) > 0 && !skipsTurn(battle, "player") && !r.crit && r.total < r.targetAc + IRON_WARD_AC;
+}
+
+/* A monster's turn: each of its attacks (from attack number `from`), at one of you (with a companion standing, it picks
+   one of you at random; `onAlly` carries that choice over when its turn resumes). An attack with `onHit` ({ condition,
+   save, dc, rounds }) makes whoever it hits save or take that condition, with a save at the end of each of their turns
+   to shake it off (the ghoul's paralysing claws); one with `poison` ({ save, dc, damage }) does extra damage, halved on
+   a save (the wyvern's sting). A blow that would hit you, when Iron Ward could stop it, pauses the fight for your
+   reaction: returns true then (battle.pending says which blow). */
+function monsterTurn(battle, i, rng, from = 0, onAllyChoice = null) {
   const m = battle.monsters[i], a = battle.ally;
-  const onAlly = !!(a && a.hp > 0 && rng() < 0.5);
+  const onAlly = onAllyChoice ?? !!(a && a.hp > 0 && rng() < 0.5);
   const key = onAlly ? "ally" : "player";
-  for (const atk of m.attacks) {
+  for (let n = from; n < m.attacks.length; n++) {
     if (combatant(battle, key).hp <= 0) break;
+    const atk = m.attacks[n];
     const r = resolveAttack(atk, acOf(battle, key), rng, attackMods(battle, i, key));
-    const woke = hurt(battle, key, r.damage);
-    if (onAlly) say(battle, "monster-attack", `The ${m.name} attacks ${a.name} with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, actor: i, onAlly: true });
-    else say(battle, "monster-attack", `The ${m.name} attacks with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r, true)}`, { roll: r, actor: i });
-    tellWoken(battle, key, woke);
-    if (r.hit && atk.onHit && combatant(battle, key).hp > 0) afflict(battle, key, atk.onHit, rng);
+    if (key === "player" && r.hit && canWard(battle, r)) {
+      battle.pending = { kind: "ironWard", monster: i, attack: n, onAlly, roll: r };
+      say(battle, "ward-prompt", `The ${m.name}'s ${atk.name} is going to hit you (${r.total} vs AC ${r.targetAc})! Iron Ward? (+${IRON_WARD_AC} AC, a rune slot)`, { actor: i });
+      return true;
+    }
+    landAttack(battle, i, key, atk, r, rng);
   }
-  if (onAlly && a.hp === 0) say(battle, "ally-down", `${a.name} is knocked down! ${a.name} will be back up after the fight.`);
+  if (onAlly && a.hp === 0) {
+    battle.allyFell = true;
+    say(battle, "ally-down", `${a.name} is knocked down! ${a.name} will be back up after the fight.`);
+  }
+  return false;
+}
+
+/* One monster attack landing (or missing), with what it does after. */
+function landAttack(battle, i, key, atk, r, rng) {
+  const m = battle.monsters[i], a = battle.ally;
+  const woke = hurt(battle, key, r.damage);
+  if (key === "ally") say(battle, "monster-attack", `The ${m.name} attacks ${a.name} with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, actor: i, onAlly: true });
+  else say(battle, "monster-attack", `The ${m.name} attacks with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r, true)}`, { roll: r, actor: i });
+  tellWoken(battle, key, woke);
+  if (r.hit && atk.poison && combatant(battle, key).hp > 0) {
+    const { save, dc, damage } = atk.poison, s = resistSave(battle, key, save, dc, rng), full = roll(damage, rng).total;
+    const dmg = s.success ? Math.floor(full / 2) : full;
+    hurt(battle, key, dmg);
+    say(battle, "poison", `Poison burns through ${key === "player" ? "you" : a.name}: ${dmg} damage (${save} save ${s.total} vs DC ${dc}${s.success ? ", halved" : ""}).`, { who: key, damage: dmg });
+  }
+  if (r.hit && atk.onHit && combatant(battle, key).hp > 0) afflict(battle, key, atk.onHit, rng);
+}
+
+/* Your answer when Iron Ward could stop a blow: use it (a rune slot, +5 AC against this attack, so it misses) or take
+   the hit. Then the monster's turn carries on. Returns { ok, events } like playerAction. */
+export function reactAction(battle, useWard, rng = Math.random) {
+  const pend = battle.pending;
+  if (!isReacting(battle)) return { ok: false, reason: "There's nothing to react to." };
+  const start = battle.log.length, p = battle.player, m = battle.monsters[pend.monster], atk = m.attacks[pend.attack], r = pend.roll;
+  battle.pending = null;
+  if (useWard) {
+    p.runes.used = (p.runes.used || 0) + 1;
+    say(battle, "ward", `Iron Ward! The rune on your blade flares, and the ${m.name}'s ${atk.name} glances off (${r.total} vs AC ${r.targetAc + IRON_WARD_AC}).`, { actor: pend.monster });
+  } else landAttack(battle, pend.monster, "player", atk, r, rng);
+  if (!monsterTurn(battle, pend.monster, rng, pend.attack + 1, pend.onAlly) && !checkEnd(battle, rng)) {
+    finishTurn(battle, pend.monster, rng);
+    nextTurn(battle);
+    runMonsterTurns(battle, rng);
+  }
+  return { ok: true, events: battle.log.slice(start) };
 }
 
 /* An attack's lingering effect: a saving throw, or the condition. */
@@ -353,7 +455,15 @@ export function rollLoot(monsters, rng = Math.random) {
 
 function nextTurn(battle) {
   battle.turn++;
-  if (battle.turn >= battle.order.length) { battle.turn = 0; battle.round++; }
+  if (battle.turn >= battle.order.length) {
+    battle.turn = 0;
+    battle.round++;
+    // A waystone's trial: hold out long enough, and the stone's power breaks whatever's left.
+    if (battle.surviveRounds && battle.round > battle.surviveRounds && living(battle).length) {
+      for (const m of living(battle)) m.hp = 0;
+      say(battle, "survived", `You've held the stone for ${battle.surviveRounds} rounds! It blazes white, and your foes crumble to dust.`);
+    }
+  }
 }
 
 export function checkEnd(battle, rng) {

@@ -2,7 +2,7 @@
 // from the quest flags every time, so there's nothing extra to save. No Phaser here, so it can be tested; the Quests
 // screen shows what questLog returns.
 import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD } from "./scripts.js";
-import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD } from "./act3.js";
+import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD, WAYSTONE_REWARD, ROAD_REWARD } from "./act3.js";
 import { actOf } from "./hero.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
@@ -86,6 +86,20 @@ export const QUESTS = [
       { text: "Go to the rockslide, north of the keep", done: f => f.metRachel },
       { text: "Find the three rune-stones on the keep's grounds", done: f => stonesFound(f) === 3 },
       { text: "Lay the Wardenblade against the rune with Rachel", done: f => f.rockslideOpen },
+    ],
+  },
+  {
+    id: "road", title: "The Warden's Road", kind: "main",
+    known: f => f.rockslideOpen,
+    about: "Three waystones line the old road up the pass, each with a rune for a Warden who passes its trial. Thorne is ahead, stealing the runes as he goes.",
+    reward: `${3 * WAYSTONE_REWARD.gold + ROAD_REWARD.gold} gold, ${3 * WAYSTONE_REWARD.xp + ROAD_REWARD.xp} XP, three runes`,
+    steps: [
+      { text: "Climb to the first waystone", done: f => f.metColleen || f.waystoneIron },
+      { text: "Pass the trial of Iron", done: f => f.waystoneIron },
+      { text: "Pass the trial of the Call, above the snowfield", done: f => f.waystoneCall },
+      { text: "Find the third waystone, on the heights", done: f => f.bindingStolen || f.bindingRecovered },
+      { text: "Take the Rune of Binding back from Thorne's camp", done: f => f.bindingRecovered },
+      { text: "Bring it back to Colleen at the third waystone", done: f => f.wardensRoad },
     ],
   },
   {

@@ -1,17 +1,19 @@
 // The battle screen: the hero on the left, monsters on the right, actions bottom right.
 // The rules engine decides everything; this scene plays its log back one line at a time, using the HP each
 // log entry recorded, so the bars drain in step with the story. The six buttons show one page at a time: your
-// actions, ITEMS (potions and SCROLLs to read), SKILLS (Action Surge and Rune Strike, once you know a rune), and, when
-// you lead your companion (tap them to switch), their turn.
+// actions, ITEMS (potions and SCROLLs to read), SKILLS (Action Surge and the Warden's runes, once you know one), and, when
+// you lead your companion (tap them to switch), their turn. When a monster's blow would hit you and Iron Ward could stop
+// it, the fight stops and asks (IRON WARD or TAKE IT). A waystone's trial can end after a number of rounds
+// (surviveRounds), or ask you to keep your companion standing (guardAlly: if they fall, the trial isn't passed).
 import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
-import { createBattle, playerAction, isPlayerTurn, isAllyTurn } from "../rules/combat.js";
+import { createBattle, playerAction, isPlayerTurn, isAllyTurn, isReacting, reactAction } from "../rules/combat.js";
 import { readScroll } from "../rules/magic.js";
 import { allyAction, castable, canFlyby, quillFlyby } from "../rules/tactics.js";
 import { TACTICS } from "../rules/party.js";
 import { groupPack, baseOf } from "../rules/items.js";
 import { SPELLS } from "../data/spells.js";
 import { CONDITIONS } from "../rules/conditions.js";
-import { armourClass, hasFeature, runesLeft, runeSlots } from "../rules/character.js";
+import { armourClass, hasFeature, runesLeft, runeSlots, knowsRune } from "../rules/character.js";
 import { state, faint, autosave } from "../state/game.js";
 import { hubById } from "../world/travel.js";
 import { uiCamera } from "../ui/widgets.js";
@@ -35,12 +37,15 @@ export class Battle extends Phaser.Scene {
     this.foes = data.foes;
     this.winFlag = data.winFlag || null; // a quest flag to set if you win (the boss fight)
     this.afterWin = data.afterWin || null; // a script to play back in the world if you win (the King's last words)
+    this.afterFail = data.afterFail || null; // ...or if you win but fail the trial (your companion fell)
+    this.surviveRounds = data.surviveRounds || 0; // a waystone's trial: hold out this many rounds
+    this.guardAlly = !!data.guardAlly; // a waystone's trial: keep your companion standing
     this.zone = stageZone(data.zone);
   }
 
   create() {
     uiCamera(this);
-    this.battle = createBattle(state.hero, this.foes);
+    this.battle = createBattle(state.hero, this.foes, Math.random, { surviveRounds: this.surviveRounds });
     // Phaser reuses this scene object for every fight, so reset everything here.
     this.busy = false;
     this.leaving = false;
@@ -165,7 +170,12 @@ export class Battle extends Phaser.Scene {
     }
     if (page === "skills") {
       const surge = { label: "SURGE", on: mine && hasFeature(h, "actionSurge") && h.actionSurge && !b.surging, run: () => this.act({ type: "actionSurge" }) };
-      return [surge, { label: `RUNE x${runesLeft(h)}`, on: mine && runesLeft(h) > 0, run: () => this.act({ type: "runeStrike" }) }, null, null, back("main")];
+      const rune = (id, label, type) => (knowsRune(h, id) ? { label, on: mine && runesLeft(h) > 0, run: () => this.act({ type }) } : null);
+      return [surge, rune("runeStrike", `RUNE x${runesLeft(h)}`, "runeStrike"), rune("wardensCall", "CALL", "wardensCall"), rune("binding", "BIND", "binding"), back("main")];
+    }
+    if (page === "react") {
+      const on = !this.busy && isReacting(b);
+      return [{ label: "IRON WARD", on, run: () => this.react(true) }, { label: "TAKE IT", on, run: () => this.react(false) }, null, null, null, null];
     }
     if (page === "allySpells") {
       const list = castable(b).slice(0, 5).map(c => ({ label: c.spell.short, on: hers, run: () => this.actAlly({ type: "cast", spell: c.id, slotLevel: c.slotLevel }) }));
@@ -185,6 +195,8 @@ export class Battle extends Phaser.Scene {
 
   refreshButtons() {
     const mine = !this.busy && isPlayerTurn(this.battle), hers = !this.busy && isAllyTurn(this.battle);
+    if (isReacting(this.battle)) this.page = "react";
+    else if (this.page === "react") this.page = "main";
     const allyPage = this.page.startsWith("ally");
     if (hers && !allyPage) this.page = "ally";
     if (mine && allyPage) this.page = "main";
@@ -228,8 +240,14 @@ export class Battle extends Phaser.Scene {
 
   act(action) {
     if (this.busy || !isPlayerTurn(this.battle)) return;
-    if (action.type === "attack" || action.type === "runeStrike") action.target = this.target;
+    if (["attack", "runeStrike", "binding"].includes(action.type)) action.target = this.target;
     this.then(playerAction(this.battle, action));
+  }
+
+  /* Iron Ward, or take the blow. */
+  react(useWard) {
+    if (this.busy || !isReacting(this.battle)) return;
+    this.then(reactAction(this.battle, useWard));
   }
 
   /* Reads a scroll: at the monster you've picked, or for a healing spell, at whichever of you needs it more. */
@@ -277,7 +295,7 @@ export class Battle extends Phaser.Scene {
 
   showEvent(e) {
     const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again",
-      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge"].includes(e.type);
+      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -370,6 +388,37 @@ export class Battle extends Phaser.Scene {
         sfx("coin");
         this.float(this.heroSprite, "+1!", COLORS.gold);
         break;
+      case "ward-prompt":
+        sfx("alert");
+        this.lunge(this.foeViews[e.actor].sprite, -1);
+        this.float(this.heroSprite, "!", COLORS.gold);
+        break;
+      case "ward":
+        sfx("clang");
+        this.float(this.heroSprite, "IRON WARD!", COLORS.gold);
+        this.heroSprite.setTintFill(0x9fd0ff);
+        this.time.delayedCall(160, () => this.heroSprite.clearTint());
+        break;
+      case "call":
+        sfx("heal");
+        this.float(this.heroSprite, "CALL!", COLORS.gold);
+        break;
+      case "call-heal":
+        if (e.revived) this.tweens.add({ targets: [this.allyView.sprite, this.allyView.name], alpha: 1, duration: 300 });
+        if (e.heal) this.float(this.spriteOf(e.who), `+${e.heal}`, COLORS.good);
+        break;
+      case "regen":
+        sfx("heal");
+        this.float(this.foeViews[e.target].sprite, `+${e.heal}`, COLORS.good);
+        break;
+      case "poison":
+        this.hit(this.spriteOf(e.who), e.damage, false);
+        break;
+      case "survived":
+        sfx("crit");
+        this.cameras.main.flash(300, 200, 230, 255);
+        for (const v of this.foeViews) this.tweens.add({ targets: [v.sprite, v.name, v.bar, v.barBg], alpha: 0, duration: 500 });
+        break;
       case "indomitable":
         sfx("heal");
         this.float(this.heroSprite, "INDOMITABLE!", COLORS.gold);
@@ -449,13 +498,15 @@ export class Battle extends Phaser.Scene {
     const b = this.battle, lines = [];
     recordBattle(state.bestiary, b);
     let title, color;
+    this.failedTrial = b.state === "won" && this.guardAlly && b.allyFell;
     if (b.state === "won") {
-      if (this.winFlag) state.flags[this.winFlag] = true;
-      title = "VICTORY!"; color = COLORS.gold;
+      if (this.winFlag && !this.failedTrial) state.flags[this.winFlag] = true;
+      title = this.failedTrial ? "YOU WON, BUT..." : "VICTORY!"; color = COLORS.gold;
       playJingle(b.rewards.levelUps.length ? "levelUp" : "victory");
       lines.push(`+${b.rewards.xp} XP   +${b.rewards.gold} gold`);
       for (const l of b.rewards.levelUps) lines.push(`Level ${l.level}! +${l.hpGain} max HP${l.features.length ? `, ${l.features.join(", ")}` : ""}`);
       if (b.rewards.loot.length) lines.push(`Found: ${b.rewards.loot.join(", ")}`);
+      if (this.failedTrial) lines.push(`${b.ally.name} fell: the trial isn't passed.`);
     } else if (b.state === "lost") {
       title = "DEFEATED"; color = COLORS.bad;
       playJingle("defeat");
@@ -486,7 +537,7 @@ export class Battle extends Phaser.Scene {
     this.leaving = true;
     const quiet = this.battle.state !== "lost"; // back where you were, so no area banner
     this.cameras.main.fadeOut(250);
-    const script = this.battle.state === "won" ? this.afterWin : null;
+    const script = this.battle.state !== "won" ? null : this.failedTrial ? this.afterFail : this.afterWin;
     this.cameras.main.once("camerafadeoutcomplete", () => this.scene.start("World", { quiet, script }));
   }
 }

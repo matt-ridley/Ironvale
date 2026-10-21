@@ -27,7 +27,7 @@ const ids = (map, flags) => activeObjects(MAPS[map], flags).map(o => o.id);
 test("Pip runs away once the pass is open: Hazel's news, his trail, and Pip and the kobolds in the Deep Warrens", () => {
   const flags = { ...ACT3 }, hero = hero9(), s = { hero, flags };
   assert.equal(zoneEvent({ flags: { ...ACT3, rockslideOpen: false } }, "village"), null);
-  assert.match(zoneEvent(s, "village"), /Have you seen Pip/);
+  assert.match(zoneEvent(s, "village").note, /Have you seen Pip/);
   assert.equal(flags.pipRanAway, true);
   assert.equal(zoneEvent(s, "village"), null); // once
   assert.ok(!ids("overworld", flags).includes("pip"));

@@ -25,6 +25,8 @@ export const CONDITIONS = {
   shielded:   { name: "shielded", ac: 5 },
   blinked:    { name: "out of reach", attackedWith: "disadvantage" }, // Misty Step
   helped:     { name: "helped", attacksWith: "advantage", once: true }, // Quill's flyby
+  bound:      { name: "bound", skips: true }, // the Rune of Binding
+  frightened: { name: "frightened", attacksWith: "disadvantage" },
 };
 
 const of = (battle, key) => (battle.conditions ||= {})[key] ||= {};

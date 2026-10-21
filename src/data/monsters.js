@@ -64,6 +64,38 @@ export const MONSTERS = {
     xp: 2300, gold: "20d10",
     type: "undead", saves: { STR: 4, DEX: 1, CON: 3, WIS: 2 }, resistant: ["necrotic"], weaponResist: "silver",
     loot: [{ base: "potionGreaterHealing", chance: 1 }] },
+  // The Mountain Pass (Act 3, levels 9 to 12). SRD monsters, but with a sharper attack bonus (+9 to +11): by now the
+  // hero's armour is +3 or better (AC 24 to 30), and at SRD bonuses they'd hardly land a blow; and about a third more HP,
+  // as the hero hits three times a turn by level 11. Tuned with the simulator: see the roadmap. The wyvern's poison is
+  // trimmed (5d6, not 7d6).
+  // A `regen` monster heals at the start of each turn unless it took one of the `stop` damage types since its last
+  // (trolls, and fire). `weaponResist: "magic"` halves weapon damage unless the weapon is magic (upgraded, or the
+  // Wardenblade). An attack's `poison` is extra damage, halved by a saving throw.
+  griffon:     { name: "Griffon",      ac: 12, hp: "9d10+27", dexMod: 2,
+    attacks: [{ name: "Beak", bonus: 9, damage: "1d8+4" }, { name: "Claws", bonus: 9, damage: "2d6+4" }], xp: 450, gold: "0",
+    type: "monstrosity", saves: { STR: 4, DEX: 2, CON: 3, WIS: 1 } },
+  manticore:   { name: "Manticore",    ac: 14, hp: "10d10+30", dexMod: 3,
+    attacks: [{ name: "Bite", bonus: 9, damage: "1d8+3" }, { name: "Claw", bonus: 9, damage: "1d6+3" }, { name: "Tail Spikes", bonus: 9, damage: "1d8+3" }], xp: 700, gold: "2d10",
+    type: "monstrosity", saves: { STR: 3, DEX: 3, CON: 3, WIS: 1 } },
+  ettin:       { name: "Ettin",        ac: 12, hp: "12d10+48", dexMod: -1,
+    attacks: [{ name: "Battleaxe", bonus: 10, damage: "2d8+5" }, { name: "Morningstar", bonus: 10, damage: "2d8+5" }], xp: 1100, gold: "4d10",
+    type: "giant", saves: { STR: 5, DEX: -1, CON: 3, WIS: 0 }, loot: [{ base: "potionGreaterHealing", chance: 0.3 }] },
+  troll:       { name: "Troll",        ac: 15, hp: "10d10+50", dexMod: 1,
+    attacks: [{ name: "Bite", bonus: 10, damage: "1d6+4" }, { name: "Claw", bonus: 10, damage: "2d6+4" }, { name: "Claw", bonus: 10, damage: "2d6+4" }], xp: 1800, gold: "3d10",
+    type: "giant", saves: { STR: 4, DEX: 1, CON: 5, WIS: -1 }, regen: { hp: 10, stop: ["fire", "acid"] },
+    loot: [{ base: "potionGreaterHealing", chance: 0.3 }] },
+  wyvern:      { name: "Wyvern",       ac: 13, hp: "15d10+45", dexMod: 0,
+    attacks: [{ name: "Bite", bonus: 10, damage: "2d6+4" }, { name: "Stinger", bonus: 10, damage: "2d6+4", poison: { save: "CON", dc: 15, damage: "5d6" } }], xp: 2300, gold: "0",
+    type: "dragon", saves: { STR: 4, DEX: 0, CON: 3, WIS: 1 }, loot: [{ base: "potionGreaterHealing", chance: 0.4 }] },
+  stoneGiant:  { name: "Stone Giant",  ac: 17, hp: "13d12+65", dexMod: 2,
+    attacks: [{ name: "Greatclub", bonus: 11, damage: "3d8+6" }, { name: "Greatclub", bonus: 11, damage: "3d8+6" }], xp: 2900, gold: "6d10",
+    type: "giant", saves: { STR: 6, DEX: 5, CON: 8, WIS: 4 }, loot: [{ base: "potionGreaterHealing", chance: 0.5 }] },
+  gargoyle:    { name: "Gargoyle",     ac: 15, hp: "9d8+27", dexMod: 0,
+    attacks: [{ name: "Bite", bonus: 9, damage: "1d6+4" }, { name: "Claws", bonus: 9, damage: "1d6+4" }], xp: 450, gold: "0",
+    type: "elemental", saves: { STR: 2, DEX: 0, CON: 3, WIS: 0 }, weaponResist: "magic" },
+  earthElemental: { name: "Earth Elemental", ac: 17, hp: "14d10+70", dexMod: -1,
+    attacks: [{ name: "Slam", bonus: 10, damage: "2d8+5" }, { name: "Slam", bonus: 10, damage: "2d8+5" }], xp: 1800, gold: "0",
+    type: "elemental", saves: { STR: 5, DEX: -1, CON: 5, WIS: 0 }, weaponResist: "magic", vulnerable: ["thunder"] },
   // Kobolds, digging in the empty Deep Warrens in Act 3, "for the Great One beyond the mountain" (no match for you now).
   kobold:      { name: "Kobold",       ac: 12, hp: "2d6",   dexMod: 2, attack: { name: "Dagger",   bonus: 4, damage: "1d4+2" }, xp: 25,  gold: "1d6",
     type: "humanoid", saves: { STR: -2, DEX: 2, CON: -1, WIS: -2 } },

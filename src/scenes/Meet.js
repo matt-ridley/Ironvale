@@ -17,7 +17,10 @@ import { sfx } from "../audio/sound.js";
 
 const THEM_X = 360;
 // Names for the things that don't say who they are.
-const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE", goblinKing: "GOBLIN KING", journal: "JOURNAL", bed: "SPARE BED", campfire: "CAMPFIRE", signet: "IRON SIGNET", rubble: "FALLEN ROCK", flood: "FLOODWATER", portcullis: "PORTCULLIS", fenGate: "FENWATCH GATE", crown: "CROWN", board: "BOUNTY BOARD", shrine: "SHRINE", cairn: "OLD GRAVES", lever: "LEVER", seal: "ALTAR", tombDoor: "TOMB DOOR", sarcophagus: "SARCOPHAGUS", archeryTarget: "TARGET", fishingRod: "FISHING ROD" };
+const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE", goblinKing: "GOBLIN KING", journal: "JOURNAL", bed: "SPARE BED", campfire: "CAMPFIRE", signet: "IRON SIGNET", rubble: "FALLEN ROCK", flood: "FLOODWATER", portcullis: "PORTCULLIS", fenGate: "FENWATCH GATE", crown: "CROWN", board: "BOUNTY BOARD", shrine: "SHRINE", cairn: "OLD GRAVES", lever: "LEVER", seal: "ALTAR", tombDoor: "TOMB DOOR", sarcophagus: "SARCOPHAGUS", archeryTarget: "TARGET", fishingRod: "FISHING ROD",
+  tent: "TENT", runeStone: "RUNE-STONE", carving: "CARVING", runeDoor: "GATEHOUSE DOOR", statue: "STATUE", plaque: "PLAQUE", mountedFish: "OLD GNASHER",
+  pipShield: "SHIELD", chalk: "CHALK MARK", waystone: "WAYSTONE", waystoneLit: "WAYSTONE", boneCairn: "CAIRN", mirror: "MIRROR", earthElemental: "GUARDIAN",
+  kobold: "KOBOLDS", colleen: "WARDEN COLLEEN" };
 const TEXT_W = 290;
 const BTN_X = 394, BTN_W = 152, BTN_H = 28, BTN_GAP = 6; // the answer buttons: centre x, size, gap
 const SLIM_H = 18, SLIM_GAP = 3; // with more than three answers, slimmer buttons (keep those labels to one line)
@@ -44,6 +47,7 @@ export class Meet extends Phaser.Scene {
     // People drawn on a walking sheet (Megan) turn to face you; monsters are drawn facing right, so they flip.
     const sheet = o.frame !== undefined;
     this.them = stand(this, THEM_X, o.sprite, sheet ? heroFrame("side") : undefined).setFlipX(sheet || o.sprite === "goblinKing");
+    if (o.ghost) this.them.setAlpha(0.7);
     // Things drawn with empty rows under them (the oak, a chest) are lowered to stand on the ground.
     const art = SPRITES[o.sprite] || [];
     let blank = 0;

@@ -63,6 +63,7 @@ export class World extends Phaser.Scene {
     // People and things stand on their tile's bottom edge; everything is drawn in order of where its feet are.
     this.objectSprites = Object.fromEntries(this.map.objects.map(o => {
       const s = this.add.image(px(o.x + 0.5), px(o.y + 1) - 2, o.sprite, o.frame).setOrigin(0.5, 1).setDepth(px(o.y + 1));
+      if (o.ghost) s.setAlpha(0.7); // Warden Colleen
       if (!o.still) this.tweens.add({ targets: s, y: s.y - 2, duration: 900 + (o.x % 3) * 120, yoyo: true, repeat: -1, ease: "Sine.inOut" });
       return [o.id, s];
     }));
@@ -345,7 +346,8 @@ export class World extends Phaser.Scene {
       markSeen(state.flags, zone.id); // for the map
       this.say("banner", zone.name, 1800);
       const event = zoneEvent(state, zone.id);
-      if (event) { this.time.delayedCall(900, () => this.say("note", event, 3600)); this.syncObjects(); }
+      if (event?.note) { this.time.delayedCall(900, () => this.say("note", event.note, 3600)); this.syncObjects(); }
+      if (event?.script) this.time.delayedCall(700, () => this.openOverlay("Dialogue", { script: event.script }));
       if (!event) {
         const remark = remarkFor(state, zone.id, Object.fromEntries(Object.entries(COMPANIONS).map(([id, c]) => [id, c.name])));
         if (remark) {

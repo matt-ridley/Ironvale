@@ -4,7 +4,9 @@ import { MONSTERS } from "../data/monsters.js";
 import { ENCOUNTERS } from "../world/encounters.js";
 
 const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willowmere", warrens: "The Deep Warrens", fen: "Greywater Fen", keepGrounds: "Ironvale Keep's grounds",
-  courtyard: "Ironvale Keep's courtyard", chapel: "Ironvale Keep's chapel", armoury: "Ironvale Keep's armoury" };
+  courtyard: "Ironvale Keep's courtyard", chapel: "Ironvale Keep's chapel", armoury: "Ironvale Keep's armoury",
+  slopes: "The pass's slopes", snowfield: "The snowfield", heights: "The heights", watchtower: "The old watchtower", thorneCamp: "Thorne's camp",
+  gatehouseApproach: "Below the gatehouse" };
 const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall", motherSallow: "Her hut in Greywater Fen", lordVarric: "His tomb, under Ironvale Keep",
   kobold: "Digging in the Deep Warrens" }; // bosses (and Pip's kobolds) don't roam
 
@@ -26,6 +28,14 @@ export const LORE = {
   wight: "A dead knight with cold eyes, who remembers how to fight. Plain steel only half-bites it. Silver does the job.",
   helmedHorror: "A suit of armour with nothing inside, still guarding the armoury. Very hard to hit, and it hits back twice.",
   lordVarric: "The Ironbound: the last lord of Ironvale, a wight knight in black plate. Plain steel only half-bites him, and his touch can freeze you.",
+  griffon: "Half eagle, half lion, all appetite. They nest on the pass's cliffs, and they're very fond of horses. And heroes.",
+  manticore: "A lion with a man's face, bat wings and a tail full of spikes. It talks, mostly about eating you.",
+  ettin: "A two-headed giant who argues with itself about which head gets to hit you. Both win.",
+  troll: "Long-armed, green and always hungry. Cut it and the wound closes before your eyes: only fire stops it.",
+  wyvern: "A cousin of the dragons with a sting in its tail. The poison burns; a hardy hero shrugs off half of it.",
+  stoneGiant: "Grey as the mountain and nearly as big. It throws boulders for fun, and clubs anything that isn't a boulder.",
+  gargoyle: "A stone thing with wings that sits so still you'd swear it was carved. Thorne's runes are burned into these. Only magic weapons bite deep.",
+  earthElemental: "The mountain, walking. Ordinary weapons only chip it; a magic blade does the job.",
   kobold: "A little rust-red lizard-dog with a pick and a candle on its head. It digs for \"the Great One beyond the mountain\", and won't say who that is.",
   motherSallow: "A marsh hag with weed in her hair and a laugh like a drain. She keeps the causeway under water, and she loves a bargain.",
 };

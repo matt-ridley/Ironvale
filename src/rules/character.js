@@ -48,7 +48,14 @@ export const canIndomitable = char => hasFeature(char, "indomitable") && !char.i
 // Warden runes: the hero's own magic, learned from the story. Rune slots come back with a long rest, like spell slots.
 export const RUNES = {
   runeStrike: { name: "Rune Strike", about: "After you hit, your blade's rune flares: 2d8 radiant damage, 3d8 against the undead." },
+  // Act 3: the three waystones on the Warden's Road.
+  ironWard: { name: "Iron Ward", about: "When a monster's attack would hit you, spend a slot for +5 AC against it: it may miss." },
+  wardensCall: { name: "Warden's Call", about: "Your action: you and your companion heal 2d8 + your level and shake off paralysis, fear and sleep." },
+  binding: { name: "Rune of Binding", about: "Your action: a monster makes a CON save against your rune, or loses its next turn." },
 };
+export const IRON_WARD_AC = 5;
+/* The DC of the hero's runes that monsters save against: 8 + proficiency + STR. */
+export const runeDc = char => 8 + proficiencyBonus(char.level) + mod(char, "STR");
 /* How many rune slots the hero has (none until they learn a rune). */
 export const runeSlots = char => (char.runes?.known?.length ? (char.level >= 9 ? 3 : 2) : 0);
 export const runesLeft = char => Math.max(0, runeSlots(char) - (char.runes?.used || 0));
@@ -142,7 +149,7 @@ export function weaponAttack(char) {
     bonus: ability + proficiencyBonus(char.level) + w.upgrade,
     damage: base.damage,
     damageBonus: ability + w.upgrade + dueling,
-    damageType: base.damageType, silvered: !!w.silvered,
+    damageType: base.damageType, silvered: !!w.silvered, magic: w.upgrade > 0 || w.base === "wardenblade",
   };
 }
 

@@ -1198,7 +1198,7 @@ export function sideObjective(flags, state = {}) {
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
    counted until it can be finished. */
 export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported, flags.causewayRaised, flags.signetReturned,
-  flags.rockslideOpen].filter(Boolean).length;
+  flags.rockslideOpen, flags.wardensRoad].filter(Boolean).length;
 
 /* The line under the HP box saying what to do next. */
 export function objective(flags) {
@@ -1222,7 +1222,13 @@ export function objective(flags) {
     if (!flags.heardTremor && !flags.metRachel) return "Hild has news: talk to her again";
     if (!flags.metRachel) return "Go to the rockslide, north of the keep";
     if (!flags.rockslideOpen) return stonesFound(flags) < 3 ? `Find the rune-stones near the keep (${stonesFound(flags)}/3)` : "Take the rune-stones to Rachel";
-    return "Climb the Mountain Pass";
+    if (!flags.metColleen) return "Climb the pass to the first waystone";
+    if (!flags.waystoneIron) return "Pass the trial of Iron at the first waystone";
+    if (!flags.waystoneCall) return "Cross the ice to the second waystone";
+    if (!flags.bindingStolen && !flags.bindingRecovered) return "Climb to the third waystone, over the chasm";
+    if (!flags.bindingRecovered) return "Take the Binding back from Thorne's camp, east";
+    if (!flags.wardensRoad) return "Take the Binding back to Colleen";
+    return "Open the Wardens' gatehouse, at the top";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";
