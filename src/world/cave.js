@@ -30,6 +30,9 @@ export const DEEP_CAVE = {
     { id: "warrensCarving", x: 7, y: 7, sprite: "carving", script: "carving", still: true,
       lore: "\"Dug by the Wardens to bring iron down from the mountain.\" Rachel squints. \"These were Warden mines before they were goblin tunnels. And a cache: under the third mushroom.\"",
       cache: { gold: 90, items: ["scrollLightningBolt"] } },
+    // Act 3: Pip, run away to be a Warden, has found kobolds digging in the rat nest.
+    { id: "pipWarrens", x: 41, y: 28, sprite: "villager", script: "pipWarrens", shownWhen: "pipRanAway", goneWhen: "pipFound" },
+    { id: "kobolds", x: 43, y: 26, sprite: "kobold", script: "kobolds", shownWhen: "pipRanAway", goneWhen: "koboldsGone" },
     { id: "nestChest", x: 44, y: 29, sprite: "chest", script: "chest", goneWhen: "nestChestOpened", still: true, loot: { gold: 30, items: ["potionHealing", "potionHealing"] } },
   ],
   rows: [

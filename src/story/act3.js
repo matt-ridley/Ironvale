@@ -1,15 +1,20 @@
 // Act 3's conversations: the pass. Quest 6, the Scholar at the Rockslide: Hild's news that the keep shook in the night,
 // Rachel camped at the foot of the rockslide with Quill, the three rune-stones the blast threw down onto the keep's
 // grounds, and the Wardenblade laid against the Breaking Rune while she reads it backwards. Then the Warden carvings
-// all over the old maps, which only Rachel can read, and the sealed door of the Wardens' gatehouse.
+// all over the old maps, which only Rachel can read, and the sealed door of the Wardens' gatehouse. Going back:
+// Pip's Big Adventure (he runs off to be a Warden and finds kobolds digging in the Deep Warrens), his statue of you in
+// Oakhollow, the bard and the plaque at the Sleeping Fox, and Old Gnasher's mount in Tom's hut.
 // No Phaser here. scripts.js adds these to SCRIPTS.
 import { joinParty, COMPANIONS } from "../rules/party.js";
 import { makeItem, itemName } from "../rules/items.js";
 import { pay, paid } from "./rewards.js";
-import { callName } from "./hero.js";
+import { callName, titleOf, actOf } from "./hero.js";
 import { MAPS } from "../world/maps.js";
 
-const RACHEL = "RACHEL";
+const RACHEL = "RACHEL", PIP = "PIP";
+export const PIP_REWARD = { gold: 0, xp: 1000 }; // and his Junior Warden badge
+export const GNASHER_REWARD = { gold: 300, xp: 1000 };
+export const KOBOLD_FIGHT = ["kobold", "kobold"];
 export const ROCKSLIDE_REWARD = { gold: 400, xp: 4000 }; // quest 6, when the rockslide opens
 export const RUNE_STONES = ["runeStone1", "runeStone2", "runeStone3"];
 /* How many of the three rune-stones you've picked up. */
@@ -133,6 +138,106 @@ export const ACT3_SCRIPTS = {
     },
   },
 
+  // Pip's statue of you in Oakhollow's square. It gets better as the story goes on.
+  statue: {
+    start: "look",
+    nodes: {
+      look: {
+        text: s => {
+          const f = s.flags, name = callName(s.hero) ? `${callName(s.hero).toUpperCase()}, ` : "";
+          const bits = ["A statue of you, by Pip: mud and sticks on a stone plinth, a wooden sword twice as long as you are, and a turnip for a head."];
+          if (f.rockslideOpen) bits.push("He's added a cape (a sack) and a little clay owl on one shoulder.");
+          if (f.wardenTraining) bits.push("The sword has blue runes painted on it now.");
+          if (f.pipRewarded) bits.push("Pip's put himself on the plinth too, a head shorter, holding the turnip's hand.");
+          return `${bits.join(" ")} Carved on the plinth: ${name}${titleOf(f).toUpperCase()}.`;
+        },
+      },
+    },
+  },
+
+  // The plaque at the Sleeping Fox.
+  plaque: { start: "look", nodes: { look: { text: "A brass plaque, polished till it gleams: THE HERO SLEPT HERE. Underneath, in smaller letters someone added later: AND SNORED." } } },
+
+  // A travelling bard at the Sleeping Fox, with a terrible song about you.
+  bard: {
+    start: "sing",
+    nodes: {
+      sing: {
+        speaker: "BARD",
+        text: s => `"Ohhh, ${callName(s.hero) || "the Hero"}, ${titleOf(s.flags)}, with a sword as long as a tree! Who beat the Goblin King, and the hag, and the dead, and then... went up a mountain, probably! Fol-de-rol-dee!" He bows. "I'm working on the last verse."`,
+        choices: [{ label: "Tip him (5 gold)", if: s => s.hero.gold >= 5, to: "tip" }, { label: "Please stop.", to: "stop" }],
+      },
+      tip: { speaker: "BARD", enter: s => { s.hero.gold -= 5; }, text: "\"A patron of the arts!\" He bows so low his hat falls off. \"The next verse rhymes 'Warden' with 'garden'. It's going to be magnificent.\"" },
+      stop: { speaker: "BARD", text: "\"Everyone's a critic.\" He tunes his lute, which doesn't help." },
+    },
+  },
+
+  // Pip's Big Adventure: his wooden shield, dropped in the wood...
+  pipShield: {
+    start: "look",
+    nodes: {
+      look: {
+        enter: s => { s.flags.pipShieldFound = true; },
+        text: "A little wooden shield in the bracken, with a turnip painted on it: Pip's. His footprints go on east, towards Goblin Rocks.",
+      },
+    },
+  },
+
+  // ...and a chalk mark by the goblin cave.
+  pipChalk: {
+    start: "look",
+    nodes: {
+      look: {
+        enter: s => { s.flags.pipChalkFound = true; },
+        text: s => (s.flags.pipFound ? "PIP WOZ ERE, in chalk, and a little sword. Somebody has added: AND THE HERO." : "Scrawled on a rock by the goblin cave, in chalk: PIP WOZ ERE. And an arrow, pointing into the cave."),
+      },
+    },
+  },
+
+  // Pip in the Deep Warrens, behind a rock, watching the kobolds dig.
+  pipWarrens: {
+    start: s => (s.flags.koboldsGone ? "after" : "hide"),
+    nodes: {
+      hide: {
+        speaker: PIP,
+        enter: s => { s.flags.pipMetWarrens = true; },
+        text: "Shh! Kobolds! They're digging, and they keep saying it's for \"the Great One beyond the mountain\". I was going to fight them. Any minute now. I was just... planning.",
+      },
+      after: { speaker: PIP, enter: s => { s.flags.pipFound = true; }, text: "We beat them! I'm going home to tell Mum. Come and see us!" },
+    },
+  },
+
+  // The kobolds: not a real fight for you any more.
+  kobolds: {
+    start: "look",
+    nodes: {
+      look: {
+        text: "Two kobolds in candle-hats are digging at the wall with tiny picks. \"Dig, dig! For the Great One beyond the mountain!\" One sees you, and squeaks. \"Big one! BIG ONE!\"",
+        choices: [{ label: "Fight!", to: "fight" }, { label: "Back away", to: null }],
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...KOBOLD_FIGHT], zone: "warrens", winFlag: "koboldsGone", afterWin: "koboldsFled" }) },
+    },
+  },
+
+  // Straight after the kobolds: Pip comes out from behind his rock.
+  koboldsFled: {
+    start: "flee",
+    nodes: {
+      flee: {
+        text: "The last kobold squeals and dives into its tunnel. \"The Great One will eat you!\" it shrieks from the dark. \"The Great One beyond the mountain!\" Then it's gone.",
+        to: "pip",
+      },
+      pip: {
+        speaker: PIP,
+        enter: s => { s.flags.pipFound = true; },
+        text: "Did you SEE that? We beat them! Well, you did. I watched. Very bravely. I'm going home to tell Mum before she finds out herself. Come and see us!",
+      },
+    },
+  },
+
+  // Old Gnasher on Tom's wall.
+  gnasherMount: { start: "look", nodes: { look: { text: "Old Gnasher, mounted on a board over Tom's fireplace, still looking grumpy about it. A label in Tom's wobbly hand: CAUGHT BY THE HERO. LET GO OF THE DUCK." } } },
+
   // The great door of the Wardens' gatehouse, at the top of the pass. Sealed with three runes.
   gatehouseDoor: {
     start: "look",
@@ -168,3 +273,14 @@ export const tremorNode = {
   text: s => `${callName(s.hero) || "My lord"}, the keep shook last night. Dust from every ceiling, and Brannoc swears his anvil jumped. It came from the north, from the Mountain Pass. Someone should look at that rockslide.`,
   to: "hello",
 };
+
+/* Things that happen as you walk into a zone: Pip runs away from Oakhollow once the pass is open. Returns a note for
+   the HUD, or null. (The World scene calls this on every new zone.) */
+export function zoneEvent(state, zoneId) {
+  const f = state.flags;
+  if (zoneId === "village" && actOf(f) >= 3 && f.rockslideOpen && !f.pipRanAway) {
+    f.pipRanAway = true;
+    return "Hazel runs up the path, white as flour: \"Have you seen Pip? He's gone!\"";
+  }
+  return null;
+}

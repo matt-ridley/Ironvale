@@ -95,8 +95,13 @@ export const GAME_SCRIPTS = {
         text: (s, ctx) => `${ctx.object?.look ?? "A fishing rod."} (Fish bite ${fishLeft(s.hero)} more time${fishLeft(s.hero) === 1 ? "" : "s"} before you next sleep.)`,
         choices: [{ label: "Fish", to: "play" }, { label: "Not now", to: null }],
       },
-      play: { enter: (s, ctx) => play("Fishing", { spot: ctx.object?.spot || "willowmere" })(s, ctx) },
+      play: { enter: (s, ctx) => play("Fishing", { spot: fishingSpot(s, ctx.object?.spot || "willowmere") })(s, ctx) },
       quiet: { text: `The fish have stopped biting: you've caught ${FISH_PER_REST} since you last slept. Come back after a night's rest.` },
     },
   },
 };
+
+/* Where you're fishing: at Willowmere, once Old Tom's letter says Old Gnasher is biting (and until you've caught him),
+   the legendary pike might take the bait. */
+export const fishingSpot = (s, spot) => (spot === "willowmere" && s.flags.gnasherQuest && !s.flags.gnasherCaught
+  && !s.hero.inventory.some(i => i.base === "oldGnasher") ? "gnasher" : spot);

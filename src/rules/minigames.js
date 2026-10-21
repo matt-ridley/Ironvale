@@ -138,10 +138,12 @@ export const BITE_WINDOW = 1; // seconds to strike once the float dips
 export const REEL_TAP = 0.1;
 export const FISH = {
   perch: { pull: 0.15 }, pike: { pull: 0.3 }, fenEel: { pull: 0.4 }, goldenCarp: { pull: 0.5 },
+  oldGnasher: { pull: 0.6 }, // the legendary pike: Tom's letter says he's biting (Act 3)
 };
 export const FISHING_SPOTS = {
   willowmere: { name: "Willowmere", catch: [["perch", 0.55], ["pike", 0.35], ["goldenCarp", 0.1]] },
   fenwatch: { name: "Fenwatch", catch: [["perch", 0.3], ["fenEel", 0.55], ["goldenCarp", 0.15]] },
+  gnasher: { name: "Willowmere", catch: [["perch", 0.35], ["pike", 0.3], ["oldGnasher", 0.25], ["goldenCarp", 0.1]] }, // while Gnasher's biting
 };
 
 export function fishNew(spot, rng = Math.random) {

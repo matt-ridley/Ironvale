@@ -5,6 +5,30 @@
 export const MONSTER_SCALE = 1.25; // on the battle and meeting stage; the hero stands at 1.5
 
 export const MONSTER_ART = {
+  // A kobold: a little rust-red lizard-dog with a miner's pick and a candle stub on its head (16 x 18).
+  kobold: {
+    colours: { k: "#1c1210", a: "#a84a2a", b: "#7a3018", c: "#d8743e", e: "#f4d03f", t: "#efe6cf", i: "#8a8a94", w: "#6b4226", y: "#ffe28a" },
+    rows: [
+      "........y.......",
+      ".......kyk......",
+      "......kttk......",
+      "...k.kaaaak.k...",
+      "..kak.aaaaakak..",
+      "...kaaeaaeaak...",
+      "....kacaacak.ki.",
+      "...kaattttaakkik",
+      "....kaaaaaak.kwk",
+      "...kbbaaaabbkwk.",
+      "..kbakaccakbwk..",
+      "..kakaccccakwk..",
+      "..kk.kaccaak....",
+      ".....kbaabk.....",
+      ".....kb..bk.....",
+      "....kbb..bbk....",
+      "....kkk..kkk....",
+      "................",
+    ],
+  },
   // A goblin: big ears, a toothy grin, a leather jerkin, a scimitar and a bow on its back (21 x 24).
   goblin: {
     colours: { a: "#342110", b: "#286306", c: "#6f4015", d: "#4c950e", e: "#a7621d", f: "#68a61a", g: "#826c5b", h: "#82b441", i: "#81888b", j: "#fcbf22", k: "#050809", m: "#afa788", n: "#c5ccb4", o: "#eff5ea" },

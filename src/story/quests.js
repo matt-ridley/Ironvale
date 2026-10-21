@@ -2,7 +2,7 @@
 // from the quest flags every time, so there's nothing extra to save. No Phaser here, so it can be tested; the Quests
 // screen shows what questLog returns.
 import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD } from "./scripts.js";
-import { ROCKSLIDE_REWARD, stonesFound } from "./act3.js";
+import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD } from "./act3.js";
 import { actOf } from "./hero.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
@@ -118,6 +118,30 @@ export const QUESTS = [
     steps: [
       { text: "Find the toolbox in the keep's armoury", done: f => f.toolsFound },
       { text: "Bring it to Brannoc's forge in Fenwatch", done: f => f.toolsReturned },
+    ],
+  },
+  {
+    id: "pip", title: "Pip's Big Adventure", kind: "side",
+    known: f => f.pipRanAway,
+    about: "Pip has run away to be a Warden like you. His note says not to worry. Hazel is worrying.",
+    reward: "Pip's Junior Warden badge, 1000 XP",
+    steps: [
+      { text: "Ask Hazel what happened", done: f => f.hazelPipNews || f.pipShieldFound || f.pipFound },
+      { text: "Follow Pip's trail through the Whispering Wood", done: f => f.pipShieldFound || f.pipChalkFound || f.pipFound },
+      { text: "Find where the trail leads", done: f => f.pipChalkFound || f.pipMetWarrens || f.pipFound },
+      { text: "Find Pip in the Deep Warrens", done: f => f.pipMetWarrens || f.koboldsGone },
+      { text: "Chase off the kobolds", done: f => f.koboldsGone },
+      { text: "See Pip and Hazel at home", done: f => f.pipRewarded },
+    ],
+  },
+  {
+    id: "gnasher", title: "Old Gnasher", kind: "side",
+    known: f => f.gnasherQuest,
+    about: "Old Tom's letter: the legendary pike of Willowmere is biting at last.",
+    reward: reward(GNASHER_REWARD),
+    steps: [
+      { text: "Read Old Tom's letter (Hazel has it)", done: f => f.gnasherQuest },
+      { text: "Catch Old Gnasher with Tom's rod and take him to Tom", done: f => f.gnasherCaught },
     ],
   },
   {

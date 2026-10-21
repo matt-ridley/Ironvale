@@ -59,6 +59,10 @@ export const ITEMS = {
     about: "A heavy ring of black iron, warm to the touch. Its seal is a tower between two keys, like the crest on your sword." },
   brannocTools: { name: "Brannoc's Tools", type: "key", cost: 0,
     about: "A dwarf-sized toolbox bound in iron, with BRANNOC burned into the lid. He'll want these back." },
+  juniorBadge: { name: "Junior Warden Badge", type: "trinket", prize: true, cost: 0,
+    about: "A tin badge Pip made, with JUNIOR WARDEN scratched on it. Once per rest, when you just fail a saving throw against a monster, +1 turns it into a success. Works from your pack." },
+  oldGnasher: { name: "Old Gnasher", type: "key", cost: 0,
+    about: "The legendary pike of Willowmere, older than Old Tom and twice as grumpy. Tom will want to see this." },
   goblinCrown: { name: "Goblin King's Crown", type: "key", cost: 0,
     about: "Bent gold set with red glass. Gaudy, and far too big for you. Somebody shinier-minded might want it." },
 

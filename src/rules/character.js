@@ -209,6 +209,7 @@ export function rest(char) {
   if (char.slotsUsed) char.slotsUsed = [];
   if (char.runes) char.runes.used = 0;
   char.indomitableUsed = false;
+  char.badgeUsed = false; // Pip's Junior Warden badge
   char.luckUsed = false; // the Lucky Die
   char.fishCaught = 0; // the fish bite again
   if (char.companion) char.companion.hurt = 0;

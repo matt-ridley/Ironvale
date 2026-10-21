@@ -57,7 +57,10 @@ export const TOM_HUT = house({
   title: "Old Tom's Hut",
   door: { x: 20, y: 43 },
   mat: { x: 4, y: 5 },
-  objects: [{ id: "tomBed", x: 1, y: 2, sprite: "bed", script: "bed", still: true }],
+  objects: [
+    { id: "tomBed", x: 1, y: 2, sprite: "bed", script: "bed", still: true },
+    { id: "gnasherMount", x: 6, y: 4, sprite: "mountedFish", script: "gnasherMount", shownWhen: "gnasherCaught", still: true },
+  ],
   rows: [
     "xxxxxxxxx",
     "x|s|h|||x",
@@ -77,6 +80,9 @@ export const INN = house({
   mat: { x: 6, y: 6 },
   objects: [
     { id: "nell", x: 9, y: 2, sprite: "innkeeper", script: "inn" },
+    // Act 3: the hero's fame, in the Sleeping Fox.
+    { id: "bard", x: 4, y: 2, sprite: "bard", script: "bard", shownWhen: "keepHome" },
+    { id: "plaque", x: 11, y: 4, sprite: "plaque", script: "plaque", shownWhen: "keepHome", still: true },
     { id: "wat", x: 8, y: 4, sprite: "gambler", script: "diceWat" }, // knucklebones
     { id: "oswin", x: 3, y: 5, sprite: "woodcutter", script: "armWrestle" },
   ],

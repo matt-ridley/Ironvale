@@ -92,10 +92,17 @@ export function saveBonusOf(battle, key, ability) {
 /* A saving throw in a fight, with conditions (Bless, restrained) counted. */
 export const battleSave = (battle, key, ability, dc, rng = Math.random) => conditionSave(battle, key, ability, dc, saveBonusOf(battle, key, ability), rng);
 
-/* A saving throw against something a monster does to you: from level 9, Indomitable rolls a failed one again (once
-   per long rest), and says so in the log. */
+/* A saving throw against something a monster does to you: Pip's Junior Warden badge adds 1 to one that only just
+   failed (once per rest), and from level 9, Indomitable rolls a failed one again (once per long rest). Both say so in
+   the log. */
 export function resistSave(battle, key, ability, dc, rng = Math.random) {
   const s = battleSave(battle, key, ability, dc, rng);
+  const p = battle.player;
+  if (!s.success && key === "player" && s.total + 1 >= dc && !p.badgeUsed && p.inventory.some(i => i.base === "juniorBadge")) {
+    p.badgeUsed = true; // Pip's Junior Warden badge, once per rest
+    say(battle, "badge", `${ability} save ${s.total} vs DC ${dc}... your Junior Warden badge glints: +1, and that's enough!`);
+    return { ...s, total: s.total + 1, success: true };
+  }
   if (s.success || key !== "player" || !canIndomitable(battle.player)) return s;
   battle.player.indomitableUsed = true;
   say(battle, "indomitable", `${ability} save ${s.total} vs DC ${dc}... Indomitable! You refuse to give in, and roll again.`);
