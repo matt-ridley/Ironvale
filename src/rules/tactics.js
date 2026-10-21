@@ -13,7 +13,7 @@
 import { SPELLS } from "../data/spells.js";
 import { roll } from "./dice.js";
 import { baseOf } from "./items.js";
-import { attackMods, addCondition } from "./conditions.js";
+import { attackMods, addCondition, skipsTurn } from "./conditions.js";
 import { acOf, hurt, tellWoken, say, living, resolveAttack, adjustRoll, rollText, hitText, isAllyTurn, endAllyAction } from "./combat.js";
 import { makeCaster, castSpell, slotsLeft, spendForSpell } from "./magic.js";
 
@@ -34,7 +34,7 @@ function freeSlot(battle, level) {
 export function castable(battle) {
   const a = battle.ally;
   if (!a?.casting) return [];
-  return a.casting.spells.map(id => ({ id, spell: SPELLS[id], slotLevel: SPELLS[id].level ? freeSlot(battle, SPELLS[id].level) : 0 }))
+  return a.casting.spells.filter(id => SPELLS[id].kind !== "reaction").map(id => ({ id, spell: SPELLS[id], slotLevel: SPELLS[id].level ? freeSlot(battle, SPELLS[id].level) : 0 }))
     .filter(s => s.spell.level === 0 || s.slotLevel > 0);
 }
 
@@ -145,6 +145,30 @@ function shoot(battle, target, rng) {
 
 /* True if your companion can still VOLLEY this fight (Megan, once Matthew has taught her). */
 export const canVolley = battle => !!battle.player.companion?.volley && battle.ally?.hp > 0 && !battle.volleyUsed && living(battle).length > 0;
+
+/* True if Rachel could COUNTER a spell now: she knows Counterspell, has a level 3 slot (or higher) left, and can act. */
+export function canCounter(battle) {
+  const a = battle.ally;
+  return a?.id === "rachel" && a.hp > 0 && !skipsTurn(battle, "ally") && a.casting?.spells.includes("counterspell") && freeSlot(battle, 3) > 0;
+}
+
+/* Rachel's COUNTER: spends her lowest slot of level 3 or more. A spell of 3rd level or lower just stops; a higher one
+   needs her check (d20 + INT against 10 + its level). Returns true if the spell is stopped. */
+export function counter(battle, spell, rng = Math.random) {
+  const a = battle.ally, c = battle.player.companion, slot = freeSlot(battle, 3);
+  c.slotsUsed = [...(c.slotsUsed || [])];
+  c.slotsUsed[slot - 1] = (c.slotsUsed[slot - 1] || 0) + 1;
+  const level = spell.level || 1;
+  if (level <= Math.max(3, slot)) {
+    say(battle, "counter", `${a.name} snaps her fingers: COUNTERSPELL! ${spell.name[0].toUpperCase() + spell.name.slice(1)} fizzles into nothing.`);
+    return true;
+  }
+  const roll20 = 1 + Math.floor(rng() * 20), total = roll20 + a.casting.mod, dc = 10 + level;
+  const ok = total >= dc;
+  say(battle, ok ? "counter" : "counter-fail", ok ? `${a.name} snaps her fingers: COUNTERSPELL! (${total} vs DC ${dc}) It fizzles into nothing.`
+    : `${a.name} tries to COUNTER it (${total} vs DC ${dc}), but it's too strong!`);
+  return ok;
+}
 
 /* Your companion's turn when they act by themselves. */
 export function allyTurn(battle, rng = Math.random) {

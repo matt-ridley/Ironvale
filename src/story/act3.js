@@ -12,10 +12,13 @@
 // Fenwatch (help them and Grub's stall opens; in Act 3, Snik leads you through the old mines round the ice, and they go
 // home to Goblin Rocks), Mother Sallow (bargained with: the Queen of the Fen's toll on the causeway, then Sallow's
 // Sundries at the rockslide; fought: her sister Auntie Nettle spoils your rests on the pass until you find her hut), and
-// Old Vosk the ferryman, with treasure hints and a row out to the island in the south lake.
+// Old Vosk the ferryman, with treasure hints and a row out to the island in the south lake. Quest 8, the Wardens'
+// Gatehouse: the door opens to a Warden who knows all three runes; three rune doors inside (Rachel reads which rune each
+// wants); rune-iron in the frozen forge (Brannoc makes the Wardenblade's second form of it); Thorne and his shield
+// guardian at the Door; and what to do with him after.
 // No Phaser here. scripts.js adds these to SCRIPTS.
 import { joinParty, COMPANIONS } from "../rules/party.js";
-import { learnRune } from "../rules/character.js";
+import { learnRune, knowsRune } from "../rules/character.js";
 import { makeItem, itemName } from "../rules/items.js";
 import { pay, paid } from "./rewards.js";
 import { callName, titleOf, actOf } from "./hero.js";
@@ -38,7 +41,12 @@ export const NETTLE_FIGHT = ["nightHag"];
 export const FERRY_COST = 10;
 /* Auntie Nettle haunts the pass: from Act 3 if you fought her sister, until you beat her. */
 export const nettleHaunting = s => actOf(s.flags) >= 3 && !!s.flags.sallowDefeated && !s.flags.nettleDefeated;
-const noGold = r => ({ ...r, gold: 0 });
+export const GATEHOUSE_REWARD = { gold: 1000, xp: 12000 }; // quest 8, once Thorne is dealt with
+export const THORNE_FIGHT = ["thorne", "shieldGuardian"];
+const THORNE = "THORNE";
+const RUNE_NAMES = { iron: "Iron", call: "the Call", binding: "the Binding" };
+/* True once the hero knows all three of the waystones' runes: what the gatehouse door wants. */
+export const allThreeRunes = hero => ["ironWard", "wardensCall", "binding"].every(r => knowsRune(hero, r));
 const xpOnly = (ctx, reward) => paid(ctx, reward).replace("+0 gold, ", "");
 export const WAYSTONE_REWARD = { gold: 200, xp: 2000 }; // each of the three trials
 export const ROAD_REWARD = { gold: 200, xp: 2000 }; // quest 7, once all three runes are won
@@ -821,15 +829,134 @@ export const ACT3_SCRIPTS = {
     },
   },
 
-  // The great door of the Wardens' gatehouse, at the top of the pass. Sealed with three runes.
+  // The great door of the Wardens' gatehouse, at the top of the pass. Sealed with three runes: it opens for a Warden who
+  // knows all three.
   gatehouseDoor: {
-    start: "look",
+    start: s => (allThreeRunes(s.hero) ? "ready" : "look"),
     nodes: {
       look: {
-        text: s => `A door of black iron as tall as a house, cut into the mountain. Three runes are carved across it, and none of them glows.${withRachel(s) ? " Rachel: \"Iron, the Call, and Binding. It wants a Warden who knows all three.\"" : ""}`,
+        text: s => `A door of black iron as tall as a house, cut into the mountain. Three runes are carved across it, and none of them glows.${withRachel(s) ? " Rachel: \"Iron, the Call, and Binding. It wants a Warden who knows all three.\"" : " It wants something you don't have yet."}`,
+      },
+      ready: {
+        text: "The gatehouse door, black iron cut into the mountain. Three runes are carved across it: Iron, the Call and the Binding. Your blade hums.",
+        choices: [{ label: "Raise the Wardenblade", to: "open" }, { label: "Not yet", to: null }],
+      },
+      open: {
+        enter: s => { s.flags.gatehouseOpen = true; },
+        text: "One by one the three runes on the door light up, answering the ones in your blade. Then, with a groan like the mountain waking, the door swings inward. Cold air breathes out of the dark.",
       },
     },
   },
+
+  // A rune door inside the gatehouse (the map object has its `answer` and `riddle`). Pick the right rune; a wrong one
+  // bites (never knocking you out). Rachel reads which one it wants.
+  runeLock: {
+    start: "look",
+    nodes: {
+      look: {
+        text: (s, ctx) => `A door carved with three runes, and a line in the Wardens' script. ${withRachel(s) ? `Rachel reads it out: ${ctx.object.riddle} "That's ${RUNE_NAMES[ctx.object.answer]}," she says. "Obviously."` : `You can just make out the words: ${ctx.object.riddle}`}`,
+        choices: [
+          { label: "Touch the blade to Iron", to: "iron" },
+          { label: "Touch the blade to the Call", to: "call" },
+          { label: "Touch the blade to the Binding", to: "binding" },
+          { label: "Leave it", to: null },
+        ],
+      },
+      ...Object.fromEntries(["iron", "call", "binding"].map(rune => [rune, {
+        enter: (s, ctx) => {
+          if (ctx.object.answer === rune) { s.flags[ctx.object.flag] = true; return ctx.goto("opened"); }
+          const dmg = Math.min(ctx.roll("2d8"), s.hero.hp - 1);
+          s.hero.hp -= dmg;
+          ctx.remember("hurt", dmg);
+          ctx.goto("wrong");
+        },
+      }])),
+      opened: { text: "The rune flares to meet your blade, and the door grinds aside into the wall." },
+      wrong: {
+        text: (s, ctx) => `The wrong rune spits sparks up your arm! -${ctx.recall("hurt")} HP. The door stays shut.`,
+        choices: [{ label: "Try again", to: "look" }, { label: "Leave it", to: null }],
+      },
+    },
+  },
+
+  // The Wardens' frozen forge, and the rune-iron in its ore bin.
+  frozenForge: { start: "look", nodes: { look: { text: "The Wardens' forge, cold for a hundred years, the anvil under a skin of ice. Brannoc would weep. Or swear. Probably both." } } },
+  oreBin: {
+    start: s => (s.flags.runeIronFound ? "empty" : "look"),
+    nodes: {
+      look: {
+        enter: s => { s.flags.runeIronFound = true; s.hero.inventory.push(makeItem("runeIron")); },
+        text: "An old ore bin, and in it, under the frost, lumps of blue-black ore that hum when you touch them: rune-iron. You take the best of it. Brannoc will know what to do.",
+      },
+      empty: { text: "The ore bin. You've taken the best of the rune-iron already." },
+    },
+  },
+
+  // Aldric Thorne, at the Door, with his shield guardian.
+  thorneBoss: {
+    start: "you",
+    nodes: {
+      you: {
+        speaker: THORNE,
+        text: "You. The heir with the sword. I wondered which of us would reach the Door first. Do you know what's behind it? A voice. Old, and patient, and kind. It says the Wardens were jailers.",
+        to: "promise",
+      },
+      promise: {
+        speaker: THORNE,
+        text: s => (withRachel(s) ? "Rachel. You came. Then you understand: I found a way, for both of us. Every rune ever carved, it says. And your sister, Rachel, your sister is—"
+          : "It promised me every rune ever carved, if I open it. And I'm so close. Stand aside, Warden. Or stand there, and be broken."),
+        to: "rachel",
+      },
+      rachel: {
+        enter: (s, ctx) => { if (!withRachel(s)) ctx.goto("choose"); },
+        speaker: RACHEL,
+        text: "Don't you DARE.",
+        to: "choose",
+      },
+      choose: {
+        text: "Thorne lifts his staff. Stolen runes flare along it, and beside him the shield guardian's amulet blazes. It steps between you.",
+        choices: [{ label: "Fight!", to: "fight" }, { label: "Back away", to: null }],
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...THORNE_FIGHT], zone: "door", winFlag: "thorneDefeated", afterWin: "thorneFate", music: "thorne" }) },
+    },
+  },
+
+  // Straight after the fight: spare him (chained in the keep's cells) or leave him to the mountain.
+  thorneFate: {
+    start: "fall",
+    nodes: {
+      fall: {
+        text: "Thorne falls to his knees, his staff cracked through, the stolen runes guttering out of it one by one. The guardian crashes down beside him.",
+        to: "beg",
+      },
+      beg: {
+        speaker: THORNE,
+        text: "It promised... it promised me...",
+        choices: [{ label: "Spare him: chain him, take him to the keep", to: "spare" }, { label: "Leave him to the mountain", to: "leave" }],
+      },
+      spare: {
+        enter: s => { s.flags.thorneSpared = true; },
+        text: s => `You bind his hands with his own belt. He doesn't fight it.${withRachel(s) ? " Rachel: \"He taught me to read runes. I won't let the mountain have him.\"" : ""} Hild will find him a cell.`,
+        to: "done",
+      },
+      leave: {
+        enter: s => { s.flags.thorneLeft = true; },
+        text: s => `You turn your back on him. The cold will decide.${withRachel(s) ? " Rachel looks at him for a long moment. \"Goodbye, Aldric.\"" : ""}`,
+        to: "done",
+      },
+      done: {
+        enter: (s, ctx) => { s.flags.gatehouseDone = true; pay(s, ctx, GATEHOUSE_REWARD); },
+        text: (s, ctx) => `The gatehouse is quiet. ${paid(ctx, GATEHOUSE_REWARD)} Behind you, the Door groans. Something on the other side has heard the fighting stop.`,
+      },
+    },
+  },
+
+  // The Door itself.
+  greatDoor: {
+    start: "look",
+    nodes: { look: { text: "The Door. Black iron, taller than the keep, carved with every rune the Wardens ever knew. It's cold to the touch. And from the other side, very faintly, something is breathing." } },
+  },
+
 };
 
 /* Sending Quill to scout from a camp (a node in the campfire script): he marks this map's secrets on the world map. */

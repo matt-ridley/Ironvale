@@ -70,6 +70,8 @@ export const SCENARIOS = [
     ["Troll and griffon, L10 +4, Rachel", { level: 10, upgrade: 4 }, ["troll", "griffon"]],
     ["Thorne's guardian, L10 +4, Rachel", { level: 10, upgrade: 4 }, ["earthElemental", "gargoyle"]],
     ["Stone giant, L11 +4, Rachel", { level: 11, upgrade: 4 }, ["stoneGiant"]],
+    ["Thorne and guardian, L11 +4, Rachel", { level: 11, upgrade: 4, runes: ["runeStrike", "ironWard", "wardensCall", "binding"] }, ["thorne", "shieldGuardian"]],
+    ["Thorne and guardian, L11 +4, Megan", { level: 11, upgrade: 4, companion: "megan", runes: ["runeStrike", "ironWard", "wardensCall", "binding"] }, ["thorne", "shieldGuardian"]],
   ].map(([label, h, foes]) => [label, { companion: "rachel", potions: 3, greater: 2, weapon: "wardenblade", silvered: true, runes: ["runeStrike", "ironWard"], ...h }, foes]),
 ];
 

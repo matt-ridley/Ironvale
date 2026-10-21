@@ -40,6 +40,7 @@ export class Battle extends Phaser.Scene {
     this.afterFail = data.afterFail || null; // ...or if you win but fail the trial (your companion fell)
     this.surviveRounds = data.surviveRounds || 0; // a waystone's trial: hold out this many rounds
     this.guardAlly = !!data.guardAlly; // a waystone's trial: keep your companion standing
+    this.music = data.music || null; // a boss's own track (Thorne's)
     this.zone = stageZone(data.zone);
   }
 
@@ -73,7 +74,7 @@ export class Battle extends Phaser.Scene {
       const sprite = stand(this, x, this.textures.exists(m.id) ? m.id : "goblin").setFlipX(true).setInteractive({ useHandCursor: true });
       sprite.on("pointerup", () => this.select(i));
       const top = GROUND_Y - sprite.displayHeight; // the Goblin King is taller than the rest
-      const name = this.add.text(x, top - 18, m.name, { fontFamily: FONT, fontSize: "8px", color: COLORS.text, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
+      const name = this.add.text(x, top - 18, m.label, { fontFamily: FONT, fontSize: "8px", color: COLORS.text, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
       const barBg = this.add.rectangle(x - BAR_W / 2, top - 8, BAR_W, 4, 0x000000, 0.6).setOrigin(0, 0.5);
       const bar = this.add.rectangle(x - BAR_W / 2, top - 8, BAR_W, 4, 0x7bc96f).setOrigin(0, 0.5);
       return { sprite, name, barBg, bar, x, top, max: m.maxHp };
@@ -87,7 +88,7 @@ export class Battle extends Phaser.Scene {
     this.applyHp(this.battle.log[0].hp);
     this.placeMarker();
     this.cameras.main.fadeIn(250);
-    playMusic(this.winFlag ? "boss" : "battle");
+    playMusic(this.music || (this.winFlag ? "boss" : "battle"));
     if (ally && !state.flags.leadTip) { // once: how to lead your companion
       state.flags.leadTip = true;
       this.addLine(`Tip: tap ${ally.name} to pick their actions yourself.`);
@@ -126,7 +127,7 @@ export class Battle extends Phaser.Scene {
   }
 
   count(base) { return state.hero.inventory.filter(i => i.base === base).length; }
-  scrolls() { return groupPack(state.hero.inventory).filter(g => baseOf(g.item).type === "scroll"); }
+  scrolls() { return groupPack(state.hero.inventory).filter(g => baseOf(g.item).type === "scroll" && SPELLS[baseOf(g.item).spell].kind !== "reaction"); }
   items() { return BATTLE_POTIONS.reduce((n, b) => n + this.count(b), 0) + this.scrolls().reduce((n, g) => n + g.count, 0); }
 
   /* The friend a healing spell should go to: whoever has the smaller share of their HP. */
@@ -175,8 +176,8 @@ export class Battle extends Phaser.Scene {
       return [surge, rune("runeStrike", `RUNE x${runesLeft(h)}`, "runeStrike"), rune("wardensCall", "CALL", "wardensCall"), rune("binding", "BIND", "binding"), back("main")];
     }
     if (page === "react") {
-      const on = !this.busy && isReacting(b);
-      return [{ label: "IRON WARD", on, run: () => this.react(true) }, { label: "TAKE IT", on, run: () => this.react(false) }, null, null, null, null];
+      const on = !this.busy && isReacting(b), ward = b.pending?.kind !== "counter";
+      return [{ label: ward ? "IRON WARD" : "COUNTER", on, run: () => this.react(true) }, { label: ward ? "TAKE IT" : "LET IT GO", on, run: () => this.react(false) }, null, null, null, null];
     }
     if (page === "allySpells") {
       const list = castable(b).slice(0, 5).map(c => ({ label: c.spell.short, on: hers, run: () => this.actAlly({ type: "cast", spell: c.id, slotLevel: c.slotLevel }) }));
@@ -296,7 +297,7 @@ export class Battle extends Phaser.Scene {
 
   showEvent(e) {
     const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again",
-      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived", "volley"].includes(e.type);
+      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived", "volley", "counter"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -401,6 +402,17 @@ export class Battle extends Phaser.Scene {
       case "monster-spell":
         if (e.damage) { this.hit(this.spriteOf(e.who), e.damage, false); this.cameras.main.shake(120, 0.006); }
         else this.float(this.spriteOf(e.who), "RESIST", COLORS.dim);
+        break;
+      case "counter-prompt":
+        sfx("alert");
+        this.float(this.foeViews[e.actor].sprite, "CASTING...", COLORS.gold);
+        break;
+      case "counter":
+        sfx("crit");
+        this.float(this.allyView.sprite, "COUNTER!", COLORS.gold);
+        break;
+      case "hesitate":
+        this.float(this.foeViews[e.who].sprite, "...", COLORS.dim);
         break;
       case "ward-prompt":
         sfx("alert");

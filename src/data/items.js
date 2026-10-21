@@ -79,6 +79,8 @@ export const ITEMS = {
   scrollFireball:     { name: "Scroll of Fireball",      type: "scroll", spell: "fireball", cost: 300 },
   scrollMistyStep:    { name: "Scroll of Misty Step",    type: "scroll", spell: "mistyStep", cost: 100 },
   scrollLightningBolt: { name: "Scroll of Lightning Bolt", type: "scroll", spell: "lightningBolt", cost: 300 },
+  scrollCounterspell: { name: "Scroll of Counterspell", type: "scroll", spell: "counterspell", cost: 300 }, // for Rachel's book: it's a reaction
+  runeIron: { name: "Rune-Iron", type: "key", cost: 0, about: "Blue-black ore from the Wardens' frozen forge, cold even in your hand. Brannoc would know what to do with it." },
 };
 
 export const SILVER_COST = 100; // silvering a weapon at Brannoc's forge (the SRD's price)
@@ -113,7 +115,7 @@ export const SHOPS = {
   sundries: {
     title: "SALLOW'S SUNDRIES", tabs: ["buy", "sell"], tint: 0x5d7a3e, markup: 1.5,
     greeting: "Mother's shop! Everything a hero needs on a cold mountain, dearie, at Mother's prices. Which are fair. For Mother.",
-    stock: ["potionGreaterHealing", "potionSpeed", "homewardFeather", "scrollMistyStep", "scrollLightningBolt", "scrollFireball"],
+    stock: ["potionGreaterHealing", "potionSpeed", "homewardFeather", "scrollMistyStep", "scrollLightningBolt", "scrollFireball", "scrollCounterspell"],
   },
   apothecary: {
     title: "APOTHECARY", tabs: ["buy", "sell"], greeting: "Bubble, bubble! Fresh potions, brewed this morning.", tint: 0x9fd18b,

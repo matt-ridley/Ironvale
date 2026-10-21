@@ -6,7 +6,9 @@
 // `vulnerable` ones do double, `resistant` ones half, and `weaponResist: "silver"` halves weapon damage unless the
 // weapon is silvered (wights). A monster with `spells` may cast one on its turn instead of attacking: each is a saving
 // throw ({ name, save, dc, damage, damageType, half, targets: "one" | "all", condition: { id, rounds }, uses (per
-// fight), chance (of casting it, when it's left) }); "all" means you and your companion.
+// fight), chance (of casting it, when it's left), level (for Rachel's COUNTER; a `breath` can't be countered) });
+// "all" means you and your companion. `guardedBy` (a monster's index in the fight) gives it +3 AC while that one stands;
+// `hesitates`: with Rachel in your party, it loses its first turn. `label`: a shorter name for its tag in a fight.
 
 export const MONSTERS = {
   giantRat:    { name: "Giant Rat",    ac: 12, hp: "2d6",   dexMod: 2, attack: { name: "Bite",     bonus: 4, damage: "1d4+2" }, xp: 25,  gold: "1d4",
@@ -121,6 +123,27 @@ export const MONSTERS = {
       { name: "Nightmare", save: "WIS", dc: 15, damage: "3d8", damageType: "psychic", half: true, targets: "all", condition: { id: "frightened", rounds: 2 }, uses: 1, chance: 0.5 },
     ],
     loot: [{ base: "potionGreaterHealing", chance: 1 }, { base: "scrollLightningBolt", chance: 1 }] },
+  // The Wardens' Gatehouse (Act 3's dungeon): the Wardens' old guardians, still on watch, and Thorne's beasts.
+  chimera:     { name: "Chimera",      ac: 14, hp: "15d10+45", dexMod: 0,
+    attacks: [{ name: "Bite", bonus: 10, damage: "2d6+4" }, { name: "Horns", bonus: 10, damage: "1d12+4" }, { name: "Claws", bonus: 10, damage: "2d6+4" }], xp: 2300, gold: "0",
+    type: "monstrosity", saves: { STR: 4, DEX: 0, CON: 4, WIS: 2 },
+    spells: [{ name: "Fire Breath", breath: true, save: "DEX", dc: 15, damage: "6d8", damageType: "fire", half: true, targets: "all", uses: 1, chance: 0.4 }],
+    loot: [{ base: "potionGreaterHealing", chance: 0.4 }] },
+  shieldGuardian: { name: "Shield Guardian", label: "Guardian", ac: 17, hp: "15d10+60", dexMod: -1,
+    attacks: [{ name: "Fist", bonus: 12, damage: "2d6+6" }, { name: "Fist", bonus: 12, damage: "2d6+6" }], xp: 2900, gold: "0",
+    type: "construct", saves: { STR: 4, DEX: -1, CON: 4, WIS: 0 } },
+  // Not in the SRD: Aldric Thorne, the rune scholar who stole the Wardens' runes, Act 3's boss. He fights with them: the
+  // Breaking Rune hits you both, a Rune of Frost, and the Binding he copied before you took it back. His shield guardian
+  // wards him (+3 AC while it stands). With Rachel there, he hesitates. Tuned with the simulator: see the roadmap.
+  thorne:      { name: "Aldric Thorne", label: "Thorne", proper: true, ac: 16, hp: "20d8+60", dexMod: 2,
+    attacks: [{ name: "Staff of Runes", bonus: 10, damage: "2d8+5" }, { name: "Staff of Runes", bonus: 10, damage: "2d8+5" }], xp: 5000, gold: "20d10",
+    type: "humanoid", saves: { STR: 0, DEX: 3, CON: 4, WIS: 5 }, guardedBy: 1, hesitates: true,
+    spells: [
+      { name: "the Breaking Rune", level: 5, save: "DEX", dc: 17, damage: "8d8", damageType: "force", half: true, targets: "all", uses: 1, chance: 0.6 },
+      { name: "a Rune of Frost", level: 3, save: "CON", dc: 17, damage: "6d8", damageType: "cold", half: true, targets: "one", condition: { id: "restrained", rounds: 1 }, uses: 2, chance: 0.5 },
+      { name: "a stolen Binding", level: 2, save: "WIS", dc: 17, targets: "one", condition: { id: "paralyzed", rounds: 1 }, uses: 1, chance: 0.4 },
+    ],
+    loot: [{ base: "potionGreaterHealing", chance: 1 }, { base: "scrollCounterspell", chance: 1 }] },
   // Kobolds, digging in the empty Deep Warrens in Act 3, "for the Great One beyond the mountain" (no match for you now).
   kobold:      { name: "Kobold",       ac: 12, hp: "2d6",   dexMod: 2, attack: { name: "Dagger",   bonus: 4, damage: "1d4+2" }, xp: 25,  gold: "1d6",
     type: "humanoid", saves: { STR: -2, DEX: 2, CON: -1, WIS: -2 } },

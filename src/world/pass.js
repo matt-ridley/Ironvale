@@ -20,7 +20,10 @@ export const PASS = {
     { id: "slopes", name: "The Mountain Pass", x0: 0, y0: 50, x1: 47, y1: 79, music: "pass" },
   ],
   // Down the road to the rockslide, back in Ironvale.
-  exits: [{ x: 24, y: 78, to: "ironvale", at: { x: 31, y: 7 }, facing: "down" }],
+  exits: [
+    { x: 24, y: 78, to: "ironvale", at: { x: 31, y: 7 }, facing: "down" },
+    { x: 24, y: 3, to: "gatehouse", at: { x: 20, y: 36 }, facing: "up" }, // through the door, once it's open
+  ],
   objects: [
     // The Warden's Road: three waystones (dark until their trial is done, then lit), Warden Colleen's ghost beside the
     // one you're at, and a campfire at each once its trial is done (a camp).
@@ -60,7 +63,7 @@ export const PASS = {
     { id: "hagHut", x: 42, y: 58, sprite: "hagHut", script: "hagHut", shownWhen: "nettleMet", still: true },
     // A cairn of bones on the snowfield, with half of a sun charm in it.
     { id: "boneCairn", x: 6, y: 30, sprite: "boneCairn", script: "boneCairn", still: true },
-    { id: "gatehouseDoor", x: 24, y: 4, sprite: "runeDoor", script: "gatehouseDoor", still: true },
+    { id: "gatehouseDoor", x: 24, y: 4, sprite: "runeDoor", script: "gatehouseDoor", goneWhen: "gatehouseOpen", still: true },
     { id: "passCarving", x: 13, y: 70, sprite: "carving", script: "carving", still: true,
       lore: "\"Here the Wardens laid the first stone of the road, that the door should never stand alone.\" Rachel runs a finger along it. \"Look: there's a cache marked under it.\"",
       cache: { gold: 120, items: ["potionGreaterHealing"] } },

@@ -6,9 +6,11 @@ import { ENCOUNTERS } from "../world/encounters.js";
 const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willowmere", warrens: "The Deep Warrens", fen: "Greywater Fen", keepGrounds: "Ironvale Keep's grounds",
   courtyard: "Ironvale Keep's courtyard", chapel: "Ironvale Keep's chapel", armoury: "Ironvale Keep's armoury",
   slopes: "The pass's slopes", snowfield: "The snowfield", heights: "The heights", watchtower: "The old watchtower", thorneCamp: "Thorne's camp",
-  gatehouseApproach: "Below the gatehouse", frozenChapel: "The Frozen Chapel" };
+  gatehouseApproach: "Below the gatehouse", frozenChapel: "The Frozen Chapel", gatehouse: "The Wardens' Gatehouse",
+  frozenForge: "The Frozen Forge", barracks: "The Wardens' Barracks" };
 const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall", motherSallow: "Her hut in Greywater Fen", lordVarric: "His tomb, under Ironvale Keep",
-  kobold: "Digging in the Deep Warrens", crownedSallow: "The drowned causeway, collecting tolls", nightHag: "A crooked hut on the pass's slopes" }; // bosses (and Pip's kobolds) don't roam
+  kobold: "Digging in the Deep Warrens", crownedSallow: "The drowned causeway, collecting tolls", nightHag: "A crooked hut on the pass's slopes",
+  thorne: "At the Door, at the top of the gatehouse" }; // bosses (and Pip's kobolds) don't roam
 
 export const LORE = {
   giantRat: "A rat the size of a dog. Alone it's a nuisance; it's the bite that festers.",
@@ -40,6 +42,9 @@ export const LORE = {
   specter: "The pale, wailing shape of someone lost on the pass. Weak alone, but they come in twos.",
   crownedSallow: "Mother Sallow, in the Goblin King's crown, calling herself the Queen of the Fen. Tougher than before, and she breathes swamp gas.",
   nightHag: "Auntie Nettle, Mother Sallow's sister: a night hag with hair like a dandelion clock. She curses, she sickens, and she's still owed money.",
+  chimera: "A lion with a goat's head and a dragon's growing out of it, and wings. Three mouths, all hungry, one of them full of fire.",
+  shieldGuardian: "A Warden construct of stone and iron, built to guard whoever wears its amulet. Thorne wears one now.",
+  thorne: "Aldric Thorne, scholar of the Wardens' runes, who learned to lift them out of the stone and use them. Something behind the Door has been whispering to him.",
   kobold: "A little rust-red lizard-dog with a pick and a candle on its head. It digs for \"the Great One beyond the mountain\", and won't say who that is.",
   motherSallow: "A marsh hag with weed in her hair and a laugh like a drain. She keeps the causeway under water, and she loves a bargain.",
 };
