@@ -54,6 +54,10 @@ export const TRAVEL_POINTS = [
     centre: { x: 14, y: 65 }, opensWhen: f => !!f.waystoneIron },
   { id: "waystone2", name: "Second Waystone", kind: "camp", map: "pass", zone: "snowfield", at: { x: 24, y: 32 },
     centre: { x: 22, y: 31 }, opensWhen: f => !!f.waystoneCall },
+  { id: "watchtower", name: "The Watchtower", kind: "camp", map: "pass", zone: "watchtower", at: { x: 7, y: 19 },
+    centre: { x: 7, y: 19 }, opensWhen: f => !!f.matthewFound }, // Matthew's old tower
+  { id: "chapel", name: "The Frozen Chapel", kind: "camp", map: "pass", zone: "frozenChapel", at: { x: 40, y: 34 },
+    centre: { x: 40, y: 32 }, opensWhen: f => !!f.chapelLit },
   { id: "waystone3", name: "Third Waystone", kind: "camp", map: "pass", zone: "heights", at: { x: 24, y: 18 },
     centre: { x: 22, y: 18 }, opensWhen: f => !!f.waystoneBinding },
 ];

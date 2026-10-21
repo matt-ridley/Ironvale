@@ -96,6 +96,14 @@ export const MONSTERS = {
   earthElemental: { name: "Earth Elemental", ac: 17, hp: "14d10+70", dexMod: -1,
     attacks: [{ name: "Slam", bonus: 10, damage: "2d8+5" }, { name: "Slam", bonus: 10, damage: "2d8+5" }], xp: 1800, gold: "0",
     type: "elemental", saves: { STR: 5, DEX: -1, CON: 5, WIS: 0 }, weaponResist: "magic", vulnerable: ["thunder"] },
+  // The Frozen Chapel: the Wardens' dead, gone cold. Plain steel only half-bites them; silver (the Wardenblade) does.
+  wraith:      { name: "Wraith",       ac: 13, hp: "14d8+42", dexMod: 3,
+    attacks: [{ name: "Life Drain", bonus: 10, damage: "4d8+3", onHit: { condition: "frightened", save: "WIS", dc: 14, rounds: 3 } },
+      { name: "Cold Grasp", bonus: 10, damage: "2d8+3" }], xp: 1800, gold: "0",
+    type: "undead", saves: { STR: -2, DEX: 3, CON: 3, WIS: 2 }, resistant: ["necrotic"], weaponResist: "silver",
+    loot: [{ base: "potionGreaterHealing", chance: 0.4 }] },
+  specter:     { name: "Specter",      ac: 12, hp: "9d8",    dexMod: 2, attack: { name: "Life Drain", bonus: 9, damage: "4d6" }, xp: 200, gold: "0",
+    type: "undead", saves: { STR: -5, DEX: 2, CON: 0, WIS: 0 }, resistant: ["necrotic"], weaponResist: "silver" },
   // Kobolds, digging in the empty Deep Warrens in Act 3, "for the Great One beyond the mountain" (no match for you now).
   kobold:      { name: "Kobold",       ac: 12, hp: "2d6",   dexMod: 2, attack: { name: "Dagger",   bonus: 4, damage: "1d4+2" }, xp: 25,  gold: "1d6",
     type: "humanoid", saves: { STR: -2, DEX: 2, CON: -1, WIS: -2 } },

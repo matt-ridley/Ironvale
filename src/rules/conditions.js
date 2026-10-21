@@ -26,6 +26,7 @@ export const CONDITIONS = {
   blinked:    { name: "out of reach", attackedWith: "disadvantage" }, // Misty Step
   helped:     { name: "helped", attacksWith: "advantage", once: true }, // Quill's flyby
   bound:      { name: "bound", skips: true }, // the Rune of Binding
+  turned:     { name: "turned", skips: true, wakesOnDamage: true }, // Turn Undead: it flees until it's hurt
   frightened: { name: "frightened", attacksWith: "disadvantage" },
 };
 

@@ -50,6 +50,7 @@ export const ITEMS = {
   oswinBelt: { name: "Oswin's Belt", type: "trinket", prize: true, cost: 0,
     about: "Big Oswin's wide leather belt, won in an arm wrestle. +2 STR while it's in your pack." },
   willowBow: { name: "Willow Longbow", type: "bow", prize: true, damage: "1d8", damageType: "piercing", cost: 50 },
+  griffonBow: { name: "Griffon Longbow", type: "bow", prize: true, damage: "1d10", damageType: "piercing", cost: 100 }, // Matthew's prize
   // Fish (fishing at Willowmere and Fenwatch): sell them at any shop.
   perch: { name: "Perch", type: "fish", cost: 6, about: "A stripy little perch. A shop will give you a few coins for it." },
   pike: { name: "Pike", type: "fish", cost: 16, about: "A long, toothy pike. Worth a bit at any shop." },

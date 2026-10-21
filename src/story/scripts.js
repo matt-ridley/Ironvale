@@ -1191,6 +1191,8 @@ function obstacle({ look, checks, flag, passedFlag, shoveLabel, climbLabel, hurt
 export function sideObjective(flags, state = {}) {
   if (flags.meganQuest && !flags.meganJoined) return flags.bowFound ? "Bring the bow back to Megan" : "Find Megan's bow in the Whispering Wood";
   if (flags.robynQuest && !flags.robynJoined) return flags.gravesAtRest ? "Tell Robyn the graves are quiet" : "Lay the restless graves in the fen to rest";
+  if (flags.matthewQuest && !flags.matthewFound) return "Follow Matthew's arrows up the pass, with Megan";
+  if (flags.chapelQuest && !flags.chapelLit) return "Take Robyn to the Frozen Chapel on the pass";
   if (flags.pipRanAway && !flags.pipRewarded) return flags.pipFound ? "See Pip and Hazel in Oakhollow" : flags.hazelPipNews ? "Find Pip: his trail goes into the wood" : "Ask Hazel what's happened to Pip";
   return bountyLine(state);
 }

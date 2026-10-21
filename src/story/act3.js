@@ -6,7 +6,9 @@
 // Oakhollow, the bard and the plaque at the Sleeping Fox, and Old Gnasher's mount in Tom's hut. Quest 7, the Warden's
 // Road: the ghost of Warden Colleen at three waystones, each with a trial and a rune (Iron Ward, Warden's Call, and the
 // Rune of Binding, which Thorne stole: take it back from his camp), the sun half of a charm in a cairn of bones, and
-// the wolves on the heights that someone sent.
+// the wolves on the heights that someone sent. The companions' own quests: Matthew's Arrows (Megan finds her father at
+// the old watchtower; he teaches her VOLLEY and comes to live at the keep) and the Frozen Chapel (Robyn lights the
+// Wardens' chapel again, and learns Turn Undead and Spiritual Weapon).
 // No Phaser here. scripts.js adds these to SCRIPTS.
 import { joinParty, COMPANIONS } from "../rules/party.js";
 import { learnRune } from "../rules/character.js";
@@ -15,7 +17,13 @@ import { pay, paid } from "./rewards.js";
 import { callName, titleOf, actOf } from "./hero.js";
 import { MAPS } from "../world/maps.js";
 
-const RACHEL = "RACHEL", PIP = "PIP", COLLEEN = "WARDEN COLLEEN";
+const RACHEL = "RACHEL", PIP = "PIP", COLLEEN = "WARDEN COLLEEN", MEGAN = "MEGAN", MATTHEW = "MATTHEW", ROBYN = "ROBYN";
+export const MATTHEW_REWARD = { gold: 0, xp: 3000 }; // and Megan's Volley
+export const CHAPEL_REWARD = { gold: 0, xp: 3000 }; // and Robyn's new prayers
+export const CHAPEL_FIGHT = ["wraith", "specter"];
+export const ARROWS_FOUND = ["matthewArrow1", "matthewArrow2", "matthewArrow3"];
+export const arrowsFound = flags => ARROWS_FOUND.filter(f => flags[f]).length;
+const withCompanion = (s, id) => s.hero.companion?.id === id;
 export const WAYSTONE_REWARD = { gold: 200, xp: 2000 }; // each of the three trials
 export const ROAD_REWARD = { gold: 200, xp: 2000 }; // quest 7, once all three runes are won
 export const IRON_TRIAL = ["gargoyle", "gargoyle"];
@@ -474,6 +482,117 @@ export const ACT3_SCRIPTS = {
         speaker: RACHEL,
         text: "Wolves don't do that. She stares after them for a long time. \"Wolves don't DO that.\"",
       },
+    },
+  },
+
+  // Matthew's Arrows: his arrows along the pass. Only Megan knows them (the object says which flag it sets).
+  matthewArrow: {
+    start: s => (withCompanion(s, "megan") ? "megan" : "plain"),
+    nodes: {
+      plain: { text: "An old arrow in the snow, grey goose feathers with a little nick in each. Megan would know whose." },
+      megan: {
+        enter: (s, ctx) => { s.flags[ctx.object.flag] = true; },
+        speaker: MEGAN,
+        text: s => (arrowsFound(s.flags) < 3
+          ? `That's his! Grey goose, and the nick in the feathers. Da's. (${arrowsFound(s.flags)} of 3) They're leading west, and up.`
+          : "Another one. They all point the same way: west, on the heights, to that old tower. He's there. I know he's there."),
+      },
+    },
+  },
+
+  // Matthew at the old watchtower: he shoots at strangers, and only comes out for Megan.
+  matthew: {
+    start: s => (!withCompanion(s, "megan") ? "warning" : s.flags.matthewQuest ? "meg" : "warning"),
+    nodes: {
+      warning: { text: "An arrow thunks into the snow at your feet. \"That's close enough!\" shouts a voice from the tower. \"Go back down the mountain!\"" },
+      meg: { speaker: MEGAN, text: "Da? DA! It's me! It's Meg!", to: "door" },
+      door: {
+        text: "Silence. Then the tower door creaks, and a grey-bearded man in a griffon-feather cloak comes out, very slowly, as if the snow might break.",
+        to: "look",
+      },
+      look: { speaker: MATTHEW, text: "Meg? Little Meg? Look at you. And look at that bow. That's my bow.", to: "why" },
+      why: {
+        speaker: MATTHEW,
+        text: "Griffons took the survey party, ten years ago, up on the heights. I lived. I didn't think I deserved to go home and say so. So I stayed up here and hunted the things that took them.",
+        to: "stubborn",
+      },
+      stubborn: { speaker: MEGAN, text: "You stupid, stubborn... I'm so glad you're alive.", to: "owe" },
+      owe: {
+        speaker: MATTHEW,
+        text: "You brought her up a mountain she's scared of. I owe you everything. Meg, come here. Let me show you something I should have taught you years ago.",
+        to: "volley",
+      },
+      volley: {
+        enter: (s, ctx) => {
+          s.hero.companion.volley = true;
+          s.flags.matthewFound = true;
+          pay(s, ctx, MATTHEW_REWARD);
+        },
+        text: (s, ctx) => `Matthew shows Megan how to nock three arrows at once and loose them in one breath. Megan learned VOLLEY! (Once a fight, she shoots at every monster.) ${paid(ctx, MATTHEW_REWARD).replace("+0 gold, ", "")}`,
+        to: "home",
+      },
+      home: { speaker: MATTHEW, text: "I'll come down to your keep, if there's room for an old man. It's time. And I'll want a rematch with that girl at the targets." },
+    },
+  },
+
+  // Matthew at the keep: archery rematches, and something he saw, years ago.
+  matthewKeep: {
+    start: "hello",
+    nodes: {
+      hello: {
+        speaker: MATTHEW,
+        text: s => (s.flags.wonMatthewArchery ? "Fancy another round at the targets? I'm still on 40. No prize, just pride." : "A rematch at the targets? Beat my 40 and you'll have my griffon longbow, for Meg. It's the best bow I ever made."),
+        choices: [
+          { label: "Archery!", to: "play" },
+          { label: "Seen anything strange up there?", if: s => withCompanion(s, "rachel"), to: "claire" },
+          { label: "Not now", to: null },
+        ],
+      },
+      play: { enter: (s, ctx) => ctx.emit({ type: "minigame", key: "Archery", data: { rival: "matthew" } }) },
+      claire: {
+        speaker: MATTHEW,
+        enter: s => { s.flags.matthewClaire = true; },
+        text: "Strange? A girl came down the pass once, years back. Wild hair, a wolf pelt, running with the pack on all fours. Had your face, scholar.",
+        to: "rachel",
+      },
+      rachel: { speaker: RACHEL, text: "...You must be mistaken. It was a long winter. Everyone sees things." },
+    },
+  },
+
+  // The Frozen Chapel's altar: only Robyn can light it again.
+  iceAltar: {
+    start: s => (s.flags.chapelLit ? "lit" : withCompanion(s, "robyn") ? "robyn" : "cold"),
+    nodes: {
+      cold: { text: "A Warden altar under a skin of black ice, the sun of the Dawn carved on it. The cold in here isn't just cold: it watches. You'd need a priest to wake this place." },
+      robyn: {
+        speaker: ROBYN,
+        text: "This is it. Their chapel. I can feel the light under all that ice, like a fire under ash. Stand with me. Something in here won't want it back.",
+        choices: [{ label: "Light it.", to: "pray" }, { label: "Not yet.", to: null }],
+      },
+      pray: {
+        text: "Robyn kneels and prays. The ice on the altar cracks like a shot, and the shadows in the corners stand up.",
+        to: "fight",
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...CHAPEL_FIGHT], zone: "frozenChapel", winFlag: "chapelCleared", afterWin: "chapelLit" }) },
+      lit: { text: "The altar glows warm, the braziers burning without fuel. Rest by them: the Frozen Chapel is a camp now." },
+    },
+  },
+  chapelLit: {
+    start: "light",
+    nodes: {
+      light: { text: "Robyn finishes her prayer in the quiet. Gold light runs along the old carvings, the ice slides off the altar, and the braziers catch by themselves.", to: "answer" },
+      answer: {
+        speaker: ROBYN,
+        enter: (s, ctx) => {
+          const c = s.hero.companion;
+          if (c?.id === "robyn") c.spells = [...new Set([...(c.spells || ["sacredFlame", "cureWounds", "healingWord", "bless"]), "turnUndead", "spiritualWeapon"])];
+          s.flags.chapelLit = true;
+          pay(s, ctx, CHAPEL_REWARD);
+        },
+        text: (s, ctx) => `Dawn. It answered. It ANSWERED. (Robyn learned TURN UNDEAD and SPIRITUAL WEAPON! ${paid(ctx, CHAPEL_REWARD).replace("(+0 gold, ", "(")})`,
+        to: "oath",
+      },
+      oath: { speaker: ROBYN, text: "The Wardens who prayed here swore an Oath of Dawn. The dead don't pass them. I think... I think it would suit you. But you'll choose." },
     },
   },
 

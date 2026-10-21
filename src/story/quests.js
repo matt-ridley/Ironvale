@@ -2,7 +2,7 @@
 // from the quest flags every time, so there's nothing extra to save. No Phaser here, so it can be tested; the Quests
 // screen shows what questLog returns.
 import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD } from "./scripts.js";
-import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD, WAYSTONE_REWARD, ROAD_REWARD } from "./act3.js";
+import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD, WAYSTONE_REWARD, ROAD_REWARD, MATTHEW_REWARD, CHAPEL_REWARD, arrowsFound } from "./act3.js";
 import { actOf } from "./hero.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
@@ -132,6 +132,26 @@ export const QUESTS = [
     steps: [
       { text: "Find the toolbox in the keep's armoury", done: f => f.toolsFound },
       { text: "Bring it to Brannoc's forge in Fenwatch", done: f => f.toolsReturned },
+    ],
+  },
+  {
+    id: "matthew", title: "Matthew's Arrows", kind: "side",
+    known: f => f.matthewQuest,
+    about: "Megan's father went up the pass ten years ago and never came back. She's found one of his arrows in the snow.",
+    reward: `${MATTHEW_REWARD.xp} XP, and Megan learns Volley`,
+    steps: [
+      { text: "Find Matthew's arrows along the pass (Megan knows them)", done: f => arrowsFound(f) === 3 || f.matthewFound },
+      { text: "Follow them to the old watchtower, with Megan", done: f => f.matthewFound },
+    ],
+  },
+  {
+    id: "chapel", title: "The Frozen Chapel", kind: "side",
+    known: f => f.chapelQuest,
+    about: "A Warden chapel high on the pass, gone cold and full of the dead. Robyn thinks the light she prays to is waiting there.",
+    reward: `${CHAPEL_REWARD.xp} XP, and Robyn learns Turn Undead and Spiritual Weapon`,
+    steps: [
+      { text: "Find the Frozen Chapel, east of the snowfield", done: f => f.seenFrozenChapel || f.chapelLit },
+      { text: "Let Robyn light the altar (she must be with you)", done: f => f.chapelLit },
     ],
   },
   {

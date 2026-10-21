@@ -139,6 +139,16 @@ export const ENCOUNTERS = {
       { weight: 1, foes: ["wyvern", "griffon"] },
     ],
   },
+  frozenChapel: {
+    level: 10,
+    chance: 0.08,
+    table: [
+      { weight: 2, foes: ["specter", "specter"] },
+      { weight: 2, foes: ["wraith"] },
+      { weight: 2, foes: ["wraith", "specter"] },
+      { weight: 1, foes: ["wraith", "wraith"] },
+    ],
+  },
   watchtower: {
     level: 10,
     chance: 0.06,
