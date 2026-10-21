@@ -8,7 +8,11 @@
 // Rune of Binding, which Thorne stole: take it back from his camp), the sun half of a charm in a cairn of bones, and
 // the wolves on the heights that someone sent. The companions' own quests: Matthew's Arrows (Megan finds her father at
 // the old watchtower; he teaches her VOLLEY and comes to live at the keep) and the Frozen Chapel (Robyn lights the
-// Wardens' chapel again, and learns Turn Undead and Spiritual Weapon).
+// Wardens' chapel again, and learns Turn Undead and Spiritual Weapon). Choices come back: the goblin refugees outside
+// Fenwatch (help them and Grub's stall opens; in Act 3, Snik leads you through the old mines round the ice, and they go
+// home to Goblin Rocks), Mother Sallow (bargained with: the Queen of the Fen's toll on the causeway, then Sallow's
+// Sundries at the rockslide; fought: her sister Auntie Nettle spoils your rests on the pass until you find her hut), and
+// Old Vosk the ferryman, with treasure hints and a row out to the island in the south lake.
 // No Phaser here. scripts.js adds these to SCRIPTS.
 import { joinParty, COMPANIONS } from "../rules/party.js";
 import { learnRune } from "../rules/character.js";
@@ -24,6 +28,18 @@ export const CHAPEL_FIGHT = ["wraith", "specter"];
 export const ARROWS_FOUND = ["matthewArrow1", "matthewArrow2", "matthewArrow3"];
 export const arrowsFound = flags => ARROWS_FOUND.filter(f => flags[f]).length;
 const withCompanion = (s, id) => s.hero.companion?.id === id;
+const SNIK = "SNIK", SALLOW = "QUEEN SALLOW", NETTLE = "AUNTIE NETTLE", VOSK = "OLD VOSK";
+export const REFUGEE_REWARD = { gold: 0, xp: 1500 };
+export const QUEEN_REWARD = { gold: 0, xp: 2000 };
+export const NETTLE_REWARD = { gold: 0, xp: 2000 };
+export const RAIDERS_FIGHT = ["lizardfolk", "lizardfolk"];
+export const QUEEN_FIGHT = ["crownedSallow"];
+export const NETTLE_FIGHT = ["nightHag"];
+export const FERRY_COST = 10;
+/* Auntie Nettle haunts the pass: from Act 3 if you fought her sister, until you beat her. */
+export const nettleHaunting = s => actOf(s.flags) >= 3 && !!s.flags.sallowDefeated && !s.flags.nettleDefeated;
+const noGold = r => ({ ...r, gold: 0 });
+const xpOnly = (ctx, reward) => paid(ctx, reward).replace("+0 gold, ", "");
 export const WAYSTONE_REWARD = { gold: 200, xp: 2000 }; // each of the three trials
 export const ROAD_REWARD = { gold: 200, xp: 2000 }; // quest 7, once all three runes are won
 export const IRON_TRIAL = ["gargoyle", "gargoyle"];
@@ -596,6 +612,215 @@ export const ACT3_SCRIPTS = {
     },
   },
 
+  // The goblin refugees' camp outside Fenwatch: Snik and the others, come up the back passage with nothing.
+  snik: {
+    start: s => (s.flags.refugeesHelped ? "thanks" : s.flags.refugeesRefused ? "cold" : s.flags.refugeeQuest ? "waiting" : "hello"),
+    nodes: {
+      hello: {
+        speaker: SNIK,
+        text: "Don't stab! Don't stab! Snik's not a raider. Not any more. Old King's dead, and the bones took our home years ago. We came up the back passage with nothing.",
+        to: "trouble",
+      },
+      trouble: {
+        speaker: SNIK,
+        text: "Fenwatch won't let goblins in. Fair, maybe. But lizardfolk take our fish traps every night, and the little ones are hungry. You're big. Could you...?",
+        choices: [{ label: "I'll deal with the lizardfolk.", to: "help" }, { label: "You raided Oakhollow. Go away.", to: "refuse" }],
+      },
+      help: { speaker: SNIK, enter: s => { s.flags.refugeeQuest = true; }, text: "Really? They come out of the reeds north of here, by the big pool. Snik won't forget this!" },
+      refuse: { speaker: SNIK, enter: s => { s.flags.refugeesRefused = true; }, text: "...Fair. Snik remembers raiding. Snik will remember this too." },
+      waiting: { speaker: SNIK, text: "The lizardfolk hide in the reeds north of here, by the big pool. Please hurry." },
+      cold: { speaker: SNIK, text: "Snik heard you. No need to say it twice." },
+      thanks: {
+        speaker: SNIK,
+        text: s => (actOf(s.flags) >= 3 ? "Snik's going up the mountain, to the old mines: goblins dug there before the bones. Snik knows a way round the ice. Find Snik up there!"
+          : "Fenwatch lets us trade at the gate now! Grub's opened a stall. Snik owes you one. A big one."),
+      },
+    },
+  },
+  // The lizardfolk raiding the goblins' fish traps.
+  raiders: {
+    start: "look",
+    nodes: {
+      look: {
+        text: "Two lizardfolk crouch in the reeds with a heap of stolen fish traps, picking their teeth. One hisses at you.",
+        choices: [{ label: "Fight!", to: "fight" }, { label: "Back away", to: null }],
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...RAIDERS_FIGHT], zone: "fen", winFlag: "raidersBeaten", afterWin: "raidersFled" }) },
+    },
+  },
+  raidersFled: {
+    start: "gone",
+    nodes: {
+      gone: {
+        enter: (s, ctx) => { s.flags.refugeesHelped = true; pay(s, ctx, REFUGEE_REWARD); },
+        text: (s, ctx) => `The lizardfolk splash off into the fen. You carry the fish traps back to the goblins' camp, and Snik nearly cries. Fenwatch's gate guard grudgingly agrees they can trade. ${xpOnly(ctx, REFUGEE_REWARD)}`,
+      },
+    },
+  },
+  // Grub, the refugees' trader (at their camp, then in the keep's courtyard in Act 3).
+  grub: {
+    start: "hello",
+    nodes: {
+      hello: {
+        speaker: "GRUB",
+        text: "Grub's goods! Cheap! Don't ask where from.",
+        choices: [{ label: "Let's see", to: "shop" }, { label: "Not now", to: null }],
+      },
+      shop: { enter: (s, ctx) => ctx.emit({ type: "shop", shop: "goblinTrader" }) },
+    },
+  },
+  // Goblins back home at Goblin Rocks, in Act 3.
+  goblinVillager: {
+    start: "hello",
+    nodes: { hello: { speaker: "GOBLIN", text: "Home! Rocks are home again. The hero helped. Snik says don't steal from the hero. Snik says don't steal from ANYONE, but that's harder." } },
+  },
+  // Snik at the old Warden mine on the pass: a way round the ice, if you helped the refugees.
+  mineMouth: {
+    start: s => (s.flags.refugeesHelped ? "snik" : "dark"),
+    nodes: {
+      dark: { text: "An old Warden mine, its timbers rotten. In the dark it splits three ways, then thirty. You'd be lost in minutes without a guide." },
+      snik: {
+        speaker: SNIK,
+        text: "Snik found it! The old mines. Goblins dug here, before the bones. It comes out above the ice. And Snik saw a little door on the way. Follow Snik!",
+        choices: [{ label: "Lead on, Snik.", to: "go" }, { label: "Not now.", to: null }],
+      },
+      go: { enter: (s, ctx) => { s.flags.snikShortcut = true; ctx.emit({ type: "travel", map: "pass", at: { x: 4, y: 31 } }); } },
+    },
+  },
+  mineExit: {
+    start: "look",
+    nodes: {
+      look: {
+        text: s => (s.flags.snikShortcut ? "The way back down through Snik's mine, to the slopes below the ice." : "An old mine, its timbers rotten. It goes down into the mountain, and you can't tell where."),
+        choices: [{ label: "Go down", if: s => !!s.flags.snikShortcut, to: "go" }, { label: "Leave it", to: null }],
+      },
+      go: { enter: (s, ctx) => ctx.emit({ type: "travel", map: "pass", at: { x: 5, y: 53 } }) },
+    },
+  },
+
+  // Mother Sallow, if you bargained: crowned, and taking tolls on the causeway as the Queen of the Fen.
+  queenSallow: {
+    start: s => ["toll1", "toll2", "toll3", "toll4"][Math.min(3, s.flags.queenTolls || 0)],
+    nodes: {
+      toll1: {
+        speaker: SALLOW,
+        text: "HALT! Who goes there, on the Queen's causeway? The Queen of the Fen, that's who's asking. Toll's one copper, dearie.",
+        choices: [{ label: "Pay a copper (1 gold)", if: s => s.hero.gold >= 1, to: "paid1" }, { label: "This has to stop.", to: "stop" }],
+      },
+      paid1: { speaker: SALLOW, enter: s => { s.hero.gold -= 1; s.flags.queenTolls = 1; }, text: "Lovely! Pass, pass. Mind the Queen's water." },
+      toll2: {
+        speaker: SALLOW,
+        text: "Toll's gone up! A song, dearie. Sing for the Queen!",
+        choices: [{ label: "Sing (badly)", to: "paid2" }, { label: "This has to stop.", to: "stop" }],
+      },
+      paid2: { speaker: SALLOW, enter: s => { s.flags.queenTolls = 2; }, text: "...That was terrible. Mother loved it. Pass!" },
+      toll3: {
+        speaker: SALLOW,
+        text: "A PRETTY PEBBLE. The Queen demands a pretty pebble. The prettiest. Fenwatch's been complaining, you know. Ungrateful.",
+        choices: [{ label: "Here's a pebble.", to: "paid3" }, { label: "This has to stop.", to: "stop" }],
+      },
+      paid3: { speaker: SALLOW, enter: s => { s.flags.queenTolls = 3; }, text: "It's... grey. Mother will allow it. This once." },
+      toll4: {
+        speaker: SALLOW,
+        text: "The Queen's toll is... something SHINY. Shinier than a crown. Or the Queen keeps her causeway, and Fenwatch can swim.",
+        choices: [{ label: "This has to stop.", to: "stop" }, { label: "Not now.", to: null }],
+      },
+      stop: {
+        speaker: SALLOW,
+        enter: s => { s.flags.queenMet = true; },
+        text: "Stop? STOP? Mother is a QUEEN now, dearie. Queens don't stop. Unless... unless something very shiny turned up. Something a queen could look at herself in.",
+        choices: [
+          { label: "Give her Thorne's mirror", if: s => s.hero.inventory.some(i => i.base === "thorneMirror"), to: "mirror" },
+          { label: "Then I'll make you stop!", to: "fight" },
+          { label: "Not now.", to: null },
+        ],
+      },
+      mirror: {
+        speaker: SALLOW,
+        enter: (s, ctx) => {
+          s.hero.inventory = s.hero.inventory.filter(i => i.base !== "thorneMirror");
+          s.flags.queenSettled = true;
+          pay(s, ctx, QUEEN_REWARD);
+        },
+        text: (s, ctx) => `"A MIRROR! Oh, look at her. Look at that QUEEN." She gazes into it for a long, long time. "Mother's had enough of tolls. Mother's going into BUSINESS. Look for Mother up at the rockslide, dearie." ${xpOnly(ctx, QUEEN_REWARD)}`,
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...QUEEN_FIGHT], zone: "drowned", winFlag: "queenBeaten", afterWin: "queenFalls" }) },
+    },
+  },
+  queenFalls: {
+    start: "sulk",
+    nodes: {
+      sulk: {
+        enter: (s, ctx) => { s.flags.queenSettled = true; pay(s, ctx, QUEEN_REWARD); },
+        text: (s, ctx) => `Sallow pulls off the crown and throws it in the mud. "FINE! Mother will find honest work. Honest-ish." She stomps off up the old road, muttering about rockslides and passing trade. ${xpOnly(ctx, QUEEN_REWARD)}`,
+      },
+    },
+  },
+  // Sallow's Sundries, at the rockslide camp: the pass's only pedlar.
+  sundries: {
+    start: "hello",
+    nodes: {
+      hello: {
+        speaker: "MOTHER SALLOW",
+        text: "Welcome to Mother's shop, dearie! Cold charms, warm potions, scrolls that go BANG. Fair prices. Fair for Mother.",
+        choices: [{ label: "Let's see", to: "shop" }, { label: "Not now", to: null }],
+      },
+      shop: { enter: (s, ctx) => ctx.emit({ type: "shop", shop: "sundries" }) },
+    },
+  },
+
+  // Auntie Nettle, if you fought Sallow: her crooked hut on the slopes, once she's spoiled a rest.
+  hagHut: {
+    start: s => (s.flags.nettleDefeated ? "empty" : "knock"),
+    nodes: {
+      knock: {
+        speaker: NETTLE,
+        text: "Ooh, a visitor! You're the one who drowned my sister. Sallow! Poor Sallow. She owed me money, you know. Eleven silver and a goat. Who's going to pay that now?",
+        choices: [{ label: "You've been spoiling my rest.", to: "spoil" }, { label: "Back away", to: null }],
+      },
+      spoil: {
+        speaker: NETTLE,
+        text: "And I'll spoil it till the mountain falls down, dearie. Unless you'd like to settle Sallow's debt the hard way. Hee!",
+        choices: [{ label: "Fight!", to: "fight" }, { label: "Not now.", to: null }],
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...NETTLE_FIGHT], zone: "slopes", winFlag: "nettleDefeated", afterWin: "nettleFalls" }) },
+      empty: { text: "Auntie Nettle's hut, empty now. It still smells of burnt toast and bad intentions." },
+    },
+  },
+  nettleFalls: {
+    start: "gone",
+    nodes: {
+      gone: {
+        enter: (s, ctx) => pay(s, ctx, NETTLE_REWARD),
+        text: (s, ctx) => `Auntie Nettle shrieks, folds up like a wet umbrella, and is gone in a puff of nightmare. The pass feels warmer at once. You'll sleep easy by its fires now. ${xpOnly(ctx, NETTLE_REWARD)}`,
+      },
+    },
+  },
+
+  // Old Vosk, Fenwatch's ferryman: a hint about the treasure out there, and a row out to the island in the south lake.
+  ferryman: {
+    start: "hello",
+    nodes: {
+      hello: {
+        speaker: VOSK,
+        enter: s => { s.flags.ferryHint = ((s.flags.ferryHint ?? -1) + 1) % 4; },
+        text: s => ["Ferry's running again, now the dead are quiet. There's a chest on the little island in the south lake, west of here. Ten gold and I'll row you out.",
+          "Up the pass, they say the old Warden miners hid things where the ice is. Goblins would know the way. Goblins know all the holes.",
+          "Carvings all over these parts: by the goblin hole in the fen, in the keep, in the old garden at Willowmere. Can't read 'em. Wardens' runes.",
+          "The keep's chapel, I heard, has a chest behind the pews. And the courtyard another. Did you look?"][s.flags.ferryHint],
+        choices: [{ label: `Row to the island (${FERRY_COST} gold)`, if: s => s.hero.gold >= FERRY_COST, to: "row" }, { label: "Not now", to: null }],
+      },
+      row: { enter: (s, ctx) => { s.hero.gold -= FERRY_COST; ctx.emit({ type: "travel", map: "ironvale", at: { x: 23, y: 53 } }); } },
+    },
+  },
+  ferryBack: {
+    start: "look",
+    nodes: {
+      look: { text: "Old Vosk's punt, and Old Vosk, smoking his pipe. \"Back to town?\"", choices: [{ label: "Back to Fenwatch", to: "go" }, { label: "Not yet", to: null }] },
+      go: { enter: (s, ctx) => ctx.emit({ type: "travel", map: "ironvale", at: { x: 48, y: 56 } }) },
+    },
+  },
+
   // The great door of the Wardens' gatehouse, at the top of the pass. Sealed with three runes.
   gatehouseDoor: {
     start: "look",
@@ -640,6 +865,10 @@ export function zoneEvent(state, zoneId) {
   if (zoneId === "village" && actOf(f) >= 3 && f.rockslideOpen && !f.pipRanAway) {
     f.pipRanAway = true;
     return { note: "Hazel runs up the path, white as flour: \"Have you seen Pip? He's gone!\"" };
+  }
+  if (zoneId === "fenwatch" && actOf(f) >= 3 && f.sallowBargain && !f.queenHeard) {
+    f.queenHeard = true;
+    return { note: "Fenwatch folk are grumbling: Mother Sallow's set up a toll on the causeway. She calls herself the Queen of the Fen now." };
   }
   if (zoneId === "heights" && !f.sawWolves) {
     f.sawWolves = true;

@@ -88,7 +88,7 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
   if (!keys) return { ok: false, reason };
   const who = caster.key === "player" ? "You" : caster.name;
   say(battle, "spell", `${who} ${caster.key === "player" ? "cast" : "casts"} ${spell.name}${slot > spell.level && spell.level ? ` (as a level ${slot} spell)` : ""}!`, { spell: spellId, caster: caster.key });
-  const fallen = t => { if (typeof t === "number" && combatant(battle, t).hp === 0) say(battle, "defeat", `The ${battle.monsters[t].name} falls.`, { target: t }); };
+  const fallen = t => { if (typeof t === "number" && combatant(battle, t).hp === 0) say(battle, "defeat", `${battle.monsters[t].The} falls.`, { target: t }); };
   const condition = (t, c) => {
     addCondition(battle, t, c.id, { rounds: c.rounds, untilTurnStart: c.untilTurnStart, saveEnds: c.saveEnds && { ability: c.saveEnds, dc: caster.saveDc } });
     if (CONDITIONS[c.id].once) return; // a passing effect (mocked) needs no line of its own
@@ -100,7 +100,7 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
     const r = adjustRoll(resolveAttack({ bonus: caster.attackBonus, damage: spellDice(spell, "damage", caster.level, slot), damageBonus: 0 }, acOf(battle, t), rng,
       attackMods(battle, caster.key, t, { melee: false })), battle.monsters[t], spell);
     const woke = hurt(battle, t, r.damage);
-    say(battle, "spell-attack", `${spell.name} at the ${battle.monsters[t].name}: ${rollText(r, caster.attackBonus)} ${hitText(r)}`, { roll: r, target: t, spell: spellId });
+    say(battle, "spell-attack", `${spell.name} at ${battle.monsters[t].the}: ${rollText(r, caster.attackBonus)} ${hitText(r)}`, { roll: r, target: t, spell: spellId });
     tellWoken(battle, t, woke);
     fallen(t);
   } else if (spell.kind === "save") {
@@ -110,7 +110,7 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
       const dmg = adjustDamage(battle.monsters[t], s.success ? (spell.half ? Math.floor(full / 2) : 0) : full, spell.damageType).damage;
       const woke = hurt(battle, t, dmg);
       const saved = `${s.ability} save ${s.total} vs DC ${s.dc}`;
-      say(battle, "spell-save", `The ${battle.monsters[t].name} ${s.success ? "resists" : "is caught"} (${saved})${spell.damage ? `: ${dmg} ${spell.damageType} damage` : ""}.`, { target: t, save: s, damage: dmg, spell: spellId });
+      say(battle, "spell-save", `${battle.monsters[t].The} ${s.success ? "resists" : "is caught"} (${saved})${spell.damage ? `: ${dmg} ${spell.damageType} damage` : ""}.`, { target: t, save: s, damage: dmg, spell: spellId });
       tellWoken(battle, t, woke);
       fallen(t);
       if (!s.success && spell.condition && combatant(battle, t).hp > 0) condition(t, spell.condition);
@@ -121,7 +121,7 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
     for (let n = 0; n < darts && t !== undefined; n++) {
       const dmg = adjustDamage(battle.monsters[t], roll(spell.damage, rng).total, spell.damageType).damage;
       const woke = hurt(battle, t, dmg);
-      say(battle, "spell-hit", `A glowing dart strikes the ${battle.monsters[t].name}: ${dmg} ${spell.damageType} damage.`, { target: t, damage: dmg, spell: spellId });
+      say(battle, "spell-hit", `A glowing dart strikes ${battle.monsters[t].the}: ${dmg} ${spell.damageType} damage.`, { target: t, damage: dmg, spell: spellId });
       tellWoken(battle, t, woke);
       fallen(t);
       if (combatant(battle, t).hp === 0) { // the rest fly at the next monster standing

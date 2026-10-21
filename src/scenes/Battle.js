@@ -393,6 +393,15 @@ export class Battle extends Phaser.Scene {
         sfx("coin");
         this.float(this.heroSprite, "+1!", COLORS.gold);
         break;
+      case "monster-cast":
+        sfx("alert");
+        this.lunge(this.foeViews[e.actor].sprite, -1);
+        this.float(this.foeViews[e.actor].sprite, e.spell.toUpperCase(), COLORS.gold);
+        break;
+      case "monster-spell":
+        if (e.damage) { this.hit(this.spriteOf(e.who), e.damage, false); this.cameras.main.shake(120, 0.006); }
+        else this.float(this.spriteOf(e.who), "RESIST", COLORS.dim);
+        break;
       case "ward-prompt":
         sfx("alert");
         this.lunge(this.foeViews[e.actor].sprite, -1);

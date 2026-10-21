@@ -103,6 +103,18 @@ export const SHOPS = {
     greeting: "Wren's remedies! Bog myrtle, frogspawn and a little magic. Greater Healing's my speciality.",
     stock: ["potionHealing", "potionGreaterHealing", "potionSpeed", "potionDexterity", "homewardFeather", "scrollCureWounds", "scrollSleep"],
   },
+  // Act 3: Grub's stall (the goblin refugees' trader: cheap, and doesn't ask where things came from), and Sallow's
+  // Sundries at the rockslide camp (the pass's only pedlar, at hag prices). `markup` multiplies the price.
+  goblinTrader: {
+    title: "GRUB'S GOODS", tabs: ["buy", "sell"], tint: 0x6aa84f, markup: 0.8,
+    greeting: "Grub's goods! Cheap! Don't ask where from. Grub doesn't ask either.",
+    stock: ["potionHealing", "potionGreaterHealing", "potionSpeed", "potionDexterity", "homewardFeather", "scrollMagicMissile", "scrollSleep", "scrollMistyStep"],
+  },
+  sundries: {
+    title: "SALLOW'S SUNDRIES", tabs: ["buy", "sell"], tint: 0x5d7a3e, markup: 1.5,
+    greeting: "Mother's shop! Everything a hero needs on a cold mountain, dearie, at Mother's prices. Which are fair. For Mother.",
+    stock: ["potionGreaterHealing", "potionSpeed", "homewardFeather", "scrollMistyStep", "scrollLightningBolt", "scrollFireball"],
+  },
   apothecary: {
     title: "APOTHECARY", tabs: ["buy", "sell"], greeting: "Bubble, bubble! Fresh potions, brewed this morning.", tint: 0x9fd18b,
     stock: ["potionHealing", "potionSpeed", "potionDexterity", "homewardFeather",

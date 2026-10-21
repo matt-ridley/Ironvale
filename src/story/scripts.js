@@ -12,10 +12,10 @@ import { DEEP_CAVE } from "../world/cave.js";
 import { callName, titleOf, actOf } from "./hero.js";
 import { hubById } from "../world/travel.js";
 import { GAME_SCRIPTS } from "./minigames.js";
-import { BOUNTIES, currentBounty, takeBounty, claimBounty, dropBounty, bountyLine } from "./bounties.js";
+import { BOUNTIES, boardFor, currentBounty, takeBounty, claimBounty, dropBounty, bountyLine } from "./bounties.js";
 import { talkNodes, afterRest } from "./talks.js";
 import { pay, paid } from "./rewards.js";
-import { ACT3_SCRIPTS, tremorNode, scoutNode, withRachel, stonesFound, PIP_REWARD, GNASHER_REWARD } from "./act3.js";
+import { ACT3_SCRIPTS, tremorNode, scoutNode, withRachel, stonesFound, PIP_REWARD, GNASHER_REWARD, nettleHaunting } from "./act3.js";
 
 /* ", Mary" when the hero has a name, else nothing: for lines like `You did it${comma(s)}!`. */
 const comma = s => (callName(s.hero) ? `, ${callName(s.hero)}` : "");
@@ -914,9 +914,9 @@ export const SCRIPTS = {
     start: s => (currentBounty(s)?.finished ? "claim" : s.bounty ? "hunting" : "board"),
     nodes: {
       board: {
-        text: `Hunts, pinned up with fish hooks. Gully pays: ${BOUNTIES.map(b => `${b.label} ${b.gold}g`).join(", ")}, and XP. One at a time.`,
+        text: s => `Hunts, pinned up with fish hooks${actOf(s.flags) >= 3 ? " (new ones, from the pass)" : ""}. Gully pays: ${boardFor(actOf(s.flags)).map(b => `${b.label} ${b.gold}g`).join(", ")}, and XP. One at a time.`,
         choices: [
-          ...BOUNTIES.map(b => ({ label: `${b.label} x${b.count}`, to: `take_${b.id}` })),
+          ...BOUNTIES.map(b => ({ label: `${b.label} x${b.count}`, if: s => boardFor(actOf(s.flags)).includes(b), to: `take_${b.id}` })),
           { label: "Leave it", to: null },
         ],
       },
@@ -1001,6 +1001,7 @@ export const SCRIPTS = {
       scout: scoutNode,
       rest: {
         enter: (s, ctx) => {
+          if (s.map === "pass" && nettleHaunting(s)) return ctx.goto("nettle"); // Auntie Nettle won't let you sleep
           const r = { ...shortRest(s.hero, companionStats(s.hero)?.maxHp), recovered: arcaneRecovery(s.hero) };
           ctx.remember("rest", r);
           if (!r.healed && !r.secondWind && !r.actionSurge && !r.companionHealed && !r.recovered) ctx.goto("rested");
@@ -1014,6 +1015,11 @@ export const SCRIPTS = {
         choices: afterRest,
       },
       rested: { text: "You're as rested as a fire can make you. A short rest brings you up to half your HP; for more, you need a bed.", choices: afterRest },
+      nettle: {
+        enter: s => { s.flags.nettleMet = true; },
+        speaker: "AUNTIE NETTLE",
+        text: "A cackle out of the dark. \"Sleep? On MY mountain? After what you did to my sister? Not tonight, dearie!\" Something cold pours over the fire, and it gutters out. No rest here, until you deal with her. (Her hut's on the slopes, east.)",
+      },
       ...talkNodes(),
     },
   },
@@ -1191,6 +1197,9 @@ function obstacle({ look, checks, flag, passedFlag, shoveLabel, climbLabel, hurt
 export function sideObjective(flags, state = {}) {
   if (flags.meganQuest && !flags.meganJoined) return flags.bowFound ? "Bring the bow back to Megan" : "Find Megan's bow in the Whispering Wood";
   if (flags.robynQuest && !flags.robynJoined) return flags.gravesAtRest ? "Tell Robyn the graves are quiet" : "Lay the restless graves in the fen to rest";
+  if (flags.refugeeQuest && !flags.refugeesHelped) return "Chase off the lizardfolk raiding the goblins' camp";
+  if (flags.nettleMet && !flags.nettleDefeated) return "Find Auntie Nettle's hut on the pass's slopes";
+  if (flags.queenMet && !flags.queenSettled) return "Deal with the Queen of the Fen on the causeway";
   if (flags.matthewQuest && !flags.matthewFound) return "Follow Matthew's arrows up the pass, with Megan";
   if (flags.chapelQuest && !flags.chapelLit) return "Take Robyn to the Frozen Chapel on the pass";
   if (flags.pipRanAway && !flags.pipRewarded) return flags.pipFound ? "See Pip and Hazel in Oakhollow" : flags.hazelPipNews ? "Find Pip: his trail goes into the wood" : "Ask Hazel what's happened to Pip";

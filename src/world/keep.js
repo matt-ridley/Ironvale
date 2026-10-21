@@ -33,6 +33,7 @@ export const KEEP = {
     { id: "keepCarving", x: 8, y: 11, sprite: "carving", script: "carving", still: true,
       lore: "\"Iron to hold, the Call to stand, Binding to keep: three runes on the road, and the Oath at the door.\" Rachel whispers it twice. \"The waystones. And a cache behind this stone.\"",
       cache: { gold: 150, items: ["scrollMistyStep"] } },
+    { id: "grubKeep", x: 16, y: 26, sprite: "goblin", script: "grub", shownWhen: ["refugeesHelped", "rockslideOpen"] },
     { id: "matthewKeep", x: 25, y: 26, sprite: "matthew", script: "matthewKeep", shownWhen: "matthewFound" },
     { id: "brannocTools", x: 35, y: 29, sprite: "chest", script: "brannocTools", goneWhen: "toolsFound", still: true },
     { id: "chapelChest", x: 3, y: 29, sprite: "chest", script: "chest", goneWhen: "chapelChestOpened", still: true, loot: { gold: 150, items: ["potionGreaterHealing", "scrollFireball"] } },
