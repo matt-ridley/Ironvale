@@ -143,7 +143,7 @@ function shoot(battle, target, rng) {
   if (target.hp === 0) say(battle, "defeat", `${target.The} falls.`, { target: t });
 }
 
-/* True if your companion can still VOLLEY this fight (Megan, once Matthew has taught her). */
+/* True if your companion can still VOLLEY this fight (Megan, once Corwin has taught her). */
 export const canVolley = battle => !!battle.player.companion?.volley && battle.ally?.hp > 0 && !battle.volleyUsed && living(battle).length > 0;
 
 /* True if Rachel could COUNTER a spell now: she knows Counterspell, has a level 3 slot (or higher) left, and can act. */

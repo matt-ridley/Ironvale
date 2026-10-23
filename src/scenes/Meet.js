@@ -20,7 +20,7 @@ const THEM_X = 360;
 const NAMES = { chest: "CHEST", bow: "BOW", log: "FALLEN OAK", gate: "IRON GATE", goblinKing: "GOBLIN KING", journal: "JOURNAL", bed: "SPARE BED", campfire: "CAMPFIRE", signet: "IRON SIGNET", rubble: "FALLEN ROCK", flood: "FLOODWATER", portcullis: "PORTCULLIS", fenGate: "FENWATCH GATE", crown: "CROWN", board: "BOUNTY BOARD", shrine: "SHRINE", cairn: "OLD GRAVES", lever: "LEVER", seal: "ALTAR", tombDoor: "TOMB DOOR", sarcophagus: "SARCOPHAGUS", archeryTarget: "TARGET", fishingRod: "FISHING ROD",
   tent: "TENT", runeStone: "RUNE-STONE", carving: "CARVING", runeDoor: "GATEHOUSE DOOR", statue: "STATUE", plaque: "PLAQUE", mountedFish: "OLD GNASHER",
   pipShield: "SHIELD", chalk: "CHALK MARK", waystone: "WAYSTONE", waystoneLit: "WAYSTONE", boneCairn: "CAIRN", mirror: "MIRROR", earthElemental: "GUARDIAN",
-  kobold: "KOBOLDS", colleen: "WARDEN COLLEEN", arrow: "ARROW", iceAltar: "ALTAR", matthew: "MATTHEW", rachel: "RACHEL", hut: "GOBLIN CAMP",
+  kobold: "KOBOLDS", colleen: "WARDEN COLLEEN", arrow: "ARROW", iceAltar: "ALTAR", matthew: "CORWIN", rachel: "RACHEL", hut: "GOBLIN CAMP",
   ferryman: "OLD VOSK", boat: "PUNT", mineMouth: "OLD MINE", hagHut: "CROOKED HUT", crownedSallow: "QUEEN SALLOW",
   thorne: "ALDRIC THORNE", shieldGuardian: "ALDRIC THORNE", greatDoor: "THE DOOR", frozenForge: "FORGE", oreBin: "ORE BIN",
   bookcase: "RUNE LIBRARY", dummy: "TRAINING YARD", knight: "GARRISON" };

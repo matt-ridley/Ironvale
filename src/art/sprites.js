@@ -1356,7 +1356,7 @@ export const SPRITES = {
     "......kyyk......",
     ".......kk.......",
   ],
-  // Matthew, Megan's father: a grey-bearded archer in a griffon-feather cloak, with a longbow (16 x 24).
+  // Corwin, Megan's father: a grey-bearded archer in a griffon-feather cloak, with a longbow (16 x 24).
   matthew: [
     ".....kkkkkkk....",
     "....kNNNNNNNk...",
@@ -1383,7 +1383,7 @@ export const SPRITES = {
     ".....kMMkMMk....",
     "......kk.kk.....",
   ],
-  // One of Matthew's arrows, grey goose feathers with a nick in them, stuck in the snow (16 x 16).
+  // One of Corwin's arrows, grey goose feathers with a nick in them, stuck in the snow (16 x 16).
   arrow: [
     "................",
     "...kkk..........",

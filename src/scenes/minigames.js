@@ -236,10 +236,10 @@ const TGT_X = 150, TGT_Y = 145, TGT_R = 90;
 export class Archery extends Minigame {
   constructor() { super("Archery"); }
 
-  /* data.rival: "matthew" for Matthew's rematches at the keep (a higher score to beat, and his prize); else Megan. */
+  /* data.rival: "matthew" for Corwin's rematches at the keep (a higher score to beat, and his prize); else Megan. */
   create(data = {}) {
     const m = data.rival === "matthew";
-    this.rival = { name: m ? "Matthew" : "Megan", score: m ? MATTHEW_SCORE : MEGAN_SCORE, game: m ? "archeryMatthew" : "archery" };
+    this.rival = { name: m ? "Corwin" : "Megan", score: m ? MATTHEW_SCORE : MEGAN_SCORE, game: m ? "archeryMatthew" : "archery" };
     this.setup("ARCHERY CONTEST");
     this.g = this.add.graphics();
     this.marks = this.add.graphics();

@@ -6,7 +6,7 @@
 // Oakhollow, the bard and the plaque at the Sleeping Fox, and Old Gnasher's mount in Tom's hut. Quest 7, the Warden's
 // Road: the ghost of Warden Colleen at three waystones, each with a trial and a rune (Iron Ward, Warden's Call, and the
 // Rune of Binding, which Thorne stole: take it back from his camp), the sun half of a charm in a cairn of bones, and
-// the wolves on the heights that someone sent. The companions' own quests: Matthew's Arrows (Megan finds her father at
+// the wolves on the heights that someone sent. The companions' own quests: Corwin's Arrows (Megan finds her father at
 // the old watchtower; he teaches her VOLLEY and comes to live at the keep) and the Frozen Chapel (Robyn lights the
 // Wardens' chapel again, and learns Turn Undead and Spiritual Weapon). Choices come back: the goblin refugees outside
 // Fenwatch (help them and Grub's stall opens; in Act 3, Snik leads you through the old mines round the ice, and they go
@@ -27,7 +27,7 @@ import { pay, paid } from "./rewards.js";
 import { callName, titleOf, actOf } from "./hero.js";
 import { MAPS } from "../world/maps.js";
 
-const RACHEL = "RACHEL", PIP = "PIP", COLLEEN = "WARDEN COLLEEN", MEGAN = "MEGAN", MATTHEW = "MATTHEW", ROBYN = "ROBYN";
+const RACHEL = "RACHEL", PIP = "PIP", COLLEEN = "WARDEN COLLEEN", MEGAN = "MEGAN", CORWIN = "CORWIN", ROBYN = "ROBYN";
 export const MATTHEW_REWARD = { gold: 0, xp: 3000 }; // and Megan's Volley
 export const CHAPEL_REWARD = { gold: 0, xp: 3000 }; // and Robyn's new prayers
 export const CHAPEL_FIGHT = ["wraith", "specter"];
@@ -512,7 +512,7 @@ export const ACT3_SCRIPTS = {
     },
   },
 
-  // Matthew's Arrows: his arrows along the pass. Only Megan knows them (the object says which flag it sets).
+  // Corwin's Arrows: his arrows along the pass. Only Megan knows them (the object says which flag it sets).
   matthewArrow: {
     start: s => (withCompanion(s, "megan") ? "megan" : "plain"),
     nodes: {
@@ -527,7 +527,7 @@ export const ACT3_SCRIPTS = {
     },
   },
 
-  // Matthew at the old watchtower: he shoots at strangers, and only comes out for Megan.
+  // Corwin at the old watchtower: he shoots at strangers, and only comes out for Megan.
   matthew: {
     start: s => (!withCompanion(s, "megan") ? "warning" : s.flags.matthewQuest ? "meg" : "warning"),
     nodes: {
@@ -537,15 +537,15 @@ export const ACT3_SCRIPTS = {
         text: "Silence. Then the tower door creaks, and a grey-bearded man in a griffon-feather cloak comes out, very slowly, as if the snow might break.",
         to: "look",
       },
-      look: { speaker: MATTHEW, text: "Meg? Little Meg? Look at you. And look at that bow. That's my bow.", to: "why" },
+      look: { speaker: CORWIN, text: "Meg? Little Meg? Look at you. And look at that bow. That's my bow.", to: "why" },
       why: {
-        speaker: MATTHEW,
+        speaker: CORWIN,
         text: "Griffons took the survey party, ten years ago, up on the heights. I lived. I didn't think I deserved to go home and say so. So I stayed up here and hunted the things that took them.",
         to: "stubborn",
       },
       stubborn: { speaker: MEGAN, text: "You stupid, stubborn... I'm so glad you're alive.", to: "owe" },
       owe: {
-        speaker: MATTHEW,
+        speaker: CORWIN,
         text: "You brought her up a mountain she's scared of. I owe you everything. Meg, come here. Let me show you something I should have taught you years ago.",
         to: "volley",
       },
@@ -555,19 +555,19 @@ export const ACT3_SCRIPTS = {
           s.flags.matthewFound = true;
           pay(s, ctx, MATTHEW_REWARD);
         },
-        text: (s, ctx) => `Matthew shows Megan how to nock three arrows at once and loose them in one breath. Megan learned VOLLEY! (Once a fight, she shoots at every monster.) ${paid(ctx, MATTHEW_REWARD).replace("+0 gold, ", "")}`,
+        text: (s, ctx) => `Corwin shows Megan how to nock three arrows at once and loose them in one breath. Megan learned VOLLEY! (Once a fight, she shoots at every monster.) ${paid(ctx, MATTHEW_REWARD).replace("+0 gold, ", "")}`,
         to: "home",
       },
-      home: { speaker: MATTHEW, text: "I'll come down to your keep, if there's room for an old man. It's time. And I'll want a rematch with that girl at the targets." },
+      home: { speaker: CORWIN, text: "I'll come down to your keep, if there's room for an old man. It's time. And I'll want a rematch with that girl at the targets." },
     },
   },
 
-  // Matthew at the keep: archery rematches, and something he saw, years ago.
+  // Corwin at the keep: archery rematches, and something he saw, years ago.
   matthewKeep: {
     start: "hello",
     nodes: {
       hello: {
-        speaker: MATTHEW,
+        speaker: CORWIN,
         text: s => (s.flags.wonMatthewArchery ? "Fancy another round at the targets? I'm still on 40. No prize, just pride." : "A rematch at the targets? Beat my 40 and you'll have my griffon longbow, for Meg. It's the best bow I ever made."),
         choices: [
           { label: "Archery!", to: "play" },
@@ -577,7 +577,7 @@ export const ACT3_SCRIPTS = {
       },
       play: { enter: (s, ctx) => ctx.emit({ type: "minigame", key: "Archery", data: { rival: "matthew" } }) },
       claire: {
-        speaker: MATTHEW,
+        speaker: CORWIN,
         enter: s => { s.flags.matthewClaire = true; },
         text: "Strange? A girl came down the pass once, years back. Wild hair, a wolf pelt, running with the pack on all fours. Had your face, scholar.",
         to: "rachel",

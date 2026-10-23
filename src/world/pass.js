@@ -1,6 +1,6 @@
 // The Mountain Pass, Act 3's region: the old Warden road climbing from the rockslide (south, where Rachel camped) up
 // the pine slopes, across the snowfield and a sheet of ice (slide until you hit something: rocks along its top edge
-// leave one way through), over a rope bridge across the chasm to the heights, with Matthew's old watchtower to the
+// leave one way through), over a rope bridge across the chasm to the heights, with Corwin's old watchtower to the
 // west and Thorne's camp to the east, and up to the Wardens' gatehouse, cut into the mountain at the top. The Frozen
 // Chapel stands on the east of the snowfield. Three waystones line the road.
 // One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 48 wide).
@@ -45,7 +45,7 @@ export const PASS = {
     { id: "thorneFire", x: 40, y: 19, sprite: "campfire", script: "thorneFire", still: true },
     { id: "thorneNotes", x: 37, y: 14, sprite: "journal", script: "thorneNotes", still: true },
     { id: "thorneMirror", x: 44, y: 19, sprite: "mirror", script: "thorneMirror", goneWhen: "mirrorTaken", still: true },
-    // Matthew's Arrows: three of his arrows lead up to the old watchtower, where he lives (until Megan finds him).
+    // Corwin's Arrows: three of his arrows lead up to the old watchtower, where he lives (until Megan finds him).
     { id: "arrow1", x: 6, y: 56, sprite: "arrow", script: "matthewArrow", flag: "matthewArrow1", shownWhen: "matthewQuest", goneWhen: "matthewArrow1", still: true },
     { id: "arrow2", x: 4, y: 35, sprite: "arrow", script: "matthewArrow", flag: "matthewArrow2", shownWhen: "matthewQuest", goneWhen: "matthewArrow2", still: true },
     { id: "arrow3", x: 6, y: 23, sprite: "arrow", script: "matthewArrow", flag: "matthewArrow3", shownWhen: "matthewQuest", goneWhen: "matthewArrow3", still: true },

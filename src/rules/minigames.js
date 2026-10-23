@@ -104,7 +104,7 @@ export function awTap(g) {
 // to loose. Rings score 10, 8, 6, 4 and 2. Beat Megan's score to win.
 export const ARROWS = 5;
 export const MEGAN_SCORE = 34;
-export const MATTHEW_SCORE = 40; // Matthew's rematches at the keep
+export const MATTHEW_SCORE = 40; // Corwin's rematches at the keep
 export const RINGS = [[0.12, 10], [0.3, 8], [0.5, 6], [0.72, 4], [1, 2]]; // [radius as a share of the target, score]
 
 export function archNew(hero) {
@@ -192,7 +192,7 @@ export const PRIZES = {
   knucklebones: { flag: "wonKnucklebones", item: "luckyDie" },
   armWrestle: { flag: "wonArmWrestle", item: "oswinBelt" },
   archery: { flag: "wonArchery", item: "willowBow" },
-  archeryMatthew: { flag: "wonMatthewArchery", item: "griffonBow", upgrade: 2 }, // Matthew's rematch at the keep
+  archeryMatthew: { flag: "wonMatthewArchery", item: "griffonBow", upgrade: 2 }, // Corwin's rematch at the keep
   armBrannoc: { flag: "wonBrannocArm", item: "brannocBracer" }, // Brannoc, in the keep's training yard
 };
 

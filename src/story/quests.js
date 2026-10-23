@@ -165,12 +165,12 @@ export const QUESTS = [
     ],
   },
   {
-    id: "matthew", title: "Matthew's Arrows", kind: "side",
+    id: "matthew", title: "Corwin's Arrows", kind: "side",
     known: f => f.matthewQuest,
     about: "Megan's father went up the pass ten years ago and never came back. She's found one of his arrows in the snow.",
     reward: `${MATTHEW_REWARD.xp} XP, and Megan learns Volley`,
     steps: [
-      { text: "Find Matthew's arrows along the pass (Megan knows them)", done: f => arrowsFound(f) === 3 || f.matthewFound },
+      { text: "Find Corwin's arrows along the pass (Megan knows them)", done: f => arrowsFound(f) === 3 || f.matthewFound },
       { text: "Follow them to the old watchtower, with Megan", done: f => f.matthewFound },
     ],
   },
