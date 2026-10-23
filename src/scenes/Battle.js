@@ -5,11 +5,13 @@
 // you lead your companion (tap them to switch), their turn. When a monster's blow would hit you and Iron Ward could stop
 // it, the fight stops and asks (IRON WARD or TAKE IT). A waystone's trial can end after a number of rounds
 // (surviveRounds), or ask you to keep your companion standing (guardAlly: if they fall, the trial isn't passed).
+// data.second (a companion's id) brings a second companion into the fight: from the roster, or as a guest. Each
+// companion has their own sprite, bar and lead toggle; the ally page is for whichever of them is taking their turn.
 import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
-import { createBattle, playerAction, isPlayerTurn, isAllyTurn, isReacting, reactAction } from "../rules/combat.js";
+import { createBattle, playerAction, isPlayerTurn, isAllyTurn, isReacting, reactAction, allyTurnKey, allyKeys, partyKeys, isAllyKey, combatant } from "../rules/combat.js";
 import { readScroll } from "../rules/magic.js";
 import { allyAction, castable, canFlyby, quillFlyby, canVolley } from "../rules/tactics.js";
-import { TACTICS } from "../rules/party.js";
+import { TACTICS, secondCompanion } from "../rules/party.js";
 import { groupPack, baseOf } from "../rules/items.js";
 import { SPELLS } from "../data/spells.js";
 import { CONDITIONS } from "../rules/conditions.js";
@@ -17,7 +19,7 @@ import { armourClass, hasFeature, runesLeft, runeSlots, knowsRune } from "../rul
 import { state, faint, autosave } from "../state/game.js";
 import { hubById } from "../world/travel.js";
 import { uiCamera } from "../ui/widgets.js";
-import { GROUND_Y, PANEL_Y, ALLY_X, stageZone, drawBackdrop, standParty, stand, breathe } from "../ui/stage.js";
+import { GROUND_Y, PANEL_Y, stageZone, drawBackdrop, standParty, stand, breathe } from "../ui/stage.js";
 import { playMusic, playJingle, sfx } from "../audio/sound.js";
 import { recordBattle } from "../rules/bestiary.js";
 
@@ -41,12 +43,13 @@ export class Battle extends Phaser.Scene {
     this.surviveRounds = data.surviveRounds || 0; // a waystone's trial: hold out this many rounds
     this.guardAlly = !!data.guardAlly; // a waystone's trial: keep your companion standing
     this.music = data.music || null; // a boss's own track (Thorne's)
+    this.second = data.second || null; // a second companion's id
     this.zone = stageZone(data.zone);
   }
 
   create() {
     uiCamera(this);
-    this.battle = createBattle(state.hero, this.foes, Math.random, { surviveRounds: this.surviveRounds });
+    this.battle = createBattle(state.hero, this.foes, Math.random, { surviveRounds: this.surviveRounds, second: this.second && secondCompanion(state.hero, this.second) });
     // Phaser reuses this scene object for every fight, so reset everything here.
     this.busy = false;
     this.leaving = false;
@@ -56,17 +59,18 @@ export class Battle extends Phaser.Scene {
 
     drawBackdrop(this, this.zone);
     const ally = this.battle.ally;
-    const party = standParty(this, ally?.id);
+    const party = standParty(this, ally?.id, this.battle.ally2?.id);
     this.heroSprite = party.hero;
-    // Your companion stands behind you, with their own name and HP bar.
-    if (ally) {
-      const sprite = party.ally, top = GROUND_Y - sprite.displayHeight;
-      const name = this.add.text(ALLY_X, top - 18, ally.name, { fontFamily: FONT, fontSize: "8px", color: COLORS.good, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
-      this.add.rectangle(ALLY_X - BAR_W / 2, top - 8, BAR_W, 4, 0x000000, 0.6).setOrigin(0, 0.5);
-      const bar = this.add.rectangle(ALLY_X - BAR_W / 2, top - 8, BAR_W, 4, 0x7bc96f).setOrigin(0, 0.5);
-      this.allyView = { sprite, name, bar, max: ally.maxHp };
-      sprite.setInteractive({ useHandCursor: true }).on("pointerup", () => this.toggleLead());
-    } else this.allyView = null;
+    // Your companions stand behind you, each with their own name and HP bar.
+    this.allyViews = {};
+    for (const key of allyKeys(this.battle)) {
+      const a = this.battle[key], sprite = party[key], x = sprite.x, top = GROUND_Y - sprite.displayHeight;
+      const name = this.add.text(x, top - 18, a.name, { fontFamily: FONT, fontSize: "8px", color: COLORS.good, stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
+      this.add.rectangle(x - BAR_W / 2, top - 8, BAR_W, 4, 0x000000, 0.6).setOrigin(0, 0.5);
+      const bar = this.add.rectangle(x - BAR_W / 2, top - 8, BAR_W, 4, 0x7bc96f).setOrigin(0, 0.5);
+      this.allyViews[key] = { sprite, name, bar, max: a.maxHp };
+      sprite.setInteractive({ useHandCursor: true }).on("pointerup", () => this.toggleLead(key));
+    }
 
     const xs = this.battle.monsters.length === 1 ? [360] : [320, 410];
     this.foeViews = this.battle.monsters.map((m, i) => {
@@ -82,7 +86,7 @@ export class Battle extends Phaser.Scene {
     this.marker = this.add.triangle(0, 0, 0, 0, 10, 0, 5, 6, 0xe8b923);
     this.tweens.add({ targets: this.marker, y: "+=3", duration: 400, yoyo: true, repeat: -1 });
 
-    breathe(this, [this.heroSprite, ...(this.allyView ? [this.allyView.sprite] : []), ...this.foeViews.map(v => v.sprite)]);
+    breathe(this, [this.heroSprite, ...Object.values(this.allyViews).map(v => v.sprite), ...this.foeViews.map(v => v.sprite)]);
 
     this.drawPanel();
     this.applyHp(this.battle.log[0].hp);
@@ -91,7 +95,7 @@ export class Battle extends Phaser.Scene {
     playMusic(this.music || (this.winFlag ? "boss" : "battle"));
     if (ally && !state.flags.leadTip) { // once: how to lead your companion
       state.flags.leadTip = true;
-      this.addLine(`Tip: tap ${ally.name} to pick their actions yourself.`);
+      this.addLine(`Tip: tap ${this.battle.ally2 ? "a companion" : ally.name} to pick their actions yourself.`);
     }
     this.play(this.battle.log); // the opening line, plus any attacks from monsters that act first
   }
@@ -130,23 +134,24 @@ export class Battle extends Phaser.Scene {
   scrolls() { return groupPack(state.hero.inventory).filter(g => baseOf(g.item).type === "scroll" && SPELLS[baseOf(g.item).spell].kind !== "reaction"); }
   items() { return BATTLE_POTIONS.reduce((n, b) => n + this.count(b), 0) + this.scrolls().reduce((n, g) => n + g.count, 0); }
 
-  /* The friend a healing spell should go to: whoever has the smaller share of their HP. */
-  friendInNeed() {
-    const a = this.battle.ally, p = this.battle.player;
-    return a && a.hp / a.maxHp < p.hp / p.maxHp ? "ally" : "player";
+  /* The friend a healing spell should go to: whoever has the smallest share of their HP (you, on a tie). */
+  friendInNeed(keys = partyKeys(this.battle)) {
+    const share = k => { const c = combatant(this.battle, k); return c.hp / c.maxHp; };
+    return keys.reduce((best, k) => (share(k) < share(best) ? k : best), keys[0]);
   }
 
   /* The buttons on a page, in order (top left, top right, ...): { label, on, run }, or null for an empty slot.
      `mine`: it's your turn; `hers`: your companion's, and you lead them. */
   pageButtons(page, mine, hers) {
-    const h = state.hero, b = this.battle, a = b.ally, heals = this.count("potionHealing");
+    const h = state.hero, b = this.battle, k = allyTurnKey(b) || "ally", a = b[k], heals = this.count("potionHealing");
+    const needy = b.ally && this.friendInNeed(allyKeys(b)), n = needy && b[needy]; // the companion your potion would go to
     const back = to => ({ label: "BACK", on: mine || hers, run: () => this.showPage(to) });
     if (page === "items") {
       const dex = this.count("potionDexterity"), great = this.count("potionGreaterHealing"), scrolls = this.items() - heals - dex - great;
       return [
         { label: `HEAL x${heals}`, on: mine && heals > 0 && h.hp < h.maxHp, run: () => this.act({ type: "potion", base: "potionHealing" }) },
         { label: `DEX x${dex}`, on: mine && dex > 0 && !b.quick, run: () => this.act({ type: "potion", base: "potionDexterity" }) },
-        a ? { label: `${a.name.toUpperCase()} x${heals}`, on: mine && heals > 0 && a.hp < a.maxHp, run: () => this.act({ type: "allyPotion" }) } : null,
+        n ? { label: `${n.name.toUpperCase()} x${heals}`, on: mine && heals > 0 && n.hp < n.maxHp, run: () => this.act({ type: "allyPotion", on: needy }) } : null,
         { label: `SCROLL x${scrolls}`, on: mine && scrolls > 0, run: () => this.showPage("scrolls") },
         back("main"),
         { label: `GREAT x${great}`, on: mine && great > 0 && h.hp < h.maxHp, run: () => this.act({ type: "potion", base: "potionGreaterHealing" }) },
@@ -164,9 +169,9 @@ export class Battle extends Phaser.Scene {
         { label: "SHOOT", on: hers, run: () => this.actAlly({ type: "shoot" }) },
         { label: "AUTO", on: hers, run: () => this.actAlly({ type: "auto" }) },
         { label: `YOU x${heals}`, on: hers && heals > 0 && h.hp < h.maxHp, run: () => this.actAlly({ type: "potion", on: "player" }) },
-        { label: `${a.name.toUpperCase()} x${heals}`, on: hers && heals > 0 && a.hp < a.maxHp, run: () => this.actAlly({ type: "potion", on: "ally" }) },
-        a.casting ? { label: "SPELLS", on: hers && castable(b).length > 0, run: () => this.showPage("allySpells") }
-          : h.companion?.volley ? { label: "VOLLEY", on: hers && canVolley(b), run: () => this.actAlly({ type: "volley" }) } : null,
+        { label: `${a.name.toUpperCase()} x${heals}`, on: hers && heals > 0 && a.hp < a.maxHp, run: () => this.actAlly({ type: "potion", on: k }) },
+        a.casting ? { label: "SPELLS", on: hers && castable(b, k).length > 0, run: () => this.showPage("allySpells") }
+          : a.src?.volley ? { label: "VOLLEY", on: hers && canVolley(b, k), run: () => this.actAlly({ type: "volley" }) } : null,
         a.id === "rachel" ? { label: "FLYBY", on: hers && canFlyby(b), run: () => this.flyby() } : null,
       ];
     }
@@ -181,7 +186,7 @@ export class Battle extends Phaser.Scene {
       return [{ label: ward ? "IRON WARD" : "COUNTER", on, run: () => this.react(true) }, { label: ward ? "TAKE IT" : "LET IT GO", on, run: () => this.react(false) }, null, null, null, null];
     }
     if (page === "allySpells") {
-      const list = castable(b).slice(0, 5).map(c => ({ label: c.spell.short, on: hers, run: () => this.actAlly({ type: "cast", spell: c.id, slotLevel: c.slotLevel }) }));
+      const list = castable(b, k).slice(0, 5).map(c => ({ label: c.spell.short, on: hers, run: () => this.actAlly({ type: "cast", spell: c.id, slotLevel: c.slotLevel }) }));
       return [...list, ...Array(5 - list.length).fill(null), back("ally")];
     }
     return [
@@ -217,16 +222,16 @@ export class Battle extends Phaser.Scene {
     this.marker.setVisible((mine || hers) && this.battle.monsters.filter(m => m.hp > 0).length > 1);
   }
 
-  /* Tapping your companion: lead them (pick their actions yourself) or let them follow their tactics again. */
-  toggleLead() {
-    const b = this.battle, a = b.ally;
+  /* Tapping a companion: lead them (pick their actions yourself) or let them follow their tactics again. */
+  toggleLead(key) {
+    const b = this.battle, a = b[key], prop = key === "ally2" ? "leadAlly2" : "leadAlly";
     if (this.leaving || b.state !== "active") return;
-    b.leadAlly = !b.leadAlly;
-    if (b.leadAlly) state.hero.companion.lead = true; else delete state.hero.companion.lead; // remembered for next time
+    b[prop] = !b[prop];
+    if (b[prop]) a.src.lead = true; else delete a.src.lead; // remembered for next time
     sfx("select");
-    this.float(this.allyView.sprite, b.leadAlly ? "YOU LEAD" : "AUTO", COLORS.gold);
-    this.addLine(b.leadAlly ? `You'll pick ${a.name}'s actions. Tap ${a.name} again to stop.` : `${a.name} fights by tactics (${TACTICS[a.tactics]}).`);
-    if (!b.leadAlly && isAllyTurn(b) && !this.busy) return this.actAlly({ type: "auto" });
+    this.float(this.allyViews[key].sprite, b[prop] ? "YOU LEAD" : "AUTO", COLORS.gold);
+    this.addLine(b[prop] ? `You'll pick ${a.name}'s actions. Tap ${a.name} again to stop.` : `${a.name} fights by tactics (${TACTICS[a.tactics]}).`);
+    if (!b[prop] && allyTurnKey(b) === key && !this.busy) return this.actAlly({ type: "auto" });
     this.refreshButtons();
   }
 
@@ -291,7 +296,7 @@ export class Battle extends Phaser.Scene {
       if (this.battle.state !== "active") return this.showResult();
       if (this.battle.monsters[this.target].hp <= 0) this.target = this.battle.monsters.findIndex(m => m.hp > 0);
       this.placeMarker();
-      if (isAllyTurn(this.battle)) this.addLine(`${this.battle.ally.name}'s turn: pick an action, or AUTO.`);
+      if (isAllyTurn(this.battle)) this.addLine(`${this.battle[allyTurnKey(this.battle)].name}'s turn: pick an action, or AUTO.`);
       this.refreshButtons();
     });
   }
@@ -312,32 +317,34 @@ export class Battle extends Phaser.Scene {
         break;
       case "monster-attack": {
         this.lunge(this.foeViews[e.actor].sprite, -1);
-        const victim = e.onAlly ? this.allyView.sprite : this.heroSprite;
+        const victim = this.spriteOf(e.who ?? (e.onAlly ? "ally" : "player"));
         if (e.roll.hit) { this.hit(victim, e.roll.damage, e.roll.crit); this.cameras.main.shake(120, 0.006); this.time.delayedCall(90, () => sfx("hurt")); }
         else { this.float(victim, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
         break;
       }
       case "ally-attack":
-        this.lunge(this.allyView.sprite, 1);
+        this.lunge(this.spriteOf(e.by || "ally"), 1);
         sfx("sword");
         if (e.roll.hit) { this.slash(foe, e.roll.crit); this.hit(foe, e.roll.damage, e.roll.crit); this.time.delayedCall(90, () => sfx(e.roll.crit ? "crit" : "hit")); }
         else { this.float(foe, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
         break;
       case "volley":
         sfx("sword");
-        this.float(this.allyView.sprite, "VOLLEY!", COLORS.gold);
+        this.float(this.spriteOf(e.by || "ally"), "VOLLEY!", COLORS.gold);
         break;
       case "ally-level-up":
-        this.float(this.allyView.sprite, "LEVEL UP!", COLORS.gold);
+        this.float(this.spriteOf(e.who || "ally"), "LEVEL UP!", COLORS.gold);
         break;
       case "ally-potion":
         sfx("heal");
-        if (e.revived) this.tweens.add({ targets: [this.allyView.sprite, this.allyView.name], alpha: 1, duration: 300 });
-        this.float(this.allyView.sprite, `+${e.heal}`, COLORS.good);
+        if (e.revived) this.revive(e.who || "ally");
+        this.float(this.spriteOf(e.who || "ally"), `+${e.heal}`, COLORS.good);
         break;
-      case "ally-down":
-        this.tweens.add({ targets: [this.allyView.sprite, this.allyView.name], alpha: 0.35, duration: 400 });
+      case "ally-down": {
+        const v = this.allyViews[e.who || "ally"];
+        this.tweens.add({ targets: [v.sprite, v.name], alpha: 0.35, duration: 400 });
         break;
+      }
       case "loot":
         sfx("coin");
         break;
@@ -374,7 +381,7 @@ export class Battle extends Phaser.Scene {
       case "ally-heal": {
         const who = this.spriteOf(e.who);
         sfx("heal");
-        if (e.revived) this.tweens.add({ targets: [this.allyView.sprite, this.allyView.name], alpha: 1, duration: 300 });
+        if (e.revived && isAllyKey(e.who)) this.revive(e.who);
         this.float(who, `+${e.heal}`, COLORS.good);
         break;
       }
@@ -385,7 +392,7 @@ export class Battle extends Phaser.Scene {
         this.float(this.spriteOf(e.who), "...", COLORS.dim);
         break;
       case "flyby": {
-        const owl = this.add.image(ALLY_X, GROUND_Y - 70, "quill").setScale(0.8).setDepth(22);
+        const owl = this.add.image(this.spriteOf(this.rachelKey()).x, GROUND_Y - 70, "quill").setScale(0.8).setDepth(22);
         this.tweens.add({ targets: owl, x: this.foeViews[e.target]?.x ?? 360, y: GROUND_Y - 40, duration: 260, yoyo: true, ease: "Sine.inOut", onComplete: () => owl.destroy() });
         sfx("select");
         this.float(this.heroSprite, "FLYBY!", COLORS.gold);
@@ -429,7 +436,7 @@ export class Battle extends Phaser.Scene {
         break;
       case "counter":
         sfx("crit");
-        this.float(this.allyView.sprite, "COUNTER!", COLORS.gold);
+        this.float(this.spriteOf(this.rachelKey()), "COUNTER!", COLORS.gold);
         break;
       case "hesitate":
         this.float(this.foeViews[e.who].sprite, "...", COLORS.dim);
@@ -450,7 +457,7 @@ export class Battle extends Phaser.Scene {
         this.float(this.heroSprite, "CALL!", COLORS.gold);
         break;
       case "call-heal":
-        if (e.revived) this.tweens.add({ targets: [this.allyView.sprite, this.allyView.name], alpha: 1, duration: 300 });
+        if (e.revived && isAllyKey(e.who)) this.revive(e.who);
         if (e.heal) this.float(this.spriteOf(e.who), `+${e.heal}`, COLORS.good);
         break;
       case "regen":
@@ -480,9 +487,18 @@ export class Battle extends Phaser.Scene {
     }
   }
 
-  /* The sprite for a battle key: "player", "ally" or a monster's index. */
+  /* The sprite for a battle key: "player", "ally", "ally2" or a monster's index. */
   spriteOf(key) {
-    return key === "player" ? this.heroSprite : key === "ally" ? this.allyView.sprite : this.foeViews[key].sprite;
+    return key === "player" ? this.heroSprite : isAllyKey(key) ? this.allyViews[key].sprite : this.foeViews[key].sprite;
+  }
+
+  /* Rachel's key in this fight (Quill and COUNTER are hers). */
+  rachelKey() { return allyKeys(this.battle).find(k => this.battle[k].id === "rachel") || "ally"; }
+
+  /* A fallen companion gets back up. */
+  revive(key) {
+    const v = this.allyViews[key];
+    this.tweens.add({ targets: [v.sprite, v.name], alpha: 1, duration: 300 });
   }
 
   showLevel(level) {
@@ -505,10 +521,10 @@ export class Battle extends Phaser.Scene {
       v.bar.width = BAR_W * h / v.max;
       v.bar.fillColor = hpColour(h, v.max);
     });
-    if (this.allyView && hp.ally !== null && hp.ally !== undefined) {
-      const v = this.allyView;
-      v.bar.width = BAR_W * hp.ally / v.max;
-      v.bar.fillColor = hpColour(hp.ally, v.max);
+    for (const [key, v] of Object.entries(this.allyViews)) {
+      if (hp[key] === null || hp[key] === undefined) continue;
+      v.bar.width = BAR_W * hp[key] / v.max;
+      v.bar.fillColor = hpColour(hp[key], v.max);
     }
   }
 
@@ -527,7 +543,8 @@ export class Battle extends Phaser.Scene {
 
   hit(sprite, damage, crit) {
     // Knocked back a little, then settle.
-    this.tweens.add({ targets: sprite, x: sprite.x + (sprite === this.heroSprite || sprite === this.allyView?.sprite ? -6 : 6), duration: 70, yoyo: true, delay: 90, ease: "Quad.out" });
+    const ours = sprite === this.heroSprite || Object.values(this.allyViews).some(v => v.sprite === sprite);
+    this.tweens.add({ targets: sprite, x: sprite.x + (ours ? -6 : 6), duration: 70, yoyo: true, delay: 90, ease: "Quad.out" });
     this.time.delayedCall(90, () => {
       sprite.setTintFill(0xffffff);
       this.time.delayedCall(80, () => sprite.clearTint());

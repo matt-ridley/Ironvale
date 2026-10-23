@@ -18,13 +18,15 @@ import { SPELLS } from "../data/spells.js";
 import { OATHS } from "../rules/oaths.js";
 
 export const SAVE_KEY = "ironvale-save";
-export const SAVE_FORMAT = 6;
+export const SAVE_FORMAT = 7;
 // Format 1 (before 0.7.0) saved whole tiles; format 2 saves the hero's feet in fractions of a tile; format 3 (0.18.0)
 // adds lastHub, the town you wake in when you faint. Older saves get Oakhollow. Format 4 (0.19.0) adds the fighter's
 // Action Surge and ability score increases: a hero saved at level 4 or higher before then gets theirs to pick.
 // Format 5 (0.22.0) gives the hero's starting sword its crest: older saves put it on their first longsword.
 // Format 6 (0.31.0) adds Act 3's: how many campfire talks each companion has told (`talks`), the fighting style picked
 // at level 10 and Indomitable. Older saves have heard no talks and have Indomitable ready.
+// Format 7 (0.40.0) counts Indomitable's uses since the last long rest (two from level 13) instead of a yes or no: an
+// older save's "used" is one use.
 const DIR_NAMES = ["up", "down", "left", "right"];
 
 export function serialize(state) {
@@ -57,7 +59,7 @@ function loadCompanion(c) {
 export function deserialize(json) {
   let data;
   try { data = JSON.parse(json); } catch { return null; }
-  if (!data || ![1, 2, 3, 4, 5, SAVE_FORMAT].includes(data.format) || !data.state?.hero) return null;
+  if (!data || ![1, 2, 3, 4, 5, 6, SAVE_FORMAT].includes(data.format) || !data.state?.hero) return null;
   const s = data.state, h = s.hero;
   if (!h.abilities || !["STR", "DEX", "CON"].every(a => isInt(h.abilities[a]))) return null;
   for (const k of ["level", "xp", "gold", "maxHp", "hp"]) if (!isInt(h[k])) return null;
@@ -83,7 +85,8 @@ export function deserialize(json) {
   };
   if (!hero.companion) delete hero.companion;
   if (!FIGHTING_STYLES[hero.fightingStyle]) delete hero.fightingStyle;
-  if (typeof hero.indomitableUsed !== "boolean") delete hero.indomitableUsed;
+  const indomitable = h.indomitableUsed === true ? 1 : isInt(h.indomitableUsed) ? Math.min(Math.max(h.indomitableUsed, 0), 2) : 0;
+  if (indomitable) hero.indomitableUsed = indomitable; else delete hero.indomitableUsed;
   if (hero.bladeForm !== 2) delete hero.bladeForm; // the Wardenblade's second form (Act 3)
   if (!OATHS[hero.oath]) delete hero.oath; // the Oath, sworn at the end of Act 3
   if (typeof hero.unbrokenUsed !== "boolean") delete hero.unbrokenUsed;

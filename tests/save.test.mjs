@@ -164,7 +164,7 @@ test("the last town is saved; older saves, and towns the game doesn't know, get 
   played();
   assert.equal(deserialize(serialize(state)).lastHub, "oakhollow");
   const data = JSON.parse(serialize(state));
-  assert.equal(data.format, 6);
+  assert.equal(data.format, 7);
   delete data.state.lastHub;
   data.format = 2; // before 0.18.0
   assert.equal(deserialize(JSON.stringify(data)).lastHub, "oakhollow");

@@ -7,6 +7,8 @@ import { MONSTER_ART, MONSTER_SCALE } from "../art/monsters.js";
 export const GROUND_Y = 124;
 export const PANEL_Y = 152;
 export const HERO_X = 110, ALLY_X = 50;
+// With a second companion (some Act 4 fights), everyone shuffles along to make room.
+export const PARTY_OF_THREE = { hero: 132, ally: 84, ally2: 36 };
 
 const SKY = {
   forest: { sky: 0x1d2b3a, far: 0x1f3a26, ground: 0x3e6a31, groundDark: 0x34592a },
@@ -73,15 +75,19 @@ export function stand(scene, x, key, frame, { scale = MONSTER_ART[key] ? MONSTER
   return scene.add.image(x, GROUND_Y, key, frame).setOrigin(0.5, 1).setScale(scale);
 }
 
-/* The hero, and the companion behind them (allyId, if you have one): { hero, ally } sprites, ally null without one. */
-export function standParty(scene, allyId) {
-  const hero = stand(scene, HERO_X, "hero", heroFrame("side"));
-  const ally = allyId ? stand(scene, ALLY_X, allyId, heroFrame("side"), { shadow: 32 }) : null;
-  if (allyId === "rachel") { // Quill, on her shoulder
-    const owl = scene.add.image(ALLY_X - 16, GROUND_Y - 64, "quill").setScale(0.6);
+/* The hero, and the companion behind them (allyId, if you have one), and a second one behind them (ally2Id, in some
+   fights): { hero, ally, ally2 } sprites, null for anyone who isn't there. */
+export function standParty(scene, allyId, ally2Id = null) {
+  const xs = allyId && ally2Id ? PARTY_OF_THREE : { hero: HERO_X, ally: ALLY_X };
+  const hero = stand(scene, xs.hero, "hero", heroFrame("side"));
+  const ally = allyId ? stand(scene, xs.ally, allyId, heroFrame("side"), { shadow: 32 }) : null;
+  const ally2 = allyId && ally2Id ? stand(scene, xs.ally2, ally2Id, heroFrame("side"), { shadow: 32 }) : null;
+  for (const [id, x] of [[allyId, xs.ally], [ally2Id, xs.ally2]]) {
+    if (id !== "rachel" || x === undefined) continue; // Quill, on her shoulder
+    const owl = scene.add.image(x - 16, GROUND_Y - 64, "quill").setScale(0.6);
     scene.tweens.add({ targets: owl, y: owl.y - 2, duration: 1100, yoyo: true, repeat: -1, ease: "Sine.inOut" });
   }
-  return { hero, ally };
+  return { hero, ally, ally2 };
 }
 
 /* Everyone breathes a little while waiting, out of step with each other. */

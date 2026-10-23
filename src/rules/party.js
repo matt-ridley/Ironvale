@@ -6,6 +6,8 @@
 // an inn. Each has TACTICS for when they act by themselves: attack, heal (look after whoever's badly hurt first) or,
 // for casters, save magic (cantrips only, keeping spell slots). In a fight you can also lead them yourself
 // (companion.lead): rules/tactics.js plays their turns.
+// Some fights have a second companion beside you (Act 4): someone from the roster, or a guest who isn't on it (Rachel,
+// when Claire comes back). createBattle takes their record as `second`; guestCompanion makes a guest's.
 // A wizard (Rachel) keeps a spellbook that grows: give her a spell scroll and she copies it in for good (copySpell), and
 // a short rest at a camp brings back some of her spell slots (arcaneRecovery).
 import { proficiencyBonus } from "./character.js";
@@ -48,17 +50,30 @@ function gearStats(base, gear, level) {
 }
 
 /* The companion's fighting stats at the hero's level, as the battle uses them, or null with no companion. */
-export function companionStats(hero) {
-  const c = hero.companion, base = c && COMPANIONS[c.id];
+export const companionStats = hero => statsOf(hero.companion, hero.level);
+
+/* A companion record's fighting stats at a level, or null if there's no such companion. */
+export function statsOf(c, level) {
+  const base = c && COMPANIONS[c.id];
   if (!base) return null;
-  const maxHp = companionMaxHp(c.id, hero.level);
+  const maxHp = companionMaxHp(c.id, level);
   return {
-    id: c.id, name: base.name, level: hero.level, dexMod: base.dexMod, maxHp,
+    id: c.id, name: base.name, level, dexMod: base.dexMod, maxHp,
     hp: Math.max(1, maxHp - (c.hurt || 0)),
-    ...gearStats(base, c.gear || {}, hero.level),
+    ...gearStats(base, c.gear || {}, level),
     tactics: tacticsFor(c.id).includes(c.tactics) ? c.tactics : "attack",
     casting: base.casting ? { ...base.casting, spells: knownSpells(c) } : null,
   };
+}
+
+/* A companion who fights beside you without being on your roster (for one quest), rested and in their starting gear. */
+export const guestCompanion = id => ({ id, hurt: 0, gear: startingGear(id), guest: true });
+
+/* The record for a second companion in a fight: theirs from the roster if they're waiting there (their wounds and
+   spent slots carry on), else a guest's. Null if they're the one already travelling with you, or unknown. */
+export function secondCompanion(hero, id) {
+  if (!COMPANIONS[id] || hero.companion?.id === id) return null;
+  return hero.roster?.find(r => r.id === id) || guestCompanion(id);
 }
 
 /* The spells a caster companion knows: their class's to start with, and for a wizard, whatever they've copied in. */
@@ -149,9 +164,13 @@ export function joinParty(hero, id) {
   return before?.id || null;
 }
 
-/* After a fight: keep the companion's wounds (at least 1 HP left; a fallen friend gets back up). */
-export function afterBattle(hero, ally) {
-  if (hero.companion && ally) hero.companion.hurt = ally.maxHp - Math.max(1, ally.hp);
+/* After a fight: keep each companion's wounds (at least 1 HP left; a fallen friend gets back up), on the record they
+   came from (`src`: yours, a roster one, or a guest's). */
+export function afterBattle(hero, ...allies) {
+  for (const a of allies) {
+    const c = a && (a.src || hero.companion);
+    if (c) c.hurt = a.maxHp - Math.max(1, a.hp);
+  }
 }
 
 /* Why your companion can't drink this potion now, or null if they can. Only healing works on them (the other

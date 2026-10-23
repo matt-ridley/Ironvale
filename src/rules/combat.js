@@ -6,6 +6,8 @@
 // turn; they start and end with each turn. Spells and scrolls (rules/magic.js) are cast through the helpers below.
 // Your companion's turns are played by rules/tactics.js, or wait for you when you lead them (battle.leadAlly). A companion in your party (rules/party.js) takes their own turns:
 // they shoot at the monster you last attacked, and monsters pick between you and them.
+// Some fights have a second companion (createBattle's `second`): battle.ally2, with the key "ally2", who works just like
+// the first (battle.leadAlly2 when you lead them). Monsters pick between all of you who are standing.
 // A battle is a plain object. The player acts with playerAction(); monsters then take their turns until it is the
 // player's turn again or the battle is over. Every step is written to battle.log for the screen to show.
 import { d20, roll } from "./dice.js";
@@ -13,10 +15,10 @@ import { armourClass, weaponAttack, mod, gainXp, heal, SECOND_WIND, critOn, atta
 import { abilityCheck } from "./checks.js";
 import { baseOf, makeItem, itemName, useItem, cantDrink } from "./items.js";
 import { MONSTERS } from "../data/monsters.js";
-import { companionStats, afterBattle } from "./party.js";
+import { statsOf, afterBattle } from "./party.js";
 import { attackMods, conditionAc, skipsTurn, startTurn, endTurn, onDamage, conditionSave, addCondition, removeCondition, CONDITIONS } from "./conditions.js";
 import { ITEMS } from "../data/items.js";
-import { allyTurn, canCounter, counter } from "./tactics.js"; // (tactics.js uses this file's helpers too; nothing runs until a fight)
+import { allyTurn, canCounter, counter, counterKey } from "./tactics.js"; // (tactics.js uses this file's helpers too; nothing runs until a fight)
 
 export const DEFEND_AC_BONUS = 2;
 export const CALL_ENDS = ["paralyzed", "frightened", "asleep", "restrained"]; // what Warden's Call shakes off
@@ -87,10 +89,16 @@ export function resolveAttack(attack, targetAc, rng = Math.random, { advantage =
 export const living = battle => battle.monsters.filter(m => m.hp > 0);
 const playerAc = battle => armourClass(battle.player) + (battle.defending ? DEFEND_AC_BONUS : 0) + conditionAc(battle, "player");
 
-// Everyone in a fight has a key: "player", "ally" or a monster's index.
+// Everyone in a fight has a key: "player", "ally" (your companion), "ally2" (a second one) or a monster's index.
+export const ALLY_KEYS = ["ally", "ally2"];
+export const isAllyKey = key => key === "ally" || key === "ally2";
+/* The keys of the companions in this fight. */
+export const allyKeys = battle => ALLY_KEYS.filter(k => battle[k]);
+/* You and your companions. */
+export const partyKeys = battle => ["player", ...allyKeys(battle)];
 /* The hero, companion or monster with this key. */
-export const combatant = (battle, key) => (key === "player" ? battle.player : key === "ally" ? battle.ally : battle.monsters[key]);
-export const nameOf = (battle, key) => (key === "player" ? "You" : key === "ally" ? battle.ally.name : `${battle.monsters[key].The}`);
+export const combatant = (battle, key) => (key === "player" ? battle.player : isAllyKey(key) ? battle[key] : battle.monsters[key]);
+export const nameOf = (battle, key) => (key === "player" ? "You" : isAllyKey(key) ? battle[key].name : `${battle.monsters[key].The}`);
 export const acOf = (battle, key) => (key === "player" ? playerAc(battle) : combatant(battle, key).ac + conditionAc(battle, key) + guardAc(battle, key));
 /* A monster warded by its shield guardian (`guardedBy`): +3 AC while the guardian stands. */
 export const GUARD_AC = 3;
@@ -100,7 +108,7 @@ const guardAc = (battle, key) => { const g = battle.monsters[key]?.guardedBy; re
    companion's DEX (other saves +0), or a monster's listed save. */
 export function saveBonusOf(battle, key, ability) {
   if (key === "player") return mod(battle.player, ability) + (SAVE_PROFICIENCIES.includes(ability) ? proficiencyBonus(battle.player.level) : 0);
-  if (key === "ally") return ability === "DEX" ? battle.ally.dexMod : 0;
+  if (isAllyKey(key)) return ability === "DEX" ? battle[key].dexMod : 0;
   return battle.monsters[key].saves?.[ability] ?? 0;
 }
 
@@ -119,7 +127,7 @@ export function resistSave(battle, key, ability, dc, rng = Math.random) {
     return { ...s, total: s.total + 1, success: true };
   }
   if (s.success || key !== "player" || !canIndomitable(battle.player)) return s;
-  battle.player.indomitableUsed = true;
+  battle.player.indomitableUsed = (battle.player.indomitableUsed || 0) + 1;
   say(battle, "indomitable", `${ability} save ${s.total} vs DC ${dc}... Indomitable! You refuse to give in, and roll again.`);
   return battleSave(battle, key, ability, dc, rng);
 }
@@ -136,30 +144,35 @@ export function tellWoken(battle, key, ended) {
 }
 
 /* Rolls initiative (d20 + DEX; ties go to the higher DEX, then the player) and plays monster turns up to the player's.
-   opts.surviveRounds: a waystone's trial, where the monsters crumble once you've held out that many rounds. */
-export function createBattle(player, monsterIds, rng = Math.random, { surviveRounds = 0 } = {}) {
+   opts.surviveRounds: a waystone's trial, where the monsters crumble once you've held out that many rounds.
+   opts.second: a second companion's record (party.js: secondCompanion), who fights beside your own. Each companion in
+   the fight keeps the record they came from as `src` (their wounds and spell slots go back there). */
+export function createBattle(player, monsterIds, rng = Math.random, { surviveRounds = 0, second = null } = {}) {
   const monsters = monsterIds.map(id => spawnMonster(id, rng));
-  const ally = companionStats(player);
+  const allies = [player.companion, second].map(c => { const s = statsOf(c, player.level); return s && { ...s, src: c }; }).filter(Boolean);
+  allies.forEach((a, i) => { a.key = ALLY_KEYS[i]; });
+  const ally = allies[0] || null, ally2 = allies[1] || null;
   const entries = [
     { who: "player", init: d20({}, rng).natural + mod(player, "DEX"), dex: mod(player, "DEX"), tie: 2 },
-    ...(ally ? [{ who: "ally", init: d20({}, rng).natural + ally.dexMod, dex: ally.dexMod, tie: 1 }] : []),
+    ...allies.map(a => ({ who: a.key, init: d20({}, rng).natural + a.dexMod, dex: a.dexMod, tie: 1 })),
     ...monsters.map((m, i) => ({ who: i, init: d20({}, rng).natural + m.dexMod, dex: m.dexMod, tie: 0 })),
   ];
   entries.sort((a, b) => b.init - a.init || b.dex - a.dex || b.tie - a.tie);
   // A Potion of Dexterity drunk before the fight is used up by it.
   const quick = !!player.effects?.dexterity;
   if (quick) player.effects = { ...player.effects, dexterity: false };
-  const battle = { player, ally, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null, conditions: {},
-    leadAlly: !!player.companion?.lead, // you pick your companion's actions
+  const battle = { player, ally, ally2, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null, conditions: {},
+    leadAlly: !!ally?.src.lead, leadAlly2: !!ally2?.src.lead, // you pick your companions' actions
     surviveRounds, allyFell: false, pending: null }; // pending: a reaction waiting for you (Iron Ward)
-  const names = entries.map(e => (e.who === "player" ? "You" : e.who === "ally" ? ally.name : monsters[e.who].name) + ` (${e.init})`);
+  const names = entries.map(e => (e.who === "player" ? "You" : isAllyKey(e.who) ? battle[e.who].name : monsters[e.who].name) + ` (${e.init})`);
   say(battle, "start", `${monsters.map(m => m.name).join(", ")} ${monsters.length > 1 ? "appear" : "appears"}! Initiative: ${names.join(", ")}.`);
   if (quick) say(battle, "quick", "Your Potion of Dexterity makes you quick: one extra attack each time you ATTACK.");
   // Thorne, faced with his old apprentice, can't move at first.
+  const rachel = allies.find(a => a.id === "rachel");
   monsters.forEach((m, i) => {
-    if (!m.hesitates || ally?.id !== "rachel") return;
+    if (!m.hesitates || !rachel) return;
     addCondition(battle, i, "hesitant", { rounds: 1 });
-    say(battle, "hesitate", `${ally.name}: "Aldric. Stop." ${m.The} flinches, and for a moment he can't move.`, { who: i });
+    say(battle, "hesitate", `${rachel.name}: "Aldric. Stop." ${m.The} flinches, and for a moment he can't move.`, { who: i });
   });
   runMonsterTurns(battle, rng);
   return battle;
@@ -168,12 +181,18 @@ export function createBattle(player, monsterIds, rng = Math.random, { surviveRou
 export const isPlayerTurn = battle => battle.state === "active" && !battle.pending && battle.order[battle.turn].who === "player";
 /* A monster's blow would hit you and you know Iron Ward: the fight waits for reactAction(). */
 export const isReacting = battle => battle.state === "active" && !!battle.pending;
-/* Your companion's turn, waiting for you to pick their action (only when you lead them). */
-export const isAllyTurn = battle => battle.state === "active" && battle.order[battle.turn].who === "ally";
+/* A companion's turn, waiting for you to pick their action (only when you lead them). */
+export const isAllyTurn = battle => battle.state === "active" && isAllyKey(battle.order[battle.turn].who);
+/* Whose turn it is when it's a companion's: "ally" or "ally2", else null. */
+export const allyTurnKey = battle => (isAllyTurn(battle) ? battle.order[battle.turn].who : null);
+/* True if you pick this companion's actions. */
+export const leads = (battle, key) => (key === "ally2" ? battle.leadAlly2 : battle.leadAlly);
+/* Wounds go back to everyone's records once a fight is over. */
+const settle = battle => afterBattle(battle.player, battle.ally, battle.ally2);
 
 /* action: { type: "attack", target } | { type: "defend" } | { type: "potion", base } | { type: "flee" } | { type: "secondWind" }
-   | { type: "actionSurge" } | { type: "allyPotion" } (give your companion a Potion of Healing; it gets them back up if
-   they've been knocked down) | { type: "runeStrike", target } | { type: "wardensCall" } | { type: "binding", target }
+   | { type: "actionSurge" } | { type: "allyPotion", on } (give a companion, "ally" unless `on` says "ally2", a Potion of
+   Healing; it gets them back up if they've been knocked down) | { type: "runeStrike", target } | { type: "wardensCall" } | { type: "binding", target }
    (the Warden's runes: each spends a rune slot).
    A potion's base defaults to the Potion of Healing. */
 export function playerAction(battle, action, rng = Math.random) {
@@ -226,7 +245,7 @@ export function playerAction(battle, action, rng = Math.random) {
     if (!runesLeft(p)) return { ok: false, reason: "No rune slots left. A long rest brings them back." };
     p.runes.used = (p.runes.used || 0) + 1;
     say(battle, "call", "You raise the Wardenblade and call out: its rune rings like a bell across the field!");
-    for (const key of ["player", ...(battle.ally ? ["ally"] : [])]) {
+    for (const key of partyKeys(battle)) {
       const c = combatant(battle, key), down = c.hp === 0;
       const healed = Math.min(c.maxHp - c.hp, roll("2d8", rng).total + p.level);
       c.hp += healed;
@@ -284,7 +303,7 @@ export function playerAction(battle, action, rng = Math.random) {
       say(battle, "potion", `You drink a ${b.name} and recover ${r.healed} HP (${p.hp}/${p.maxHp}).`, { heal: r.healed });
     }
   } else if (action.type === "allyPotion") {
-    const a = battle.ally;
+    const key = action.on === "ally2" ? "ally2" : "ally", a = battle[key];
     if (!a) return { ok: false, reason: "No one is in your party." };
     const potion = p.inventory.find(i => i.base === "potionHealing");
     if (!potion) return { ok: false, reason: "You have no potions." };
@@ -293,7 +312,7 @@ export function playerAction(battle, action, rng = Math.random) {
     const down = a.hp === 0;
     const healed = Math.min(a.maxHp - a.hp, roll(baseOf(potion).heal, rng).total);
     a.hp += healed;
-    say(battle, "ally-potion", `You give ${a.name} a ${baseOf(potion).name}. ${a.name} recovers ${healed} HP (${a.hp}/${a.maxHp})${down ? " and gets back up!" : "."}`, { heal: healed, revived: down });
+    say(battle, "ally-potion", `You give ${a.name} a ${baseOf(potion).name}. ${a.name} recovers ${healed} HP (${a.hp}/${a.maxHp})${down ? " and gets back up!" : "."}`, { who: key, heal: healed, revived: down });
   } else if (action.type === "secondWind") {
     if (!p.secondWind) return { ok: false, reason: "You've used your Second Wind. Rest to get it back." };
     if (p.hp >= p.maxHp) return { ok: false, reason: "You're already at full health." };
@@ -313,7 +332,7 @@ export function playerAction(battle, action, rng = Math.random) {
     const c = abilityCheck(p, "DEX", FLEE_DC, rng);
     if (c.success) {
       battle.state = "fled";
-      afterBattle(p, battle.ally);
+      settle(battle);
       say(battle, "fled", `You run for it (DEX ${c.total} vs DC ${FLEE_DC}) and get away.`);
       return { ok: true, events: battle.log.slice(start) };
     }
@@ -341,11 +360,12 @@ export function endPlayerAction(battle, start, rng = Math.random) {
   return { ok: true, events: battle.log.slice(start) };
 }
 
-/* After your companion's action (when you lead them): the fight may be over; otherwise their turn ends and play
+/* After a companion's action (when you lead them): the fight may be over; otherwise their turn ends and play
    moves on. */
 export function endAllyAction(battle, start, rng = Math.random) {
+  const key = battle.order[battle.turn].who;
   if (!checkEnd(battle, rng)) {
-    finishTurn(battle, "ally", rng);
+    finishTurn(battle, key, rng);
     nextTurn(battle);
     runMonsterTurns(battle, rng);
   }
@@ -365,7 +385,7 @@ function finishTurn(battle, key, rng) {
   }
 }
 
-/* Plays everyone else's turns (your companion's and the monsters') until it is yours again or the fight is over.
+/* Plays everyone else's turns (your companions' and the monsters') until it is yours again or the fight is over.
    Anyone whose conditions take their turn away (asleep, paralyzed) just has their conditions tick on, you included. */
 function runMonsterTurns(battle, rng) {
   while (battle.state === "active") {
@@ -378,12 +398,12 @@ function runMonsterTurns(battle, rng) {
         const why = Object.keys(battle.conditions[key]).filter(id => CONDITIONS[id].skips).map(id => CONDITIONS[id].name).join(" and ");
         say(battle, "skip", `${nameOf(battle, key)} ${isAre(key)} ${why} and can't act.`, { who: key });
         finishTurn(battle, key, rng);
-      } else if (key === "player" || (key === "ally" && battle.leadAlly)) { // your turn, or one you lead
+      } else if (key === "player" || (isAllyKey(key) && leads(battle, key))) { // your turn, or one you lead
         if (key === "player") dawnLight(battle, rng);
         break;
       }
       else {
-        if (key === "ally") allyTurn(battle, rng);
+        if (isAllyKey(key)) allyTurn(battle, rng, key);
         else if (monsterTurn(battle, key, rng)) return; // a blow is waiting on your Iron Ward
         if (checkEnd(battle, rng)) return;
         finishTurn(battle, key, rng);
@@ -394,10 +414,10 @@ function runMonsterTurns(battle, rng) {
   if (battle.state === "active") battle.defending = false; // the guard lasts until the start of the player's turn
 }
 
-/* The Oath of Dawn: a little healing light for you and your companion at the start of your turn, when you're hurt. */
+/* The Oath of Dawn: a little healing light for you and your companions at the start of your turn, when you're hurt. */
 function dawnLight(battle, rng) {
   if (oathOf(battle) !== "dawn") return;
-  for (const key of ["player", "ally"]) {
+  for (const key of partyKeys(battle)) {
     const c = combatant(battle, key);
     if (!c || c.hp <= 0 || c.hp >= c.maxHp) continue;
     const healed = Math.min(c.maxHp - c.hp, roll(DAWN_AURA, rng).total);
@@ -428,20 +448,34 @@ function canWard(battle, r) {
   return knowsRune(p, "ironWard") && (runesLeft(p) > 0 || free) && !skipsTurn(battle, "player") && !r.crit && r.total < r.targetAc + IRON_WARD_AC;
 }
 
-/* A monster's turn: each of its attacks (from attack number `from`), at one of you (with a companion standing, it picks
-   one of you at random; `onAlly` carries that choice over when its turn resumes). An attack with `onHit` ({ condition,
+/* Who a monster goes for: you, or a companion who's still standing, all equally likely. */
+function pickTarget(battle, rng) {
+  const up = allyKeys(battle).filter(k => battle[k].hp > 0);
+  if (!up.length) return "player";
+  const n = Math.floor(rng() * (up.length + 1));
+  return n < up.length ? up[n] : "player";
+}
+
+/* A companion has been knocked down. */
+function allyDown(battle, key) {
+  const a = battle[key];
+  battle.allyFell = true;
+  say(battle, "ally-down", `${a.name} is knocked down! ${a.name} will be back up after the fight.`, { who: key });
+}
+
+/* A monster's turn: each of its attacks (from attack number `from`), at one of you (pickTarget; `targetChoice` carries
+   that choice over when its turn resumes). An attack with `onHit` ({ condition,
    save, dc, rounds }) makes whoever it hits save or take that condition, with a save at the end of each of their turns
    to shake it off (the ghoul's paralysing claws); one with `poison` ({ save, dc, damage }) does extra damage, halved on
    a save (the wyvern's sting). A blow that would hit you, when Iron Ward could stop it, pauses the fight for your
    reaction: returns true then (battle.pending says which blow). */
-function monsterTurn(battle, i, rng, from = 0, onAllyChoice = null) {
-  const m = battle.monsters[i], a = battle.ally;
-  if (from === 0 && onAllyChoice === null) { // a spell instead of its attacks, which Rachel may COUNTER
+function monsterTurn(battle, i, rng, from = 0, targetChoice = null) {
+  const m = battle.monsters[i];
+  if (from === 0 && targetChoice === null) { // a spell instead of its attacks, which Rachel may COUNTER
     const cast = monsterCasts(battle, i, rng);
     if (cast) return cast === "paused";
   }
-  const onAlly = onAllyChoice ?? !!(a && a.hp > 0 && rng() < 0.5);
-  const key = onAlly ? "ally" : "player";
+  const key = targetChoice ?? pickTarget(battle, rng);
   for (let n = from; n < m.attacks.length; n++) {
     if (combatant(battle, key).hp <= 0) break;
     const atk = m.attacks[n];
@@ -452,16 +486,13 @@ function monsterTurn(battle, i, rng, from = 0, onAllyChoice = null) {
       say(battle, "blink", `You BLINK, a step sideways through the air: ${m.the}'s ${atk.name} finds nothing.`, { actor: i });
     }
     if (key === "player" && r.hit && canWard(battle, r)) {
-      battle.pending = { kind: "ironWard", monster: i, attack: n, onAlly, roll: r };
+      battle.pending = { kind: "ironWard", monster: i, attack: n, target: key, roll: r };
       say(battle, "ward-prompt", `${m.The}'s ${atk.name} is going to hit you (${r.total} vs AC ${r.targetAc})! Iron Ward? (+${IRON_WARD_AC} AC, a rune slot)`, { actor: i });
       return true;
     }
     landAttack(battle, i, key, atk, r, rng);
   }
-  if (onAlly && a.hp === 0) {
-    battle.allyFell = true;
-    say(battle, "ally-down", `${a.name} is knocked down! ${a.name} will be back up after the fight.`);
-  }
+  if (isAllyKey(key) && battle[key].hp === 0) allyDown(battle, key);
   return false;
 }
 
@@ -474,7 +505,7 @@ function monsterCasts(battle, i, rng) {
   m.spellsLeft[spell.name]--;
   if (!spell.breath && canCounter(battle)) {
     battle.pending = { kind: "counter", monster: i, spell };
-    say(battle, "counter-prompt", `${m.The} begins to cast ${spell.name}! ${battle.ally.name} could COUNTER it (a level 3 slot).`, { actor: i });
+    say(battle, "counter-prompt", `${m.The} begins to cast ${spell.name}! ${battle[counterKey(battle)].name} could COUNTER it (a level 3 slot).`, { actor: i });
     return "paused";
   }
   castMonsterSpell(battle, i, spell, rng);
@@ -484,36 +515,35 @@ function monsterCasts(battle, i, rng) {
 /* A monster's spell: everyone it touches makes a saving throw (you with Indomitable and Pip's badge), for damage
    (halved on a save, if `half`) and maybe a condition. */
 export function castMonsterSpell(battle, i, spell, rng) {
-  const m = battle.monsters[i], a = battle.ally;
+  const m = battle.monsters[i];
   say(battle, "monster-cast", `${m.The} casts ${spell.name}!`, { actor: i, spell: spell.name });
-  const allyUp = !!(a && a.hp > 0);
-  const keys = spell.targets === "all" ? ["player", ...(allyUp ? ["ally"] : [])] : [allyUp && rng() < 0.5 ? "ally" : "player"];
+  const keys = spell.targets === "all" ? ["player", ...allyKeys(battle).filter(k => battle[k].hp > 0)] : [pickTarget(battle, rng)];
   for (const key of keys) {
     const s = key === "player" ? resistSave(battle, key, spell.save, spell.dc, rng) : battleSave(battle, key, spell.save, spell.dc, rng);
     const full = spell.damage ? roll(spell.damage, rng).total : 0;
     const dmg = s.success ? (spell.half ? Math.floor(full / 2) : 0) : full;
     const woke = hurt(battle, key, dmg);
-    const who = key === "player" ? "You" : a.name, are = key === "player" ? "are" : "is";
+    const who = nameOf(battle, key), are = key === "player" ? "are" : "is";
     say(battle, "monster-spell", `${who} ${s.success ? (key === "player" ? "resist" : "resists") : (key === "player" ? "are caught" : "is caught")} (${spell.save} save ${s.total} vs DC ${spell.dc})${dmg ? `: ${dmg} ${spell.damageType} damage` : ""}.`, { who: key, damage: dmg });
     tellWoken(battle, key, woke);
     if (!s.success && spell.condition && combatant(battle, key).hp > 0 && !immuneTo(battle, key, spell.condition.id)) {
       addCondition(battle, key, spell.condition.id, { rounds: spell.condition.rounds });
       say(battle, "condition", `${who} ${are} ${CONDITIONS[spell.condition.id].name}!`, { who: key, condition: spell.condition.id });
     }
-    if (key === "ally" && a.hp === 0) { battle.allyFell = true; say(battle, "ally-down", `${a.name} is knocked down! ${a.name} will be back up after the fight.`); }
+    if (isAllyKey(key) && battle[key].hp === 0) allyDown(battle, key);
   }
 }
 
 /* One monster attack landing (or missing), with what it does after. */
 function landAttack(battle, i, key, atk, r, rng) {
-  const m = battle.monsters[i], a = battle.ally;
+  const m = battle.monsters[i], a = combatant(battle, key);
   if (r.hit && oathOf(battle) === "iron") {
     if (key === "player") r.damage = Math.max(0, r.damage - IRON_SKIN); // heavy armour mastery
     else if (battle.player.hp > 0) r.damage = Math.floor(r.damage / 2); // Shield Ally: you cover your companion
   }
   const woke = hurt(battle, key, r.damage);
-  if (key === "ally") say(battle, "monster-attack", `${m.The} attacks ${a.name} with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, actor: i, onAlly: true });
-  else say(battle, "monster-attack", `${m.The} attacks with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r, true)}`, { roll: r, actor: i });
+  if (isAllyKey(key)) say(battle, "monster-attack", `${m.The} attacks ${a.name} with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, actor: i, onAlly: true, who: key });
+  else say(battle, "monster-attack", `${m.The} attacks with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r, true)}`, { roll: r, actor: i, who: key });
   tellWoken(battle, key, woke);
   if (r.hit && atk.poison && combatant(battle, key).hp > 0) {
     const { save, dc, damage } = atk.poison, s = resistSave(battle, key, save, dc, rng), full = roll(damage, rng).total;
@@ -549,7 +579,7 @@ export function reactAction(battle, useWard, rng = Math.random) {
     else p.runes.used = (p.runes.used || 0) + 1;
     say(battle, "ward", `Iron Ward! The rune on your blade flares, and ${m.the}'s ${atk.name} glances off (${r.total} vs AC ${r.targetAc + IRON_WARD_AC}).`, { actor: pend.monster });
   } else landAttack(battle, pend.monster, "player", atk, r, rng);
-  if (!monsterTurn(battle, pend.monster, rng, pend.attack + 1, pend.onAlly) && !checkEnd(battle, rng)) {
+  if (!monsterTurn(battle, pend.monster, rng, pend.attack + 1, pend.target) && !checkEnd(battle, rng)) {
     finishTurn(battle, pend.monster, rng);
     nextTurn(battle);
     runMonsterTurns(battle, rng);
@@ -596,13 +626,13 @@ export function checkEnd(battle, rng) {
   }
   if (battle.player.hp <= 0) {
     battle.state = "lost";
-    afterBattle(battle.player, battle.ally);
+    settle(battle);
     say(battle, "lost", "You fall to the ground. Darkness takes you.");
     return true;
   }
   if (living(battle).length === 0) {
     battle.state = "won";
-    afterBattle(battle.player, battle.ally);
+    settle(battle);
     const xp = battle.monsters.reduce((s, m) => s + m.xp, 0);
     const gold = battle.monsters.reduce((s, m) => s + roll(m.gold, rng).total, 0);
     battle.player.gold += gold;
@@ -615,7 +645,7 @@ export function checkEnd(battle, rng) {
     for (const l of levelUps) {
       const news = [...l.features, ...(l.asi ? ["an ability score increase"] : [])];
       say(battle, "level-up", `You reach level ${l.level}! +${l.hpGain} max HP.${news.length ? ` New: ${news.join(", ")}.` : ""}`, { level: l.level });
-      if (battle.ally) say(battle, "ally-level-up", `${battle.ally.name} reaches level ${l.level} too!`);
+      for (const key of allyKeys(battle)) say(battle, "ally-level-up", `${battle[key].name} reaches level ${l.level} too!`, { who: key });
     }
     return true;
   }
@@ -625,7 +655,7 @@ export function checkEnd(battle, rng) {
 /* Each log entry carries everyone's HP right after it happened, so a screen can play the fight back step by step.
    extra: roll (an attack roll), target / actor (monster index), heal (HP recovered), onAlly (a monster hit your companion). */
 export function say(battle, type, text, extra = {}) {
-  const hp = { player: battle.player.hp, ally: battle.ally ? battle.ally.hp : null, monsters: battle.monsters.map(m => m.hp) };
+  const hp = { player: battle.player.hp, ally: battle.ally ? battle.ally.hp : null, ally2: battle.ally2 ? battle.ally2.hp : null, monsters: battle.monsters.map(m => m.hp) };
   battle.log.push({ round: battle.round, type, text, hp, level: battle.player.level, ...extra });
 }
 

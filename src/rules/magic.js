@@ -8,7 +8,7 @@ import { ITEMS } from "../data/items.js";
 import { roll, parseDice } from "./dice.js";
 import { proficiencyBonus } from "./character.js";
 import { addCondition, attackMods, CONDITIONS } from "./conditions.js";
-import { combatant, nameOf, acOf, battleSave, hurt, tellWoken, say, living, resolveAttack, adjustRoll, adjustDamage, rollText, hitText, isPlayerTurn, endPlayerAction } from "./combat.js";
+import { combatant, nameOf, acOf, battleSave, hurt, tellWoken, say, living, resolveAttack, adjustRoll, adjustDamage, rollText, hitText, isPlayerTurn, endPlayerAction, allyKeys, isAllyKey } from "./combat.js";
 import { companionStats } from "./party.js";
 
 export const DAWN_HEAL_BONUS = 5; // the Oath of Dawn: your companion's healing spells heal this much more
@@ -61,8 +61,8 @@ export function spendForSpell(book, casterLevel, spellId, slotLevel) {
   return { ok: true, slotLevel: level };
 }
 
-/* Who a spell would land on, or a reason it can't be cast. target: a monster's index for "one", "player" or "ally"
-   for "friend". */
+/* Who a spell would land on, or a reason it can't be cast. target: a monster's index for "one", "player", "ally" or
+   "ally2" for "friend". */
 function targetsFor(battle, spell, caster, target) {
   if (spell.targets === "one") {
     const t = target ?? battle.monsters.indexOf(living(battle)[0]);
@@ -73,10 +73,10 @@ function targetsFor(battle, spell, caster, target) {
     return keys.length ? { keys } : { reason: `There's nothing here for ${spell.name} to touch.` };
   }
   if (spell.targets === "self") return { keys: [caster.key] };
-  if (spell.targets === "party") return { keys: ["player", ...(battle.ally?.hp > 0 ? ["ally"] : [])] };
+  if (spell.targets === "party") return { keys: ["player", ...allyKeys(battle).filter(k => battle[k].hp > 0)] };
   const t = target ?? caster.key;
-  if (t === "ally" && !battle.ally) return { reason: "No one is in your party." };
-  return t === "player" || t === "ally" ? { keys: [t] } : { reason: "Pick yourself or a friend." };
+  if (isAllyKey(t) && !battle[t]) return { reason: "No one is in your party." };
+  return t === "player" || isAllyKey(t) ? { keys: [t] } : { reason: "Pick yourself or a friend." };
 }
 
 /* Casts a spell in a fight: rolls it, deals damage, heals, and adds conditions, writing each step to the battle log.
@@ -145,7 +145,7 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
     if (!any) say(battle, "spell-fizzle", "A drowsy haze drifts over them, but no one is weak enough to drop off.", { spell: spellId });
   } else if (spell.kind === "heal") {
     const t = keys[0], c = combatant(battle, t), down = c.hp === 0;
-    const dawn = caster.key === "ally" && battle.player.oath === "dawn" ? DAWN_HEAL_BONUS : 0; // the Oath of Dawn
+    const dawn = isAllyKey(caster.key) && battle.player.oath === "dawn" ? DAWN_HEAL_BONUS : 0; // the Oath of Dawn
     const amount = Math.max(1, roll(spellDice(spell, "heal", caster.level, slot), rng).total + caster.mod + dawn);
     const healed = Math.min(c.maxHp - c.hp, amount);
     c.hp += healed;

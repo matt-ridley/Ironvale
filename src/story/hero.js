@@ -18,10 +18,11 @@ export const TITLES = [
 
 export const titleOf = flags => TITLES.find(t => t.earned(flags || {})).name;
 
-/* Which act of the story you're in, from the quest flags: 1 (the goblins), 2 (Ironvale, from the Goblin King's fall)
-   or 3 (the pass: the blade is reforged and the keep is home). Scripts branch on it for the lines that change when
-   you go back to old places. */
+/* Which act of the story you're in, from the quest flags: 1 (the goblins), 2 (Ironvale, from the Goblin King's fall),
+   3 (the pass: the blade is reforged and the keep is home) or 4 (beyond the door: from the end of Act 3). Scripts
+   branch on it for the lines that change when you go back to old places. */
 export function actOf(flags = {}) {
+  if (flags.act3Complete) return 4;
   if (flags.bladeReforged && flags.keepHome) return 3;
   if (flags.kingDefeated) return 2;
   return 1;
