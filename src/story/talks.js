@@ -14,7 +14,7 @@ export const TALKS = {
   megan: [
     { id: "megan1", needs: () => true, lines: [
       [null, "The fire crackles. Megan turns her bow over and over in her hands."],
-      [MEGAN, "Can I tell you something? My da was an archer, in Fenwatch. Matthew. Ten years ago he went up the mountain pass with a survey party, and none of them came back."],
+      [MEGAN, "Can I tell you something? My da was an archer, in Fenwatch. Corwin. Ten years ago he went up the mountain pass with a survey party, and none of them came back."],
       [MEGAN, "Mum took me to Willowmere after. This bow was his. Sometimes I think: if the pass ever opens, I could go up and look. Silly, isn't it?"],
     ] },
     { id: "megan2", needs: f => !!f.rockslideOpen, lines: [
@@ -24,7 +24,7 @@ export const TALKS = {
     { id: "megan3", needs: f => !!f.wardenTraining, opens: "matthewQuest", lines: [
       [MEGAN, "I found one of Da's arrows today, in the snow by the old road. Grey goose feathers, and a little nick in each: his mark. Nobody else fletches like that."],
       [MEGAN, "It's been ten years. But if there's one, there might be more. Will you help me follow them? Please?"],
-      [null, "(A new side quest: Matthew's Arrows. Look for his arrows along the pass, with Megan in your party.)"],
+      [null, "(A new side quest: Corwin's Arrows. Look for his arrows along the pass, with Megan in your party.)"],
     ] },
   ],
   robyn: [

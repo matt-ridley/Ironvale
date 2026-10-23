@@ -1,4 +1,4 @@
-// The companions' quests in Act 3: Matthew's Arrows (Megan's father, Volley, archery rematches at the keep) and the
+// The companions' quests in Act 3: Corwin's Arrows (Megan's father, Volley, archery rematches at the keep) and the
 // Frozen Chapel (Robyn's Turn Undead and Spiritual Weapon), and the chapel's wraiths.
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -29,7 +29,7 @@ const talk = (s, map, id) => startConversation(SCRIPTS[obj(map, id).script], s, 
 const through = c => { const seen = []; while (view(c)) { seen.push(view(c).text); if (view(c).choices.length > 1) break; choose(c, 0); } return seen.join(" "); };
 const ACT3 = { kingDefeated: true, signetReturned: true, varricDefeated: true, bladeReforged: true, keepHome: true, rockslideOpen: true, wardenTraining: true };
 
-test("Matthew's arrows: only Megan knows them, and they lead to the watchtower", () => {
+test("Corwin's arrows: only Megan knows them, and they lead to the watchtower", () => {
   const flags = { ...ACT3, matthewQuest: true }, s = { hero: hero("megan"), flags };
   assert.ok(!activeObjects(pass, { ...ACT3 }).some(o => o.id === "arrow1"));
   for (const id of ["arrow1", "arrow2", "arrow3"]) assert.ok(activeObjects(pass, flags).some(o => o.id === id));
@@ -40,10 +40,10 @@ test("Matthew's arrows: only Megan knows them, and they lead to the watchtower",
   through(talk(s, "pass", "arrow2"));
   through(talk(s, "pass", "arrow3"));
   assert.equal(arrowsFound(flags), 3);
-  assert.equal(sideObjective(flags, s), "Follow Matthew's arrows up the pass, with Megan");
+  assert.equal(sideObjective(flags, s), "Follow Corwin's arrows up the pass, with Megan");
 });
 
-test("at the watchtower: Matthew shoots at strangers, comes out for Megan, and teaches her Volley", () => {
+test("at the watchtower: Corwin shoots at strangers, comes out for Megan, and teaches her Volley", () => {
   const flags = { ...ACT3, matthewQuest: true }, h = hero("megan"), s = { hero: h, flags };
   assert.match(view(talk({ hero: hero("robyn"), flags }, "pass", "matthew")).text, /That's close enough/);
   const xp = h.xp;
@@ -80,7 +80,7 @@ test("Volley: once a fight, a shot at every monster; by herself, Megan looses it
   }
 });
 
-test("Matthew's rematches at the keep: archery against his 40, and his griffon longbow goes to Megan", () => {
+test("Corwin's rematches at the keep: archery against his 40, and his griffon longbow goes to Megan", () => {
   const flags = { ...ACT3, matthewFound: true }, h = hero("megan"), s = { hero: h, flags };
   const c = talk(s, "keep", "matthewKeep");
   pick(c, "Archery!");
@@ -90,7 +90,7 @@ test("Matthew's rematches at the keep: archery against his 40, and his griffon l
   assert.equal(h.companion.gear.bow, bow);
   assert.equal(bow.upgrade, 2);
   assert.equal(winPrize(h, flags, "archeryMatthew"), null); // once
-  // With Rachel: something Matthew saw, years back.
+  // With Rachel: something Corwin saw, years back.
   const r = { hero: hero("rachel"), flags };
   const c2 = talk(r, "keep", "matthewKeep");
   pick(c2, "Seen anything strange up there?");

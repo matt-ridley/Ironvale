@@ -1220,7 +1220,7 @@ export function sideObjective(flags, state = {}) {
   if (flags.nettleMet && !flags.nettleDefeated) return "Find Auntie Nettle's hut on the pass's slopes";
   if (flags.queenMet && !flags.queenSettled) return "Deal with the Queen of the Fen on the causeway";
   if (flags.runeIronFound && !flags.bladeSecondForm) return "Take the rune-iron to Brannoc at the keep";
-  if (flags.matthewQuest && !flags.matthewFound) return "Follow Matthew's arrows up the pass, with Megan";
+  if (flags.matthewQuest && !flags.matthewFound) return "Follow Corwin's arrows up the pass, with Megan";
   if (flags.chapelQuest && !flags.chapelLit) return "Take Robyn to the Frozen Chapel on the pass";
   if (flags.pipRanAway && !flags.pipRewarded) return flags.pipFound ? "See Pip and Hazel in Oakhollow" : flags.hazelPipNews ? "Find Pip: his trail goes into the wood" : "Ask Hazel what's happened to Pip";
   return bountyLine(state);

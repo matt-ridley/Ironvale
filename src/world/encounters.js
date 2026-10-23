@@ -103,7 +103,7 @@ export const ENCOUNTERS = {
   },
 
   // The Mountain Pass (Act 3): fights get tougher as the road climbs. Thorne's camp and the gatehouse are guarded by
-  // his rune-touched gargoyles and elementals; Matthew's watchtower is griffon country. Simulated (tools/simulate.mjs),
+  // his rune-touched gargoyles and elementals; Corwin's watchtower is griffon country. Simulated (tools/simulate.mjs),
   // a level 9 hero with +3 gear and Rachel wins the slopes' fights with 85-100% of their HP left, the snowfield's with
   // 65-90%; the heights are for level 11 (a level 10 hero with +4 gear wins 95-100%, with 65-95% left).
   slopes: {
