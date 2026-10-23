@@ -1,6 +1,6 @@
 # Ironvale roadmap
 
-The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 11 and step 12's minigames are done (0.18.0 to 0.30.0; Greywater Fen was built before Fenwatch). Act 3 (steps 13-20) is being built from 0.31.0. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
+The plan for the rest of the game: how the story carries on after the Goblin King, the rules and systems it needs, and the order to build them in. Steps 1 to 11 and step 12's minigames are done (0.18.0 to 0.30.0; Greywater Fen was built before Fenwatch). Act 3 (steps 13-20) was built from 0.31.0 to 0.38.0. Act 4 (steps 21-27) is proposed below and starts once the owner agrees it. Decisions marked **decided** have been agreed; **open** ones are still to settle. Update this file as things are built or change.
 
 ## The shape of the game
 
@@ -156,6 +156,115 @@ No dragons in Act 3: the eye at the door is the only one you see. Use `npm run s
 - **Titles:** Warden-in-training (first waystone), then the Oath's title at the end of the act (e.g. *Sworn of Iron*). *Warden of Ironvale* waits for Act 4.
 - **Looks:** the cape from Act 2, the blade's runes glowing (one more per rune), and the Oath's colours after the ending.
 
+## Act 4: Beyond the Door (proposed)
+
+Everything in this section is a **proposal** until the owner agrees it. The names (the dragon, the land beyond, the new people) are placeholders like "Ironvale" itself. Some of it is already **decided** elsewhere in this file (Claire, the whole-party final fight, the Oath paths, Thorne mattering), and this section builds on those.
+
+### The story in one breath
+
+A hundred years ago the Wardens didn't guard a door to nowhere. They came from the land beyond it, a green valley called the **Emberreach**, until a red dragon, **Vorthax** (placeholder), burned them out. Their captain, **Edric** (Colleen's husband, and so the hero's forefather), led the last Wardens back through to kill it and never returned. Colleen sealed the door behind them and held it for the rest of her life. For a century the dragon has pushed on the door, whispered to anyone who could read the runes (Thorne), and sent its kobolds to dig the long way round (the ones Pip found in the Warrens).
+
+Since Thorne cracked the door, the seal is failing: the crack glows at night and the keep's runes flicker. The hero, now sworn to an Oath, goes **through the door**. On the other side the valley is half ash and half wild forest, and in the forest lives **Claire**, Rachel's twin, who went through the gap as a girl and grew up with the wolves. Claire gathers the whole cast. Each companion finds the piece of their story that was left beyond the door, and each pledges to stand at the last fight. Then the party climbs into the **Emberdeep**, the dragon's mountain, and faces Vorthax together. The hero comes home as the **Warden of Ironvale**, and the door can stand open again.
+
+### Main quests
+
+| Quest | What happens |
+|---|---|
+| **Q9 Through the Door** | The crack in the door is wider every night, and kobolds have started coming out of the Warrens' tunnels. Rachel (or Hild, if she's not with you) works out that a Warden can open the door from this side and the runes will close it behind them. At the door the hero lays the Wardenblade against it, the three runes light up, and the door swings open onto heat and ash. On the far side: the **Threshold**, the Wardens' old gate-camp, burned out (it becomes the first camp). The voice that shouted "Rae?" left tracks. A kobold warband ambushes you on the ash road, and a wolf pack drives them off and leads you to the edge of the wildwood. About 10,000 XP. |
+| **Q10 Two Halves** | Claire's recruit quest, the reunion. She's wary: the dragon has used voices before, and she won't believe Rachel is real. The proof is the charm: Rachel's moon half and the sun half from the pass's cairn. When the halves touch, the dragon's brood attacks the grove (a young red dragon and a fire elemental), and the twins fight beside you: **the first battle with two companions**. Afterwards the charm is whole (a key item), and Claire joins. If Rachel isn't in your party she comes along as a **guest** for this quest, so the main quest still needs nobody in particular. About 6,000 XP. |
+| **Q11 The Pledges** | Claire knows something beyond the door that belongs to each of your people, and she takes each of them to it (see The companions' last quests). The hero's piece is the main quest: **Edric's grave** at the burned outpost of **Lastwatch**, guarded by the Wardens he led, raised by the dragon as **Cinder Wardens**. Laying them to rest teaches the hero the **Breaking Rune** (Thorne's old rune: it hits every monster), and Edric's shield on the grave gives the dragon's true name to anyone who can read it (Rachel; or Thorne, from the keep). The others are optional, but anyone who doesn't pledge isn't at the last fight. About 5,000 XP each. |
+| **Q12 The Emberdeep** | The dragon's mountain: the Act 4 dungeon. The kobolds' tunnels, the brood's aeries, golems the Wardens built and the dragon took, and the **hoard**. Brannoc's lost forge is on the way (the Wardenblade's final form). Dunstan's map (Megan's quest) shows a back way that skips the golems; the goblin refugees' Snik knows one too. About 15,000 XP. |
+| **Ending: Vorthax** | Vorthax in three phases with the whole party (see The last fight). When it falls, the Emberreach's fires go out one by one, the wildwood starts to cross the ash, and the door stays open. Back at the keep, everyone you've recruited and helped is in the hall (Hild, Brannoc, Matthew, the goblin trader, Pip with his wooden sword). Hild hands you the keep's keys: **Warden of Ironvale**. ACT 4 COMPLETE, the credits, and then free play (below). About 18,000 XP for the dragon. |
+
+**The rule for companion gates still holds:** the main quest never needs a particular companion (Rachel joins Q10 as a guest if she has to), and the pledges are where each companion matters.
+
+### Claire
+
+The decided parts are under **Companions: Claire, Rachel's twin**. What Act 4 adds:
+
+- **Her stats:** WIS +4 casting, a quarterstaff, hide armour, good saves (WIS and INT proficient, as an SRD druid), and she starts at the hero's level like the others. Spells: Produce Flame, Entangle, Faerie Fire, Cure Wounds, Moonbeam, Call Lightning and Conjure Animals.
+- **Wild Shape:** twice per rest she becomes a **bear** (hits hard, about 60 HP of its own) or a **great cat** (two attacks, quicker to act). The beast's HP is a second bar under hers; when it runs out she turns back with her own HP untouched. In beast form she can't cast. (SRD druids can't take a beast this big at her level without the Circle of the Moon, which isn't in the SRD: a bend, like scrolls for anyone.)
+- **Conjure Animals** is a wolf pack that bites each monster once at the end of every round for three rounds, not new fighters on the screen (the screen has no room). **Moonbeam** and **Call Lightning** last their rounds like Bless (no concentration yet).
+- **Hearing the land:** with her in the party, beasts won't attack (wolves, apes and the like walk away instead), hidden paths show up on the Emberreach map, and some animals have something to say (a raven who knows where the survey party's camp was).
+- **Breaking curses:** her touch ends charms and curses after a fight (the night hag's, the dragon's Frightful Presence lingering), and she rolls her saves with advantage against magic.
+- **Rally:** in the last fight, once per phase she brings a fallen companion back with a little HP.
+- **Her talks:** three campfire talks like the others (the years beyond the door, Rachel as a girl, what the dragon whispered to her), and she's the one companion who wants to talk to **Thorne** in the cells.
+
+### The companions' last quests (the pledges)
+
+Each ends with the companion pledging to stand at the last fight. A pledge shows as a **banner** in the keep's hall.
+
+| Who | What Claire found beyond the door | The quest | Reward |
+|---|---|---|---|
+| **The hero** | Edric's grave at Lastwatch | Main quest (Q11) | The **Breaking Rune**; the dragon's true name |
+| **Rachel** | Claire herself | Q10, Two Halves | The charm, made whole: while either twin is in the party, the other can be tagged in during any fight once per rest |
+| **Megan** | **Dunstan**, Matthew's old survey partner, alive and kept by the kobolds to draw their maps | **The Mapmaker.** Free him from the kobolds' diggings. He knew Megan as a baby, and he has a letter from Matthew he never got to send. | Dunstan's **map** (the Emberdeep's back way) and three **Arrows of Dragon Slaying** for Megan (SRD: CON save or 6d10 more) |
+| **Robyn** | A **shrine of the Dawn**, the first one, where the Wardens' light was first prayed to | **The First Light.** The dragon's undead have made it a lair. Robyn has to hold the light while you fight (a `surviveRounds` trial, like the waystones). | **Mass Healing Word** (heals everyone in the party at once) |
+| **Brannoc** (not a companion) | The Wardens' **lost forge**, inside the Emberdeep | Part of Q12: bring him to it once the way is clear, with the charm's light to read the forge's runes. | The **Wardenblade's final form** (one more rune slot, and it shrugs off fire: half fire damage while you hold it) |
+| **Matthew, Snik, Pip** (not companions) | | No pledge quest. If you finished Matthew's Arrows or helped the refugees, they turn up at the keep for the ending. | Lines and a place in the hall |
+
+### Thorne, if spared (decided: it matters)
+
+He knows the voice. Visit the cells in Act 4 and he gives you the dragon's **true name** without needing Edric's shield, and he's frank about what it promised him. With the name spoken at the start of the last phase, **Frightful Presence** doesn't work on the party and the door's runes **bind** Vorthax for one round. Without Thorne you can still get the name from Edric's shield, but only Rachel can read it, so a party without her goes into the last phase without the binding. Claire's talks with him are the one place he apologises. After the ending he asks to be let out to help rebuild the Emberreach: an open question whether you can say yes.
+
+### The Oath paths
+
+Each Oath opens one path in the Emberreach (decided in The Oath). Each leads to an **Oath vault**: a Warden cache with a piece of Oath gear.
+
+| | **Iron** | **Storm** | **Dawn** |
+|---|---|---|---|
+| Path | Hold up the collapsing bridge over the lava gorge while the party crosses (a STR trial: three checks in a row) | Blink across a chasm to the vault on the far side | Walk through the cursed gate at Lastwatch, which burns anyone else |
+| Vault | Edric's tower shield (+2 AC, fire resistance while you use it) | A storm-glass rune stone (Chain Lightning hits once more) | The Dawn banner (the healing light also works on a guest or second companion) |
+
+### Choices come back (last time)
+
+- **Sallow's Sundries:** the bargained Sallow sells Potions of Fire Resistance at hag prices, and later a "dragon-proof" hat that does nothing.
+- **The goblin refugees:** Snik knows the kobolds' tunnels into the Emberdeep (a second back way). The goblins are at the ending.
+- **Pip:** stows away through the door in Q9 and is found by Claire's wolves, very proud of himself. She sends him home with a wolf to guard him; after that he tells every child in Oakhollow about the wolf.
+- **Old places:** new Act 4 lines for the hubs (Maren on the Wardens' homeland, the bard's song gets a dragon verse), and Act 3 bounties stay on the boards with Act 4 ones added.
+
+### The region
+
+- **`src/world/beyond.js`** (about 64 x 72), the Emberreach: the door's far face and the Threshold camp in the south; the **ash road** and lava gorge; the **wildwood** in the west (Claire's grove, a camp once she joins); the burned outpost of **Lastwatch** in the east (Edric's grave, the Dawn shrine's ruins); the kobold diggings; the brood's **aeries** in the north; and the Emberdeep's gate under the mountain. Zones: `threshold` (safe), `ashRoad`, `wildwood`, `lastwatch`, `aeries`, `emberGate`. The `beyond` region in `REGIONS` gets its `map`.
+- **`src/world/emberdeep.js`**: the dungeon. Zones: `tunnels`, `forge`, `hoard`.
+- **Camps:** the Threshold, Claire's grove, Lastwatch (after Edric's grave), the lost forge (after Brannoc). The hub is still the keep: the door is a short walk from the gatehouse, and a fast-travel point on each side.
+- **New tiles:** ash, cinders, obsidian, lava (blocks, like deep water), burned tree, giant wildwood tree, standing stone, the door's far face, a crumbling bridge.
+- **New music:** `emberreach` (warm and wide, low horns), `wildwood` (the woods' track with a drone underneath), `emberdeep` (the gatehouse's organ, slower and hotter), and a `dragon` boss track with three sections, one per phase.
+
+### Monsters and XP
+
+Levels 13 to 16 run from 120,000 to 195,000 XP, and the end of Act 3 is about 100,000. Quest rewards come to about 54,000 (Q9 10,000, Q10 6,000, the pledges 5,000 each, Q12 15,000, the Oath vault 3,000), and the dragon about 18,000; the rest comes from fights and bounties, so a hero who does everything reaches level 15 before the Emberdeep and 16 with the dragon. Act 4 monsters hit at +11 to +14 with about a third more HP than the SRD, like Act 3's. Fights are still one or two monsters.
+
+| Where | Monsters (XP) | Falls to / tests |
+|---|---|---|
+| Ash road | hell hound pairs (700), salamander (1,800), fire elemental (1,800); kobold warbands always run (flavour) | Iron and Dawn (hell hounds) / Iron (the elementals' fire) |
+| Wildwood (before Claire) | giant ape (2,900), werewolf pairs (700), the treant (5,000, only if you attack it) | Iron / Dawn (beasts) |
+| Lastwatch | Cinder Wardens (custom wights with fire, about 1,800), vampire spawn (1,800), mummy pairs (700) | Dawn / Storm (they soak spells) |
+| Aeries | young red dragon (5,900), roc (7,200) | Storm (flyers) / Iron (breath) |
+| Emberdeep | fire giant (5,000), clay golem (5,000), stone golem (5,900), young red dragon (5,900) | Iron (giants, golems) / Storm (golems) |
+| Bosses | Vorthax (about 18,000 across three phases; custom, from the SRD adult red dragon) | All three, if the party covers the gap |
+
+### The last fight
+
+Vorthax is built from the SRD **adult red dragon** (AC 19, bite +14 with fire, two claws, Frightful Presence, a breath weapon of 18d6 fire, DC 21 to halve) with its HP spread over three battles that run back to back. Between phases you **tag in** any pledged companion for either of the two places beside you; there's no rest, but Claire's **rally** works once in each phase.
+
+1. **The Sky:** Vorthax on the wing. Melee attacks on a flying monster have disadvantage; bows, spells and runes don't (Megan and Rachel shine). It ends when a wing tears.
+2. **The Ground:** on the ground with one of its brood (two monsters). Its breath **recharges** on a 5 or 6 each round instead of a fixed number of uses.
+3. **The Hoard:** in the hoard, wounded and furious. **Lair actions:** at the top of each round the floor erupts somewhere (a DEX save for fire). **Legendary resistance:** three times it turns a failed save into a success, so Binding and Sleep need to wear it down. With the true name (and Thorne's help) Frightful Presence fails and the door's runes bind it for the first round.
+
+Tune with `npm run sim` before merging. Targets: a level 16 hero with two companions and +5 gear wins about 90% of the time; with only Claire and one other, about 70%.
+
+### The hero in Act 4
+
+- **Fighter levels 13-16** (SRD Champion): **Indomitable** twice per long rest (L13), ability score increases (L14 and L16), **Superior Critical** (L15: crits on 18-20).
+- **Runes:** the **Breaking Rune** (every monster, a DEX save halves it), the Oath's signature at full power (one more use per rest), and the Wardenblade's final form with one more rune slot.
+- **Title:** *Warden of Ironvale* at the ending, replacing the Oath title in NPC lines (the Oath title stays on the hero sheet).
+- **Looks:** the blade's last rune lit, and the Oath vault's gear on the sprite (the shield, the sparks, or the banner on the cape).
+
+### After the ending: free play
+
+The game doesn't stop at the credits. The Emberreach stays open, its fires out, with the wildwood slowly spreading over the ash (the map's ash tiles turn to grass over the next few visits). The bounty boards keep their hunts, the training yard keeps its rematches, and Pip finally gets a real (small) sword. Whether there's anything past level 16 is an open question.
+
 ## Safe places, resting and travel (decided)
 
 ### Hubs and camps
@@ -246,7 +355,7 @@ Companions to add:
 **Bringing everyone together (Act 4):** Claire gathers the whole cast the way Rachel never could.
 
 - **Her recruit quest is a reunion:** find the twins' lost charm halves and put them back together. That's when she joins.
-- **She knows everyone's missing piece.** Beyond the door she has met something tied to each companion's story: Megan's father's old survey partner, a shrine of the Dawn for Robyn, the Wardens' lost forge for Brannoc, Colleen's son's grave for the hero. She leads each companion to theirs, one quest each, and each one ends with that companion pledging to stand at the final fight. That makes every companion's story pay off before the end.
+- **She knows everyone's missing piece.** Beyond the door she has met something tied to each companion's story: Megan's father's old survey partner, a shrine of the Dawn for Robyn, the Wardens' lost forge for Brannoc, Edric's grave for the hero (Colleen's husband: her son went south, so his grave isn't beyond the door; see Act 4). She leads each companion to theirs, one quest each, and each one ends with that companion pledging to stand at the final fight. That makes every companion's story pay off before the end.
 - **The final battle is the one fight with the whole party.** Normally it's one companion at a time; for the dragon, everyone you've recruited comes. Two stand beside you at a time (the battle screen needs room for a second companion: Act 4 work) and you can tag in the others between the dragon's phases. Anyone you never recruited isn't there, so recruiting everyone is worth it. Claire's **rally** brings a fallen companion back once per phase.
 - **The roster screen remembers:** every pledge shows as a banner in the keep's hall, so you can see who's coming.
 
@@ -369,6 +478,16 @@ One pull request each, with a minor version bump.
 
 Claire's hints go in with the step they belong to: the moon charm with Rachel (14), the sun half and the wolves with the pass (16), Matthew's line (17), Thorne's line (19), "Rae?" with the ending (20). Each Oath's world changes (the garrison, the library tower, the temple) also come in step 20.
 
+### Act 4 (proposed)
+
+21. **Act 4 groundwork:** fighter levels 13-16 (Indomitable twice, Superior Critical, the L14 and L16 ability score increases), `actOf()` returning 4 once Q9 starts, and the **second companion** in battle: a second ally slot in the rules (turn order, monsters picking between three targets, tactics for both, `guest` companions who aren't on the roster) and room on the Battle screen for two allies. Save format 7. Test it with a cheat-screen fight before any story uses it.
+22. **Through the Door (Q9):** `beyond.js` with only its southern part (the Threshold, the ash road, the gorge, the wildwood's edge), the ash and lava tiles, the `emberreach` track, opening the door (and fast travel on both sides), the kobold warband, the wolves, the ash road's monsters, and Pip stowing away. The `beyond` region gets its map.
+23. **Claire and Two Halves (Q10):** `art/claire.js` with bear and cat forms, Wild Shape (a second HP bar), the druid spells (Moonbeam, Call Lightning, Conjure Animals as the wolf pack), hearing the land (beasts walk away, hidden paths), breaking curses, the wildwood and her grove, the charm made whole, and the first two-companion fight with Rachel as a guest if needed. Her three talks.
+24. **Lastwatch and the hero's pledge (Q11):** the rest of `beyond.js` east (Lastwatch, the shrine ruins, the kobold diggings, the aeries), the Cinder Wardens and the rest of the region's monsters, Edric's grave, the Breaking Rune, the true name, and Thorne's Act 4 lines in the cells (and Claire's talk with him).
+25. **The other pledges:** The Mapmaker (Dunstan, Arrows of Dragon Slaying), The First Light (Mass Healing Word), the pledge banners in the keep's hall, the Oath paths and vaults, and the last round of choices coming back (Sallow's fire potions, Snik's tunnels, new hub lines and bounties).
+26. **The Emberdeep (Q12):** `emberdeep.js`, the `emberdeep` track, golems and giants, the two back ways (Dunstan's map, Snik), Brannoc's lost forge and the Wardenblade's final form, the hoard's doors.
+27. **Vorthax and the ending:** monster rules for flying (melee disadvantage), breath recharge, lair actions and legendary resistance; battles that chain into the next phase with HP carried over and tag-in between them; Claire's rally; the true name's binding; the `dragon` track; the ending in the keep's hall, *Warden of Ironvale*, the credits and free play. Tune with `npm run sim` against the targets in The last fight.
+
 ## Open questions
 
 1. **The hero's secret:** leaning to the last Warden heir: Act 2's opening (0.23.0) hints at the bloodline without saying it. Still open: confirm it, and when it's said out loud (built in 0.28.0 as Varric's "Warden's blood... at last").
@@ -379,3 +498,7 @@ Claire's hints go in with the step they belong to: the moon charm with Rachel (1
 6. ~~**Act 3's cast:**~~ Decided: Megan's father is **Matthew**, the rival is **Aldric Thorne**, and the mentor is the ghost of **Warden Colleen**, the last Warden and the hero's ancestor.
 7. ~~**Sparing Thorne:**~~ Decided: a real choice, and it matters in Act 4.
 8. ~~**Ice tiles:**~~ Decided: in, as short sliding puzzles on the pass.
+9. **Act 4's names:** the dragon (Vorthax), the land beyond (the Emberreach), its dungeon (the Emberdeep), Colleen's husband (Edric) and Matthew's partner (Dunstan) are all placeholders.
+10. **Edric instead of Colleen's son:** the Claire section first put Colleen's son's grave beyond the door, but Act 3 sent her son south with the sword. Proposed: the grave is her husband Edric's, the captain who went through the door. Open until the owner agrees.
+11. **Thorne after the ending:** can the hero free him to help rebuild the Emberreach?
+12. **Past level 16:** does free play keep levelling (the XP table goes to 20), or does the game stop at 16?
