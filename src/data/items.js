@@ -34,6 +34,8 @@ export const ITEMS = {
   wardenPlate: { name: "Warden Plate",   type: "armour", category: "heavy",  baseAc: 20, cost: 3000 }, // Brannoc, for a Warden sworn of Iron
 
   shield:      { name: "Shield", type: "shield", ac: 2, cost: 10 },
+  // The Oath of Iron's vault (Act 4): the Wardens' tower shield. Fire does you half while it's on your arm.
+  towerShield: { name: "Wardens' Tower Shield", type: "shield", ac: 4, prize: true, cost: 0, fireproof: true },
 
   // Potions. Healing works any time you're hurt. Speed lasts a number of steps in the world: you move faster and
   // run into fewer monsters. Dexterity lasts one fight: one extra attack each time you ATTACK.
@@ -41,6 +43,8 @@ export const ITEMS = {
   potionGreaterHealing: { name: "Potion of Greater Healing", type: "consumable", heal: "4d4+4", cost: 50 },
   potionSpeed:     { name: "Potion of Speed",     type: "consumable", effect: "speed", steps: 150, cost: 30 },
   potionDexterity: { name: "Potion of Dexterity", type: "consumable", effect: "dexterity", cost: 40 },
+  // Act 4, from Sallow's Sundries: half fire damage to you in your next fight (drink it before).
+  potionFireResistance: { name: "Potion of Fire Resistance", type: "consumable", effect: "fireResist", cost: 120 },
   // Not a potion, but used up the same way: out in the open, it takes you back to the last town (hub) you were in.
   homewardFeather: { name: "Homeward Feather", type: "consumable", effect: "homeward", cost: 50 },
 
@@ -71,6 +75,17 @@ export const ITEMS = {
     about: "Half of a gold charm, a sun, snapped off long ago. It was wound into a cairn of bones on the snowfield. Rachel wears the other half: a moon." },
   twinCharm: { name: "The Sun-and-Moon Charm", type: "key", cost: 0,
     about: "The twins' charm, whole again: a gold sun and a silver moon, snapped apart when they were twelve and fitted back together in Claire's grove. It's warm, and it hums when either of them is near." },
+  // Act 4: the sisters' pledges and the Oath vaults.
+  dunstansMap: { name: "Dunstan's Map", type: "key", cost: 0,
+    about: "Ten years of kobold tunnels, drawn on the backs of their own shopping lists: Dunstan's map of the Emberdeep. One tunnel, marked in red, goes round the golems." },
+  corwinsLetter: { name: "Corwin's Letter", type: "key", cost: 0,
+    about: "A letter Megan's da wrote her before he went up the pass, in case he didn't come back. Dunstan carried it for ten years. Megan reads it every night." },
+  stormGlass: { name: "Storm-Glass Rune Stone", type: "trinket", prize: true, cost: 0,
+    about: "A rune stone of clear glass with a storm trapped inside, from the Oath of Storm's vault. Your Chain Lightning leaps once more, to the first monster still standing. Works from your pack." },
+  dawnBanner: { name: "The Dawn Banner", type: "trinket", prize: true, cost: 0,
+    about: "The Wardens' old banner of the Dawn, gold on white, from the Oath of Dawn's vault. Your healing light shines twice as bright. Works from your pack." },
+  dragonProofHat: { name: "Dragon-Proof Hat", type: "trinket", cost: 400,
+    about: "A tall felt hat with a brim, painted with a dragon looking sad. Sallow swears it's dragon-proof. It is a hat." },
   thorneMirror: { name: "Thorne's Mirror", type: "key", cost: 0,
     about: "A silver hand mirror from Thorne's camp, polished bright. Shiny. Somebody would love this." },
   oldGnasher: { name: "Old Gnasher", type: "key", cost: 0,
@@ -140,6 +155,12 @@ export const SHOPS = {
     title: "SALLOW'S SUNDRIES", tabs: ["buy", "sell"], tint: 0x5d7a3e, markup: 1.5,
     greeting: "Mother's shop! Everything a hero needs on a cold mountain, dearie, at Mother's prices. Which are fair. For Mother.",
     stock: ["potionGreaterHealing", "potionSpeed", "homewardFeather", "scrollMistyStep", "scrollLightningBolt", "scrollFireball", "scrollCounterspell"],
+  },
+  // Act 4: Sallow's had word of a dragon. Fire potions at hag prices, and a hat.
+  sundriesDragon: {
+    title: "SALLOW'S SUNDRIES", tabs: ["buy", "sell"], tint: 0x5d7a3e, markup: 1.5,
+    greeting: "A DRAGON, dearie? Mother has just the thing. Several things. Fire-proof potions, fresh from... somewhere. And a hat.",
+    stock: ["potionFireResistance", "dragonProofHat", "potionGreaterHealing", "potionSpeed", "homewardFeather", "scrollLightningBolt", "scrollFireball", "scrollCounterspell"],
   },
   apothecary: {
     title: "APOTHECARY", tabs: ["buy", "sell"], greeting: "Bubble, bubble! Fresh potions, brewed this morning.", tint: 0x9fd18b,

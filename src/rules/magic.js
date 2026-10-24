@@ -147,13 +147,15 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
       condition(t, spell.condition);
     }
     if (!any) say(battle, "spell-fizzle", "A drowsy haze drifts over them, but no one is weak enough to drop off.", { spell: spellId });
-  } else if (spell.kind === "heal") {
-    const t = keys[0], c = combatant(battle, t), down = c.hp === 0;
-    const dawn = isAllyKey(caster.key) && battle.player.oath === "dawn" ? DAWN_HEAL_BONUS : 0; // the Oath of Dawn
-    const amount = Math.max(1, roll(spellDice(spell, "heal", caster.level, slot), rng).total + caster.mod + dawn);
-    const healed = Math.min(c.maxHp - c.hp, amount);
-    c.hp += healed;
-    say(battle, "spell-heal", `${nameOf(battle, t)} ${t === "player" ? "recover" : "recovers"} ${healed} HP (${c.hp}/${c.maxHp})${down && healed ? " and gets back up!" : "."}`, { who: t, heal: healed, revived: down && healed > 0, spell: spellId });
+  } else if (spell.kind === "heal") { // one friend, or the whole party (Mass Healing Word)
+    for (const t of keys) {
+      const c = combatant(battle, t), down = c.hp === 0;
+      const dawn = isAllyKey(caster.key) && battle.player.oath === "dawn" ? DAWN_HEAL_BONUS : 0; // the Oath of Dawn
+      const amount = Math.max(1, roll(spellDice(spell, "heal", caster.level, slot), rng).total + caster.mod + dawn);
+      const healed = Math.min(c.maxHp - c.hp, amount);
+      c.hp += healed;
+      say(battle, "spell-heal", `${nameOf(battle, t)} ${t === "player" ? "recover" : "recovers"} ${healed} HP (${c.hp}/${c.maxHp})${down && healed ? " and gets back up!" : "."}`, { who: t, heal: healed, revived: down && healed > 0, spell: spellId });
+    }
   } else if (spell.kind === "pack") {
     battle.pack = { by: caster.key, rounds: spell.rounds, attack: { name: "Bite", bonus: caster.attackBonus, damage: spell.damage, damageBonus: 0, damageType: "piercing" } };
     say(battle, "pack-summon", "A howl answers, and a wolf pack comes running out of nowhere, teeth bared!", { by: caster.key, spell: spellId });

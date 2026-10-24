@@ -26,7 +26,11 @@ import { allyTurn, canCounter, counter, counterKey } from "./tactics.js"; // (ta
 export const DEFEND_AC_BONUS = 2;
 export const CALL_ENDS = ["paralyzed", "frightened", "asleep", "restrained"]; // what Warden's Call shakes off
 export const IRON_SKIN = 3; // the Oath of Iron: weapon hits on you do this much less
-export const DAWN_AURA = "1d6"; // the Oath of Dawn: healing at the start of your turn
+export const DAWN_AURA = "1d6"; // the Oath of Dawn: healing at the start of your turn (twice over with the Dawn banner)
+export const STORM_GLASS = "3d8"; // the Oath of Storm's vault: Chain Lightning leaps once more, to the first monster standing
+/* True if fire only does you half (a Potion of Fire Resistance this fight, or the Wardens' tower shield on your arm). */
+export const fireproof = battle => !!battle.fireResist || !!(battle.player.equipment?.shield && baseOf(battle.player.equipment.shield).fireproof);
+const carries = (char, base) => !!char.inventory?.some(i => i.base === base);
 const oathOf = battle => battle.player.oath || null;
 export const FLEE_DC = 10;
 
@@ -174,7 +178,10 @@ export function createBattle(player, monsterIds, rng = Math.random, { surviveRou
   // A Potion of Dexterity drunk before the fight is used up by it.
   const quick = !!player.effects?.dexterity;
   if (quick) player.effects = { ...player.effects, dexterity: false };
-  const battle = { player, ally, ally2, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, state: "active", log: [], rewards: null, conditions: {},
+  // So is a Potion of Fire Resistance (Act 4, Sallow's): half fire damage to you for the fight.
+  const fireResist = !!player.effects?.fireResist;
+  if (fireResist) player.effects = { ...player.effects, fireResist: false };
+  const battle = { player, ally, ally2, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, fireResist, state: "active", log: [], rewards: null, conditions: {},
     leadAlly: !!ally?.src.lead, leadAlly2: !!ally2?.src.lead, // you pick your companions' actions
     surviveRounds, allyFell: false, pending: null }; // pending: a reaction waiting for you (Iron Ward)
   const names = entries.map(e => (e.who === "player" ? "You" : isAllyKey(e.who) ? battle[e.who].name : monsters[e.who].name) + ` (${e.init})`);
@@ -281,6 +288,15 @@ export function playerAction(battle, action, rng = Math.random) {
       tellWoken(battle, t, woke);
       if (m.hp === 0) say(battle, "defeat", `${m.The} falls.`, { target: t });
     }
+    const last = living(battle)[0];
+    if (last && carries(p, "stormGlass")) { // the storm-glass rune stone: one more leap
+      const t = battle.monsters.indexOf(last), s = battleSave(battle, t, "DEX", dc, rng), full = roll(STORM_GLASS, rng).total;
+      const dmg = adjustDamage(last, s.success ? Math.floor(full / 2) : full, "lightning").damage;
+      const woke = hurt(battle, t, dmg);
+      say(battle, "spell-save", `The storm-glass rings, and the lightning leaps back to ${last.the} (DEX save ${s.total} vs DC ${dc}): ${dmg} lightning damage.`, { target: t, save: s, damage: dmg });
+      tellWoken(battle, t, woke);
+      if (last.hp === 0) say(battle, "defeat", `${last.The} falls.`, { target: t });
+    }
   } else if (action.type === "breakingRune") {
     // The Breaking Rune (Act 4, from Matt): force, which nothing beyond the Door is immune to, on every monster.
     if (!knowsRune(p, "breakingRune")) return { ok: false, reason: "You don't know that rune." };
@@ -320,6 +336,7 @@ export function playerAction(battle, action, rng = Math.random) {
     if (b.effect === "speed") return { ok: false, reason: "A Potion of Speed is for travelling. Drink it from your bag." };
     if (b.effect === "homeward") return { ok: false, reason: "There's no flying home from the middle of a fight!" };
     if (b.effect === "dexterity" && battle.quick) return { ok: false, reason: "You're already as quick as you can be." };
+    if (b.effect === "fireResist") return { ok: false, reason: "Drink that before a fight, from your bag." };
     const reason = cantDrink(p, potion);
     if (reason) return { ok: false, reason };
     const r = useItem(p, potion.uid, rng);
@@ -451,7 +468,8 @@ function dawnLight(battle, rng) {
   for (const key of partyKeys(battle)) {
     const c = combatant(battle, key);
     if (!c || c.hp <= 0 || c.hp >= c.maxHp) continue;
-    const healed = Math.min(c.maxHp - c.hp, roll(DAWN_AURA, rng).total);
+    const light = roll(DAWN_AURA, rng).total + (carries(battle.player, "dawnBanner") ? roll(DAWN_AURA, rng).total : 0);
+    const healed = Math.min(c.maxHp - c.hp, light);
     c.hp += healed;
     say(battle, "dawn-light", `The Dawn's light warms ${key === "player" ? "you" : c.name}: +${healed} HP.`, { who: key, heal: healed });
   }
@@ -581,7 +599,8 @@ export function castMonsterSpell(battle, i, spell, rng) {
   for (const key of keys) {
     const s = key === "player" ? resistSave(battle, key, spell.save, spell.dc, rng) : battleSave(battle, key, spell.save, spell.dc, rng, { advantage: !!combatant(battle, key).resistsMagic });
     const full = spell.damage ? roll(spell.damage, rng).total : 0;
-    const dmg = s.success ? (spell.half ? Math.floor(full / 2) : 0) : full;
+    let dmg = s.success ? (spell.half ? Math.floor(full / 2) : 0) : full;
+    if (key === "player" && spell.damageType === "fire" && fireproof(battle)) dmg = Math.floor(dmg / 2);
     const woke = hurt(battle, key, dmg);
     const who = nameOf(battle, key), are = key === "player" ? "are" : "is";
     say(battle, "monster-spell", `${who} ${s.success ? (key === "player" ? "resist" : "resists") : (key === "player" ? "are caught" : "is caught")} (${spell.save} save ${s.total} vs DC ${spell.dc})${dmg ? `: ${dmg} ${spell.damageType} damage` : ""}.`, { who: key, damage: dmg });
@@ -601,6 +620,7 @@ function landAttack(battle, i, key, atk, r, rng) {
     if (key === "player") r.damage = Math.max(0, r.damage - IRON_SKIN); // heavy armour mastery
     else if (battle.player.hp > 0) r.damage = Math.floor(r.damage / 2); // Shield Ally: you cover your companion
   }
+  if (r.hit && key === "player" && atk.damageType === "fire" && fireproof(battle)) r.damage = Math.floor(r.damage / 2);
   const woke = hurt(battle, key, r.damage);
   if (isAllyKey(key)) say(battle, "monster-attack", `${m.The} attacks ${a.name} with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, actor: i, onAlly: true, who: key });
   else say(battle, "monster-attack", `${m.The} attacks with its ${atk.name}: ${rollText(r, atk.bonus)} ${hitText(r, true)}`, { roll: r, actor: i, who: key });

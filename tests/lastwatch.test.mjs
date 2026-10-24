@@ -164,7 +164,7 @@ test("quest 11 in the log and on the HUD, step by step", () => {
     [{}, "Find Claire's father at Lastwatch, east along the ash road"],
     [{ seenLastwatch: true }, "Fight through the Cinder Wardens at Lastwatch's gate"],
     [{ cindersBeaten: true }, "Talk to Matt at Lastwatch"],
-    [{ mattMet: true, q11Done: true }, "The sisters' pledges (the next part of Act 4 is coming)"],
+    [{ mattMet: true, q11Done: true }, "Claire's waiting at Lastwatch"],
   ];
   let flags = { ...story };
   for (const [more, line] of steps) { flags = { ...flags, ...more }; assert.equal(objective(flags), line); }

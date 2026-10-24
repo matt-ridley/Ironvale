@@ -57,7 +57,7 @@ export class Hud extends Phaser.Scene {
     this.side.setText(side ? `ALSO: ${side}` : "");
     this.effects.setY(side ? 53 : 40);
     const fx = h.effects || {};
-    this.effects.setText([fx.speed > 0 ? `SPEED ${fx.speed}` : "", fx.dexterity ? "DEX READY" : ""].filter(Boolean).join("  "));
+    this.effects.setText([fx.speed > 0 ? `SPEED ${fx.speed}` : "", fx.dexterity ? "DEX READY" : "", fx.fireResist ? "FIRE-PROOF" : ""].filter(Boolean).join("  "));
     // The Elder has just paid for a quest.
     const done = questsDone(state.flags);
     if (done > this.lastDone) this.banner("QUEST COMPLETE!", 2500);

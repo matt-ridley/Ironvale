@@ -209,7 +209,9 @@ export const ACT3_SCRIPTS = {
     nodes: {
       sing: {
         speaker: "BARD",
-        text: s => `"Ohhh, ${callName(s.hero) || "the Hero"}, ${titleOf(s.flags)}, with a sword as long as a tree! Who beat the Goblin King, and the hag, and the dead, and then... went up a mountain, probably! Fol-de-rol-dee!" He bows. "I'm working on the last verse."`,
+        text: s => (s.flags.q9Done
+          ? `"Ohhh, ${callName(s.hero) || "the Hero"}, ${titleOf(s.flags)}, who opened the Door with a blade full of light! And found a DRAGON behind it, and didn't run off in a fright! Fol-de-rol-dee!" He bows. "The dragon verse. Nothing rhymes with Emberreach. I've tried 'peach'."`
+          : `"Ohhh, ${callName(s.hero) || "the Hero"}, ${titleOf(s.flags)}, with a sword as long as a tree! Who beat the Goblin King, and the hag, and the dead, and then... went up a mountain, probably! Fol-de-rol-dee!" He bows. "I'm working on the last verse."`),
         choices: [{ label: "Tip him (5 gold)", if: s => s.hero.gold >= 5, to: "tip" }, { label: "Please stop.", to: "stop" }],
       },
       tip: { speaker: "BARD", enter: s => { s.hero.gold -= 5; }, text: "\"A patron of the arts!\" He bows so low his hat falls off. \"The next verse rhymes 'Warden' with 'garden'. It's going to be magnificent.\"" },
@@ -693,12 +695,19 @@ export const ACT3_SCRIPTS = {
   },
   // Snik at the old Warden mine on the pass: a way round the ice, if you helped the refugees.
   mineMouth: {
-    start: s => (s.flags.refugeesHelped ? "snik" : "dark"),
+    start: s => (s.flags.refugeesHelped ? (s.flags.q11Done ? "tunnels" : "snik") : "dark"),
     nodes: {
       dark: { text: "An old Warden mine, its timbers rotten. In the dark it splits three ways, then thirty. You'd be lost in minutes without a guide." },
       snik: {
         speaker: SNIK,
         text: "Snik found it! The old mines. Goblins dug here, before the bones. It comes out above the ice. And Snik saw a little door on the way. Follow Snik!",
+        choices: [{ label: "Lead on, Snik.", to: "go" }, { label: "Not now.", to: null }],
+      },
+      // Act 4: Snik's been digging further, and found the kobolds' tunnels (the second back way into the Emberdeep).
+      tunnels: {
+        speaker: SNIK,
+        enter: s => { s.flags.snikTunnels = true; },
+        text: "Snik went DEEPER! Kobolds dug into these old mines from the far side, years ago. Snik followed their tunnels, a long, long way: under the Door, under the ash, right into the dragon's mountain. Snik knows the way in. When you want it, Snik will show you.",
         choices: [{ label: "Lead on, Snik.", to: "go" }, { label: "Not now.", to: null }],
       },
       go: { enter: (s, ctx) => { s.flags.snikShortcut = true; ctx.emit({ type: "travel", map: "pass", at: { x: 4, y: 31 } }); } },
@@ -779,10 +788,12 @@ export const ACT3_SCRIPTS = {
     nodes: {
       hello: {
         speaker: "MOTHER SALLOW",
-        text: "Welcome to Mother's shop, dearie! Cold charms, warm potions, scrolls that go BANG. Fair prices. Fair for Mother.",
+        text: s => (s.flags.q9Done
+          ? "Through the Door, dearie? To the DRAGON? Mother's heard. Mother has potions that keep the fire off, at a very fair price, considering. And a hat."
+          : "Welcome to Mother's shop, dearie! Cold charms, warm potions, scrolls that go BANG. Fair prices. Fair for Mother."),
         choices: [{ label: "Let's see", to: "shop" }, { label: "Not now", to: null }],
       },
-      shop: { enter: (s, ctx) => ctx.emit({ type: "shop", shop: "sundries" }) },
+      shop: { enter: (s, ctx) => ctx.emit({ type: "shop", shop: s.flags.q9Done ? "sundriesDragon" : "sundries" }) },
     },
   },
 

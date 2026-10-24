@@ -5,8 +5,11 @@
 // wildwood, a trail (the grey wolf waits at its foot) climbs north to Claire's grove, with a pool, and a hidden glade
 // behind a thicket only she knows the way through. East, at the road's end: Lastwatch, the Wardens' burned outpost
 // (Matt's hold, a camp once you've met him), with the Cinder Wardens at its west gate, and the shrine of the Dawn to
-// its south-east. Lastwatch's north gate opens onto the Wardens' bridge over the gorge (Matt lowers it), and the
-// aeries beyond: the brood's hunting grounds, a nest in the crags, and the mouth of the kobolds' diggings.
+// its south-east (Robyn's pledge: hold its light), and the Oath of Dawn's cursed gate in the fort's old tower.
+// Lastwatch's north gate opens onto the Wardens' bridge over the gorge (Matt lowers it), and the
+// aeries beyond: the brood's hunting grounds, a nest in the crags, the mouth of the kobolds' diggings (Megan's
+// pledge: Dunstan), and the Oath of Storm's vault on an islet in a lava lake. The Oath of Iron's path is the gorge's
+// broken bridge, south of the road's old end.
 // One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 104 wide).
 
 export const BEYOND = {
@@ -53,11 +56,20 @@ export const BEYOND = {
     { id: "matt", x: 82, y: 19, sprite: "matt", script: "matt", shownWhen: "cindersBeaten" },
     { id: "lastwatchFire", x: 80, y: 21, sprite: "campfire", script: "campfire", shownWhen: "q11Done", still: true },
     { id: "northGate", x: 82, y: 15, sprite: "portcullis", script: "northGate", goneWhen: "q11Done", still: true },
-    // The shrine of the Dawn, its door shut on what's inside (Robyn's pledge, in a later part of Act 4).
-    { id: "dawnDoor", x: 97, y: 30, sprite: "gate", script: "dawnDoor", still: true },
+    // Dunstan, once he's free (Megan's pledge): he's drawing Matt a map of the Emberdeep.
+    { id: "dunstan", x: 84, y: 19, sprite: "villager", script: "dunstan", shownWhen: "meganPledged" },
+    // The Oath of Dawn's path: the cursed gate in Lastwatch's old tower, which burns anyone else, and the vault behind it.
+    { id: "cursedGate", x: 87, y: 23, sprite: "portcullis", script: "cursedGate", goneWhen: "dawnGateOpen", still: true },
+    { id: "dawnVault", x: 87, y: 25, sprite: "chest", script: "oathVault", oath: "dawn", goneWhen: "dawnVault", still: true },
+    // The shrine of the Dawn (Robyn's pledge): its door, shut on the dead inside, then its lamp, lit again.
+    { id: "dawnDoor", x: 97, y: 30, sprite: "gate", script: "dawnDoor", goneWhen: "robynPledged", still: true },
+    { id: "dawnLamp", x: 97, y: 33, sprite: "shrine", script: "dawnLamp", shownWhen: "robynPledged", still: true },
     // Over the bridge: a nest in the crags, and the kobolds' diggings (Megan's pledge, in a later part of Act 4).
     { id: "aerieNest", x: 69, y: 3, sprite: "chest", script: "chest", goneWhen: "aerieNestOpened", still: true, loot: { gold: 600, items: ["potionGreaterHealing", "potionGreaterHealing", "scrollFireball"] } },
     { id: "diggings", x: 98, y: 4, sprite: "mineMouth", script: "diggings", still: true },
+    // The Oath of Storm's path: a rune stone at the edge of a lava lake, and the vault on the islet in the middle.
+    { id: "stormStone", x: 73, y: 7, sprite: "runeStone", script: "stormStone", still: true },
+    { id: "stormVault", x: 76, y: 7, sprite: "chest", script: "oathVault", oath: "storm", goneWhen: "stormVault", still: true },
     // The lip of the gorge, where the road's old bridge used to be.
     { id: "gorgeEdge", x: 32, y: 15, sprite: "brokenBridge", script: "gorgeEdge", still: true },
   ],
@@ -69,7 +81,7 @@ export const BEYOND = {
   "^WW.,......,....WWazaaaazaealllllzaaezaeazaaalllllaeaaaaaaeazeaae^aaaaaa^aaaaaaaaaaaazeelllaz^^^^^C^^^^^",
   "^WW.............WWaeaaaazaezlllllaaaaeaaaazzeeaaaaaaaeeazaaaazzaaaazaaaaaaaaeaaaaaaaaazalllazaaeaaaaaza^",
   "^WW.~~..........WWazzaaaazzalllllaaaaazzeaaeazeaaaazeezaaazeazaaaaaaazeaaelllllaaaeeaaaaaaeaeaaeaaaaaza^",
-  "^WW.~~..........WWaaaaaazaazaaaaazazzzazaeaaaaaaazzazlllllaaaeaaeaeaaaaaaalllllzaaaaaaaaaaaaaaaaaaaaaea^",
+  "^WW.~~..........WWaaaaaazaazaaaaazazzzazaeaaaaaaazzazlllllaaaeaaeaeaaaaaaallollzaaaaaaaaaaaaaaaaaaaaaea^",
   "^WW.............WWaaaaaaaaaeaaaaaaaazaaaaazaaazaaeazalllllzzezeaeaaaeaaaaalllllazaaaeaaaaaaaaaaaaaeaaaa^",
   "^WW,............WWaaazeaaazzzaeeaazazaaaazazaaaaaaaaelllllaaaaaaaaeaaaaaezzeaaaaazaaaeaaaaaaaazeaaaazee^",
   "^WW...,.....,...WWaaaaaaaaaeaazaazazeaaazzaeaaazezaeaaeaeaaaaaaazaaaaaeaeaaaaaaaaaaazaazeazazaaaaezazaa^",
@@ -85,11 +97,11 @@ export const BEYOND = {
   "^WWWWWWWWW.W...W..===============aaaaaazaaaoollllloeaaaoellleezazaaaeazaKnnnnnnnnnnnnnnnnnnnKaaeaaaaaaa^",
   "^WWWWWWWWW............aazaaaaaaa=aaaaaaazazellllllloaazaaeoeaaaaaaeezaaaKnnnnnnnnnnnnnnn*nnnKeaaaaaaaaa^",
   "^WW............W...aa.azzzaaaaaa=aaaaaaaaaaollllllloaaaaaaaaaaaaaaaaaaaeKnnnnnnnnnnnnnnnnnnnKaaaaaaaaaa^",
-  "^WW.............W....aaazaaaazaz=aazaaaaazaellllllloaaaaaaaaaaaaaazaaaaeKnnnnnnnnnnnnnnnnnnnKeaaaazeaaa^",
-  "^WW................azaazzaaazaaa=zaaaaaaaaaeellllloozaaaaaaaaaaaaaaaaaaaKnnnnnnnnnnnnnKKKnnnKaeaazaaaaa^",
-  "^WWWWWWWWW...W.....aaaazzaaaaaaa=aaaaaaaaaaaoeeoeeeaaaeeeooaaaaaaaaaaaaaKnnnnnnnnnnnnnKKKnnnKaaaazaaaaa^",
-  "^WWWWWWWWWW..........aaazKKKnnnnnnnnnnKKaaaaaaaaaaaaaoellleoaaaaaaaeaaaaKnn*nnnnnnnnnnKKKnnnKaazeaaaaaa^",
-  "^WWWWWWWWW.W...W....aazazKnn*nnnnnnn*nnKaazaaaaaazaaaellllleaaaaaaaaaazaKnnn*nnnnnnnnnnnnn*nKaaaaaaaeaa^",
+  "^WW.............W....aaazaaaazaz=aazaaaaazaellllllloaaaaaaaaaaaaaazaaaaeKnnnnnnnnnnnnKKnKKnnKeaaaazeaaa^",
+  "^WW................azaazzaaazaaa=zaaaaaaaaaeellllloozaaaaaaaaaaaaaaaaaaaKnnnnnnnnnnnnKnnnKnnKaeaazaaaaa^",
+  "^WWWWWWWWW...W.....aaaazzaaaaaaa=aaaaaaaaaaaoeeoeeeaaaeeeooaaaaaaaaaaaaaKnnnnnnnnnnnnKnnnKnnKaaaazaaaaa^",
+  "^WWWWWWWWWW..........aaazKKKnnnnnnnnnnKKaaaaaaaaaaaaaoellleoaaaaaaaeaaaaKnn*nnnnnnnnnKnnnKnnKaazeaaaaaa^",
+  "^WWWWWWWWW.W...W....aazazKnn*nnnnnnn*nnKaazaaaaaazaaaellllleaaaaaaaaaazaKnnn*nnnnnnnnKKKKK*nKaaaaaaaeaa^",
   "^WWWWWWWWW........WazzaazKnnnnnnnnnnnnnneeeaaaaaaaaaaollllloaaaazeaaaaaaKnnnnnnnnnnnnnnnnnnnKaaaaaaaaaa^",
   "^WWWWWWWWW...W........aaznnnnnnnnnnnnnnnllleeaaaaazaaellllloaaaaaaaaaaaaKKKKKKKKKKKKKKKKKKKKKaaaaaaaaaa^",
   "^WWWWWWWWW............aaznnnnnnnnnnnnnnKlllloaaaaaaaaeollleoaaaaaaaaaaaeeazaaaaaaaaaaazeaaaaaaKKKnKKKaa^",

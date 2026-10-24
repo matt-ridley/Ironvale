@@ -55,6 +55,7 @@ export const SCRIPTS = {
   elder: {
     start: s => {
       const f = s.flags;
+      if (f.q9Done) return "homeland"; // Act 4
       if (f.kingRewarded) return f.seenFen && f.signetShown && !f.fenReported ? "fenReport" : f.signetShown ? "ironvale" : f.signetTaken ? "signet" : "afterAll";
       if (f.kingDefeated) return "kingThanks";
       if (f.questRewarded) return f.kingQuestStarted ? "kingReminder" : "kingIntro";
@@ -191,6 +192,10 @@ export const SCRIPTS = {
         speaker: ELDER,
         enter: s => { s.flags.oathFragments = true; },
         text: "Three Oaths, and no book says which a Warden swore. Perhaps each one chose for themselves. Perhaps, one day soon, you will.",
+      },
+      homeland: {
+        speaker: ELDER,
+        text: "Through the Door! The Wardens' homeland, the old songs called it: green as Willowmere, before the dragon. My grandmother's grandmother said the Wardens came over the mountain every spring with their banners flying. Bring the banners home, Warden.",
       },
       afterAll: {
         speaker: ELDER,
@@ -919,7 +924,7 @@ export const SCRIPTS = {
     start: s => (currentBounty(s)?.finished ? "claim" : s.bounty ? "hunting" : "board"),
     nodes: {
       board: {
-        text: s => `Hunts, pinned up with fish hooks${actOf(s.flags) >= 3 ? " (new ones, from the pass)" : ""}. Gully pays: ${boardFor(actOf(s.flags)).map(b => `${b.label} ${b.gold}g`).join(", ")}, and XP. One at a time.`,
+        text: s => `Hunts, pinned up with fish hooks${actOf(s.flags) >= 4 ? " (new ones, from beyond the Door)" : actOf(s.flags) >= 3 ? " (new ones, from the pass)" : ""}. Gully pays: ${boardFor(actOf(s.flags)).map(b => `${b.label} ${b.gold}g`).join(", ")}, and XP. One at a time.`,
         choices: [
           ...BOUNTIES.map(b => ({ label: `${b.label} x${b.count}`, if: s => boardFor(actOf(s.flags)).includes(b), to: `take_${b.id}` })),
           { label: "Leave it", to: null },
@@ -1278,7 +1283,10 @@ export function objective(flags) {
     if (!flags.seenLastwatch) return "Find Claire's father at Lastwatch, east along the ash road";
     if (!flags.cindersBeaten) return "Fight through the Cinder Wardens at Lastwatch's gate";
     if (!flags.q11Done) return "Talk to Matt at Lastwatch";
-    return "The sisters' pledges (the next part of Act 4 is coming)";
+    if (flags.meganJoined && !flags.meganPledged) return "Take Megan to the kobolds' diggings, over the bridge from Lastwatch";
+    if (flags.robynJoined && !flags.robynPledged) return "Take Robyn to the shrine of the Dawn, south-east of Lastwatch";
+    if (flags.claireJoined && !flags.clairePledged) return "Claire's waiting at Lastwatch";
+    return "The Emberdeep (the next part of Act 4 is coming)";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";
