@@ -90,7 +90,7 @@ export function deserialize(json) {
   if (!FIGHTING_STYLES[hero.fightingStyle]) delete hero.fightingStyle;
   const indomitable = h.indomitableUsed === true ? 1 : isInt(h.indomitableUsed) ? Math.min(Math.max(h.indomitableUsed, 0), 2) : 0;
   if (indomitable) hero.indomitableUsed = indomitable; else delete hero.indomitableUsed;
-  if (hero.bladeForm !== 2) delete hero.bladeForm; // the Wardenblade's second form (Act 3)
+  if (hero.bladeForm !== 2 && hero.bladeForm !== 3) delete hero.bladeForm; // the Wardenblade's second form (Act 3), and its last (Act 4)
   if (!OATHS[hero.oath]) delete hero.oath; // the Oath, sworn at the end of Act 3
   if (typeof hero.unbrokenUsed !== "boolean") delete hero.unbrokenUsed;
   hero.name = cleanName(h.name);

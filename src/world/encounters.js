@@ -201,6 +201,18 @@ export const ENCOUNTERS = {
       { weight: 1, foes: ["cinderWarden", "vampireSpawn"] },
     ],
   },
+  // The Emberdeep's tunnels (Q12): fire giants, the Wardens' clay golems, and the brood. Simulated at level 15 with
+  // +4 gear and any one companion: all won, with 58-90% of your HP left.
+  tunnels: {
+    level: 15,
+    chance: 0.06,
+    table: [
+      { weight: 3, foes: ["fireGiant"] },
+      { weight: 2, foes: ["clayGolem", "hellHound"] },
+      { weight: 2, foes: ["youngRedDragon"] },
+      { weight: 1, foes: ["fireGiant", "hellHound"] },
+    ],
+  },
   aeries: {
     level: 14,
     chance: 0.05,

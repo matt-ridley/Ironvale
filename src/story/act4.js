@@ -10,6 +10,8 @@
 // is a camp, and his bridge north opens the aeries and the kobolds' diggings.
 // The sisters' pledges: the Mapmaker (Megan finds Dunstan in the kobolds' diggings), the First Light (Robyn relights
 // the shrine of the Dawn), Claire's at Matt's fire, their banners in the keep, and each Oath's path to its vault.
+// Quest 12, the Emberdeep: the dragon's mountain, through the golem hall or round it (Dunstan's red tunnel, Snik's
+// kobold tunnel), the Wardens' lost forge (Brannoc, and the Wardenblade's final form), and the hoard's doors.
 // The roadmap's Act 4 section has the rest. No Phaser here.
 import { pay, paid } from "./rewards.js";
 import { callName } from "./hero.js";
@@ -19,7 +21,7 @@ import { DRAGON_ARROWS } from "../rules/tactics.js";
 import { learnRune } from "../rules/character.js";
 import { makeItem } from "../rules/items.js";
 
-const RACHEL = "RACHEL", HILD = "HILD", PIP = "PIP", KOBOLD = "KOBOLD", CLAIRE = "CLAIRE", MATT = "MATT", MEGAN = "MEGAN", ROBYN = "ROBYN", DUNSTAN = "DUNSTAN";
+const RACHEL = "RACHEL", HILD = "HILD", PIP = "PIP", KOBOLD = "KOBOLD", CLAIRE = "CLAIRE", MATT = "MATT", MEGAN = "MEGAN", ROBYN = "ROBYN", DUNSTAN = "DUNSTAN", BRANNOC = "BRANNOC";
 export const Q9_REWARD = { gold: 500, xp: 10000 };
 export const Q10_REWARD = { gold: 300, xp: 6000 };
 export const BROOD_FIGHT = ["youngRedDragon", "fireElemental"];
@@ -54,6 +56,16 @@ function openVault(s, ctx, oath) {
 const vaultText = (oath, ctx) => `${VAULT_TEXT[oath]} ${paid(ctx, VAULT_REWARD).replace("+0 gold, ", "")} OATH VAULT FOUND.`;
 /* True once every sister who's joined you has pledged (Rachel's came with the charm): then Claire pledges. */
 export const sistersPledged = f => !!f.q10Done && (!f.meganJoined || !!f.meganPledged) && (!f.robynJoined || !!f.robynPledged);
+
+// Quest 12, the Emberdeep (step 26).
+export const Q12_REWARD = { gold: 1000, xp: 15000 };
+export const GOLEM_FIGHT = ["clayGolem", "stoneGolem"];
+export const HOARD_GUARDS = ["fireGiant", "hellHound"];
+const hasItem = (s, base) => s.hero.inventory.some(i => i.base === base);
+/* Brannoc can read the lost forge's runes by the twins' charm's light, or with one of the twins to read them out. */
+export const canReadForge = s => hasItem(s, "twinCharm") || withCompanion(s, "rachel") || withCompanion(s, "claire");
+/* Past the golem hall: through the golems, round by Dunstan's red tunnel, or in by Snik's. */
+export const pastGolems = f => !!(f.golemsBeaten || f.redTunnel || f.snikWay);
 
 export const untoldSister = s => (s.flags.q11Done && SISTERS.find(id => s.flags[`${id}Joined`] && !s.flags[`${id}Heard`])) || null;
 const withClaire = s => s.hero.companion?.id === "claire";
@@ -614,6 +626,7 @@ export const ACT4_SCRIPTS = {
           megan: "Megan's banner: a gold arrow on green, and under it, in Corwin's hand, copied from his letter: SHOOT STRAIGHT.",
           robyn: "Robyn's banner: a gold sun on white, the lamp of the Dawn. It seems to glow a little, even at night.",
           claire: "Claire's banner: a green wolf's head on grey. She stitched it herself. The wolf is grinning.",
+          brannoc: "Brannoc's banner: an iron anvil on red. \"Not a sister,\" he says, \"but I'm not missing it.\"",
         }[ctx.object?.who] || "A banner."),
       },
     },
@@ -684,6 +697,119 @@ export const ACT4_SCRIPTS = {
     },
   },
 
+  // Quest 12, the Emberdeep: the first steps inside.
+  emberdeepView: {
+    start: "look",
+    nodes: {
+      look: {
+        text: "The gate under the mountain opens on a cave the size of a cathedral, lit red from below. Kobold tunnels run off in every direction, and the air shakes with something breathing, far above. The Emberdeep.",
+        to: "claire",
+      },
+      claire: {
+        enter: (s, ctx) => { if (!withCompanion(s, "claire")) ctx.goto(null); },
+        speaker: CLAIRE,
+        text: "\"Father says the Wardens dug half of this, before it was the Great One's. Their forge is up there somewhere, and their golems.\" She sniffs. \"And it knows we're here.\"",
+      },
+    },
+  },
+
+  // The golem hall's north door: a clay golem and a stone golem, Warden-made, the dragon's now.
+  golems: {
+    start: "face",
+    nodes: {
+      face: {
+        text: s => `Two shapes stand in the golem hall's north door: a golem of red clay and one of grey stone, runes burning in their chests. Warden-made, to guard the forge; the Great One's now. They turn their heads as one.${hasItem(s, "dunstansMap") ? " (Dunstan's map has a red line round this hall, up the west side.)" : ""}`,
+        choices: [{ label: "Fight", to: "fight" }, { label: "Back away", to: null }],
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...GOLEM_FIGHT], zone: "golemHall", winFlag: "golemsBeaten", afterWin: "golemsFall", music: "boss" }) },
+    },
+  },
+  golemsFall: { start: "fall", nodes: { fall: { text: "The golems' runes gutter out, and they settle where they stand like old statues. Behind them, steps climb into the heat." } } },
+
+  // Dunstan's red tunnel: a crack in the tunnels' west wall, round the golem hall.
+  redCrack: {
+    start: s => (hasItem(s, "dunstansMap") ? "map" : "look"),
+    nodes: {
+      look: { text: "A crack in the west wall, just wide enough for a kobold, breathing warm air. It could go anywhere. Without a map, it probably goes nowhere good." },
+      map: {
+        enter: s => { s.flags.redTunnel = true; },
+        text: "Dunstan's map: his red line runs right through this crack and up the west side of the mountain, round the golem hall. You squeeze through, and the tunnel opens out beyond. (Dunstan's back way is open.)",
+      },
+    },
+  },
+
+  // The Wardens' lost forge: cold until Brannoc comes; then his, and the Wardenblade's final form.
+  lostForge: {
+    start: s => (s.flags.brannocAtForge ? "brannoc" : "cold"),
+    nodes: {
+      cold: {
+        enter: s => { s.flags.lostForgeFound = true; },
+        text: "The Wardens' lost forge, cold and black for a hundred years: an anvil as big as a cart, bellows of dragon-leather, and runes cut into every stone, too worn to read by this light. Brannoc would weep. Brannoc should see this. (Tell him at the keep.)",
+      },
+      brannoc: {
+        speaker: BRANNOC,
+        text: s => (s.hero.bladeForm >= 3
+          ? "\"Best forge I ever stood at, and I've stood at a few. Same as ever, lad: gear to +5, and silver.\""
+          : "\"Look at it. LOOK at it. The Wardens' own forge, and the fire took first time, like it was waiting.\" He pats the anvil like a horse. \"Give me that blade. This is where it was meant to be finished.\""),
+        choices: [
+          { label: "Reforge the Wardenblade", if: s => !(s.hero.bladeForm >= 3), to: "reforge" },
+          { label: "Let's see the forge", to: "shop" },
+          { label: "Goodbye.", to: null },
+        ],
+      },
+      shop: { enter: (s, ctx) => ctx.emit({ type: "shop", shop: s.flags.oath === "iron" ? "forgeIron" : "forge" }) },
+      reforge: {
+        enter: (s, ctx) => {
+          if (!s.hero.inventory.some(i => i.base === "wardenblade") && s.hero.equipment.weapon?.base !== "wardenblade") return ctx.goto("noBlade");
+          if (!canReadForge(s)) ctx.goto("dark");
+        },
+        speaker: BRANNOC,
+        text: s => (hasItem(s, "twinCharm")
+          ? "\"The runes on this forge are written in light, not ink.\" He holds up the twins' charm, and it glows sun-gold and moon-silver, and the runes on every stone light up to answer it. \"There. Now I can read it.\""
+          : `"The runes on this forge are written in light, not ink." ${withCompanion(s, "rachel") ? "Rachel" : "Claire"} reads them out for him, one by one, while he works.`),
+        to: "final",
+      },
+      dark: {
+        speaker: BRANNOC,
+        text: "\"The runes on this forge are written in light, not ink, and I can't read them in this murk. That charm of the twins' glows, they tell me. Or bring one of those two girls: they could read them for me.\"",
+      },
+      noBlade: { speaker: BRANNOC, text: "\"Where's the blade, lad? I can't finish what you haven't brought.\"" },
+      final: {
+        enter: (s, ctx) => { s.hero.bladeForm = 3; s.flags.bladeFinalForm = true; s.flags.brannocPledged = true; },
+        text: s => `All night the old forge roars. At dawn Brannoc lifts the Wardenblade out of the quench, and every rune down its length is lit at once, one more than before. The Wardenblade's FINAL FORM: one more rune slot, and while it's in your hand, fire does you half. "When you go through those doors," Brannoc says, with a nod up at the hoard, "I'll be holding them with Matt. A dwarf owes a forge that much, ${callName(s.hero) || "lad"}." (BRANNOC PLEDGES. His banner will hang in the keep's hall.)`,
+      },
+    },
+  },
+
+  // The hoard's last guards, in the antechamber's door.
+  hoardGuards: {
+    start: "face",
+    nodes: {
+      face: {
+        text: "In the antechamber's door stands the hoard's last guard: a fire giant in black iron, its beard alight, with a hell hound on a chain as thick as your arm. The giant lifts a greatsword as long as you are, and lets the chain go.",
+        choices: [{ label: "Fight", to: "fight" }, { label: "Back away", to: null }],
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...HOARD_GUARDS], zone: "hoardDoors", winFlag: "hoardGuardsBeaten", music: "boss" }) },
+    },
+  },
+
+  // The hoard's doors: only the Wardenblade's final form wakes their runes. Opening them ends quest 12.
+  hoardDoor: {
+    start: s => (s.flags.q12Done ? "ajar" : s.hero.bladeForm >= 3 ? "open" : "sealed"),
+    nodes: {
+      sealed: {
+        text: "The hoard's doors: two leaves of black iron as tall as the keep's walls, Warden runes down one side and kobold scratchings down the other. You lay the Wardenblade against them, and the runes stir and go dark again. Something the blade needs is missing. (The Wardens' lost forge?)",
+      },
+      open: {
+        enter: (s, ctx) => { s.flags.q12Done = true; pay(s, ctx, Q12_REWARD); },
+        text: (s, ctx) => `You lay the Wardenblade against the doors, and every Warden rune on them lights at once. They grind open a hand's width, and the heat that comes out of the gap could melt a sword. In the gold-red dark beyond, something enormous breathes in, and stops. ${paid(ctx, Q12_REWARD)} QUEST COMPLETE: The Emberdeep.`,
+        to: "next",
+      },
+      next: { text: "(The last part of Act 4, the Great One, is coming.)" },
+      ajar: { text: "Through the gap in the hoard's doors: heat, gold-light, and breathing. (The last part of Act 4 is coming.)" },
+    },
+  },
+
   // The end of the road, at the lip of the gorge. The Oath of Iron's path: hold up a span of the broken bridge (three
   // STR checks in a row) while your friends cross, to the vault in the far pier.
   gorgeEdge: {
@@ -724,6 +850,10 @@ export function act4Event(state, zoneId) {
   }
   if (zoneId === "courtyard" && untoldSister(state)) return { script: "familyNews" };
   if (zoneId === "lastwatchHold" && f.q11Done && f.claireJoined && !f.clairePledged && (f.meganPledged || f.robynPledged) && sistersPledged(f)) return { script: "clairePledge" };
+  if (zoneId === "tunnels" && !f.enteredEmberdeep) {
+    f.enteredEmberdeep = true;
+    return { script: "emberdeepView" };
+  }
   if (zoneId === "threshold" && !f.throughDoor) {
     f.throughDoor = true;
     return { script: "throughDoor" };

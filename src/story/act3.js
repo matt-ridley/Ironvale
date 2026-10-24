@@ -708,7 +708,11 @@ export const ACT3_SCRIPTS = {
         speaker: SNIK,
         enter: s => { s.flags.snikTunnels = true; },
         text: "Snik went DEEPER! Kobolds dug into these old mines from the far side, years ago. Snik followed their tunnels, a long, long way: under the Door, under the ash, right into the dragon's mountain. Snik knows the way in. When you want it, Snik will show you.",
-        choices: [{ label: "Lead on, Snik.", to: "go" }, { label: "Not now.", to: null }],
+        choices: [{ label: "Into the dragon's mountain", to: "deep" }, { label: "Up round the ice", to: "go" }, { label: "Not now.", to: null }],
+      },
+      // Act 4: the second back way into the Emberdeep, past the golem hall.
+      deep: {
+        enter: (s, ctx) => { s.flags.snikWay = true; ctx.emit({ type: "travel", map: "emberdeep", at: { x: 36, y: 15 } }); },
       },
       go: { enter: (s, ctx) => { s.flags.snikShortcut = true; ctx.emit({ type: "travel", map: "pass", at: { x: 4, y: 31 } }); } },
     },

@@ -5,7 +5,7 @@ import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD 
 import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD, WAYSTONE_REWARD, ROAD_REWARD, MATTHEW_REWARD, CHAPEL_REWARD, arrowsFound,
   REFUGEE_REWARD, QUEEN_REWARD, NETTLE_REWARD, GATEHOUSE_REWARD } from "./act3.js";
 import { actOf } from "./hero.js";
-import { Q9_REWARD, Q10_REWARD, Q11_REWARD, PLEDGE_REWARD, VAULT_REWARD } from "./act4.js";
+import { Q9_REWARD, Q10_REWARD, Q11_REWARD, Q12_REWARD, PLEDGE_REWARD, VAULT_REWARD, pastGolems } from "./act4.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
 
@@ -189,6 +189,21 @@ export const QUESTS = [
       { text: "Fight through the Cinder Wardens at its gate", done: f => f.cindersBeaten },
       { text: "Hear Matt's story", done: f => f.mattMet },
       { text: "Learn the Breaking Rune, and the Great One's true name", done: f => f.q11Done },
+    ],
+  },
+  {
+    id: "emberdeep", title: "The Emberdeep", kind: "main",
+    known: f => f.q11Done,
+    about: "The Great One's mountain, under the aeries: the kobolds' tunnels, the Wardens' old golems and their lost forge, and at the top, the hoard.",
+    reward: reward(Q12_REWARD),
+    steps: [
+      { text: "Find the Emberdeep's gate, at the top of the aeries", done: f => f.seenTunnels },
+      { text: "Get past the golem hall (or round it)", done: pastGolems },
+      { text: "Find the Wardens' lost forge", done: f => f.lostForgeFound },
+      { text: "Bring Brannoc to it", done: f => f.brannocAtForge },
+      { text: "The Wardenblade's final form", done: f => f.bladeFinalForm },
+      { text: "Beat the hoard's guards", done: f => f.hoardGuardsBeaten },
+      { text: "Open the hoard's doors", done: f => f.q12Done },
     ],
   },
   // Act 4: the sisters' pledges, and your Oath's vault.

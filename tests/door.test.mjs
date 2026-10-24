@@ -85,7 +85,7 @@ test("the Emberreach: new ground, its own music, a region on the world map, and 
   assert.equal(tileAt(beyond, 30, 13).name, "lava");
   assert.equal(isWalkable(beyond, 30, 13), false);
   assert.ok(TRACKS.emberreach);
-  for (const z of beyond.zones) assert.ok(["emberreach", "wildwood", "keep"].includes(z.music), z.id);
+  for (const z of beyond.zones) assert.ok(["emberreach", "wildwood", "keep", "emberdeep"].includes(z.music), z.id);
   assert.ok(TRACKS.wildwood);
   const region = REGIONS.find(r => r.id === "beyond");
   assert.equal(regionOpen(region, { act3Complete: true }), false);

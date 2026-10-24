@@ -28,8 +28,10 @@ export const CALL_ENDS = ["paralyzed", "frightened", "asleep", "restrained"]; //
 export const IRON_SKIN = 3; // the Oath of Iron: weapon hits on you do this much less
 export const DAWN_AURA = "1d6"; // the Oath of Dawn: healing at the start of your turn (twice over with the Dawn banner)
 export const STORM_GLASS = "3d8"; // the Oath of Storm's vault: Chain Lightning leaps once more, to the first monster standing
-/* True if fire only does you half (a Potion of Fire Resistance this fight, or the Wardens' tower shield on your arm). */
-export const fireproof = battle => !!battle.fireResist || !!(battle.player.equipment?.shield && baseOf(battle.player.equipment.shield).fireproof);
+/* True if fire only does you half (a Potion of Fire Resistance this fight, the Wardens' tower shield on your arm, or
+   the Wardenblade in its final form in your hand). */
+export const fireproof = battle => { const { shield, weapon } = battle.player.equipment || {};
+  return !!battle.fireResist || !!(shield && baseOf(shield).fireproof) || (battle.player.bladeForm >= 3 && weapon?.base === "wardenblade"); };
 const carries = (char, base) => !!char.inventory?.some(i => i.base === base);
 const oathOf = battle => battle.player.oath || null;
 export const FLEE_DC = 10;

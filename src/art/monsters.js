@@ -866,3 +866,11 @@ export const MONSTER_ART = {
 
 // A werewolf: the wolf's drawing, darker and red-eyed (the wildwood, Act 4).
 MONSTER_ART.werewolf = { rows: MONSTER_ART.wolf.rows, colours: { ...MONSTER_ART.wolf.colours, b: "#2a2420", c: "#3a3028", e: "#4a4038", f: "#5a4a3c", h: "#6a5a4a", i: "#7a6a58", g: "#e0302a" } };
+
+// The Emberdeep (Act 4, Q12): the fire giant is the stone giant's drawing, coal-dark with a burning beard; the clay
+// golem is the earth elemental's, in red clay; the stone golem is the shield guardian's, its runes glowing like coals.
+// The Wardens' lost forge (a picture, not a monster) is the frozen forge's drawing, lit again.
+MONSTER_ART.fireGiant = { rows: MONSTER_ART.stoneGiant.rows, colours: { ...MONSTER_ART.stoneGiant.colours, g: "#5a3a34", G: "#3e2824", d: "#2a1a18", e: "#ffb040", r: "#ff6a20", h: "#3a3a44" } };
+MONSTER_ART.clayGolem = { rows: MONSTER_ART.earthElemental.rows, colours: { ...MONSTER_ART.earthElemental.colours, r: "#a8643c", R: "#7a4a2a", d: "#4a2a18", e: "#ffd060", u: "#ffb040", w: "#fff0c0", i: "#ffd090" } };
+MONSTER_ART.stoneGolem = { rows: MONSTER_ART.shieldGuardian.rows, colours: { ...MONSTER_ART.shieldGuardian.colours, i: "#6e6e74", s: "#9a9aa0", d: "#46464c", u: "#ff9a3a", w: "#ffe0a0" } };
+MONSTER_ART.lostForge = { rows: SPRITES.frozenForge, colours: { ...PALETTE, S: "#ff8a2a", i: "#4a4a55" } };
