@@ -71,6 +71,7 @@ export const AW_SLIP = 4;
 export const AW_FOE_RATE = 12; // how hard Oswin pushes, per second
 
 export const AW_BRANNOC_RATE = 17; // Brannoc, in the keep's training yard, pushes harder than Oswin
+export const AW_MATT_RATE = 20; // Matt, at Lastwatch: one leg's stiff, but the arm isn't
 
 export function awNew(hero, foeRate = AW_FOE_RATE) {
   return { pos: 50, t: 0, cursor: 0, dir: 1, push: 8 + 2 * mod(hero, "STR"), result: null, foe: foeRate };
@@ -194,6 +195,7 @@ export const PRIZES = {
   archery: { flag: "wonArchery", item: "willowBow" },
   archeryMatthew: { flag: "wonMatthewArchery", item: "griffonBow", upgrade: 2 }, // Corwin's rematch at the keep
   armBrannoc: { flag: "wonBrannocArm", item: "brannocBracer" }, // Brannoc, in the keep's training yard
+  armMatt: { flag: "wonMattArm", item: "captainsBadge" }, // Matt's rematch at Lastwatch
 };
 
 /* A win: the prize the first time (returns the item), nothing after. Megan's bow goes straight to her, wherever she is. */

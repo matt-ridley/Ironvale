@@ -178,6 +178,34 @@ export const ENCOUNTERS = {
       { weight: 1, foes: ["chimera", "helmedHorror"] },
     ],
   },
+  // Act 4, the Emberreach beyond the ash road: the wildwood's edge (beasts lie down for Claire), the land round
+  // Lastwatch, and the aeries north over the Wardens' bridge.
+  wildwood: {
+    level: 13,
+    chance: 0.05,
+    table: [
+      { weight: 2, foes: ["giantApe"] },
+      { weight: 2, foes: ["werewolf", "werewolf"] },
+    ],
+  },
+  lastwatch: {
+    level: 14,
+    chance: 0.06,
+    table: [
+      { weight: 3, foes: ["mummy", "mummy"] },
+      { weight: 2, foes: ["cinderWarden"] },
+      { weight: 2, foes: ["vampireSpawn"] },
+      { weight: 1, foes: ["cinderWarden", "mummy"] },
+    ],
+  },
+  aeries: {
+    level: 14,
+    chance: 0.05,
+    table: [
+      { weight: 2, foes: ["youngRedDragon"] },
+      { weight: 2, foes: ["roc"] },
+    ],
+  },
   watchtower: {
     level: 10,
     chance: 0.06,

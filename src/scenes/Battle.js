@@ -197,7 +197,14 @@ export class Battle extends Phaser.Scene {
       const surge = { label: "SURGE", on: mine && hasFeature(h, "actionSurge") && h.actionSurge && !b.surging, run: () => this.act({ type: "actionSurge" }) };
       const rune = (id, label, type) => (knowsRune(h, id) ? { label, on: mine && runesLeft(h) > 0, run: () => this.act({ type }) } : null);
       const oath = rune("chainLightning", "CHAIN", "chainLightning") || rune("dawnstrike", "DAWN", "dawnstrike");
-      return [surge, rune("runeStrike", `RUNE x${runesLeft(h)}`, "runeStrike"), rune("wardensCall", "CALL", "wardensCall"), rune("binding", "BIND", "binding"), oath, back("main")];
+      // The Breaking Rune (Act 4) doesn't fit beside the rest: with it, the Oath's rune moves to a second page with it.
+      const more = knowsRune(h, "breakingRune") ? { label: "MORE", on: mine, run: () => this.showPage("runes2") } : oath;
+      return [surge, rune("runeStrike", `RUNE x${runesLeft(h)}`, "runeStrike"), rune("wardensCall", "CALL", "wardensCall"), rune("binding", "BIND", "binding"), more, back("main")];
+    }
+    if (page === "runes2") {
+      const rune = (id, label, type) => (knowsRune(h, id) ? { label, on: mine && runesLeft(h) > 0, run: () => this.act({ type }) } : null);
+      const oath = rune("chainLightning", "CHAIN", "chainLightning") || rune("dawnstrike", "DAWN", "dawnstrike");
+      return [rune("breakingRune", `BREAK x${runesLeft(h)}`, "breakingRune"), oath, null, null, null, back("skills")];
     }
     if (page === "react") {
       const on = !this.busy && isReacting(b), ward = b.pending?.kind !== "counter";
@@ -321,7 +328,7 @@ export class Battle extends Phaser.Scene {
 
   showEvent(e) {
     const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again", "wild-shape", "pack-summon", "calm",
-      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived", "volley", "counter", "unbroken", "blink", "chain", "dawn-light"].includes(e.type);
+      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived", "volley", "counter", "unbroken", "blink", "chain", "breaking", "dawn-light"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -462,6 +469,11 @@ export class Battle extends Phaser.Scene {
         sfx("crit");
         this.cameras.main.flash(200, 160, 210, 255);
         this.float(this.heroSprite, "CHAIN LIGHTNING!", COLORS.gold);
+        break;
+      case "breaking":
+        sfx("crit");
+        this.cameras.main.shake(220, 0.012);
+        this.float(this.heroSprite, "BREAKING RUNE!", COLORS.gold);
         break;
       case "dawn-light":
         sfx("heal");

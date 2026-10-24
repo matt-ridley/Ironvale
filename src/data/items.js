@@ -50,6 +50,8 @@ export const ITEMS = {
     about: "A bone die from the knucklebones table, worn smooth. In a fight, the first time you roll a natural 1 to attack, you roll again. Once per rest. Works from your pack." },
   brannocBracer: { name: "Brannoc's Bracer", type: "trinket", prize: true, cost: 0,
     about: "A dwarf's iron bracer, won in an arm wrestle in the keep's yard. +2 CON while it's in your pack." },
+  captainsBadge: { name: "Captain's Badge", type: "trinket", prize: true, cost: 0,
+    about: "Matt's old Warden captain's badge, a tower between two keys, won in an arm wrestle at Lastwatch. +2 DEX while it's in your pack." },
   oswinBelt: { name: "Oswin's Belt", type: "trinket", prize: true, cost: 0,
     about: "Big Oswin's wide leather belt, won in an arm wrestle. +2 STR while it's in your pack." },
   willowBow: { name: "Willow Longbow", type: "bow", prize: true, damage: "1d8", damageType: "piercing", cost: 50 },

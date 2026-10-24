@@ -59,6 +59,8 @@ export const RUNES = {
   // The Oaths' signature runes (rules/oaths.js), learned when you swear.
   chainLightning: { name: "Chain Lightning", about: "Your action: lightning leaps to every monster (6d8, a DEX save halves it)." },
   dawnstrike: { name: "Dawnstrike", about: "After you hit, the Dawn burns through your blade: 3d8 radiant, double against the undead and fiends." },
+  // Act 4: Matt teaches it at Lastwatch (Thorne's old rune, the Wardens' before it was his).
+  breakingRune: { name: "the Breaking Rune", about: "Your action: the rune hits every monster like a hammer (5d8 force, a DEX save halves it)." },
 };
 export const IRON_WARD_AC = 5;
 /* The DC of the hero's runes that monsters save against: 8 + proficiency + STR. */
@@ -92,7 +94,7 @@ export const XP_FOR_LEVEL = [0, 0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48
 export const abilityMod = score => Math.floor((score - 10) / 2);
 export const proficiencyBonus = level => 2 + Math.floor((level - 1) / 4);
 // Trinkets that raise an ability while they're in your pack (minigame prizes). Each counts once, however many you carry.
-export const TRINKET_BONUS = { oswinBelt: { STR: 2 }, brannocBracer: { CON: 2 } };
+export const TRINKET_BONUS = { oswinBelt: { STR: 2 }, brannocBracer: { CON: 2 }, captainsBadge: { DEX: 2 } };
 export const trinketBonus = (char, ability) => Object.entries(TRINKET_BONUS)
   .reduce((sum, [base, b]) => sum + (b[ability] && char.inventory?.some(i => i.base === base) ? b[ability] : 0), 0);
 /* An ability score with any trinket bonus. */

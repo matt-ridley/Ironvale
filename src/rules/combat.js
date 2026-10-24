@@ -205,7 +205,7 @@ const settle = battle => afterBattle(battle.player, battle.ally, battle.ally2);
 
 /* action: { type: "attack", target } | { type: "defend" } | { type: "potion", base } | { type: "flee" } | { type: "secondWind" }
    | { type: "actionSurge" } | { type: "allyPotion", on } (give a companion, "ally" unless `on` says "ally2", a Potion of
-   Healing; it gets them back up if they've been knocked down) | { type: "runeStrike", target } | { type: "wardensCall" } | { type: "binding", target }
+   Healing; it gets them back up if they've been knocked down) | { type: "runeStrike", target } | { type: "wardensCall" } | { type: "binding", target } | { type: "breakingRune" }
    (the Warden's runes: each spends a rune slot).
    A potion's base defaults to the Potion of Healing. */
 export function playerAction(battle, action, rng = Math.random) {
@@ -278,6 +278,21 @@ export function playerAction(battle, action, rng = Math.random) {
       const dmg = adjustDamage(m, s.success ? Math.floor(full / 2) : full, "lightning").damage;
       const woke = hurt(battle, t, dmg);
       say(battle, "spell-save", `${m.The} ${s.success ? "dodges half of it" : "is caught"} (DEX save ${s.total} vs DC ${dc}): ${dmg} lightning damage.`, { target: t, save: s, damage: dmg });
+      tellWoken(battle, t, woke);
+      if (m.hp === 0) say(battle, "defeat", `${m.The} falls.`, { target: t });
+    }
+  } else if (action.type === "breakingRune") {
+    // The Breaking Rune (Act 4, from Matt): force, which nothing beyond the Door is immune to, on every monster.
+    if (!knowsRune(p, "breakingRune")) return { ok: false, reason: "You don't know that rune." };
+    if (!runesLeft(p)) return { ok: false, reason: "No rune slots left. A long rest brings them back." };
+    p.runes.used = (p.runes.used || 0) + 1;
+    say(battle, "breaking", "You strike the ground with the Wardenblade and speak the Breaking Rune: it hits like a hammer!");
+    const dc = runeDc(p);
+    for (const m of living(battle)) {
+      const t = battle.monsters.indexOf(m), s = battleSave(battle, t, "DEX", dc, rng), full = roll("5d8", rng).total;
+      const dmg = adjustDamage(m, s.success ? Math.floor(full / 2) : full, "force").damage;
+      const woke = hurt(battle, t, dmg);
+      say(battle, "spell-save", `${m.The} ${s.success ? "dodges half of it" : "takes it full on"} (DEX save ${s.total} vs DC ${dc}): ${dmg} force damage.`, { target: t, save: s, damage: dmg });
       tellWoken(battle, t, woke);
       if (m.hp === 0) say(battle, "defeat", `${m.The} falls.`, { target: t });
     }

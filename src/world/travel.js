@@ -67,6 +67,8 @@ export const TRAVEL_POINTS = [
     centre: { x: 31, y: 30 }, opensWhen: f => !!f.doorOpened },
   { id: "grove", name: "Claire's Grove", kind: "camp", map: "beyond", zone: "grove", at: { x: 9, y: 10 },
     centre: { x: 8, y: 9 }, opensWhen: f => !!f.claireJoined },
+  { id: "lastwatch", name: "Lastwatch", kind: "camp", map: "beyond", zone: "lastwatchHold", at: { x: 80, y: 22 },
+    centre: { x: 80, y: 21 }, opensWhen: f => !!f.q11Done }, // Matt's fire
 ];
 export const CAMP_RADIUS = 3;
 export const FIRST_HUB = "oakhollow";

@@ -2,6 +2,8 @@
 // face the hero). Each monster has its own palette; "k" is always its outline and "." is see-through. These
 // are drawn a little smaller than the hero on the stage (STAGE_SCALE), as in the reference.
 
+import { PALETTE, SPRITES } from "./sprites.js";
+
 export const MONSTER_SCALE = 1.25; // on the battle and meeting stage; the hero stands at 1.5
 
 export const MONSTER_ART = {
@@ -49,6 +51,92 @@ export const MONSTER_ART = {
       "....kcck........kcck.......",
       "...kccck.......kccck.......",
       "...kkkk........kkkk........",
+    ],
+  },
+  // Lastwatch (Act 4, Q11): a Cinder Warden is a wight's drawing in Matt's fallen Wardens' colours (scorched plate,
+  // burning eyes, a sword glowing like a coal); vampire spawn are the ghast's, pale and wine-dark. The mummy is new.
+  cinderWarden: {
+    colours: { ...PALETTE, i: "#3a2c28", v: "#140c0a", u: "#ff7a2a", N: "#8a7a70", S: "#ff9a3a", O: "#7a2a1a", f: "#4a3a34", y: "#c0802a" },
+    rows: SPRITES.wight,
+  },
+  vampireSpawn: {
+    colours: { ...PALETTE, G: "#cfc6d8", O: "#4a1a2a", a: "#e0302a" },
+    rows: SPRITES.ghast,
+  },
+  // A mummy, wrapped in grave-linen, eyes like embers (16 x 24).
+  mummy: {
+    colours: { k: "#2a2018", w: "#d8ccaa", W: "#a89a78", a: "#e0602a" },
+    rows: [
+      "................",
+      "......kkkk......",
+      ".....kwwwwk.....",
+      "....kwWwwWwk....",
+      "....kwaawaak....",
+      "....kwwwwwwk....",
+      "....kWwwwwWk....",
+      ".....kwwwwk.....",
+      "...kkkwWwwkkk...",
+      "..kwwkwwwWkwwk..",
+      ".kwWkkWwwwkkWwk.",
+      ".kwk.kwwWwk.kwk.",
+      ".kwk.kWwwwk.kwk.",
+      ".kwk.kwwwWk.kwk.",
+      "kwwk.kwWwwk.kwwk",
+      "kkk..kwwwwk..kkk",
+      ".....kwWwwk.....",
+      "....kwwwwWwk....",
+      "....kwwkkwwk....",
+      "....kWwk.kwk....",
+      "....kwwk.kWk....",
+      "....kwWk.kwwk...",
+      "...kkkkk.kkkk...",
+      "................",
+    ],
+  },
+  // A roc over the aeries: an eagle as big as a barn, facing right (26 x 16).
+  roc: {
+    colours: { k: "#1a120a", W: "#6a4a2a", B: "#4a3018", b: "#8a5a30", e: "#f4d03f", y: "#e8b923", c: "#e8c060" },
+    rows: [
+      "..........................",
+      "kk........................",
+      "kWkk..............kkkk....",
+      "kWWWkk...........kbbbbk...",
+      ".kWWWWkk........kbbbbbbk..",
+      ".kWWWWWWkk.....kbbbbeybkk.",
+      "..kWWWWWWWkk...kbbbbbbyyyk",
+      "..kWWWWWWWWWkkkbbbbbbkyyk.",
+      "...kWWWWWWWWWbbbbbbbbk.kk.",
+      "....kWWWWWWbbbbbbbbbk.....",
+      "...kBBBBBWbbbbbbbbbbk.....",
+      "..kBBBBBBBbbbbbbbbbk......",
+      ".kBBBBk.kbbbbbbbbkk.......",
+      "kBBBk....kkcckcckk........",
+      "kkk.......kc.kc.k.........",
+      "..........kck.kck.........",
+    ],
+  },
+  // A giant ape from the wildwood, knuckles down (20 x 18).
+  giantApe: {
+    colours: { k: "#1a120c", b: "#4a3a30", f: "#8a6a50", e: "#f4d03f", s: "#2a1a10" },
+    rows: [
+      "......kkkkk.........",
+      ".....kffffbk........",
+      "....kfeffefbk.......",
+      "....kffssffbk.......",
+      "....kbfffffbk.......",
+      "...kkbbbbbbbkk......",
+      "..kbbbbbbbbbbbk.....",
+      ".kbbbbffffbbbbbk....",
+      "kbbbkbffffbkbbbbk...",
+      "kbbk.bffffb.kbbbk...",
+      "kbbk.bbbbbb.kbbbk...",
+      "kffk.kbbbbk..kffk...",
+      "kffk.kbbbbbk.kffk...",
+      ".kk.kbbbkbbbk.kk....",
+      "....kbbk.kbbk.......",
+      "....kbbk.kbbk.......",
+      "...kfffk.kfffk......",
+      "...kkkkk.kkkkk......",
     ],
   },
   // A young red dragon of Vorthax's brood: red scales, a golden belly and eyes, wings half spread (28 x 21).
@@ -775,3 +863,6 @@ export const MONSTER_ART = {
     ],
   },
 };
+
+// A werewolf: the wolf's drawing, darker and red-eyed (the wildwood, Act 4).
+MONSTER_ART.werewolf = { rows: MONSTER_ART.wolf.rows, colours: { ...MONSTER_ART.wolf.colours, b: "#2a2420", c: "#3a3028", e: "#4a4038", f: "#5a4a3c", h: "#6a5a4a", i: "#7a6a58", g: "#e0302a" } };
