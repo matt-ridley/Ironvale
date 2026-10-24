@@ -7,10 +7,26 @@
 // No Phaser here: the rest scripts in scripts.js add talkNodes() and go to "talk" after a rest.
 import { actOf } from "./hero.js";
 
-const MEGAN = "MEGAN", ROBYN = "ROBYN", RACHEL = "RACHEL";
+const MEGAN = "MEGAN", ROBYN = "ROBYN", RACHEL = "RACHEL", CLAIRE = "CLAIRE";
 
 // Each talk: { id, needs (flags), lines: [[speaker, text]] (speaker null for narration), opens (a flag) }.
 export const TALKS = {
+  // Act 4: Claire, once she's joined (the twins have just found each other, so she talks a lot).
+  claire: [
+    { id: "claire1", needs: f => !!f.claireJoined, lines: [
+      [null, "Claire sits with her back to the fire, so she can watch the dark. Old habit, she says."],
+      [CLAIRE, "Twelve years out here. The wolves took me in, the first winter. I could hunt before I could read. I still can't read. Rae's appalled."],
+      [CLAIRE, "The land talks, if you listen. Not in words: where the water is, where the fire's coming from. Father says I'm the best listener he ever knew."],
+    ] },
+    { id: "claire2", needs: f => !!f.claireJoined, lines: [
+      [CLAIRE, "Did Rae ever tell you she was scared of the dark? She made me hold her hand all the way to the privy. Then she told everyone it was me who was scared."],
+      [CLAIRE, "I used to climb the tallest tree in the foothills and shout her name until she came out with a book under her arm, cross as a cat. I missed that. I missed her every day."],
+    ] },
+    { id: "claire3", needs: f => !!f.claireJoined, lines: [
+      [CLAIRE, "It talks to me too, you know. The Great One. At night, in Mother's voice. It says the Door's a cage, and the Wardens were jailers, and I'm a jailer's daughter."],
+      [CLAIRE, "It's not wrong about the cage. It's wrong about what's in it. I've seen what it did to this valley. When you go up that mountain, I'm going with you."],
+    ] },
+  ],
   megan: [
     { id: "megan1", needs: () => true, lines: [
       [null, "The fire crackles. Megan turns her bow over and over in her hands."],

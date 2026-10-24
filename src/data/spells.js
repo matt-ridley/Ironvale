@@ -15,6 +15,10 @@
 // targets: "one" (a monster you pick), "all" (every monster; `onlyType` narrows it to one creature type), "friend" (you
 // or your companion), "self" or "party".
 // condition: { id (in CONDITIONS), rounds, untilTurnStart, saveEnds: ability (the same DC as the spell) }.
+// linger (a save spell): { id, rounds }: the spell stays on its target and hurts it again (the same dice and save) at
+//   the start of each of its turns, for that many rounds (Moonbeam, Call Lightning; no concentration here).
+// - pack: summons a wolf pack (`damage` a bite, at the caster's spell attack bonus) that bites every monster at the
+//   start of the caster's turn for `rounds` rounds (Conjure Animals).
 // classes: which casters can learn it (scrolls work for anyone). short: its name on a battle button.
 
 export const SPELLS = {
@@ -49,6 +53,12 @@ export const SPELLS = {
 
   // Level 3
   lightningBolt:  { name: "Lightning Bolt", short: "LIGHTNING", level: 3, classes: ["wizard"], kind: "save", save: "DEX", half: true, targets: "all", damage: "8d6", damageType: "lightning", upcast: { dice: 1 } },
+  // Claire's (the druid's): beams and storms that stay on their target, and a wolf pack.
+  moonbeam:       { name: "Moonbeam", short: "MOON", level: 2, classes: ["druid"], kind: "save", save: "CON", half: true, targets: "one", damage: "2d10", damageType: "radiant",
+    upcast: { dice: 1 }, linger: { id: "moonlit", rounds: 2 } },
+  callLightning:  { name: "Call Lightning", short: "STORM", level: 3, classes: ["druid"], kind: "save", save: "DEX", half: true, targets: "one", damage: "3d10", damageType: "lightning",
+    upcast: { dice: 1 }, linger: { id: "stormcalled", rounds: 2 } },
+  conjureAnimals: { name: "Conjure Animals", short: "WOLVES", level: 3, classes: ["druid"], kind: "pack", targets: "self", damage: "2d6+2", rounds: 3 },
   // A reaction (Rachel's COUNTER, when a monster starts casting): stops a spell of 3rd level or lower outright; a higher
   // one needs a check (d20 + her INT against 10 + its level). Never cast on your own turn.
   counterspell:   { name: "Counterspell", short: "COUNTER", level: 3, classes: ["wizard"], kind: "reaction" },

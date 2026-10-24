@@ -2,7 +2,9 @@
 // forest. So far only its south: the far side of the Door (an exit back to the gatehouse), the Threshold (the Wardens'
 // burned gate-camp, now a camp of yours), the ash road north and west, the lava gorge right across the map (and the
 // burned land past it, seen but not reached yet), and the edge of the wildwood in the west. A wall of burned trees
-// leaves the road the only way west, past the kobold warband. Later steps add the north (Lastwatch, the aeries).
+// leaves the road the only way west, past the kobold warband. In the wildwood, a trail (the grey wolf waits at its
+// foot) climbs north to Claire's grove, with a pool, and a hidden glade behind a thicket only she knows the way
+// through. Later steps add the north (Lastwatch, the aeries).
 // One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 64 wide).
 
 export const BEYOND = {
@@ -12,7 +14,8 @@ export const BEYOND = {
   spawn: { x: 32, y: 33 },
   zones: [
     { id: "threshold", name: "The Threshold", x0: 25, y0: 26, x1: 39, y1: 36, music: "emberreach", safe: true },
-    { id: "wildwood", name: "The Wildwood's Edge", x0: 0, y0: 0, x1: 21, y1: 39, music: "emberreach" },
+    { id: "grove", name: "Claire's Grove", x0: 2, y0: 2, x1: 16, y1: 15, music: "wildwood" },
+    { id: "wildwood", name: "The Wildwood's Edge", x0: 0, y0: 0, x1: 21, y1: 39, music: "wildwood" },
     { id: "ashRoad", name: "The Ash Road", x0: 0, y0: 0, x1: 63, y1: 39, music: "emberreach" },
   ],
   // Back through the Door, into the gatehouse.
@@ -27,9 +30,16 @@ export const BEYOND = {
     { id: "warband1", x: 24, y: 20, sprite: "kobold", script: "warband", goneWhen: "warbandFled" },
     { id: "warband2", x: 25, y: 19, sprite: "kobold", script: "warband", goneWhen: "warbandFled" },
     { id: "warband3", x: 25, y: 21, sprite: "kobold", script: "warband", goneWhen: "warbandFled" },
-    // The wolf that waits for you at the wildwood's edge, and then, quest 9 done, at a trail into the trees.
+    // The wolf that waits for you at the wildwood's edge, and then, quest 9 done, at the foot of the trail to the grove.
     { id: "wolfGuide", x: 17, y: 20, sprite: "wolf", script: "wolfGuide", shownWhen: "warbandFled", goneWhen: "q9Done" },
-    { id: "wolfWaiting", x: 10, y: 23, sprite: "wolf", script: "wolfWaiting", shownWhen: "q9Done" },
+    { id: "wolfWaiting", x: 10, y: 15, sprite: "wolf", script: "wolfTrail", shownWhen: "q9Done", goneWhen: "wolfFollowed" },
+    // Claire's grove (quest 10): Claire, until she joins; then her fire (a camp), a raven with news, and the thicket she
+    // shows you the way through, to a glade and an old Warden cache.
+    { id: "claire", x: 9, y: 7, sprite: "claire", frame: 0, script: "claireMeet", goneWhen: "claireJoined" },
+    { id: "groveFire", x: 8, y: 9, sprite: "campfire", script: "campfire", shownWhen: "claireJoined", still: true },
+    { id: "raven", x: 13, y: 5, sprite: "raven", script: "raven", shownWhen: "claireJoined", still: true },
+    { id: "thicket", x: 5, y: 12, sprite: "thicket", script: "thicket", goneWhen: "claireJoined", still: true },
+    { id: "gladeChest", x: 4, y: 14, sprite: "chest", script: "chest", goneWhen: "gladeChestOpened", still: true, loot: { gold: 400, items: ["potionGreaterHealing", "potionGreaterHealing", "scrollFireball"] } },
     // The lip of the gorge, where the road's old bridge used to be.
     { id: "gorgeEdge", x: 32, y: 15, sprite: "brokenBridge", script: "gorgeEdge", still: true },
   ],
@@ -37,19 +47,19 @@ export const BEYOND = {
   "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
   "^WWWWWWWWWWWWWWWWWaaaaezaaaaezaaazzaaaaaaaaaaaaaaaaezaaazaazaaa^",
   "^WWWWWWWWWWWWWWWWWaazaeeaezaaaaaaazazzzaaaaealllllazaaaaaaaaaaa^",
-  "^WWWWWWWWWWWWWWWWWazaaaaaaaaaaaeaaazaaaeaaaaalllllazaeaaaaaaaaz^",
-  "^WWWWWWWWWWWWWWWWWazaaaazaealllllzaaezaeazaaalllllaeaaaaaaeazea^",
-  "^WWWWWWWWWWWWWWWWWaeaaaazaezlllllaaaaeaaaazzeeaaaaaaaeeazaaaazz^",
-  "^WWWWWWWWWWWWWWWWWazzaaaazzalllllaaaaazzeaaeazeaaaazeezaaazeaza^",
-  "^WWWWWWWWWWWWWWWWWaaaaaazaazaaaaazazzzazaeaaaaaaazzazlllllaaaea^",
-  "^WWWWWWWWWWWWWWWWWaaaaaaaaaeaaaaaaaazaaaaazaaazaaeazalllllzzeze^",
-  "^WWWWWWWWWWWWWWWWWaaazeaaazzzaeeaazazaaaazazaaaaaaaaelllllaaaaa^",
-  "^WWWWWWWWWWWWWWWWWaaaaaaaaaeaazaazazeaaazzaeaaazezaeaaeaeaaaaaa^",
-  "^WWWWWWWWWWWWWWWWWaeaaaaaeeeaeeeaeaaeeeaeeeaeaeeeeeaaeeaaeaeaee^",
-  "^WWWWWWWWWWWWWWWWWlllllllllllllllllllllllllllllllllllllllllllll^",
-  "^WWWWWWWWWWWWWWWWWlllllllllllllllllllllllllllllllllllllllllllll^",
-  "^WWWWWWWWWWWWWWWWWlllllllllllllllllllllllllllllllllllllllllllll^",
-  "^WWWWWWWWWWWWWWWWWeeeaaezeaaaaaeaaaaaaeeeeaaaeaaaeeaeaeaeaeeaaa^",
+  "^WW.....W.....,WWWazaaaaaaaaaaaeaaazaaaeaaaaalllllazaeaaaaaaaaz^",
+  "^WW.,......,....WWazaaaazaealllllzaaezaeazaaalllllaeaaaaaaeazea^",
+  "^WW.............WWaeaaaazaezlllllaaaaeaaaazzeeaaaaaaaeeazaaaazz^",
+  "^WW.~~..........WWazzaaaazzalllllaaaaazzeaaeazeaaaazeezaaazeaza^",
+  "^WW.~~..........WWaaaaaazaazaaaaazazzzazaeaaaaaaazzazlllllaaaea^",
+  "^WW.............WWaaaaaaaaaeaaaaaaaazaaaaazaaazaaeazalllllzzeze^",
+  "^WW,............WWaaazeaaazzzaeeaazazaaaazazaaaaaaaaelllllaaaaa^",
+  "^WW...,.....,...WWaaaaaaaaaeaazaazazeaaazzaeaaazezaeaaeaeaaaaaa^",
+  "^WWW...........WWWaeaaaaaeeeaeeeaeaaeeeaeeeaeaeeeeeaaeeaaeaeaee^",
+  "^WWWW.WWWW.WWWWWWWlllllllllllllllllllllllllllllllllllllllllllll^",
+  "^WW.....WW.WWWWWWWlllllllllllllllllllllllllllllllllllllllllllll^",
+  "^WW.....WW.WWWWWWWlllllllllllllllllllllllllllllllllllllllllllll^",
+  "^WW.....WW.WWWWWWWeeeaaezeaaaaaeaaaaaaeeeeaaaeaaaeeaeaeaeaeeaaa^",
   "^WWWWWWWWW.....W...aa.aazaaaaaaa=aaaaaaaaaaaaaaaaaaaaazzazaaaaa^",
   "^WWWWWWWWW..W..W...a.aazzzaazzaa=aaaaazaaaaaaaazaazaaaaaaeeoaaa^",
   "^WWWWWWWWW..W......aa.azzaaaaaaa=zaaaaaaaaaaaaazaaaaaaaeellloea^",

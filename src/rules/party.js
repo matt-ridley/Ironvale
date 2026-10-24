@@ -8,6 +8,9 @@
 // (companion.lead): rules/tactics.js plays their turns.
 // Some fights have a second companion beside you (Act 4): someone from the roster, or a guest who isn't on it (Rachel,
 // when Claire comes back). createBattle takes their record as `second`; guestCompanion makes a guest's.
+// Claire, the druid (Act 4), has Wild Shape: twice per rest (short or long) she becomes a bear or a great cat (FORMS),
+// with HP of its own; she can't cast in beast form, and turns back when the beast's HP runs out, her own untouched.
+// She makes her saving throws against spells with advantage.
 // A wizard (Rachel) keeps a spellbook that grows: give her a spell scroll and she copies it in for good (copySpell), and
 // a short rest at a camp brings back some of her spell slots (arcaneRecovery).
 import { proficiencyBonus } from "./character.js";
@@ -27,7 +30,26 @@ export const COMPANIONS = {
   // crossbow for when the magic runs out, a spellbook that grows (`wizard`), and Quill, her owl.
   rachel: { name: "Rachel", dexMod: 2, hpBase: 7, hpPerLevel: 4, startGear: { bow: "lightCrossbow", armour: "padded" },
     casting: { mod: 3, spells: ["fireBolt", "magicMissile", "shield", "sleep"], wizard: true } },
+  // Claire, Rachel's twin, a druid who grew up wild beyond the Door (WIS +4): a sling and leather, and Wild Shape. Her
+  // WIS and INT saves are proficient (`saves`: modifier, and whether she's proficient), and she resists magic.
+  claire: { name: "Claire", dexMod: 2, hpBase: 8, hpPerLevel: 5, startGear: { bow: "sling", armour: "leather" },
+    casting: { mod: 4, spells: ["produceFlame", "cureWounds", "entangle", "faerieFire", "moonbeam", "callLightning", "conjureAnimals"] },
+    saves: { WIS: [4, true], INT: [0, true] }, resistsMagic: true, wildShape: true },
 };
+
+// Wild Shape's beasts, at the druid's level: AC, HP and attacks (to hit: proficiency + `hit`).
+export const FORMS = {
+  bear: { name: "bear", ac: 11, hp: level => 8 + 4 * level, hit: 4, attacks: [{ name: "Bite", damage: "1d8+4" }, { name: "Claws", damage: "2d6+4" }] },
+  cat: { name: "great cat", ac: 13, hp: level => 6 + 3 * level, hit: 6, attacks: [{ name: "Bite", damage: "1d10+5" }, { name: "Claws", damage: "2d6+5" }] },
+};
+export const WILD_SHAPES = 2; // per rest
+/* How many Wild Shapes a companion has left (0 for anyone but a druid). */
+export const shapesLeft = c => (COMPANIONS[c?.id]?.wildShape ? Math.max(0, WILD_SHAPES - (c.shapesUsed || 0)) : 0);
+/* A beast form for a fight: { id, name, ac, hp, maxHp, attacks }. */
+export function makeForm(id, level) {
+  const f = FORMS[id], hp = f.hp(level);
+  return { id, name: f.name, ac: f.ac, hp, maxHp: hp, attacks: f.attacks.map(a => ({ ...a, bonus: proficiencyBonus(level) + f.hit, damageBonus: 0, damageType: "slashing" })) };
+}
 
 export const TACTICS = { attack: "ATTACK", heal: "HEAL", save: "SAVE MAGIC" };
 /* The tactics a companion can use: saving magic only means something to a caster. */
@@ -57,8 +79,10 @@ export function statsOf(c, level) {
   const base = c && COMPANIONS[c.id];
   if (!base) return null;
   const maxHp = companionMaxHp(c.id, level);
+  const saves = { DEX: base.dexMod, ...Object.fromEntries(Object.entries(base.saves || {}).map(([ab, [m, prof]]) => [ab, m + (prof ? proficiencyBonus(level) : 0)])) };
   return {
-    id: c.id, name: base.name, level, dexMod: base.dexMod, maxHp,
+    id: c.id, name: base.name, level, dexMod: base.dexMod, maxHp, saves,
+    ...(base.resistsMagic && { resistsMagic: true }), ...(base.wildShape && { wildShape: true }),
     hp: Math.max(1, maxHp - (c.hurt || 0)),
     ...gearStats(base, c.gear || {}, level),
     tactics: tacticsFor(c.id).includes(c.tactics) ? c.tactics : "attack",
@@ -68,6 +92,10 @@ export function statsOf(c, level) {
 
 /* A companion who fights beside you without being on your roster (for one quest), rested and in their starting gear. */
 export const guestCompanion = id => ({ id, hurt: 0, gear: startingGear(id), guest: true });
+
+/* The records for a fight's own party (Q10: the twins, whoever's travelling with you): each one's from your party or
+   roster if they're there, else a guest's. */
+export const partyRecords = (hero, ids) => ids.map(id => (hero.companion?.id === id ? hero.companion : hero.roster?.find(r => r.id === id) || guestCompanion(id)));
 
 /* The record for a second companion in a fight: theirs from the roster if they're waiting there (their wounds and
    spent slots carry on), else a guest's. Null if they're the one already travelling with you, or unknown. */
@@ -149,6 +177,7 @@ export function takeCompanion(hero, id) {
   c.hurt = 0;
   if (c.slotsUsed) c.slotsUsed = [];
   delete c.recovered;
+  delete c.shapesUsed;
   hero.companion = c;
   return { ok: true, id };
 }

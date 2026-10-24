@@ -67,6 +67,8 @@ export const ITEMS = {
     about: "A tin badge Pip made, with JUNIOR WARDEN scratched on it. Once per rest, when you just fail a saving throw against a monster, +1 turns it into a success. Works from your pack." },
   sunCharm: { name: "Half a Sun Charm", type: "key", cost: 0,
     about: "Half of a gold charm, a sun, snapped off long ago. It was wound into a cairn of bones on the snowfield. Rachel wears the other half: a moon." },
+  twinCharm: { name: "The Sun-and-Moon Charm", type: "key", cost: 0,
+    about: "The twins' charm, whole again: a gold sun and a silver moon, snapped apart when they were twelve and fitted back together in Claire's grove. It's warm, and it hums when either of them is near." },
   thorneMirror: { name: "Thorne's Mirror", type: "key", cost: 0,
     about: "A silver hand mirror from Thorne's camp, polished bright. Shiny. Somebody would love this." },
   oldGnasher: { name: "Old Gnasher", type: "key", cost: 0,

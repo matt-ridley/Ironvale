@@ -65,6 +65,8 @@ export const TRAVEL_POINTS = [
     centre: { x: 17, y: 4 }, opensWhen: f => !!f.act3Complete },
   { id: "threshold", name: "The Threshold", kind: "camp", map: "beyond", zone: "threshold", at: { x: 32, y: 30 },
     centre: { x: 31, y: 30 }, opensWhen: f => !!f.doorOpened },
+  { id: "grove", name: "Claire's Grove", kind: "camp", map: "beyond", zone: "grove", at: { x: 9, y: 10 },
+    centre: { x: 8, y: 9 }, opensWhen: f => !!f.claireJoined },
 ];
 export const CAMP_RADIUS = 3;
 export const FIRST_HUB = "oakhollow";

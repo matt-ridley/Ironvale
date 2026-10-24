@@ -30,9 +30,10 @@ const thenRandom = (...specs) => { const f = faces(...specs), r = seededRng(1); 
 
 test("every spell is well formed, and every monster has saves and a type", () => {
   for (const [id, s] of Object.entries(SPELLS)) {
-    assert.ok(["attack", "save", "darts", "sleep", "heal", "buff", "reaction"].includes(s.kind), id);
+    assert.ok(["attack", "save", "darts", "sleep", "heal", "buff", "reaction", "pack"].includes(s.kind), id);
     assert.ok(Number.isInteger(s.level) && s.level >= 0 && s.level <= 9, id);
     if (s.condition) assert.ok(CONDITIONS[s.condition.id], `${id}: unknown condition`);
+    if (s.linger) assert.ok(CONDITIONS[s.linger.id]?.lingering && s.kind === "save" && s.damage, `${id}: bad linger`);
     if (s.kind === "save") assert.ok(["STR", "DEX", "CON", "WIS"].includes(s.save), id);
   }
   for (const [id, m] of Object.entries(MONSTERS)) {

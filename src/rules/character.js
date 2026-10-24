@@ -232,6 +232,7 @@ export function rest(char) {
   if (char.companion) char.companion.hurt = 0;
   if (char.companion?.slotsUsed) char.companion.slotsUsed = [];
   if (char.companion) delete char.companion.recovered; // Arcane Recovery
+  if (char.companion) delete char.companion.shapesUsed; // Wild Shape
 }
 
 /* A short rest (a camp's fire): back up to at least half your maximum HP, and Second Wind and Action Surge back.
@@ -252,6 +253,7 @@ export function shortRest(char, companionMax = 0) {
   }
   let companionHealed = 0;
   const c = char.companion;
+  if (c) delete c.shapesUsed; // a druid's Wild Shape comes back on a short rest too
   if (c && companionMax) {
     const hurt = c.hurt || 0, cap = companionMax - Math.floor(companionMax / 2); // the most hurt they can stay
     companionHealed = Math.max(0, hurt - cap);

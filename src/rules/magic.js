@@ -116,6 +116,10 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
       tellWoken(battle, t, woke);
       fallen(t);
       if (!s.success && spell.condition && combatant(battle, t).hp > 0) condition(t, spell.condition);
+      if (spell.linger && combatant(battle, t).hp > 0) { // it stays on them, and burns again each turn
+        addCondition(battle, t, spell.linger.id, { rounds: spell.linger.rounds, damage: spellDice(spell, "damage", caster.level, slot), damageType: spell.damageType, save: spell.save, dc: caster.saveDc });
+        say(battle, "condition", `${nameOf(battle, t)} is ${CONDITIONS[spell.linger.id].name}.`, { who: t, condition: spell.linger.id });
+      }
     }
   } else if (spell.kind === "darts") {
     let t = keys[0];
@@ -150,6 +154,9 @@ export function castSpell(battle, caster, spellId, { target, slotLevel } = {}, r
     const healed = Math.min(c.maxHp - c.hp, amount);
     c.hp += healed;
     say(battle, "spell-heal", `${nameOf(battle, t)} ${t === "player" ? "recover" : "recovers"} ${healed} HP (${c.hp}/${c.maxHp})${down && healed ? " and gets back up!" : "."}`, { who: t, heal: healed, revived: down && healed > 0, spell: spellId });
+  } else if (spell.kind === "pack") {
+    battle.pack = { by: caster.key, rounds: spell.rounds, attack: { name: "Bite", bonus: caster.attackBonus, damage: spell.damage, damageBonus: 0, damageType: "piercing" } };
+    say(battle, "pack-summon", "A howl answers, and a wolf pack comes running out of nowhere, teeth bared!", { by: caster.key, spell: spellId });
   } else if (spell.kind === "buff") {
     for (const t of keys) condition(t, spell.condition);
   }

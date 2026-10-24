@@ -85,7 +85,8 @@ test("the Emberreach: new ground, its own music, a region on the world map, and 
   assert.equal(tileAt(beyond, 30, 13).name, "lava");
   assert.equal(isWalkable(beyond, 30, 13), false);
   assert.ok(TRACKS.emberreach);
-  for (const z of beyond.zones) assert.equal(z.music, "emberreach");
+  for (const z of beyond.zones) assert.ok(["emberreach", "wildwood"].includes(z.music), z.id);
+  assert.ok(TRACKS.wildwood);
   const region = REGIONS.find(r => r.id === "beyond");
   assert.equal(regionOpen(region, { act3Complete: true }), false);
   assert.equal(regionOpen(region, { seenThreshold: true }), true);
@@ -108,7 +109,7 @@ test("past the Threshold only the road goes west, and the kobold warband stands 
   assert.equal([...from].some(k => Number(k.split(",")[1]) < 12), false, "nothing past the gorge yet");
   const after = { ...flags, warbandFled: true };
   assert.ok(near(beyond, after, 17, 20), "the grey wolf, once they've gone");
-  assert.ok(near(beyond, { ...after, q9Done: true }, 10, 23), "the wolf waiting at the trail");
+  assert.ok(near(beyond, { ...after, q9Done: true }, 10, 15), "the wolf waiting at the trail");
 });
 
 test("through the Door: footprints, and Pip in your pack if he's had his big adventure", () => {
@@ -161,7 +162,7 @@ test("quest 9 in the log and on the HUD, step by step", () => {
     [{ doorOpened: true }, "Go through the Door"],
     [{ seenThreshold: true }, "Follow the footprints up the ash road"],
     [{ warbandFled: true }, "Follow the grey wolf to the wildwood, west"],
-    [{ q9Done: true }, "The wildwood waits (the next part of Act 4 is coming)"],
+    [{ q9Done: true }, "Follow the grey wolf up the trail, north"],
   ];
   const story = { kingRewarded: true, signetTaken: true, brannocFreed: true, signetShown: true, askedBrannoc: true, passageCleared: true, seenFen: true,
     fenReported: true, metSallow: true, causewayRaised: true, keepGateOpened: true, tombOpen: true, seenTomb: true, varricDefeated: true, heardTremor: true,

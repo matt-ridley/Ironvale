@@ -51,6 +51,7 @@ function loadCompanion(c) {
     ...(Array.isArray(c.spells) && { spells: c.spells.filter(id => SPELLS[id]) }), // a wizard's spellbook
     ...(c.recovered === true && { recovered: true }), // Arcane Recovery, used since the last long rest
     ...(c.volley === true && { volley: true }), // Megan's Volley, taught by her father
+    ...(isInt(c.shapesUsed) && c.shapesUsed > 0 && { shapesUsed: Math.min(c.shapesUsed, 2) }), // Claire's Wild Shapes, since a rest
   };
   return { id: c.id, hurt: isInt(c.hurt) && c.hurt > 0 ? c.hurt : 0, gear, ...extra };
 }

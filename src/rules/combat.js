@@ -8,6 +8,9 @@
 // they shoot at the monster you last attacked, and monsters pick between you and them.
 // Some fights have a second companion (createBattle's `second`): battle.ally2, with the key "ally2", who works just like
 // the first (battle.leadAlly2 when you lead them). Monsters pick between all of you who are standing.
+// A companion in Wild Shape (Claire: `form` on them) uses the beast's AC, and the beast's HP takes the damage first.
+// Lingering spells (Moonbeam, Call Lightning) hurt a monster at the start of each of its turns, and a summoned wolf pack
+// (battle.pack) bites every monster at the start of its summoner's turn, for a few rounds.
 // A battle is a plain object. The player acts with playerAction(); monsters then take their turns until it is the
 // player's turn again or the battle is over. Every step is written to battle.log for the screen to show.
 import { d20, roll } from "./dice.js";
@@ -100,7 +103,7 @@ export const partyKeys = battle => ["player", ...allyKeys(battle)];
 /* The hero, companion or monster with this key. */
 export const combatant = (battle, key) => (key === "player" ? battle.player : isAllyKey(key) ? battle[key] : battle.monsters[key]);
 export const nameOf = (battle, key) => (key === "player" ? "You" : isAllyKey(key) ? battle[key].name : `${battle.monsters[key].The}`);
-export const acOf = (battle, key) => (key === "player" ? playerAc(battle) : combatant(battle, key).ac + conditionAc(battle, key) + guardAc(battle, key));
+export const acOf = (battle, key) => { const c = combatant(battle, key); return key === "player" ? playerAc(battle) : (c.form?.ac ?? c.ac) + conditionAc(battle, key) + guardAc(battle, key); };
 /* A monster warded by its shield guardian (`guardedBy`): +3 AC while the guardian stands. */
 export const GUARD_AC = 3;
 const guardAc = (battle, key) => { const g = battle.monsters[key]?.guardedBy; return g !== undefined && battle.monsters[g]?.hp > 0 ? GUARD_AC : 0; };
@@ -109,12 +112,12 @@ const guardAc = (battle, key) => { const g = battle.monsters[key]?.guardedBy; re
    companion's DEX (other saves +0), or a monster's listed save. */
 export function saveBonusOf(battle, key, ability) {
   if (key === "player") return mod(battle.player, ability) + (SAVE_PROFICIENCIES.includes(ability) ? proficiencyBonus(battle.player.level) : 0);
-  if (isAllyKey(key)) return ability === "DEX" ? battle[key].dexMod : 0;
+  if (isAllyKey(key)) return battle[key].saves?.[ability] ?? 0;
   return battle.monsters[key].saves?.[ability] ?? 0;
 }
 
-/* A saving throw in a fight, with conditions (Bless, restrained) counted. */
-export const battleSave = (battle, key, ability, dc, rng = Math.random) => conditionSave(battle, key, ability, dc, saveBonusOf(battle, key, ability), rng);
+/* A saving throw in a fight, with conditions (Bless, restrained) counted. opts.advantage: rolled with advantage. */
+export const battleSave = (battle, key, ability, dc, rng = Math.random, opts = {}) => conditionSave(battle, key, ability, dc, saveBonusOf(battle, key, ability), rng, opts);
 
 /* A saving throw against something a monster does to you: Pip's Junior Warden badge adds 1 to one that only just
    failed (once per rest), and from level 9, Indomitable rolls a failed one again (once per long rest). Both say so in
@@ -134,9 +137,17 @@ export function resistSave(battle, key, ability, dc, rng = Math.random) {
 }
 
 /* Takes HP off someone (never below 0) and wakes them if they were asleep. Call it before logging the hit (each log
-   entry records everyone's HP), then tellWoken() after. Returns the names of conditions the damage ended. */
+   entry records everyone's HP), then tellWoken() after. Returns the names of conditions the damage ended. A companion
+   in Wild Shape: the beast takes it, and when its HP runs out she turns back ("a bear" is what ended), unhurt. */
 export function hurt(battle, key, damage) {
   const c = combatant(battle, key);
+  if (c.form && damage > 0) {
+    c.form.hp = Math.max(0, c.form.hp - damage);
+    if (c.form.hp > 0) return onDamage(battle, key);
+    const was = c.form.name;
+    c.form = null;
+    return [`a ${was}`];
+  }
   c.hp = Math.max(0, c.hp - Math.max(0, damage));
   return damage > 0 && c.hp > 0 ? onDamage(battle, key) : [];
 }
@@ -146,11 +157,12 @@ export function tellWoken(battle, key, ended) {
 
 /* Rolls initiative (d20 + DEX; ties go to the higher DEX, then the player) and plays monster turns up to the player's.
    opts.surviveRounds: a waystone's trial, where the monsters crumble once you've held out that many rounds.
-   opts.second: a second companion's record (party.js: secondCompanion), who fights beside your own. Each companion in
-   the fight keeps the record they came from as `src` (their wounds and spell slots go back there). */
-export function createBattle(player, monsterIds, rng = Math.random, { surviveRounds = 0, second = null } = {}) {
+   opts.second: a second companion's record (party.js: secondCompanion), who fights beside your own. opts.allies: the
+   fight's own party instead (records, at most two: Q10's twins, party.js partyRecords). Each companion in the fight
+   keeps the record they came from as `src` (their wounds and spell slots go back there). */
+export function createBattle(player, monsterIds, rng = Math.random, { surviveRounds = 0, second = null, allies: own = null } = {}) {
   const monsters = monsterIds.map(id => spawnMonster(id, rng));
-  const allies = [player.companion, second].map(c => { const s = statsOf(c, player.level); return s && { ...s, src: c }; }).filter(Boolean);
+  const allies = (own || [player.companion, second]).slice(0, 2).map(c => { const s = statsOf(c, player.level); return s && { ...s, src: c }; }).filter(Boolean);
   allies.forEach((a, i) => { a.key = ALLY_KEYS[i]; });
   const ally = allies[0] || null, ally2 = allies[1] || null;
   const entries = [
@@ -394,7 +406,10 @@ function runMonsterTurns(battle, rng) {
     const key = battle.order[battle.turn].who;
     if (combatant(battle, key).hp > 0) {
       for (const name of startTurn(battle, key)) say(battle, "condition-end", `${nameOf(battle, key)} ${isAre(key)} no longer ${name}.`, { who: key });
-      if (typeof key === "number") regenerate(battle, key);
+      if (typeof key === "number") { regenerate(battle, key); linger(battle, key, rng); }
+      if (battle.pack?.by === key) packBites(battle, rng);
+      if (checkEnd(battle, rng)) return;
+      if (combatant(battle, key).hp <= 0) { nextTurn(battle); continue; } // burned away before it could act
       if (skipsTurn(battle, key)) {
         const why = Object.keys(battle.conditions[key]).filter(id => CONDITIONS[id].skips).map(id => CONDITIONS[id].name).join(" and ");
         say(battle, "skip", `${nameOf(battle, key)} ${isAre(key)} ${why} and can't act.`, { who: key });
@@ -440,6 +455,35 @@ function regenerate(battle, i) {
   if (!healed) return;
   m.hp += healed;
   say(battle, "regen", `${m.The}'s wounds knit closed before your eyes (+${healed} HP). Fire would stop that.`, { target: i, heal: healed });
+}
+
+/* Moonbeam and Call Lightning keep hurting whoever they're on, at the start of each of its turns (a save halves it). */
+function linger(battle, i, rng) {
+  const m = battle.monsters[i];
+  for (const [id, c] of Object.entries(battle.conditions?.[i] || {})) {
+    if (!CONDITIONS[id].lingering || m.hp <= 0) continue;
+    const s = battleSave(battle, i, c.save, c.dc, rng), full = roll(c.damage, rng).total;
+    const dmg = adjustDamage(m, s.success ? Math.floor(full / 2) : full, c.damageType).damage;
+    const woke = hurt(battle, i, dmg);
+    say(battle, "linger", `${CONDITIONS[id].burns} ${m.the}: ${dmg} ${c.damageType} damage (${c.save} save ${s.total} vs DC ${c.dc}${s.success ? ", halved" : ""}).`, { target: i, damage: dmg });
+    tellWoken(battle, i, woke);
+    if (m.hp === 0) say(battle, "defeat", `${m.The} falls.`, { target: i });
+  }
+}
+
+/* The summoned wolf pack: at the start of its summoner's turn, a bite at every monster standing, for its rounds. */
+function packBites(battle, rng) {
+  const p = battle.pack;
+  p.rounds--;
+  say(battle, "pack", p.rounds ? "The wolf pack harries your foes!" : "The wolf pack makes one last rush, then melts back into the trees.", { by: p.by });
+  for (const m of living(battle)) {
+    const t = battle.monsters.indexOf(m), r = adjustRoll(resolveAttack(p.attack, acOf(battle, t), rng), m, p.attack);
+    const woke = hurt(battle, t, r.damage);
+    say(battle, "pack-bite", `A wolf bites ${m.the}: ${rollText(r, p.attack.bonus)} ${hitText(r)}`, { roll: r, target: t });
+    tellWoken(battle, t, woke);
+    if (m.hp === 0) say(battle, "defeat", `${m.The} falls.`, { target: t });
+  }
+  if (!p.rounds) battle.pack = null;
 }
 
 /* True if you could turn this blow aside with Iron Ward: you know it, have a slot, can act, and +5 AC is enough. */
@@ -520,7 +564,7 @@ export function castMonsterSpell(battle, i, spell, rng) {
   say(battle, "monster-cast", `${m.The} casts ${spell.name}!`, { actor: i, spell: spell.name });
   const keys = spell.targets === "all" ? ["player", ...allyKeys(battle).filter(k => battle[k].hp > 0)] : [pickTarget(battle, rng)];
   for (const key of keys) {
-    const s = key === "player" ? resistSave(battle, key, spell.save, spell.dc, rng) : battleSave(battle, key, spell.save, spell.dc, rng);
+    const s = key === "player" ? resistSave(battle, key, spell.save, spell.dc, rng) : battleSave(battle, key, spell.save, spell.dc, rng, { advantage: !!combatant(battle, key).resistsMagic });
     const full = spell.damage ? roll(spell.damage, rng).total : 0;
     const dmg = s.success ? (spell.half ? Math.floor(full / 2) : 0) : full;
     const woke = hurt(battle, key, dmg);
@@ -656,7 +700,9 @@ export function checkEnd(battle, rng) {
 /* Each log entry carries everyone's HP right after it happened, so a screen can play the fight back step by step.
    extra: roll (an attack roll), target / actor (monster index), heal (HP recovered), onAlly (a monster hit your companion). */
 export function say(battle, type, text, extra = {}) {
-  const hp = { player: battle.player.hp, ally: battle.ally ? battle.ally.hp : null, ally2: battle.ally2 ? battle.ally2.hp : null, monsters: battle.monsters.map(m => m.hp) };
+  const form = a => (a?.form ? { id: a.form.id, hp: a.form.hp, maxHp: a.form.maxHp } : null); // Wild Shape's beast
+  const hp = { player: battle.player.hp, ally: battle.ally ? battle.ally.hp : null, ally2: battle.ally2 ? battle.ally2.hp : null, monsters: battle.monsters.map(m => m.hp),
+    forms: { ally: form(battle.ally), ally2: form(battle.ally2) } };
   battle.log.push({ round: battle.round, type, text, hp, level: battle.player.level, ...extra });
 }
 

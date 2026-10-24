@@ -44,6 +44,13 @@ export const TRACKS = {
     bass: "D2 - - - - - A2 - | Bb1 - - - - - F2 - | C2 - - - - - G2 - | A1 - - - - - E2 - | D2 - - - - - A2 - | F2 - - - - - C3 - | C2 - - - - - G2 - | D2 - - - - - A2 -",
     drums: "k . . . . . h . | . . . . k . h . | k . . . . . h . | . . . . k . h . | k . . . . . h . | . . . . k . h . | k . . . . . h . | . . . . k . h h",
   },
+  // The wildwood beyond the Door: the woods' own lilt, slower, with a low drone underneath (the bass barely moves).
+  wildwood: {
+    bpm: 88, lead: "triangle", echo: 0.4,
+    melody: "A4 - C5 - E5 - - - | D5 - C5 - A4 - - - | G4 - A4 - C5 - D5 - | E5 - - - . . . . | A4 - C5 - E5 - G5 - | F5 - E5 - D5 - C5 - | B4 - G4 - A4 - B4 - | A4 - - - . . . .",
+    bass: "A2 - - - - - - - | A2 - - - - - - - | G2 - - - - - - - | A2 - - - - - - - | A2 - - - - - - - | F2 - - - - - - - | G2 - - - - - - - | A2 - - - - - - -",
+    drums: ". . h . . . h . | . . h . . . h . | . . h . . . h . | . . h . k . h . | . . h . . . h . | . . h . . . h . | . . h . . . h . | . . h . k . h h",
+  },
   // The Wardens' Gatehouse: the keep's organ in a lower, colder key, and a slow march.
   gatehouse: {
     bpm: 60, lead: "square", echo: 0.5,

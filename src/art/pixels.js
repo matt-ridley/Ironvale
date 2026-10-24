@@ -7,6 +7,7 @@ import { HERO_COLOURS, HERO_FRAMES, FACINGS, HERO_W, HERO_H } from "./hero.js";
 import { MEGAN_COLOURS, MEGAN_FRAMES } from "./megan.js";
 import { ROBYN_COLOURS, ROBYN_FRAMES } from "./robyn.js";
 import { RACHEL_COLOURS, RACHEL_FRAMES } from "./rachel.js";
+import { CLAIRE_COLOURS, CLAIRE_FRAMES } from "./claire.js";
 import { drawTerrain } from "./terrain.js";
 import { OATH_COLOURS } from "../rules/oaths.js";
 import { TILE } from "../config.js";
@@ -52,7 +53,7 @@ export function makeTexture(scene, key, rows, colours = PALETTE, outline = "k") 
 
 /* People drawn on the hero's grid: a sheet of 12 frames of 32 x 48 each (down 0-3, up 4-7, side 8-11), plus walk
    and idle animations (the hero's are "walk-side" and so on; anyone else's are prefixed, like "megan-walk-side"). */
-const SHEETS = { hero: [HERO_FRAMES, HERO_COLOURS], megan: [MEGAN_FRAMES, MEGAN_COLOURS], robyn: [ROBYN_FRAMES, ROBYN_COLOURS], rachel: [RACHEL_FRAMES, RACHEL_COLOURS] };
+const SHEETS = { hero: [HERO_FRAMES, HERO_COLOURS], megan: [MEGAN_FRAMES, MEGAN_COLOURS], robyn: [ROBYN_FRAMES, ROBYN_COLOURS], rachel: [RACHEL_FRAMES, RACHEL_COLOURS], claire: [CLAIRE_FRAMES, CLAIRE_COLOURS] };
 export const heroFrame = (facing, i = 0) => FACINGS.indexOf(facing) * 4 + i;
 export const animKey = (key, kind, facing) => `${key === "hero" ? "" : `${key}-`}${kind}-${facing}`;
 
