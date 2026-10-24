@@ -16,7 +16,7 @@ import { BOUNTIES, boardFor, currentBounty, takeBounty, claimBounty, dropBounty,
 import { talkNodes, afterRest } from "./talks.js";
 import { pay, paid } from "./rewards.js";
 import { ACT3_SCRIPTS, tremorNode, scoutNode, withRachel, stonesFound, PIP_REWARD, GNASHER_REWARD, nettleHaunting } from "./act3.js";
-import { ACT4_SCRIPTS } from "./act4.js";
+import { ACT4_SCRIPTS, pastGolems } from "./act4.js";
 
 /* ", Mary" when the hero has a name, else nothing: for lines like `You did it${comma(s)}!`. */
 const comma = s => (callName(s.hero) ? `, ${callName(s.hero)}` : "");
@@ -990,11 +990,18 @@ export const SCRIPTS = {
           { label: "Let's see the forge", to: "shop" },
           { label: "Give Brannoc his tools", if: s => s.hero.inventory.some(i => i.base === "brannocTools"), to: "tools" },
           { label: "Show Brannoc the rune-iron", if: s => s.hero.inventory.some(i => i.base === "runeIron"), to: "runeIron" },
+          { label: "Tell him about the lost forge", if: s => !!s.flags.lostForgeFound && !s.flags.brannocAtForge, to: "lostForge" },
           { label: "Goodbye.", to: null },
         ],
       },
       shop: { enter: (s, ctx) => ctx.emit({ type: "shop", shop: s.flags.oath === "iron" ? "forgeIron" : "forge" }) },
       tools: toolsNode(),
+      // Act 4: the Wardens' lost forge, in the Emberdeep. He goes (and his forge here goes cold until the end).
+      lostForge: {
+        speaker: BRANNOC,
+        enter: s => { s.flags.brannocAtForge = true; },
+        text: "\"The Wardens' LOST forge? Under the dragon's own mountain?\" He's already untying his apron. \"I'll pack. Don't touch anything. Meet me there.\" (Brannoc will be at the lost forge. It's a camp now.)",
+      },
       // The Wardenblade's second form: one more rune slot.
       runeIron: {
         speaker: BRANNOC,
@@ -1237,7 +1244,7 @@ export function sideObjective(flags, state = {}) {
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
    counted until it can be finished. */
 export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported, flags.causewayRaised, flags.signetReturned,
-  flags.rockslideOpen, flags.wardensRoad, flags.gatehouseDone, flags.oathSworn, flags.q9Done, flags.q10Done, flags.q11Done].filter(Boolean).length;
+  flags.rockslideOpen, flags.wardensRoad, flags.gatehouseDone, flags.oathSworn, flags.q9Done, flags.q10Done, flags.q11Done, flags.q12Done].filter(Boolean).length;
 
 /* The line under the HP box saying what to do next. */
 export function objective(flags) {
@@ -1283,10 +1290,19 @@ export function objective(flags) {
     if (!flags.seenLastwatch) return "Find Claire's father at Lastwatch, east along the ash road";
     if (!flags.cindersBeaten) return "Fight through the Cinder Wardens at Lastwatch's gate";
     if (!flags.q11Done) return "Talk to Matt at Lastwatch";
-    if (flags.meganJoined && !flags.meganPledged) return "Take Megan to the kobolds' diggings, over the bridge from Lastwatch";
-    if (flags.robynJoined && !flags.robynPledged) return "Take Robyn to the shrine of the Dawn, south-east of Lastwatch";
-    if (flags.claireJoined && !flags.clairePledged) return "Claire's waiting at Lastwatch";
-    return "The Emberdeep (the next part of Act 4 is coming)";
+    if (!flags.seenTunnels) { // the pledges first, until you go into the Emberdeep
+      if (flags.meganJoined && !flags.meganPledged) return "Take Megan to the kobolds' diggings, over the bridge from Lastwatch";
+      if (flags.robynJoined && !flags.robynPledged) return "Take Robyn to the shrine of the Dawn, south-east of Lastwatch";
+      if (flags.claireJoined && !flags.clairePledged) return "Claire's waiting at Lastwatch";
+      return "Find the Emberdeep's gate, at the top of the aeries";
+    }
+    if (!pastGolems(flags)) return "Get past the golem hall in the Emberdeep (or find a way round)";
+    if (!flags.lostForgeFound) return "Find the Wardens' lost forge, in the Emberdeep";
+    if (!flags.brannocAtForge) return "Tell Brannoc at the keep about the lost forge";
+    if (!flags.bladeFinalForm) return "Have Brannoc finish the Wardenblade at the lost forge";
+    if (!flags.hoardGuardsBeaten) return "Beat the hoard's guards, at the top of the Emberdeep";
+    if (!flags.q12Done) return "Open the hoard's doors";
+    return "The Great One (the last part of Act 4 is coming)";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";

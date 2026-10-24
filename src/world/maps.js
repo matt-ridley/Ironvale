@@ -8,5 +8,6 @@ import { KEEP } from "./keep.js";
 import { PASS } from "./pass.js";
 import { GATEHOUSE } from "./gatehouse.js";
 import { BEYOND } from "./beyond.js";
+import { EMBERDEEP } from "./emberdeep.js";
 
-export const MAPS = Object.fromEntries([OVERWORLD, DEEP_CAVE, ...HOUSES, IRONVALE, KEEP, PASS, GATEHOUSE, BEYOND].map(def => [def.name, createMap(def)]));
+export const MAPS = Object.fromEntries([OVERWORLD, DEEP_CAVE, ...HOUSES, IRONVALE, KEEP, PASS, GATEHOUSE, BEYOND, EMBERDEEP].map(def => [def.name, createMap(def)]));

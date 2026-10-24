@@ -30,6 +30,7 @@ SKY.frozenChapel = SKY.gatehouse = SKY.frozenForge = SKY.barracks = SKY.door = S
 SKY.courtyard = SKY.chapel = SKY.armoury = SKY.tomb = SKY.keep;
 SKY.ashRoad = SKY.threshold = SKY.lastwatch = SKY.lastwatchHold = SKY.aeries = SKY.dawnShrine = SKY.ash;
 SKY.wildwood = SKY.grove = SKY.forest;
+SKY.tunnels = SKY.golemHall = SKY.lostForge = SKY.hoardDoors = SKY.emberGate = SKY.cave;
 
 /* A zone id the stage knows, or `fallback`. */
 export const stageZone = (zone, fallback = "forest") => (SKY[zone] ? zone : fallback);

@@ -87,6 +87,8 @@ export const SCENARIOS = [
     ["Cinder Wardens (the gate), L14 +4, Claire", { level: 14, companion: "claire" }, ["cinderWarden", "cinderWarden"]],
     ["Cinder Wardens, L14 +4, Megan", { level: 14 }, ["cinderWarden", "cinderWarden"]],
     ["Diggings' overseers, L14 +4, Megan", { level: 14 }, ["salamander", "hellHound"]],
+    ["Golem hall, L15 +4, Megan", { level: 15, runes: ["runeStrike", "ironWard", "wardensCall", "binding", "breakingRune"] }, ["clayGolem", "stoneGolem"]],
+    ["Hoard's guards, L15 +4, Megan", { level: 15, runes: ["runeStrike", "ironWard", "wardensCall", "binding", "breakingRune"] }, ["fireGiant", "hellHound"]],
     ["Roc, L14 +4, Claire, Breaking Rune", { level: 14, companion: "claire", runes: ["runeStrike", "ironWard", "wardensCall", "binding", "breakingRune"] }, ["roc"]],
   ].map(([label, h, foes]) => [label, { companion: "megan", upgrade: 4, potions: 1, greater: 0, weapon: "wardenblade", silvered: true, runes: ["runeStrike", "ironWard", "wardensCall", "binding"], ...h }, foes]),
 ];

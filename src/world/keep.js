@@ -29,7 +29,7 @@ export const KEEP = {
     { id: "varric", x: 19, y: 4, sprite: "lordVarric", script: "varric", shownWhen: "tombOpen", goneWhen: "varricDefeated" },
     // Once the dead sleep, the keep is home: Hild the steward (your bed, and the companions who wait), and Brannoc's forge.
     { id: "hild", x: 17, y: 28, sprite: "steward", script: "keepHall", shownWhen: "signetReturned" },
-    { id: "keepBrannoc", x: 22, y: 28, sprite: "brannoc", script: "keepForge", shownWhen: "bladeReforged" },
+    { id: "keepBrannoc", x: 22, y: 28, sprite: "brannoc", script: "keepForge", shownWhen: "bladeReforged", goneWhen: "brannocAtForge" },
     { id: "keepCarving", x: 8, y: 11, sprite: "carving", script: "carving", still: true,
       lore: "\"Iron to hold, the Call to stand, Binding to keep: three runes on the road, and the Oath at the door.\" Rachel whispers it twice. \"The waystones. And a cache behind this stone.\"",
       cache: { gold: 150, items: ["scrollMistyStep"] } },
@@ -48,6 +48,7 @@ export const KEEP = {
     { id: "bannerMegan", x: 17, y: 14, sprite: "bannerMegan", script: "pledgeBanner", who: "megan", shownWhen: "meganPledged", still: true },
     { id: "bannerRobyn", x: 21, y: 14, sprite: "bannerRobyn", script: "pledgeBanner", who: "robyn", shownWhen: "robynPledged", still: true },
     { id: "bannerClaire", x: 23, y: 14, sprite: "bannerClaire", script: "pledgeBanner", who: "claire", shownWhen: "clairePledged", still: true },
+    { id: "bannerBrannoc", x: 25, y: 14, sprite: "bannerBrannoc", script: "pledgeBanner", who: "brannoc", shownWhen: "brannocPledged", still: true },
     { id: "brannocTools", x: 35, y: 29, sprite: "chest", script: "brannocTools", goneWhen: "toolsFound", still: true },
     { id: "chapelChest", x: 3, y: 29, sprite: "chest", script: "chest", goneWhen: "chapelChestOpened", still: true, loot: { gold: 150, items: ["potionGreaterHealing", "scrollFireball"] } },
     { id: "courtyardChest", x: 24, y: 30, sprite: "chest", script: "chest", goneWhen: "courtyardChestOpened", still: true, loot: { gold: 120, items: ["potionGreaterHealing", "potionGreaterHealing"] } },

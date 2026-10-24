@@ -69,6 +69,8 @@ export const TRAVEL_POINTS = [
     centre: { x: 8, y: 9 }, opensWhen: f => !!f.claireJoined },
   { id: "lastwatch", name: "Lastwatch", kind: "camp", map: "beyond", zone: "lastwatchHold", at: { x: 80, y: 22 },
     centre: { x: 80, y: 21 }, opensWhen: f => !!f.q11Done }, // Matt's fire
+  { id: "lostForge", name: "The Lost Forge", kind: "camp", map: "emberdeep", zone: "lostForge", at: { x: 7, y: 14 },
+    centre: { x: 6, y: 11 }, opensWhen: f => !!f.brannocAtForge }, // Brannoc's, in the Emberdeep
 ];
 export const CAMP_RADIUS = 3;
 export const FIRST_HUB = "oakhollow";

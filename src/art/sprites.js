@@ -1849,6 +1849,6 @@ const BANNER = [
   "......kbbk......",
   ".....kkkkkk.....",
 ];
-for (const [key, cloth, mark] of [["bannerRachel", "U", "S"], ["bannerMegan", "G", "y"], ["bannerRobyn", "t", "y"], ["bannerClaire", "N", "G"]]) {
+for (const [key, cloth, mark] of [["bannerRachel", "U", "S"], ["bannerMegan", "G", "y"], ["bannerRobyn", "t", "y"], ["bannerClaire", "N", "G"], ["bannerBrannoc", "r", "i"]]) {
   SPRITES[key] = BANNER.map(r => r.replaceAll("c", cloth).replaceAll("E", mark));
 }

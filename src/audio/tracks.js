@@ -58,6 +58,14 @@ export const TRACKS = {
     bass: "E1 - - - - - - - | E1 - - - - - - - | C1 - - - - - - - | B0 - - - - - - - | E1 - - - - - - - | G1 - - - - - - - | B0 - - - - - - - | E1 - - - - - - -",
     drums: "k . . . . . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . h .",
   },
+  // The Emberdeep, the dragon's mountain: the gatehouse's organ, slower and hotter (a flattened second, like heat
+  // shimmer), over a bass that hardly moves.
+  emberdeep: {
+    bpm: 52, lead: "sawtooth", echo: 0.55,
+    melody: "D4 - - - Eb4 - - - | D4 - C4 - A3 - - - | Bb3 - - - C4 - D4 - | A3 - - - - - . . | D4 - - - F4 - Eb4 - | D4 - - - C4 - Bb3 - | A3 - - - Bb3 - G3 - | A3 - - - - - . .",
+    bass: "D1 - - - - - - - | D1 - - - - - - - | Bb0 - - - - - - - | A0 - - - - - - - | D1 - - - - - - - | Eb1 - - - - - - - | G0 - - - - - - - | A0 - - - - - - -",
+    drums: "k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . s s . h .",
+  },
   // Aldric Thorne: fast and wrong-footed, the pass's bells turned sour.
   thorne: {
     bpm: 168, lead: "sawtooth", echo: 0.3,

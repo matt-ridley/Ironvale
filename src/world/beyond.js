@@ -9,7 +9,7 @@
 // Lastwatch's north gate opens onto the Wardens' bridge over the gorge (Matt lowers it), and the
 // aeries beyond: the brood's hunting grounds, a nest in the crags, the mouth of the kobolds' diggings (Megan's
 // pledge: Dunstan), and the Oath of Storm's vault on an islet in a lava lake. The Oath of Iron's path is the gorge's
-// broken bridge, south of the road's old end.
+// broken bridge, south of the road's old end. Under the mountain, at the top of the aeries: the Emberdeep's gate.
 // One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 104 wide).
 
 export const BEYOND = {
@@ -24,11 +24,15 @@ export const BEYOND = {
     { id: "dawnShrine", name: "The Shrine of the Dawn", x0: 95, y0: 31, x1: 99, y1: 34, music: "keep" },
     { id: "wildwood", name: "The Wildwood's Edge", x0: 0, y0: 0, x1: 21, y1: 39, music: "wildwood" },
     { id: "lastwatch", name: "Lastwatch's Fields", x0: 60, y0: 15, x1: 103, y1: 39, music: "emberreach" },
+    { id: "emberGate", name: "The Emberdeep's Gate", x0: 36, y0: 0, x1: 44, y1: 3, music: "emberdeep" },
     { id: "aeries", name: "The Aeries", x0: 22, y0: 0, x1: 103, y1: 11, music: "emberreach" },
     { id: "ashRoad", name: "The Ash Road", x0: 0, y0: 0, x1: 103, y1: 39, music: "emberreach" },
   ],
   // Back through the Door, into the gatehouse.
-  exits: [{ x: 32, y: 36, to: "gatehouse", at: { x: 20, y: 2 }, facing: "down" }],
+  exits: [
+    { x: 32, y: 36, to: "gatehouse", at: { x: 20, y: 2 }, facing: "down" },
+    { x: 40, y: 1, to: "emberdeep", at: { x: 20, y: 41 }, facing: "up" }, // the Emberdeep's gate, under the mountain
+  ],
   objects: [
     // The Door from this side, standing open (only a picture: walk into it to go back).
     { id: "farDoor", x: 32, y: 36, sprite: "openDoor", walkable: true, still: true },
@@ -75,7 +79,7 @@ export const BEYOND = {
   ],
   rows: [
   "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^WWWWWWWWWWWWWWWWWaaaaezaaaaezaaazzaaaaaaaaaaaaaaaaezaaazaazaaaaa^^^^^^^^aaaaezaazaaazaaeaaaa^^^^^^^^^^^",
+  "^WWWWWWWWWWWWWWWWWaaaaezaaaaezaaazzaaaa^C^aaaaaaaaaezaaazaazaaaaa^^^^^^^^aaaaezaazaaazaaeaaaa^^^^^^^^^^^",
   "^WWWWWWWWWWWWWWWWWaazaeeaezaaaaaaazazzzaaaaealllllazaaaaaaaaaaaaz^aaaaaa^aazaazaaaaaaaaaaaeaa^^^^^^^^^^^",
   "^WW.....W.....,WWWazaaaaaaaaaaaeaaazaaaeaaaaalllllazaeaaaaaaaazaa^aaaaaa^aaaeaaaaaaaaeaaaaaaa^^^^^^^^^^^",
   "^WW.,......,....WWazaaaazaealllllzaaezaeazaaalllllaeaaaaaaeazeaae^aaaaaa^aaaaaaaaaaaazeelllaz^^^^^C^^^^^",

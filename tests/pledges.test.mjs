@@ -219,7 +219,7 @@ test("the pledges in the quest log and on the HUD", () => {
     [{}, "Take Megan to the kobolds' diggings, over the bridge from Lastwatch"],
     [{ diggingsCleared: true, meganPledged: true }, "Take Robyn to the shrine of the Dawn, south-east of Lastwatch"],
     [{ robynPledged: true }, "Claire's waiting at Lastwatch"],
-    [{ clairePledged: true }, "The Emberdeep (the next part of Act 4 is coming)"],
+    [{ clairePledged: true }, "Find the Emberdeep's gate, at the top of the aeries"],
   ];
   let flags = { ...story };
   for (const [more, line] of steps) { flags = { ...flags, ...more }; assert.equal(objective(flags), line); }

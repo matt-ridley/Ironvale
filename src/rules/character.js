@@ -66,8 +66,9 @@ export const IRON_WARD_AC = 5;
 /* The DC of the hero's runes that monsters save against: 8 + proficiency + STR. */
 export const runeDc = char => 8 + proficiencyBonus(char.level) + mod(char, "STR");
 /* How many rune slots the hero has (none until they learn a rune): 2, 3 from level 9, and one more once Brannoc has
-   worked rune-iron into the Wardenblade (its second form, `bladeForm` 2), and two more for the Oath of Storm. */
-export const runeSlots = char => (char.runes?.known?.length ? (char.level >= 9 ? 3 : 2) + (char.bladeForm >= 2 ? 1 : 0) + (char.oath === "storm" ? 2 : 0) : 0);
+   worked rune-iron into the Wardenblade (its second form, `bladeForm` 2), one more for its final form (3, at the
+   Wardens' lost forge in Act 4), and two more for the Oath of Storm. */
+export const runeSlots = char => (char.runes?.known?.length ? (char.level >= 9 ? 3 : 2) + (char.bladeForm >= 2 ? 1 : 0) + (char.bladeForm >= 3 ? 1 : 0) + (char.oath === "storm" ? 2 : 0) : 0);
 export const runesLeft = char => Math.max(0, runeSlots(char) - (char.runes?.used || 0));
 export const knowsRune = (char, id) => !!char.runes?.known?.includes(id);
 export function learnRune(char, id) {

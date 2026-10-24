@@ -190,6 +190,19 @@ export const MONSTERS = {
     attacks: [{ name: "Beak", bonus: 13, damage: "4d8+7" }, { name: "Talons", bonus: 13, damage: "3d6+7" }], xp: 7200, gold: "0",
     type: "monstrosity", saves: { STR: 9, DEX: 4, CON: 9, WIS: 4 },
     loot: [{ base: "potionGreaterHealing", chance: 0.5 }] },
+  // The Emberdeep (Q12), the dragon's mountain: fire giants who serve it, and the golems the Wardens built to guard
+  // their forge, which the dragon took. Golems shrug off ordinary steel (the Wardenblade is magic).
+  fireGiant:   { name: "Fire Giant",   ac: 18, hp: "16d12+96", dexMod: -1,
+    attacks: [{ name: "Greatsword", bonus: 12, damage: "3d6+7" }, { name: "Greatsword", bonus: 12, damage: "3d6+7" }], xp: 5000, gold: "8d10",
+    type: "giant", saves: { STR: 7, DEX: 2, CON: 10, WIS: 5 }, immune: ["fire"],
+    loot: [{ base: "potionGreaterHealing", chance: 0.5 }] },
+  clayGolem:   { name: "Clay Golem",   label: "Clay Golem", ac: 14, hp: "17d10+68", dexMod: -1,
+    attacks: [{ name: "Slam", bonus: 11, damage: "2d10+5" }, { name: "Slam", bonus: 11, damage: "2d10+5" }], xp: 5000, gold: "0",
+    type: "construct", saves: { STR: 5, DEX: -1, CON: 4, WIS: -1 }, weaponResist: "magic", immune: ["poison", "psychic"] },
+  stoneGolem:  { name: "Stone Golem",  label: "Stone Golem", ac: 17, hp: "19d10+95", dexMod: -1,
+    attacks: [{ name: "Slam", bonus: 12, damage: "3d8+6" }, { name: "Slam", bonus: 12, damage: "3d8+6" }], xp: 5900, gold: "0",
+    type: "construct", saves: { STR: 6, DEX: -1, CON: 5, WIS: 1 }, weaponResist: "magic", immune: ["poison", "psychic"],
+    spells: [{ name: "Slow", save: "WIS", dc: 17, targets: "one", condition: { id: "restrained", rounds: 1 }, uses: 1, chance: 0.4 }] },
   // The wildwood (beasts lie down for Claire; werewolves don't).
   giantApe:    { name: "Giant Ape",    ac: 12, hp: "15d12+60", dexMod: 2,
     attacks: [{ name: "Fist", bonus: 11, damage: "3d10+6" }, { name: "Fist", bonus: 11, damage: "3d10+6" }], xp: 2900, gold: "0",
