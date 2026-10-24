@@ -16,6 +16,7 @@ import { BOUNTIES, boardFor, currentBounty, takeBounty, claimBounty, dropBounty,
 import { talkNodes, afterRest } from "./talks.js";
 import { pay, paid } from "./rewards.js";
 import { ACT3_SCRIPTS, tremorNode, scoutNode, withRachel, stonesFound, PIP_REWARD, GNASHER_REWARD, nettleHaunting } from "./act3.js";
+import { ACT4_SCRIPTS } from "./act4.js";
 
 /* ", Mary" when the hero has a name, else nothing: for lines like `You did it${comma(s)}!`. */
 const comma = s => (callName(s.hero) ? `, ${callName(s.hero)}` : "");
@@ -50,6 +51,7 @@ export const CHAIN_CHECKS = { smash: { ability: "STR", dc: 12 }, pick: { ability
 export const SCRIPTS = {
   ...GAME_SCRIPTS, // knucklebones, arm wrestling, archery and fishing (story/minigames.js)
   ...ACT3_SCRIPTS, // the pass: Rachel, the rune-stones, the carvings (story/act3.js)
+  ...ACT4_SCRIPTS, // beyond the Door (story/act4.js)
   elder: {
     start: s => {
       const f = s.flags;
@@ -208,7 +210,8 @@ export const SCRIPTS = {
       },
       home: {
         speaker: "PIP",
-        text: s => (!s.flags.pipRewarded ? "Mum's got something to say to you. And to me. Mostly to me."
+        text: s => (s.flags.pipSentHome ? "A WOLF carried me home! A real one, bigger than the goat! It walked me all the way to the door, and then it licked Mum. She fainted. Twice."
+          : !s.flags.pipRewarded ? "Mum's got something to say to you. And to me. Mostly to me."
           : s.flags.wardenTraining ? `Are you a REAL Warden now${comma(s)}? Does the sword glow? Can I hold it? Just for a second? Mum says no.`
             : "I'm grounded until I'm thirty. Worth it! The goat got promoted while I was away."),
       },
@@ -1229,7 +1232,7 @@ export function sideObjective(flags, state = {}) {
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
    counted until it can be finished. */
 export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported, flags.causewayRaised, flags.signetReturned,
-  flags.rockslideOpen, flags.wardensRoad, flags.gatehouseDone, flags.oathSworn].filter(Boolean).length;
+  flags.rockslideOpen, flags.wardensRoad, flags.gatehouseDone, flags.oathSworn, flags.q9Done].filter(Boolean).length;
 
 /* The line under the HP box saying what to do next. */
 export function objective(flags) {
@@ -1264,7 +1267,12 @@ export function objective(flags) {
     if (!flags.thorneDefeated) return "Stop Thorne at the Door";
     if (!flags.gatehouseDone) return "Decide what to do with Thorne";
     if (!flags.oathSworn) return "Face the Door";
-    return "ACT 3 COMPLETE. Act 4 is coming: beyond the Door";
+    if (!flags.q9Started && !flags.doorOpened) return "Go home to Ironvale Keep: Hild has news";
+    if (!flags.doorOpened) return "Open the Door, at the top of the gatehouse";
+    if (!flags.seenThreshold) return "Go through the Door";
+    if (!flags.warbandFled) return "Follow the footprints up the ash road";
+    if (!flags.q9Done) return "Follow the grey wolf to the wildwood, west";
+    return "The wildwood waits (the next part of Act 4 is coming)";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";

@@ -32,7 +32,8 @@ export const OVERWORLD = {
     { id: "elder", x: 17, y: 18, sprite: "elder", script: "elder" },
     { id: "pip", x: 10, y: 29, sprite: "villager", script: "villager", goneWhen: "pipRanAway" },
     // Act 3, going back: Pip home again after his big adventure, his statue of you in the square, and his trail.
-    { id: "pipBack", x: 10, y: 29, sprite: "villager", script: "villager", shownWhen: "pipFound" },
+    { id: "pipBack", x: 10, y: 29, sprite: "villager", script: "villager", shownWhen: "pipFound", goneWhen: "pipStowedAway" },
+    { id: "pipHomeAgain", x: 10, y: 29, sprite: "villager", script: "villager", shownWhen: "pipSentHome" }, // after Act 4's wolf
     { id: "goblinHome1", x: 48, y: 30, sprite: "goblin", script: "goblinVillager", shownWhen: ["refugeesHelped", "rockslideOpen"] },
     { id: "goblinHome2", x: 53, y: 32, sprite: "goblin", script: "goblinVillager", shownWhen: ["refugeesHelped", "rockslideOpen"] },
     { id: "statue", x: 18, y: 21, sprite: "statue", script: "statue", shownWhen: "keepHome", still: true },

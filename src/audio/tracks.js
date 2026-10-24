@@ -36,6 +36,14 @@ export const TRACKS = {
     bass: "E2 - - - B2 - - - | E2 - - - B2 - - - | C2 - - - G2 - - - | D2 - - - A2 - - - | E2 - - - B2 - - - | G2 - - - D3 - - - | C2 - - - D2 - - - | E2 - - - B2 - - -",
     drums: ". . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . . . h . | . . . . k . h .",
   },
+  // Beyond the Door, the Emberreach: warm and wide, a low horn (a square lead in a low octave) over long open fifths,
+  // and a slow beat like something huge breathing far away.
+  emberreach: {
+    bpm: 76, lead: "square", echo: 0.4,
+    melody: "D4 - - - A4 - - - | G4 - F4 - E4 - D4 - | C4 - - - G4 - - - | A4 - - - - - . . | D4 - - - A4 - C5 - | D5 - - - C5 - A4 - | G4 - F4 - E4 - C4 - | D4 - - - - - . .",
+    bass: "D2 - - - - - A2 - | Bb1 - - - - - F2 - | C2 - - - - - G2 - | A1 - - - - - E2 - | D2 - - - - - A2 - | F2 - - - - - C3 - | C2 - - - - - G2 - | D2 - - - - - A2 -",
+    drums: "k . . . . . h . | . . . . k . h . | k . . . . . h . | . . . . k . h . | k . . . . . h . | . . . . k . h . | k . . . . . h . | . . . . k . h h",
+  },
   // The Wardens' Gatehouse: the keep's organ in a lower, colder key, and a slow march.
   gatehouse: {
     bpm: 60, lead: "square", echo: 0.5,

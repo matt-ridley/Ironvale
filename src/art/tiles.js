@@ -35,6 +35,11 @@ export const C = {
   ice: "#a9d6ee", iceDark: "#7db3d6", iceLight: "#e2f5ff",
   scree: "#8e8a92", screeDark: "#6a6670", screeLight: "#aeaab2",
   cliff: "#6f6a78", cliffDark: "#4a4652", cliffLight: "#8f8a98",
+  ash: "#6e6460", ashDark: "#554c48", ashLight: "#8a807a",
+  ember: "#e0592a", emberLight: "#ffb347", emberDark: "#8a2a14",
+  obsidian: "#2a2430", obsidianLight: "#5a4e6a",
+  lava: "#d9481c", lavaDark: "#9a2a10", lavaLight: "#ffb347", lavaCrust: "#3a2420",
+  char: "#2a2220", charLight: "#4a3a32",
 };
 
 export const box = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
@@ -363,6 +368,37 @@ export const DRAW = {
   },
   snowpine: (ctx, rng) => DRAW.snow(ctx, rng), // the tree itself: PROPS.snowpine
   snowrock: (ctx, rng) => DRAW.snow(ctx, rng), // the boulders: PROPS.snowrock
+  // Beyond the Door: the Emberreach, half ash and half wildwood
+  ash(ctx, rng) {
+    box(ctx, C.ash, 0, 0, T, T);
+    speckle(ctx, rng, C.ashDark, 12, 2, 1);
+    speckle(ctx, rng, C.ashLight, 8);
+  },
+  cinders(ctx, rng) {
+    DRAW.ash(ctx, rng);
+    for (let i = 0; i < 7; i++) { // embers still glowing in the ash
+      const x = 2 + Math.floor(rng() * 27), y = 2 + Math.floor(rng() * 27);
+      box(ctx, C.emberDark, x, y + 1, 3, 1); box(ctx, C.ember, x, y, 2, 1);
+      if (rng() < 0.4) box(ctx, C.emberLight, x, y, 1, 1);
+    }
+  },
+  obsidian(ctx, rng) {
+    box(ctx, C.obsidian, 0, 0, T, T);
+    for (let i = 0; i < 4; i++) { // glassy facets
+      const x = Math.floor(rng() * 24), y = Math.floor(rng() * 26);
+      box(ctx, C.obsidianLight, x, y, 6, 1); box(ctx, C.obsidianLight, x, y + 1, 1, 3);
+    }
+  },
+  lava(ctx, rng) {
+    box(ctx, C.lava, 0, 0, T, T);
+    for (let i = 0; i < 5; i++) { // a crust breaking up on the flow
+      const x = Math.floor(rng() * 26), y = Math.floor(rng() * 28);
+      box(ctx, C.lavaCrust, x, y, 6 + Math.floor(rng() * 4), 3); box(ctx, C.lavaDark, x, y + 3, 6, 1);
+    }
+    speckle(ctx, rng, C.lavaLight, 10, 2, 1);
+  },
+  burnttree: (ctx, rng) => DRAW.ash(ctx, rng), // the tree itself: PROPS.burnttree
+  wildtree: (ctx, rng) => grass(ctx, rng), // the tree itself: PROPS.wildtree
   fence(ctx, rng) {
     grass(ctx, rng);
     for (const y of [10, 20]) { box(ctx, C.woodDark, 0, y + 1, T, 3); box(ctx, C.wood, 0, y, T, 2); }
@@ -450,6 +486,37 @@ export const PROPS = {
   rubble(ctx, rng) {
     for (const [x, y, rad] of [[9 + rng() * 4, 14 + rng() * 4, 7], [21 + rng() * 4, 12 + rng() * 6, 8], [15 + rng() * 4, 22 + rng() * 3, 7]]) boulder(ctx, x, y, rad);
   },
+  // A tree burned to a black stump, its branches snapped short.
+  burnttree(ctx, rng) {
+    const look = Math.floor(rng() * 4);
+    const img = stamp(`burnttree${look}`, T + 2 * SPILL, T + 2 * SPILL, c => {
+      c.translate(SPILL, SPILL);
+      const r = seededRng(look * 11 + 2);
+      blob(c, 16, 31, 9, 2, () => C.shadow);
+      box(c, C.char, 13, 4, 6, 27); box(c, C.charLight, 13, 4, 2, 27); // the trunk
+      for (let i = 0; i < 3; i++) { // stubs of branches
+        const y = 6 + i * 6, left = i % 2 === 0, len = 3 + Math.floor(r() * 4);
+        for (let k = 0; k < len; k++) box(c, C.char, left ? 13 - k : 19 + k, y - Math.floor(k / 2), 2, 2);
+      }
+      box(c, C.ember, 15, 18 + look, 2, 1); // a last ember in the bark
+    });
+    ctx.drawImage(img, -SPILL, -SPILL);
+  },
+  // One of the wildwood's giants: a huge dark crown on a broad trunk.
+  wildtree(ctx, rng) {
+    const look = Math.floor(rng() * 4);
+    const img = stamp(`wildtree${look}`, T + 2 * SPILL, T + 2 * SPILL, c => {
+      c.translate(SPILL, SPILL);
+      const r = seededRng(look * 19 + 4);
+      blob(c, 17, 31, 14, 3, () => C.shadow);
+      box(c, C.trunk, 12, 18, 9, 13); box(c, C.trunkLight, 12, 18, 2, 13); // a broad trunk, with roots
+      box(c, C.trunk, 9, 28, 4, 3); box(c, C.trunk, 20, 28, 4, 3);
+      const leafy = (dx, dy, d) => (d > 0.85 || dx + dy > 0.45 ? C.oakDark : dx + dy < -0.5 && d < 0.6 ? C.oakLight : C.oak);
+      blob(c, 8, 10, 11, 10, leafy); blob(c, 25, 9, 11, 10, leafy); blob(c, 16, 3, 13, 10, leafy);
+      for (let i = 0; i < 14; i++) box(c, r() < 0.5 ? C.leafDark : C.oakLight, Math.floor(r() * 32), Math.floor(r() * 18) - 4, 2, 1);
+    });
+    ctx.drawImage(img, -SPILL, -SPILL);
+  },
   deadtree(ctx, rng) {
     const look = Math.floor(rng() * 4);
     const img = stamp(`deadtree${look}`, T + 2 * SPILL, T + 2 * SPILL, c => {
@@ -489,6 +556,7 @@ export const MAP_COLOURS = {
   flagstone: C.stone, rubble: C.rock, pew: C.wood, rack: C.woodDark,
   snow: C.snow, deepsnow: C.snowDark, ice: C.ice, scree: C.scree, cliff: C.cliffDark, chasm: C.cave, ropebridge: C.wood,
   snowpine: C.pineDark, snowrock: C.cliff,
+  ash: C.ash, cinders: C.ember, obsidian: C.obsidian, lava: C.lava, burnttree: C.char, wildtree: C.oakDark,
 };
 
 export const missingTileArt = () => [...new Set(Object.values(TILES).map(t => t.name))].filter(n => !DRAW[n]);

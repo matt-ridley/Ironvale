@@ -1,7 +1,7 @@
 // The Wardens' Gatehouse, Act 3's dungeon: a fortress cut into the mountain in front of the Door. In from the pass at the
 // bottom, through three rune doors (each wants one of the Wardens' runes: Rachel can read which), past the frozen forge
 // (west, with rune-iron in its ore bins) and the Wardens' barracks (east), up to the Door chamber, where Thorne waits
-// with his shield guardian.
+// with his shield guardian. In Act 4 the Door opens (doorOpened): walk through it into the Emberreach (beyond.js).
 // One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 40 wide).
 
 export const GATEHOUSE = {
@@ -15,7 +15,10 @@ export const GATEHOUSE = {
     { id: "gatehouse", name: "The Wardens' Gatehouse", x0: 0, y0: 0, x1: 39, y1: 39, music: "gatehouse" },
   ],
   // Back out onto the pass, in front of the gatehouse door.
-  exits: [{ x: 20, y: 38, to: "pass", at: { x: 24, y: 5 }, facing: "down" }],
+  exits: [
+    { x: 20, y: 38, to: "pass", at: { x: 24, y: 5 }, facing: "down" },
+    { x: 20, y: 1, to: "beyond", at: { x: 32, y: 33 }, facing: "up" }, // through the Door, once it's open
+  ],
   objects: [
     // Three rune doors: each opens to the right rune (its `answer`), with a `riddle` carved on it.
     { id: "runeDoor1", x: 20, y: 29, sprite: "runeDoor", script: "runeLock", flag: "runeDoor1", answer: "iron", goneWhen: "runeDoor1", still: true,
@@ -35,7 +38,9 @@ export const GATEHOUSE = {
     // The Door chamber: Thorne and his shield guardian, and the Door itself.
     { id: "thorne", x: 20, y: 3, sprite: "thorne", script: "thorneBoss", goneWhen: "thorneDefeated" },
     { id: "guardian", x: 23, y: 3, sprite: "shieldGuardian", script: "thorneBoss", goneWhen: "thorneDefeated" },
-    { id: "greatDoor", x: 20, y: 1, sprite: "greatDoor", script: "greatDoor", still: true },
+    { id: "greatDoor", x: 20, y: 1, sprite: "greatDoor", script: "greatDoor", goneWhen: "doorOpened", still: true },
+    { id: "greatDoorOpen", x: 20, y: 1, sprite: "openDoor", walkable: true, shownWhen: "doorOpened", still: true }, // walk in
+    { id: "doorFire", x: 16, y: 4, sprite: "campfire", script: "campfire", shownWhen: "act3Complete", still: true }, // a camp
     { id: "colleenDoor", x: 17, y: 2, sprite: "colleen", script: "greatDoor", ghost: true, shownWhen: "gatehouseDone", goneWhen: "oathSworn" },
   ],
   rows: [

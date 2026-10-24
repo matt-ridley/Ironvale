@@ -5,6 +5,7 @@ import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD 
 import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD, WAYSTONE_REWARD, ROAD_REWARD, MATTHEW_REWARD, CHAPEL_REWARD, arrowsFound,
   REFUGEE_REWARD, QUEEN_REWARD, NETTLE_REWARD, GATEHOUSE_REWARD } from "./act3.js";
 import { actOf } from "./hero.js";
+import { Q9_REWARD } from "./act4.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
 
@@ -153,6 +154,18 @@ export const QUESTS = [
     about: "Something on the other side of the Door heard the fighting stop. Colleen is waiting there.",
     reward: "Your Oath",
     steps: [{ text: "Face the Door", done: f => f.oathSworn }],
+  },
+  {
+    id: "throughTheDoor", title: "Through the Door", kind: "main",
+    known: f => f.act3Complete,
+    about: "The crack in the Door glows at night, and something beyond it called Rachel's name. The Door answers a Warden.",
+    reward: reward(Q9_REWARD),
+    steps: [
+      { text: "Open the Door with the Wardenblade", done: f => f.doorOpened },
+      { text: "Go through it", done: f => f.seenThreshold },
+      { text: "Follow the footprints up the ash road", done: f => f.warbandFled },
+      { text: "Follow the grey wolf to the wildwood", done: f => f.q9Done },
+    ],
   },
   {
     id: "runeIron", title: "Rune-Iron", kind: "side",
