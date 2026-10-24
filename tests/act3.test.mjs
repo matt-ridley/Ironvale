@@ -75,11 +75,11 @@ test("Indomitable rolls a failed save again, once per long rest, and says so", (
   const start = b.log.length;
   assert.equal(resistSave(b, "player", "CON", 99, rng).success, false); // fails both times
   assert.equal(b.log.slice(start).filter(e => e.type === "indomitable").length, 1);
-  assert.equal(hero.indomitableUsed, true);
+  assert.equal(hero.indomitableUsed, 1);
   resistSave(b, "player", "CON", 99, rng);
   assert.equal(b.log.slice(start).filter(e => e.type === "indomitable").length, 1); // used up
   rest(hero);
-  assert.equal(hero.indomitableUsed, false);
+  assert.equal(hero.indomitableUsed, 0);
   const low = atLevel(8), b2 = createBattle(low, ["goblin"], rng), n = b2.log.length;
   resistSave(b2, "player", "CON", 99, rng);
   assert.equal(b2.log.length, n); // not before level 9
@@ -149,11 +149,11 @@ test("a save keeps the talks heard, the fighting style and Indomitable", () => {
   const s = act3State("megan");
   s.hero.companion.talks = 2;
   s.hero.fightingStyle = "dueling";
-  s.hero.indomitableUsed = true;
+  s.hero.indomitableUsed = 1;
   const back = deserialize(serialize({ ...s, facing: "down", stepsSinceFight: 0, bestiary: {}, lastHub: "keep" })).hero;
   assert.equal(back.companion.talks, 2);
   assert.equal(back.fightingStyle, "dueling");
-  assert.equal(back.indomitableUsed, true);
+  assert.equal(back.indomitableUsed, 1);
   s.hero.fightingStyle = "juggling";
   assert.equal("fightingStyle" in deserialize(serialize({ ...s, facing: "down", stepsSinceFight: 0, bestiary: {}, lastHub: "keep" })).hero, false);
 });

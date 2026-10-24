@@ -3,11 +3,12 @@
 //
 // The hero plays sensibly: Action Surge on the first turn, Second Wind or a healing potion (greater first) at a third
 // of their HP or less, otherwise ATTACK at the first monster standing (with Rune Strike while there are slots, if they
-// know it). Iron Ward always goes up when it can. A companion plays by their tactics.
+// know it). Iron Ward always goes up when it can. A companion plays by their tactics, and so does a second one (`second`:
+// an id, who joins as a guest).
 import { createBattle, playerAction, isPlayerTurn, isAllyTurn, reactAction } from "../src/rules/combat.js";
 import { allyAction } from "../src/rules/tactics.js";
 import { createCharacter, gainXp, increaseAbility, learnRune, runesLeft, knowsRune, XP_FOR_LEVEL } from "../src/rules/character.js";
-import { joinParty } from "../src/rules/party.js";
+import { joinParty, secondCompanion } from "../src/rules/party.js";
 import { makeItem } from "../src/rules/items.js";
 import { seededRng } from "../src/rules/dice.js";
 
@@ -27,9 +28,9 @@ export function makeHero({ level = 1, upgrade = 0, potions = 2, greater = 0, com
   return h;
 }
 
-/* One fight to the end. Returns "won", "lost" or "fled". */
-export function playFight(hero, foes, rng) {
-  const b = createBattle(hero, foes, rng);
+/* One fight to the end, with `second` (a companion record) beside you if given. Returns "won", "lost" or "fled". */
+export function playFight(hero, foes, rng, second = null) {
+  const b = createBattle(hero, foes, rng, { second });
   for (let i = 0; i < 400 && b.state === "active"; i++) {
     if (b.pending) { reactAction(b, true, rng); continue; }
     if (isAllyTurn(b)) { allyAction(b, { type: "auto" }, rng); continue; }
@@ -50,7 +51,10 @@ export function playFight(hero, foes, rng) {
 /* Plays `fights` fights (seeded, so the same run gives the same answer) and returns the share won, 0 to 1. */
 export function simulate(heroOpts, foes, { fights = 2000, seed = 1 } = {}) {
   let won = 0;
-  for (let i = 0; i < fights; i++) if (playFight(makeHero(heroOpts), foes, seededRng(seed + i)) === "won") won++;
+  for (let i = 0; i < fights; i++) {
+    const h = makeHero(heroOpts), second = heroOpts.second ? secondCompanion(h, heroOpts.second) : null;
+    if (playFight(h, foes, seededRng(seed + i), second) === "won") won++;
+  }
   return won / fights;
 }
 
@@ -75,9 +79,14 @@ export const SCENARIOS = [
     ["Thorne and guardian, L11 +4, Rachel", { level: 11, upgrade: 4, runes: ["runeStrike", "ironWard", "wardensCall", "binding"] }, ["thorne", "shieldGuardian"]],
     ["Thorne and guardian, L11 +4, Megan", { level: 11, upgrade: 4, companion: "megan", runes: ["runeStrike", "ironWard", "wardensCall", "binding"] }, ["thorne", "shieldGuardian"]],
   ].map(([label, h, foes]) => [label, { companion: "rachel", potions: 3, greater: 2, weapon: "wardenblade", silvered: true, runes: ["runeStrike", "ironWard"], ...h }, foes]),
+  // Act 4: a second companion beside you (only in some fights).
+  ...[
+    ["Two stone giants, L13 +4, Megan", { level: 13 }, ["stoneGiant", "stoneGiant"]],
+    ["Two stone giants, L13 +4, Megan and Rachel", { level: 13, second: "rachel" }, ["stoneGiant", "stoneGiant"]],
+  ].map(([label, h, foes]) => [label, { companion: "megan", upgrade: 4, potions: 1, greater: 0, weapon: "wardenblade", silvered: true, runes: ["runeStrike", "ironWard", "wardensCall", "binding"], ...h }, foes]),
 ];
 
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split(/[\\/]/).pop())) { // (either slash: Windows too)
   const fights = Number(process.argv[2]) || 2000;
-  for (const [label, hero, foes] of SCENARIOS) console.log(label.padEnd(40), `${Math.round(100 * simulate(hero, foes, { fights }))}%`);
+  for (const [label, hero, foes] of SCENARIOS) console.log(label.padEnd(46), `${Math.round(100 * simulate(hero, foes, { fights }))}%`);
 }

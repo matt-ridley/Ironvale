@@ -1,7 +1,7 @@
 // The player character: ability scores, HP, armour class, attacks, levelling up, and the fighter's features from the
 // SRD (Champion): Second Wind (L1), Action Surge (L2), Improved Critical (L3), ability score increases (L4, L6, L8...),
-// Extra Attack (L5), Indomitable (L9), a Fighting Style (L10: the Champion's Additional Fighting Style) and Extra
-// Attack (2) (L11).
+// Extra Attack (L5), Indomitable (L9, and a second use at L13), a Fighting Style (L10: the Champion's Additional
+// Fighting Style), Extra Attack (2) (L11) and Superior Critical (L15).
 import { roll } from "./dice.js";
 import { baseOf, makeItem } from "./items.js";
 
@@ -21,11 +21,13 @@ export const FEATURES = [
   { id: "indomitable", level: 9, name: "Indomitable", about: "Once per long rest, roll a failed saving throw again." },
   { id: "fightingStyle", level: 10, name: "Fighting Style", about: "Pick a style: Defense (+1 AC in armour) or Dueling (+2 damage with a one-handed weapon)." },
   { id: "extraAttack2", level: 11, name: "Extra Attack (2)", about: "Attack three times whenever you take the ATTACK action." },
+  { id: "indomitable2", level: 13, name: "Indomitable (two uses)", about: "Twice per long rest, roll a failed saving throw again." },
+  { id: "superiorCritical", level: 15, name: "Superior Critical", about: "Your attacks score a critical hit on an 18, 19 or 20." },
 ];
 export const hasFeature = (char, id) => char.level >= FEATURES.find(f => f.id === id).level;
 export const featuresAt = level => FEATURES.filter(f => f.level === level);
-/* The lowest d20 roll that's a critical hit: 19 with Improved Critical, otherwise 20. */
-export const critOn = char => (hasFeature(char, "improvedCritical") ? 19 : 20);
+/* The lowest d20 roll that's a critical hit: 18 with Superior Critical, 19 with Improved Critical, otherwise 20. */
+export const critOn = char => (hasFeature(char, "superiorCritical") ? 18 : hasFeature(char, "improvedCritical") ? 19 : 20);
 /* Attacks each time you take the ATTACK action (before any potion). */
 export const attacksPerAction = char => (hasFeature(char, "extraAttack2") ? 3 : hasFeature(char, "extraAttack") ? 2 : 1);
 
@@ -43,8 +45,10 @@ export function pickFightingStyle(char, style) {
   char.fightingStyle = style;
   return { ok: true, style };
 }
-/* Indomitable (level 9): a failed save can be rolled again, once per long rest. */
-export const canIndomitable = char => hasFeature(char, "indomitable") && !char.indomitableUsed;
+/* Indomitable (level 9): a failed save can be rolled again, once per long rest; twice from level 13.
+   char.indomitableUsed counts the uses since the last long rest. */
+export const indomitableUses = char => (hasFeature(char, "indomitable2") ? 2 : hasFeature(char, "indomitable") ? 1 : 0);
+export const canIndomitable = char => (char.indomitableUsed || 0) < indomitableUses(char);
 // Warden runes: the hero's own magic, learned from the story. Rune slots come back with a long rest, like spell slots.
 export const RUNES = {
   runeStrike: { name: "Rune Strike", about: "After you hit, your blade's rune flares: 2d8 radiant damage, 3d8 against the undead." },
@@ -220,7 +224,7 @@ export function rest(char) {
   char.actionSurge = true;
   if (char.slotsUsed) char.slotsUsed = [];
   if (char.runes) char.runes.used = 0;
-  char.indomitableUsed = false;
+  char.indomitableUsed = 0;
   char.badgeUsed = false; // Pip's Junior Warden badge
   char.unbrokenUsed = false; // the Oath of Iron
   char.luckUsed = false; // the Lucky Die

@@ -1,9 +1,10 @@
 // The cheats screen, from the title screen's CHEATS: tap letters (or type) to enter a code, then ENTER. A right code
-// asks how much XP or gold to add (digits), then ADD adds it to your saved hero. BACK goes back to the title screen.
+// asks how much XP or gold to add (digits), then ADD adds it to your saved hero; the fight code starts a test fight
+// with a second companion beside you instead. BACK goes back to the title screen.
 // data.step is "code", "amount" (with data.cheat) or "done" (with data.note); each step restarts the scene.
 import { WIDTH, COLORS } from "../config.js";
 import { state, autosave } from "../state/game.js";
-import { cheatFor, applyCheat, MAX_CHEAT_AMOUNT } from "../rules/cheats.js";
+import { cheatFor, applyCheat, cheatFight, MAX_CHEAT_AMOUNT } from "../rules/cheats.js";
 import { text, panel, button, uiCamera } from "../ui/widgets.js";
 import { sfx } from "../audio/sound.js";
 
@@ -76,6 +77,7 @@ export class Cheats extends Phaser.Scene {
       const cheat = cheatFor(this.entry);
       if (!cheat) return this.fail("That is not a cheat code.");
       sfx("select");
+      if (cheat.kind === "fight") return this.scene.start("Battle", cheatFight(state.hero));
       return this.scene.restart({ step: "amount", cheat });
     }
     const before = state.hero.level;

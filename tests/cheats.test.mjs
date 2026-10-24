@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cheatFor, applyCheat, MAX_CHEAT_AMOUNT } from "../src/rules/cheats.js";
+import { cheatFor, applyCheat, cheatFight, MAX_CHEAT_AMOUNT } from "../src/rules/cheats.js";
+import { joinParty } from "../src/rules/party.js";
+import { gainXp, XP_FOR_LEVEL } from "../src/rules/character.js";
 import { createCharacter } from "../src/rules/character.js";
 import { faces } from "./helpers.mjs";
 
@@ -37,4 +39,13 @@ test("an amount must be a whole number in range", () => {
   const c = createCharacter();
   for (const bad of [0, -5, 1.5, NaN, MAX_CHEAT_AMOUNT + 1]) assert.equal(applyCheat(c, "gold", bad).ok, false, String(bad));
   assert.equal(applyCheat(c, "gold", MAX_CHEAT_AMOUNT).ok, true);
+});
+
+test("the fight code: a test fight for your level, with a second companion who isn't the one with you", () => {
+  assert.equal(cheatFor("strength in numbers").kind, "fight");
+  const c = createCharacter();
+  assert.deepEqual(cheatFight(c), { foes: ["goblin", "wolf"], second: "rachel", zone: "keep" });
+  joinParty(c, "rachel");
+  gainXp(c, XP_FOR_LEVEL[9], () => 0.5);
+  assert.deepEqual(cheatFight(c), { foes: ["troll", "griffon"], second: "robyn", zone: "keep" });
 });
