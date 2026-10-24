@@ -7,10 +7,11 @@ const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willo
   courtyard: "Ironvale Keep's courtyard", chapel: "Ironvale Keep's chapel", armoury: "Ironvale Keep's armoury",
   slopes: "The pass's slopes", snowfield: "The snowfield", heights: "The heights", watchtower: "The old watchtower", thorneCamp: "Thorne's camp",
   gatehouseApproach: "Below the gatehouse", frozenChapel: "The Frozen Chapel", gatehouse: "The Wardens' Gatehouse",
-  frozenForge: "The Frozen Forge", barracks: "The Wardens' Barracks", ashRoad: "The ash road, beyond the Door" };
+  frozenForge: "The Frozen Forge", barracks: "The Wardens' Barracks", ashRoad: "The ash road, beyond the Door",
+  wildwood: "The wildwood's edge", lastwatch: "Around Lastwatch", aeries: "The aeries, over the gorge" };
 const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall", motherSallow: "Her hut in Greywater Fen", lordVarric: "His tomb, under Ironvale Keep",
   kobold: "Digging in the Deep Warrens", crownedSallow: "The drowned causeway, collecting tolls", nightHag: "A crooked hut on the pass's slopes",
-  thorne: "At the Door, at the top of the gatehouse", youngRedDragon: "The skies over the Emberreach (the dragon's brood)" }; // bosses (and Pip's kobolds) don't roam
+  thorne: "At the Door, at the top of the gatehouse" }; // bosses (and Pip's kobolds) don't roam
 
 export const LORE = {
   giantRat: "A rat the size of a dog. Alone it's a nuisance; it's the bite that festers.",
@@ -51,6 +52,12 @@ export const LORE = {
   salamander: "A long red serpent with a man's arms and a spear, its tail glowing like a poker in the forge. Plain steel only half-bites it; cold bites hard.",
   fireElemental: "A man-shaped blaze that walks. Everything it touches catches. Fire does nothing to it, and ordinary weapons little more.",
   youngRedDragon: "One of the Great One's brood: red as a coal, as long as a cart and a horse, and already cruel. It breathes fire, and fire can't touch it.",
+  cinderWarden: "One of Matt's own Wardens, fallen with Lastwatch and raised by the dragon, still burning inside its plate. It fights the way Matt taught it to.",
+  vampireSpawn: "Pale, quick and hungry, out of the barrow-fields east of Lastwatch. It heals as it fights, unless the light burns it.",
+  mummy: "A Warden of the first days, wrapped in grave-linen. Its glare freezes you with dread, and it burns like dry kindling.",
+  roc: "An eagle as big as a barn. It hunts the aeries' crags for anything that moves, the brood included.",
+  giantApe: "A grey-backed ape twice your height, keeper of the wildwood's deep places. Like the wolves, it listens to Claire.",
+  werewolf: "Something that walks the wildwood on two legs at night, and four when it runs. Only silver bites it properly.",
 };
 
 /* Where a monster turns up, from the encounter tables. */

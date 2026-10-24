@@ -5,7 +5,7 @@ import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD 
 import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD, WAYSTONE_REWARD, ROAD_REWARD, MATTHEW_REWARD, CHAPEL_REWARD, arrowsFound,
   REFUGEE_REWARD, QUEEN_REWARD, NETTLE_REWARD, GATEHOUSE_REWARD } from "./act3.js";
 import { actOf } from "./hero.js";
-import { Q9_REWARD, Q10_REWARD } from "./act4.js";
+import { Q9_REWARD, Q10_REWARD, Q11_REWARD } from "./act4.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
 
@@ -177,6 +177,18 @@ export const QUESTS = [
       { text: "Find who sent the wolves", done: f => f.claireMet },
       { text: "Fight the dragon's brood beside the twins", done: f => f.broodBeaten },
       { text: "Claire joins you", done: f => f.q10Done },
+    ],
+  },
+  {
+    id: "lastwatch", title: "Lastwatch", kind: "main",
+    known: f => f.q10Done,
+    about: "Claire's father has held Lastwatch, the Wardens' burned outpost, for twenty-five years. It's east, at the end of the ash road.",
+    reward: reward(Q11_REWARD),
+    steps: [
+      { text: "Find Lastwatch, east along the ash road", done: f => f.seenLastwatch },
+      { text: "Fight through the Cinder Wardens at its gate", done: f => f.cindersBeaten },
+      { text: "Hear Matt's story", done: f => f.mattMet },
+      { text: "Learn the Breaking Rune, and the Great One's true name", done: f => f.q11Done },
     ],
   },
   {

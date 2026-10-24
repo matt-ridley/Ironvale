@@ -40,6 +40,7 @@ export function playFight(hero, foes, rng, second = null) {
     const strike = knowsRune(p, "dawnstrike") ? "dawnstrike" : "runeStrike";
     let action = { type: knowsRune(p, strike) && runesLeft(p) > (knowsRune(p, "ironWard") ? 1 : 0) ? strike : "attack" };
     if (knowsRune(p, "chainLightning") && runesLeft(p) > 1 && b.monsters.filter(m => m.hp > 0).length > 1) action = { type: "chainLightning" };
+    else if (knowsRune(p, "breakingRune") && runesLeft(p) > 1 && b.monsters.filter(m => m.hp > 0).length > 1) action = { type: "breakingRune" };
     if (b.round === 1 && p.actionSurge && p.level >= 2 && !b.surging) action = { type: "actionSurge" };
     else if (low && p.secondWind) action = { type: "secondWind" };
     else if (low && potion) action = { type: "potion", base: potion };
@@ -83,6 +84,9 @@ export const SCENARIOS = [
   ...[
     ["Two stone giants, L13 +4, Megan", { level: 13 }, ["stoneGiant", "stoneGiant"]],
     ["Two stone giants, L13 +4, Megan and Rachel", { level: 13, second: "rachel" }, ["stoneGiant", "stoneGiant"]],
+    ["Cinder Wardens (the gate), L14 +4, Claire", { level: 14, companion: "claire" }, ["cinderWarden", "cinderWarden"]],
+    ["Cinder Wardens, L14 +4, Megan", { level: 14 }, ["cinderWarden", "cinderWarden"]],
+    ["Roc, L14 +4, Claire, Breaking Rune", { level: 14, companion: "claire", runes: ["runeStrike", "ironWard", "wardensCall", "binding", "breakingRune"] }, ["roc"]],
   ].map(([label, h, foes]) => [label, { companion: "megan", upgrade: 4, potions: 1, greater: 0, weapon: "wardenblade", silvered: true, runes: ["runeStrike", "ironWard", "wardensCall", "binding"], ...h }, foes]),
 ];
 

@@ -8,6 +8,7 @@ import { MEGAN_COLOURS, MEGAN_FRAMES } from "./megan.js";
 import { ROBYN_COLOURS, ROBYN_FRAMES } from "./robyn.js";
 import { RACHEL_COLOURS, RACHEL_FRAMES } from "./rachel.js";
 import { CLAIRE_COLOURS, CLAIRE_FRAMES } from "./claire.js";
+import { MATT } from "./matt.js";
 import { drawTerrain } from "./terrain.js";
 import { OATH_COLOURS } from "../rules/oaths.js";
 import { TILE } from "../config.js";
@@ -101,5 +102,6 @@ export function groundTexture(scene, map) {
 export function makeAllTextures(scene) {
   for (const [key, rows] of Object.entries(SPRITES)) makeTexture(scene, key, rows);
   for (const [key, { rows, colours }] of Object.entries(MONSTER_ART)) makeTexture(scene, key, rows, colours);
+  makeTexture(scene, "matt", MATT.rows, MATT.colours);
   for (const [key, [frames, colours]] of Object.entries(SHEETS)) makeSheet(scene, key, frames, colours);
 }

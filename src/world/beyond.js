@@ -1,11 +1,13 @@
 // The Emberreach, beyond the Door (Act 4): the Wardens' old homeland, half burned to ash by the dragon and half wild
-// forest. So far only its south: the far side of the Door (an exit back to the gatehouse), the Threshold (the Wardens'
-// burned gate-camp, now a camp of yours), the ash road north and west, the lava gorge right across the map (and the
-// burned land past it, seen but not reached yet), and the edge of the wildwood in the west. A wall of burned trees
-// leaves the road the only way west, past the kobold warband. In the wildwood, a trail (the grey wolf waits at its
-// foot) climbs north to Claire's grove, with a pool, and a hidden glade behind a thicket only she knows the way
-// through. Later steps add the north (Lastwatch, the aeries).
-// One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 64 wide).
+// forest. The far side of the Door (an exit back to the gatehouse), the Threshold (the Wardens' burned gate-camp, now
+// a camp of yours), the ash road north, west and east, the lava gorge right across the map, and the edge of the
+// wildwood in the west. A wall of burned trees leaves the road the only way west, past the kobold warband. In the
+// wildwood, a trail (the grey wolf waits at its foot) climbs north to Claire's grove, with a pool, and a hidden glade
+// behind a thicket only she knows the way through. East, at the road's end: Lastwatch, the Wardens' burned outpost
+// (Matt's hold, a camp once you've met him), with the Cinder Wardens at its west gate, and the shrine of the Dawn to
+// its south-east. Lastwatch's north gate opens onto the Wardens' bridge over the gorge (Matt lowers it), and the
+// aeries beyond: the brood's hunting grounds, a nest in the crags, and the mouth of the kobolds' diggings.
+// One character per tile; the legend is TILES in map.js. Edit the rows by hand (keep them all 104 wide).
 
 export const BEYOND = {
   name: "beyond",
@@ -15,8 +17,12 @@ export const BEYOND = {
   zones: [
     { id: "threshold", name: "The Threshold", x0: 25, y0: 26, x1: 39, y1: 36, music: "emberreach", safe: true },
     { id: "grove", name: "Claire's Grove", x0: 2, y0: 2, x1: 16, y1: 15, music: "wildwood" },
+    { id: "lastwatchHold", name: "Lastwatch", x0: 73, y0: 16, x1: 91, y1: 28, music: "keep", safe: true },
+    { id: "dawnShrine", name: "The Shrine of the Dawn", x0: 95, y0: 31, x1: 99, y1: 34, music: "keep" },
     { id: "wildwood", name: "The Wildwood's Edge", x0: 0, y0: 0, x1: 21, y1: 39, music: "wildwood" },
-    { id: "ashRoad", name: "The Ash Road", x0: 0, y0: 0, x1: 63, y1: 39, music: "emberreach" },
+    { id: "lastwatch", name: "Lastwatch's Fields", x0: 60, y0: 15, x1: 103, y1: 39, music: "emberreach" },
+    { id: "aeries", name: "The Aeries", x0: 22, y0: 0, x1: 103, y1: 11, music: "emberreach" },
+    { id: "ashRoad", name: "The Ash Road", x0: 0, y0: 0, x1: 103, y1: 39, music: "emberreach" },
   ],
   // Back through the Door, into the gatehouse.
   exits: [{ x: 32, y: 36, to: "gatehouse", at: { x: 20, y: 2 }, facing: "down" }],
@@ -40,49 +46,61 @@ export const BEYOND = {
     { id: "raven", x: 13, y: 5, sprite: "raven", script: "raven", shownWhen: "claireJoined", still: true },
     { id: "thicket", x: 5, y: 12, sprite: "thicket", script: "thicket", goneWhen: "claireJoined", still: true },
     { id: "gladeChest", x: 4, y: 14, sprite: "chest", script: "chest", goneWhen: "gladeChestOpened", still: true, loot: { gold: 400, items: ["potionGreaterHealing", "potionGreaterHealing", "scrollFireball"] } },
+    // Lastwatch (quest 11): the Cinder Wardens in its west gate, Matt inside, his fire (a camp, after you've met him),
+    // and the north gate onto the Wardens' bridge, barred until he lowers it.
+    { id: "cinderGate1", x: 72, y: 16, sprite: "cinderWarden", script: "cinderGate", goneWhen: "cindersBeaten" },
+    { id: "cinderGate2", x: 72, y: 17, sprite: "cinderWarden", script: "cinderGate", goneWhen: "cindersBeaten" },
+    { id: "matt", x: 82, y: 19, sprite: "matt", script: "matt", shownWhen: "cindersBeaten" },
+    { id: "lastwatchFire", x: 80, y: 21, sprite: "campfire", script: "campfire", shownWhen: "q11Done", still: true },
+    { id: "northGate", x: 82, y: 15, sprite: "portcullis", script: "northGate", goneWhen: "q11Done", still: true },
+    // The shrine of the Dawn, its door shut on what's inside (Robyn's pledge, in a later part of Act 4).
+    { id: "dawnDoor", x: 97, y: 30, sprite: "gate", script: "dawnDoor", still: true },
+    // Over the bridge: a nest in the crags, and the kobolds' diggings (Megan's pledge, in a later part of Act 4).
+    { id: "aerieNest", x: 69, y: 3, sprite: "chest", script: "chest", goneWhen: "aerieNestOpened", still: true, loot: { gold: 600, items: ["potionGreaterHealing", "potionGreaterHealing", "scrollFireball"] } },
+    { id: "diggings", x: 98, y: 4, sprite: "mineMouth", script: "diggings", still: true },
     // The lip of the gorge, where the road's old bridge used to be.
     { id: "gorgeEdge", x: 32, y: 15, sprite: "brokenBridge", script: "gorgeEdge", still: true },
   ],
   rows: [
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^WWWWWWWWWWWWWWWWWaaaaezaaaaezaaazzaaaaaaaaaaaaaaaaezaaazaazaaa^",
-  "^WWWWWWWWWWWWWWWWWaazaeeaezaaaaaaazazzzaaaaealllllazaaaaaaaaaaa^",
-  "^WW.....W.....,WWWazaaaaaaaaaaaeaaazaaaeaaaaalllllazaeaaaaaaaaz^",
-  "^WW.,......,....WWazaaaazaealllllzaaezaeazaaalllllaeaaaaaaeazea^",
-  "^WW.............WWaeaaaazaezlllllaaaaeaaaazzeeaaaaaaaeeazaaaazz^",
-  "^WW.~~..........WWazzaaaazzalllllaaaaazzeaaeazeaaaazeezaaazeaza^",
-  "^WW.~~..........WWaaaaaazaazaaaaazazzzazaeaaaaaaazzazlllllaaaea^",
-  "^WW.............WWaaaaaaaaaeaaaaaaaazaaaaazaaazaaeazalllllzzeze^",
-  "^WW,............WWaaazeaaazzzaeeaazazaaaazazaaaaaaaaelllllaaaaa^",
-  "^WW...,.....,...WWaaaaaaaaaeaazaazazeaaazzaeaaazezaeaaeaeaaaaaa^",
-  "^WWW...........WWWaeaaaaaeeeaeeeaeaaeeeaeeeaeaeeeeeaaeeaaeaeaee^",
-  "^WWWW.WWWW.WWWWWWWlllllllllllllllllllllllllllllllllllllllllllll^",
-  "^WW.....WW.WWWWWWWlllllllllllllllllllllllllllllllllllllllllllll^",
-  "^WW.....WW.WWWWWWWlllllllllllllllllllllllllllllllllllllllllllll^",
-  "^WW.....WW.WWWWWWWeeeaaezeaaaaaeaaaaaaeeeeaaaeaaaeeaeaeaeaeeaaa^",
-  "^WWWWWWWWW.....W...aa.aazaaaaaaa=aaaaaaaaaaaaaaaaaaaaazzazaaaaa^",
-  "^WWWWWWWWW..W..W...a.aazzzaazzaa=aaaaazaaaaaaaazaazaaaaaaeeoaaa^",
-  "^WWWWWWWWW..W......aa.azzaaaaaaa=zaaaaaaaaaaaaazaaaaaaaeellloea^",
-  "^WWWWWWWWWW.....W...a.azzaaaaaaa=aazaaazaaaaooeeeoeaaazelllllea^",
-  "^WWWWWWWWW.W...W..===============aaaaaazaaaoollllloeaaaoellleez^",
-  "^WWWWWWWWW............aazaaaaaaa=aaaaaaazazellllllloaazaaeoeaaa^",
-  "^WW............W...aa.azzzaaaaaa=aaaaaaaaaaollllllloaaaaaaaaaaa^",
-  "^WW.............W....aaazaaaazaz=aazaaaaazaellllllloaaaaaaaaaaa^",
-  "^WW................azaazzaaazaaa=zaaaaaaaaaeellllloozaaaaaaaaaa^",
-  "^WWWWWWWWW...W.....aaaazzaaaaaaa=aaaaaaaaaaaoeeoeeeaaaeeeooaaaa^",
-  "^WWWWWWWWWW..........aaazKKKnnnnnnnnnnKKaaaaaaaaaaaaaoellleoaaa^",
-  "^WWWWWWWWW.W...W....aazazKnn*nnnnnnn*nnKaazaaaaaazaaaellllleaaa^",
-  "^WWWWWWWWW........WazzaazKnnnnnnnnnnnnnneeeaaaaaaaaaaollllloaaa^",
-  "^WWWWWWWWW...W........aaznnnnnnnnnnnnnnnllleeaaaaazaaellllloaaa^",
-  "^WWWWWWWWW............aaznnnnnnnnnnnnnnKlllloaaaaaaaaeollleoaaa^",
-  "^WWWWWWWWW.....W....a.azznnnnnnnnnnnnnnKllleeaaaaaaaaaoeoeoaaaa^",
-  "^WWWWWWWWWWWWWWWWWa.aaazzKnnnnnnnnnnn*nnoeoaaaaaaaaaaaaaaaaazaa^",
-  "^WW^WWWWW^W^^^W^^W^.^aaazKnnnnnnnnnnnnnnaaaaaaa^aaa^aaa^azaa^^a^",
-  "^^^^^^^^^^^^^^^^^^^^^^aaa^KKKKKKnKKKKKKaaa^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^KKKKKKnKKKKKK^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^KKKKKKnKKKKKK^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^KKKKKKKKKKKKK^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^KKKKKKKKKKKKK^^^^^^^^^^^^^^^^^^^^^^^^^",
-  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^WWWWWWWWWWWWWWWWWaaaaezaaaaezaaazzaaaaaaaaaaaaaaaaezaaazaazaaaaa^^^^^^^^aaaaezaazaaazaaeaaaa^^^^^^^^^^^",
+  "^WWWWWWWWWWWWWWWWWaazaeeaezaaaaaaazazzzaaaaealllllazaaaaaaaaaaaaz^aaaaaa^aazaazaaaaaaaaaaaeaa^^^^^^^^^^^",
+  "^WW.....W.....,WWWazaaaaaaaaaaaeaaazaaaeaaaaalllllazaeaaaaaaaazaa^aaaaaa^aaaeaaaaaaaaeaaaaaaa^^^^^^^^^^^",
+  "^WW.,......,....WWazaaaazaealllllzaaezaeazaaalllllaeaaaaaaeazeaae^aaaaaa^aaaaaaaaaaaazeelllaz^^^^^C^^^^^",
+  "^WW.............WWaeaaaazaezlllllaaaaeaaaazzeeaaaaaaaeeazaaaazzaaaazaaaaaaaaeaaaaaaaaazalllazaaeaaaaaza^",
+  "^WW.~~..........WWazzaaaazzalllllaaaaazzeaaeazeaaaazeezaaazeazaaaaaaazeaaelllllaaaeeaaaaaaeaeaaeaaaaaza^",
+  "^WW.~~..........WWaaaaaazaazaaaaazazzzazaeaaaaaaazzazlllllaaaeaaeaeaaaaaaalllllzaaaaaaaaaaaaaaaaaaaaaea^",
+  "^WW.............WWaaaaaaaaaeaaaaaaaazaaaaazaaazaaeazalllllzzezeaeaaaeaaaaalllllazaaaeaaaaaaaaaaaaaeaaaa^",
+  "^WW,............WWaaazeaaazzzaeeaazazaaaazazaaaaaaaaelllllaaaaaaaaeaaaaaezzeaaaaazaaaeaaaaaaaazeaaaazee^",
+  "^WW...,.....,...WWaaaaaaaaaeaazaazazeaaazzaeaaazezaeaaeaeaaaaaaazaaaaaeaeaaaaaaaaaaazaazeazazaaaaezazaa^",
+  "^WWW...........WWWaeaaaaaeeeaeeeaeaaeeeaeeeaeaeeeeeaaeeaaeaeaeeazaaaaaaaaaeaeaaazaaaaazaaeeaaaaaeaaazaa^",
+  "^WWWW.WWWW.WWWWWWWllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll#llllllllllllllllllll^",
+  "^WW.....WW.WWWWWWWllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll#llllllllllllllllllll^",
+  "^WW.....WW.WWWWWWWllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll#llllllllllllllllllll^",
+  "^WW.....WW.WWWWWWWeeeaaezeaaaaaeaaaaaaeeeeaaaeaaaeeaeaeaeaeeaaaaaaaaaaaeKKKKKKKKKKnKKKKKKKKKKaaaaeaaaaa^",
+  "^WWWWWWWWW.....W...aa.aazaaaaaaa========================================nnnnnnnnnnnnnnnnnnnnKaaaaaaaaaa^",
+  "^WWWWWWWWW..W..W...a.aazzzaazzaa=aaaaazaaaaaaaazaazaaaaaaeeoaaaaaaaaaaaannnnnnnnnnnnnnnnnnnnKaaaaaaaaaa^",
+  "^WWWWWWWWW..W......aa.azzaaaaaaa=zaaaaaaaaaaaaazaaaaaaaeellloeaaaaaaaaaaKnnnnnnnnnnnnnnnn*nnKaaaeaaaaaa^",
+  "^WWWWWWWWWW.....W...a.azzaaaaaaa=aazaaazaaaaooeeeoeaaazellllleaazaaaaaaaKnn**nnnnnnnnnnnnnnnKaaaazaeaaa^",
+  "^WWWWWWWWW.W...W..===============aaaaaazaaaoollllloeaaaoellleezazaaaeazaKnnnnnnnnnnnnnnnnnnnKaaeaaaaaaa^",
+  "^WWWWWWWWW............aazaaaaaaa=aaaaaaazazellllllloaazaaeoeaaaaaaeezaaaKnnnnnnnnnnnnnnn*nnnKeaaaaaaaaa^",
+  "^WW............W...aa.azzzaaaaaa=aaaaaaaaaaollllllloaaaaaaaaaaaaaaaaaaaeKnnnnnnnnnnnnnnnnnnnKaaaaaaaaaa^",
+  "^WW.............W....aaazaaaazaz=aazaaaaazaellllllloaaaaaaaaaaaaaazaaaaeKnnnnnnnnnnnnnnnnnnnKeaaaazeaaa^",
+  "^WW................azaazzaaazaaa=zaaaaaaaaaeellllloozaaaaaaaaaaaaaaaaaaaKnnnnnnnnnnnnnKKKnnnKaeaazaaaaa^",
+  "^WWWWWWWWW...W.....aaaazzaaaaaaa=aaaaaaaaaaaoeeoeeeaaaeeeooaaaaaaaaaaaaaKnnnnnnnnnnnnnKKKnnnKaaaazaaaaa^",
+  "^WWWWWWWWWW..........aaazKKKnnnnnnnnnnKKaaaaaaaaaaaaaoellleoaaaaaaaeaaaaKnn*nnnnnnnnnnKKKnnnKaazeaaaaaa^",
+  "^WWWWWWWWW.W...W....aazazKnn*nnnnnnn*nnKaazaaaaaazaaaellllleaaaaaaaaaazaKnnn*nnnnnnnnnnnnn*nKaaaaaaaeaa^",
+  "^WWWWWWWWW........WazzaazKnnnnnnnnnnnnnneeeaaaaaaaaaaollllloaaaazeaaaaaaKnnnnnnnnnnnnnnnnnnnKaaaaaaaaaa^",
+  "^WWWWWWWWW...W........aaznnnnnnnnnnnnnnnllleeaaaaazaaellllloaaaaaaaaaaaaKKKKKKKKKKKKKKKKKKKKKaaaaaaaaaa^",
+  "^WWWWWWWWW............aaznnnnnnnnnnnnnnKlllloaaaaaaaaeollleoaaaaaaaaaaaeeazaaaaaaaaaaazeaaaaaaKKKnKKKaa^",
+  "^WWWWWWWWW.....W....a.azznnnnnnnnnnnnnnKllleeaaaaaaaaaoeoeoaaaaaaaaaaaaaeaaaaaaeeaaeaeaaaaaaeaKnnnnnKaa^",
+  "^WWWWWWWWWWWWWWWWWa.aaazzKnnnnnnnnnnn*nnoeoaaaaaaaaaaaaaaaaazaaaaaaaaaaaaaaaaaaaaeaaaaaaaaaaaaKnnnnnKaa^",
+  "^WW^WWWWW^W^^^W^^W^.^aaazKnnnnnnnnnnnnnnaaaaaaa^aaa^aaa^azaa^^aaeaaaaaaaaaaaaaaeaaaaaaaaeaaaaaKnnnnnKaa^",
+  "^^^^^^^^^^^^^^^^^^^^^^aaa^KKKKKKnKKKKKKaaa^^^^^^^^^^^^^^^^^^^^^^aaaaeazaaeazaaaazaaaaeaaazaeaaKnnnnnKae^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^KKKKKKnKKKKKK^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^KKKKKKK^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^KKKKKKnKKKKKK^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^KKKKKKKKKKKKK^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^KKKKKKKKKKKKK^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+  "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
   ],
 };

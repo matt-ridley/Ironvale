@@ -1057,10 +1057,38 @@ export const ACT3_SCRIPTS = {
     },
   },
 
-  // Thorne, in the old crypt under the keep, if you spared him: a line for every visit.
+  // Thorne, in the old crypt under the keep, if you spared him: a line for every visit. In Act 4, once you've been
+  // through the Door, he tells you how to turn the Door's runes on the Great One (the binding, for the last fight),
+  // and with Claire he has the one talk where he says sorry.
   thorneCell: {
-    start: s => (withRachel(s) ? "rachel" : "visit"),
+    start: s => (withCompanion(s, "claire") && !s.flags.thorneClaire ? "claire"
+      : s.flags.q9Done && !s.flags.thorneBinding ? "binding" : withRachel(s) ? "rachel" : "visit"),
     nodes: {
+      binding: {
+        speaker: THORNE,
+        text: "\"You've been through. I can smell the ash on you.\" He's thinner, and calmer. \"Listen. It reached through the runes to me, for years, and I let it. So the runes reach back. The Door's runes are all one rune, cut a hundred times over. Speak your Binding at it with the Door's pattern in your head, and every rune on that Door answers at once.\"",
+        to: "binding2",
+      },
+      binding2: {
+        speaker: THORNE,
+        enter: s => { s.flags.thorneBinding = true; },
+        text: "He draws the pattern in the dust of his cell, carefully, twice, until you have it. \"One round. That's all it will hold something that size. Save it for the end, when it matters.\" (Thorne's binding: in the last fight, the Door's runes will hold the Great One for a round.)",
+      },
+      claire: {
+        speaker: "CLAIRE",
+        text: "Claire crouches by the bars and looks at Thorne the way she looks at a wolf she hasn't made up her mind about. \"You're the one who listened to it.\"",
+        to: "claire2",
+      },
+      claire2: {
+        speaker: THORNE,
+        text: "\"For years.\" He doesn't look away. \"I'm sorry. I told your sister I'd find you. I didn't tell her I'd worked out who your father was, because then she'd have gone without me.\"",
+        to: "claire3",
+      },
+      claire3: {
+        speaker: "CLAIRE",
+        enter: s => { s.flags.thorneClaire = true; },
+        text: "\"It talks to me too. In our mother's voice.\" She stands. \"I never listened. You should have tried that.\" But at the door she turns back and says, not unkindly, \"Eat something, scholar.\"",
+      },
       visit: {
         speaker: THORNE,
         enter: s => { s.flags.thorneVisits = ((s.flags.thorneVisits ?? -1) + 1) % 3; },

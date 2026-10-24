@@ -28,7 +28,7 @@ SKY.drowned = SKY.keepGrounds = SKY.fenwatch = SKY.fen;
 SKY.pass = SKY.slopes = SKY.snowfield = SKY.heights = SKY.gatehouseApproach = SKY.thorneCamp = SKY.watchtower = SKY.mountain;
 SKY.frozenChapel = SKY.gatehouse = SKY.frozenForge = SKY.barracks = SKY.door = SKY.keep;
 SKY.courtyard = SKY.chapel = SKY.armoury = SKY.tomb = SKY.keep;
-SKY.ashRoad = SKY.threshold = SKY.ash;
+SKY.ashRoad = SKY.threshold = SKY.lastwatch = SKY.lastwatchHold = SKY.aeries = SKY.dawnShrine = SKY.ash;
 SKY.wildwood = SKY.grove = SKY.forest;
 
 /* A zone id the stage knows, or `fallback`. */

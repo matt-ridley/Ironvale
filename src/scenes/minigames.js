@@ -10,7 +10,7 @@ import { itemName } from "../rules/items.js";
 import {
   KB_STAKE, kbNew, kbRoll, kbPlace, kbBestColumn, kbColumnScore, kbScores, kbWinner,
   awNew, awTick, awTap, AW_ZONE,
-  ARROWS, MEGAN_SCORE, MATTHEW_SCORE, RINGS, AW_BRANNOC_RATE, archNew, archAim, archTick, archShoot, archTotal, archDone,
+  ARROWS, MEGAN_SCORE, MATTHEW_SCORE, RINGS, AW_BRANNOC_RATE, AW_MATT_RATE, archNew, archAim, archTick, archShoot, archTotal, archDone,
   fishNew, fishTick, fishTap, fishLeft, landFish, FISHING_SPOTS,
   winPrize,
 } from "../rules/minigames.js";
@@ -166,11 +166,14 @@ const BAR_X = 60, BAR_W = 360;
 export class ArmWrestle extends Minigame {
   constructor() { super("ArmWrestle"); }
 
-  /* data.rival: "brannoc" for the keep's training yard (he pushes harder, and has his own prize); else Big Oswin. */
+  /* data.rival: "brannoc" for the keep's training yard or "matt" at Lastwatch (they push harder, and have their own
+     prizes); else Big Oswin. */
   create(data = {}) {
-    const b = data.rival === "brannoc";
-    this.rival = { name: b ? "Brannoc" : "Oswin", sprite: b ? "brannoc" : "woodcutter", rate: b ? AW_BRANNOC_RATE : undefined, game: b ? "armBrannoc" : "armWrestle",
-      win: b ? "You slam Brannoc's arm to the table! The yard roars, and Brannoc roars loudest." : "You slam Oswin's arm to the table! The inn roars." };
+    const RIVALS = {
+      brannoc: { name: "Brannoc", sprite: "brannoc", rate: AW_BRANNOC_RATE, game: "armBrannoc", win: "You slam Brannoc's arm to the table! The yard roars, and Brannoc roars loudest." },
+      matt: { name: "Matt", sprite: "matt", rate: AW_MATT_RATE, game: "armMatt", win: "You slam Matt's arm down on the old Warden table! He stares at it, then laughs till he has to sit down." },
+    };
+    this.rival = RIVALS[data.rival] || { name: "Oswin", sprite: "woodcutter", rate: undefined, game: "armWrestle", win: "You slam Oswin's arm to the table! The inn roars." };
     this.setup("ARM WRESTLING");
     this.add.image(70, 124, "hero", heroFrame("side")).setOrigin(0.5, 1).setScale(2);
     this.add.image(410, 124, this.rival.sprite).setOrigin(0.5, 1).setScale(2).setFlipX(true);
