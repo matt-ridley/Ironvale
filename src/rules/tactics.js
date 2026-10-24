@@ -68,6 +68,7 @@ export function chooseAllyAction(battle, key = "ally") {
   const target = focus?.hp > 0 ? battle.focus : battle.monsters.indexOf(living(battle)[0]);
   const spells = castable(battle, key);
   if (canVolley(battle, key) && living(battle).length > 1) return { type: "volley" };
+  if (canRally(battle, key)) return { type: "rally", on: fallenFriend(battle, key) };
   if (a.wildShape && !a.form && afflicted(battle)) return { type: "calm", on: afflicted(battle) };
   const turn = spells.find(s => s.id === "turnUndead");
   const untouched = living(battle).filter(m => m.type === "undead" && !battle.conditions?.[battle.monsters.indexOf(m)]?.turned);
@@ -96,6 +97,12 @@ export function chooseAllyAction(battle, key = "ally") {
   return { type: "shoot", target };
 }
 
+/* Claire's rally (her pledge, in Vorthax's fights): once a fight, she gets a fallen friend back up with a quarter of
+   their HP. */
+export const RALLY_SHARE = 0.25;
+const fallenFriend = (battle, key) => allyKeys(battle).find(k => k !== key && battle[k].hp === 0) ?? null;
+export const canRally = (battle, key) => !!battle.rally && !battle.rallied && battle[key]?.id === "claire" && battle[key].hp > 0 && fallenFriend(battle, key) !== null;
+
 /* Does an action for a companion. Returns { ok } or { ok: false, reason }; doesn't end their turn. action.on (a
    potion) is who drinks it: "player" or a companion's key. */
 function doAllyAction(battle, action, rng, key = "ally") {
@@ -115,6 +122,14 @@ function doAllyAction(battle, action, rng, key = "ally") {
     a.src.shapesUsed = (a.src.shapesUsed || 0) + 1;
     a.form = makeForm(action.form, a.level);
     say(battle, "wild-shape", `${a.name} drops to all fours, and where she was there's a ${a.form.name}! (${a.form.hp} HP of its own)`, { who: key, form: action.form });
+    return { ok: true };
+  }
+  if (action.type === "rally") {
+    if (!canRally(battle, key)) return { ok: false, reason: "No one to rally." };
+    const on = action.on ?? fallenFriend(battle, key), c = battle[on];
+    battle.rallied = true;
+    c.hp = Math.max(1, Math.ceil(c.maxHp * RALLY_SHARE));
+    say(battle, "rally", `${a.name} howls like the whole wildwood at once, and ${c.name} gets up out of the ash (${c.hp}/${c.maxHp})! "Every time," Claire said.`, { who: on, heal: c.hp, revived: true });
     return { ok: true };
   }
   if (action.type === "calm") {

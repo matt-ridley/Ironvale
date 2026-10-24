@@ -60,7 +60,7 @@ export class Meet extends Phaser.Scene {
     breathe(this, [party.hero, ...(party.ally ? [party.ally] : []), ...(o.still ? [] : [this.them])]);
     const first = view(this.convo);
     const top = this.them.y - this.them.displayHeight;
-    this.nameTag = text(this, THEM_X, top - 14, NAMES[o.sprite] ?? first?.speaker ?? "", { stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
+    this.nameTag = text(this, THEM_X, top - 14, o.name ?? NAMES[o.sprite] ?? first?.speaker ?? "", { stroke: "#000000", strokeThickness: 2 }).setOrigin(0.5);
 
     // The panel: who's talking and what they say on the left, your answers on the right. With a single answer
     // ("Continue" or "Close"), tapping anywhere on the panel picks it.

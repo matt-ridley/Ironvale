@@ -1076,9 +1076,15 @@ export const ACT3_SCRIPTS = {
   // through the Door, he tells you how to turn the Door's runes on the Great One (the binding, for the last fight),
   // and with Claire he has the one talk where he says sorry.
   thorneCell: {
-    start: s => (withCompanion(s, "claire") && !s.flags.thorneClaire ? "claire"
+    start: s => (s.flags.act4Complete && !s.flags.thorneAsked ? "after" : withCompanion(s, "claire") && !s.flags.thorneClaire ? "claire"
       : s.flags.q9Done && !s.flags.thorneBinding ? "binding" : withRachel(s) ? "rachel" : "visit"),
     nodes: {
+      // After the ending: he asks to help rebuild the Emberreach (whether you can say yes is a question for later).
+      after: {
+        speaker: THORNE,
+        enter: s => { s.flags.thorneAsked = true; },
+        text: "\"It's quiet. Properly quiet, for the first time in twenty years.\" He looks up at you, and he looks younger. \"Warden. When you rebuild the Emberreach, I'd like to help. Carry stones. Anything.\" (You'll have to think about that.)",
+      },
       binding: {
         speaker: THORNE,
         text: "\"You've been through. I can smell the ash on you.\" He's thinner, and calmer. \"Listen. It reached through the runes to me, for years, and I let it. So the runes reach back. The Door's runes are all one rune, cut a hundred times over. Speak your Binding at it with the Door's pattern in your head, and every rune on that Door answers at once.\"",

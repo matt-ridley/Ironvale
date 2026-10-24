@@ -203,6 +203,31 @@ export const MONSTERS = {
     attacks: [{ name: "Slam", bonus: 12, damage: "3d8+6" }, { name: "Slam", bonus: 12, damage: "3d8+6" }], xp: 5900, gold: "0",
     type: "construct", saves: { STR: 6, DEX: -1, CON: 5, WIS: 1 }, weaponResist: "magic", immune: ["poison", "psychic"],
     spells: [{ name: "Slow", save: "WIS", dc: 17, targets: "one", condition: { id: "restrained", rounds: 1 }, uses: 1, chance: 0.4 }] },
+  // Vorthax, the Great One (Act 4's last fight): the SRD's adult red dragon, its HP spread over three fights in a row
+  // (the Sky, the Ground with one of its brood, and the Hoard). In the sky it `flying` (melee attacks have
+  // disadvantage); its breath `recharge`s on a 5 or 6; its Frightful Presence fails against Matt's true name
+  // (`frightful`); in the hoard it has `lair` actions and three `legendary` resistances. Tuned with the simulator.
+  vorthaxSky: { name: "Vorthax", proper: true, ac: 19, hp: "14d12+70", dexMod: 0, flying: true,
+    attacks: [{ name: "Bite", bonus: 14, damage: "2d10+8", damageType: "fire" }, { name: "Claw", bonus: 14, damage: "2d6+8" }], xp: 6000, gold: "0",
+    type: "dragon", saves: { STR: 8, DEX: 6, CON: 13, WIS: 7 }, immune: ["fire"],
+    spells: [{ name: "Frightful Presence", breath: true, frightful: true, save: "WIS", dc: 19, targets: "all", condition: { id: "frightened", rounds: 2 }, uses: 1, chance: 0.7 },
+      { name: "Fire Breath", breath: true, save: "DEX", dc: 21, damage: "18d6", damageType: "fire", half: true, targets: "all", uses: 1, recharge: 5, chance: 0.5 }] },
+  vorthaxGround: { name: "Vorthax", proper: true, ac: 19, hp: "8d12+40", dexMod: 0,
+    attacks: [{ name: "Bite", bonus: 14, damage: "2d10+8", damageType: "fire" }, { name: "Claw", bonus: 14, damage: "2d6+8" }, { name: "Claw", bonus: 14, damage: "2d6+8" }], xp: 6000, gold: "0",
+    type: "dragon", saves: { STR: 8, DEX: 6, CON: 13, WIS: 7 }, immune: ["fire"],
+    spells: [{ name: "Fire Breath", breath: true, save: "DEX", dc: 21, damage: "18d6", damageType: "fire", half: true, targets: "all", uses: 1, recharge: 5, chance: 0.5 }] },
+  vorthaxHoard: { name: "Vorthax", proper: true, ac: 19, hp: "10d12+50", dexMod: 0, legendary: 3,
+    lair: { save: "DEX", dc: 15, damage: "4d6", damageType: "fire", text: "The hoard's floor cracks open and spits fire." },
+    attacks: [{ name: "Bite", bonus: 14, damage: "2d10+8", damageType: "fire" }, { name: "Claw", bonus: 14, damage: "2d6+8" }, { name: "Claw", bonus: 14, damage: "2d6+8" }], xp: 6000, gold: "40d10",
+    type: "dragon", saves: { STR: 8, DEX: 6, CON: 13, WIS: 7 }, immune: ["fire"],
+    spells: [{ name: "Frightful Presence", breath: true, frightful: true, save: "WIS", dc: 19, targets: "all", condition: { id: "frightened", rounds: 2 }, uses: 1, chance: 0.7 },
+      { name: "Fire Breath", breath: true, save: "DEX", dc: 21, damage: "18d6", damageType: "fire", half: true, targets: "all", uses: 1, recharge: 5, chance: 0.5 }] },
+  // The brood dragon at Vorthax's side on the ground: younger and already scorched (two attacks and a smaller breath),
+  // since the young red dragon's full strength beside Vorthax won only a quarter of the time.
+  vorthaxBrood: { name: "Young Red Dragon", label: "Young Dragon", ac: 18, hp: "10d10+40", dexMod: 0,
+    attacks: [{ name: "Bite", bonus: 13, damage: "2d10+6" }, { name: "Claw", bonus: 13, damage: "2d6+6" }], xp: 2000, gold: "0",
+    type: "dragon", saves: { STR: 6, DEX: 4, CON: 9, WIS: 4 }, immune: ["fire"],
+    spells: [{ name: "Fire Breath", breath: true, save: "DEX", dc: 17, damage: "8d6", damageType: "fire", half: true, targets: "all", uses: 1, chance: 0.5 }] },
   // The wildwood (beasts lie down for Claire; werewolves don't).
   giantApe:    { name: "Giant Ape",    ac: 12, hp: "15d12+60", dexMod: 2,
     attacks: [{ name: "Fist", bonus: 11, damage: "3d10+6" }, { name: "Fist", bonus: 11, damage: "3d10+6" }], xp: 2900, gold: "0",

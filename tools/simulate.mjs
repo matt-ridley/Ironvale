@@ -8,7 +8,8 @@
 import { createBattle, playerAction, isPlayerTurn, isAllyTurn, reactAction } from "../src/rules/combat.js";
 import { allyAction } from "../src/rules/tactics.js";
 import { createCharacter, gainXp, increaseAbility, learnRune, runesLeft, knowsRune, XP_FOR_LEVEL } from "../src/rules/character.js";
-import { joinParty, secondCompanion } from "../src/rules/party.js";
+import { joinParty, secondCompanion, partyRecords, statsOf } from "../src/rules/party.js";
+import { VORTHAX_PHASES } from "../src/story/act4.js";
 import { makeItem } from "../src/rules/items.js";
 import { seededRng } from "../src/rules/dice.js";
 
@@ -30,7 +31,10 @@ export function makeHero({ level = 1, upgrade = 0, potions = 2, greater = 0, com
 
 /* One fight to the end, with `second` (a companion record) beside you if given. Returns "won", "lost" or "fled". */
 export function playFight(hero, foes, rng, second = null) {
-  const b = createBattle(hero, foes, rng, { second });
+  return runFight(createBattle(hero, foes, rng, { second }), rng);
+}
+/* Plays a battle that's already been set up, to the end. */
+export function runFight(b, rng) {
   for (let i = 0; i < 400 && b.state === "active"; i++) {
     if (b.pending) { reactAction(b, true, rng); continue; }
     if (isAllyTurn(b)) { allyAction(b, { type: "auto" }, rng); continue; }
@@ -47,6 +51,22 @@ export function playFight(hero, foes, rng, second = null) {
     if (!playerAction(b, action, rng).ok) playerAction(b, { type: "attack" }, rng);
   }
   return b.state;
+}
+
+/* Vorthax, the last fight (Act 4): the three phases in a row, HP carried over, with no rest between. `team`: the
+   companions who can be tagged in (ids, all pledged); before each phase the two of them with the most HP left stand
+   beside you. Matt's true name, Claire's rally (if she's in the team) and Thorne's binding (`binding`) are on. */
+export function playVorthax(heroOpts, team, rng, { binding = true } = {}) {
+  const h = makeHero({ ...heroOpts, companion: null });
+  h.bladeForm = 3;
+  for (const id of team) joinParty(h, id);
+  for (const [i, phase] of VORTHAX_PHASES.entries()) {
+    const hpOf = id => statsOf(partyRecords(h, [id])[0], h.level).hp;
+    const pair = [...team].sort((a, b) => hpOf(b) - hpOf(a)).slice(0, 2);
+    const b = createBattle(h, phase.foes, rng, { allies: partyRecords(h, pair), noFlee: true, trueName: true, rally: team.includes("claire"), bindFirst: binding && i === 2 });
+    if (runFight(b, rng) !== "won") return "lost";
+  }
+  return "won";
 }
 
 /* Plays `fights` fights (seeded, so the same run gives the same answer) and returns the share won, 0 to 1. */
@@ -96,4 +116,17 @@ export const SCENARIOS = [
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split(/[\\/]/).pop())) { // (either slash: Windows too)
   const fights = Number(process.argv[2]) || 2000;
   for (const [label, hero, foes] of SCENARIOS) console.log(label.padEnd(46), `${Math.round(100 * simulate(hero, foes, { fights }))}%`);
+  // Vorthax: all three phases in a row (fewer runs: each is three fights).
+  const runes = ["runeStrike", "ironWard", "wardensCall", "binding", "breakingRune"], all = ["claire", "rachel", "megan", "robyn"];
+  for (const [label, h, team, binding] of [
+    ["Vorthax, L16 +5, all four sisters", { level: 16, upgrade: 5 }, all, true],
+    ["Vorthax, L16 +5, all four, no Thorne", { level: 16, upgrade: 5 }, all, false],
+    ["Vorthax, L16 +5, the twins only", { level: 16, upgrade: 5 }, ["claire", "rachel"], true],
+    ["Vorthax, L15 +4, all four sisters", { level: 15, upgrade: 4 }, all, true],
+  ]) {
+    const n = Math.ceil(fights / 5);
+    let won = 0;
+    for (let i = 0; i < n; i++) if (playVorthax({ potions: 2, greater: 2, weapon: "wardenblade", silvered: true, runes, ...h }, team, seededRng(1 + i), { binding }) === "won") won++;
+    console.log(label.padEnd(46), `${Math.round(100 * won / n)}%`);
+  }
 }

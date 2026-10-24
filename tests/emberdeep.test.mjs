@@ -157,7 +157,7 @@ test("quest 12 in the log and on the HUD, step by step", () => {
     [{ brannocAtForge: true }, "Have Brannoc finish the Wardenblade at the lost forge"],
     [{ bladeFinalForm: true }, "Beat the hoard's guards, at the top of the Emberdeep"],
     [{ hoardGuardsBeaten: true }, "Open the hoard's doors"],
-    [{ q12Done: true }, "The Great One (the last part of Act 4 is coming)"],
+    [{ q12Done: true }, "Go through the hoard's doors, and face the Great One"],
   ];
   let flags = { ...story };
   for (const [more, line] of steps) { flags = { ...flags, ...more }; assert.equal(objective(flags), line); }

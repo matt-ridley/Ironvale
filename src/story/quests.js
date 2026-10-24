@@ -206,6 +206,18 @@ export const QUESTS = [
       { text: "Open the hoard's doors", done: f => f.q12Done },
     ],
   },
+  {
+    id: "greatOne", title: "The Great One", kind: "main",
+    known: f => f.q12Done,
+    about: "Vorthax, the red dragon under the mountain, that burned the Emberreach and kept the Door shut for a hundred years. Everyone who's pledged will stand with you.",
+    reward: "The Emberreach, and home",
+    steps: [
+      { text: "Bring it down out of the sky", done: f => f.vorthaxSky || f.vorthaxDefeated },
+      { text: "Beat it on the ground, with its brood", done: f => f.vorthaxGround || f.vorthaxDefeated },
+      { text: "End it, in its hoard", done: f => f.vorthaxDefeated },
+      { text: "Go home", done: f => f.act4Complete },
+    ],
+  },
   // Act 4: the sisters' pledges, and your Oath's vault.
   {
     id: "mapmaker", title: "The Mapmaker", kind: "side",

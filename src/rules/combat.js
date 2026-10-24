@@ -46,7 +46,9 @@ export function spawnMonster(id, rng = Math.random) {
   return { id, name: m.name, label: m.label || m.name, the, The: the[0].toUpperCase() + the.slice(1), type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: attacks[0], attacks, xp: m.xp, gold: m.gold,
     vulnerable: m.vulnerable || [], resistant: m.resistant || [], immune: m.immune || [], weaponResist: m.weaponResist || null, ...(m.regen && { regen: { ...m.regen } }),
     ...(m.spells && { spells: m.spells, spellsLeft: Object.fromEntries(m.spells.map(sp => [sp.name, sp.uses])) }),
-    ...(m.guardedBy !== undefined && { guardedBy: m.guardedBy }), ...(m.hesitates && { hesitates: true }) };
+    ...(m.guardedBy !== undefined && { guardedBy: m.guardedBy }), ...(m.hesitates && { hesitates: true }),
+    // Vorthax (Act 4): it flies (melee has disadvantage), has lair actions, and shrugs off failed saves.
+    ...(m.flying && { flying: true }), ...(m.lair && { lair: m.lair }), ...(m.legendary && { legendaryLeft: m.legendary }) };
 }
 
 export const WEAPON_DAMAGE = ["slashing", "piercing", "bludgeoning"];
@@ -123,7 +125,17 @@ export function saveBonusOf(battle, key, ability) {
 }
 
 /* A saving throw in a fight, with conditions (Bless, restrained) counted. opts.advantage: rolled with advantage. */
-export const battleSave = (battle, key, ability, dc, rng = Math.random, opts = {}) => conditionSave(battle, key, ability, dc, saveBonusOf(battle, key, ability), rng, opts);
+export function battleSave(battle, key, ability, dc, rng = Math.random, opts = {}) {
+  const s = conditionSave(battle, key, ability, dc, saveBonusOf(battle, key, ability), rng, opts);
+  const m = typeof key === "number" ? battle.monsters[key] : null;
+  if (!s.success && m?.legendaryLeft > 0 && m.hp > 0) { // legendary resistance: a failed save becomes a success
+    m.legendaryLeft--;
+    s.success = true;
+    s.legendary = true;
+    say(battle, "legendary", `${m.The} should have failed, but refuses to: LEGENDARY RESISTANCE (${m.legendaryLeft} left).`, { who: key });
+  }
+  return s;
+}
 
 /* A saving throw against something a monster does to you: Pip's Junior Warden badge adds 1 to one that only just
    failed (once per rest), and from level 9, Indomitable rolls a failed one again (once per long rest). Both say so in
@@ -166,7 +178,10 @@ export function tellWoken(battle, key, ended) {
    opts.second: a second companion's record (party.js: secondCompanion), who fights beside your own. opts.allies: the
    fight's own party instead (records, at most two: Q10's twins, party.js partyRecords). Each companion in the fight
    keeps the record they came from as `src` (their wounds and spell slots go back there). */
-export function createBattle(player, monsterIds, rng = Math.random, { surviveRounds = 0, second = null, allies: own = null } = {}) {
+/* Vorthax's fights (Act 4) add: opts.noFlee (no running), opts.trueName (Matt's: Frightful Presence fails), opts.rally
+   (Claire's pledge: once, she gets a fallen friend up) and opts.bindFirst (Thorne's binding: the Door's runes hold the
+   first monster for its first turn). */
+export function createBattle(player, monsterIds, rng = Math.random, { surviveRounds = 0, second = null, allies: own = null, noFlee = false, trueName = false, rally = false, bindFirst = false } = {}) {
   const monsters = monsterIds.map(id => spawnMonster(id, rng));
   const allies = (own || [player.companion, second]).slice(0, 2).map(c => { const s = statsOf(c, player.level); return s && { ...s, src: c }; }).filter(Boolean);
   allies.forEach((a, i) => { a.key = ALLY_KEYS[i]; });
@@ -185,7 +200,8 @@ export function createBattle(player, monsterIds, rng = Math.random, { surviveRou
   if (fireResist) player.effects = { ...player.effects, fireResist: false };
   const battle = { player, ally, ally2, focus: 0, monsters, order: entries, turn: 0, round: 1, defending: false, quick, fireResist, state: "active", log: [], rewards: null, conditions: {},
     leadAlly: !!ally?.src.lead, leadAlly2: !!ally2?.src.lead, // you pick your companions' actions
-    surviveRounds, allyFell: false, pending: null }; // pending: a reaction waiting for you (Iron Ward)
+    surviveRounds, allyFell: false, pending: null, // pending: a reaction waiting for you (Iron Ward)
+    noFlee, trueName, rally, rallied: false };
   const names = entries.map(e => (e.who === "player" ? "You" : isAllyKey(e.who) ? battle[e.who].name : monsters[e.who].name) + ` (${e.init})`);
   say(battle, "start", `${monsters.map(m => m.name).join(", ")} ${monsters.length > 1 ? "appear" : "appears"}! Initiative: ${names.join(", ")}.`);
   if (quick) say(battle, "quick", "Your Potion of Dexterity makes you quick: one extra attack each time you ATTACK.");
@@ -196,6 +212,10 @@ export function createBattle(player, monsterIds, rng = Math.random, { surviveRou
     addCondition(battle, i, "hesitant", { rounds: 1 });
     say(battle, "hesitate", `${rachel.name}: "Aldric. Stop." ${m.The} flinches, and for a moment he can't move.`, { who: i });
   });
+  if (bindFirst && monsters[0]) { // Thorne's binding: every rune on the Door answers at once
+    addCondition(battle, 0, "bound", { rounds: 1 });
+    say(battle, "door-binding", `You speak the Binding with the Door's pattern in your head, and far below, every rune on the Door answers at once. Chains of light lock round ${monsters[0].the}!`, { who: 0, condition: "bound" });
+  }
   runMonsterTurns(battle, rng);
   return battle;
 }
@@ -376,6 +396,7 @@ export function playerAction(battle, action, rng = Math.random) {
     say(battle, "surge", "Action Surge! You push yourself: after this action, you get one more.");
     return { ok: true, events: battle.log.slice(start) }; // still your turn
   } else if (action.type === "flee") {
+    if (battle.noFlee) return { ok: false, reason: "There's no running from this one." };
     const c = abilityCheck(p, "DEX", FLEE_DC, rng);
     if (c.success) {
       battle.state = "fled";
@@ -440,7 +461,7 @@ function runMonsterTurns(battle, rng) {
     const key = battle.order[battle.turn].who;
     if (combatant(battle, key).hp > 0) {
       for (const name of startTurn(battle, key)) say(battle, "condition-end", `${nameOf(battle, key)} ${isAre(key)} no longer ${name}.`, { who: key });
-      if (typeof key === "number") { regenerate(battle, key); linger(battle, key, rng); }
+      if (typeof key === "number") { regenerate(battle, key); linger(battle, key, rng); recharge(battle, key, rng); lairAction(battle, key, rng); }
       if (battle.pack?.by === key) packBites(battle, rng);
       if (checkEnd(battle, rng)) return;
       if (combatant(battle, key).hp <= 0) { nextTurn(battle); continue; } // burned away before it could act
@@ -479,6 +500,34 @@ function dawnLight(battle, rng) {
 
 /* True if this condition can't touch them (the Oath of Dawn: no fear). */
 export const immuneTo = (battle, key, id) => key === "player" && id === "frightened" && oathOf(battle) === "dawn";
+
+/* A breath weapon with `recharge` (5: it comes back on a 5 or 6) rolls a d6 at the start of each of its monster's
+   turns once it's been used. */
+function recharge(battle, i, rng) {
+  const m = battle.monsters[i];
+  for (const sp of m.spells || []) {
+    if (!sp.recharge || m.spellsLeft[sp.name] > 0) continue;
+    const d = roll("1d6", rng).total;
+    if (d < sp.recharge) continue;
+    m.spellsLeft[sp.name] = sp.uses;
+    say(battle, "recharge", `${m.The} draws in a long, roaring breath. (Its ${sp.name} is back: rolled ${d}.)`, { who: i });
+  }
+}
+
+/* A lair action, at the start of its monster's turn: the hoard's floor erupts under one of you (a save for half). */
+function lairAction(battle, i, rng) {
+  const m = battle.monsters[i], l = m.lair;
+  if (!l || m.hp <= 0) return;
+  const keys = ["player", ...allyKeys(battle).filter(k => battle[k].hp > 0)], key = keys[Math.floor(rng() * keys.length)];
+  const s = key === "player" ? resistSave(battle, key, l.save, l.dc, rng) : battleSave(battle, key, l.save, l.dc, rng);
+  const full = roll(l.damage, rng).total;
+  let dmg = s.success ? Math.floor(full / 2) : full;
+  if (key === "player" && l.damageType === "fire" && fireproof(battle)) dmg = Math.floor(dmg / 2);
+  const woke = hurt(battle, key, dmg);
+  say(battle, "lair", `${l.text} Under ${key === "player" ? "you" : battle[key].name} (${l.save} save ${s.total} vs DC ${l.dc}): ${dmg} ${l.damageType} damage.`, { who: key, damage: dmg });
+  tellWoken(battle, key, woke);
+  if (isAllyKey(key) && battle[key].hp === 0) allyDown(battle, key);
+}
 
 /* A troll's regeneration, at the start of its turn: back up by `regen.hp`, unless it took fire (or whatever stops it)
    since its last turn. */
@@ -596,7 +645,11 @@ function monsterCasts(battle, i, rng) {
    (halved on a save, if `half`) and maybe a condition. */
 export function castMonsterSpell(battle, i, spell, rng) {
   const m = battle.monsters[i];
-  say(battle, "monster-cast", `${m.The} casts ${spell.name}!`, { actor: i, spell: spell.name });
+  say(battle, "monster-cast", `${m.The} ${spell.breath ? "uses" : "casts"} ${spell.name}!`, { actor: i, spell: spell.name });
+  if (spell.frightful && battle.trueName) { // Matt's gift: it can't make you afraid while you know what it is
+    say(battle, "true-name", `You shout its true name back at it, the name Matt wrote in the ash, and the dread breaks on you like a wave on a rock. ${m.The}'s Frightful Presence fails!`, { actor: i });
+    return;
+  }
   const keys = spell.targets === "all" ? ["player", ...allyKeys(battle).filter(k => battle[k].hp > 0)] : [pickTarget(battle, rng)];
   for (const key of keys) {
     const s = key === "player" ? resistSave(battle, key, spell.save, spell.dc, rng) : battleSave(battle, key, spell.save, spell.dc, rng, { advantage: !!combatant(battle, key).resistsMagic });
