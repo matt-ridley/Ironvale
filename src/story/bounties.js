@@ -13,9 +13,12 @@ export const BOUNTIES = [
   { id: "griffons", title: "Griffons on the slopes", label: "Griffons", monster: "griffon", count: 4, gold: 500, xp: 2000, act: 3 },
   { id: "trolls", title: "Trolls on the snowfield", label: "Trolls", monster: "troll", count: 3, gold: 600, xp: 3000, act: 3 },
   { id: "wyverns", title: "Wyverns over the heights", label: "Wyverns", monster: "wyvern", count: 2, gold: 700, xp: 3500, act: 3 },
+  { id: "hellHounds", title: "Hell hounds on the ash road", label: "Hounds", monster: "hellHound", count: 4, gold: 900, xp: 4500, act: 4 },
+  { id: "mummies", title: "The dead round Lastwatch", label: "Mummies", monster: "mummy", count: 4, gold: 800, xp: 4000, act: 4 },
+  { id: "rocs", title: "Rocs over the aeries", label: "Rocs", monster: "roc", count: 2, gold: 1200, xp: 7000, act: 4 },
 ];
-/* The hunts on the board in this act. */
-export const boardFor = act => BOUNTIES.filter(b => (b.act || 2) === (act >= 3 ? 3 : 2));
+/* The hunts on the board in this act: Act 2's, then the pass's from Act 3, and in Act 4 the pass's and the Emberreach's. */
+export const boardFor = act => BOUNTIES.filter(b => (act >= 4 ? [3, 4] : [act >= 3 ? 3 : 2]).includes(b.act || 2));
 export const bountyById = id => BOUNTIES.find(b => b.id === id) || null;
 
 const beaten = (state, monster) => state.bestiary?.[monster]?.beaten || 0;

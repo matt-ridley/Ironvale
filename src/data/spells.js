@@ -61,6 +61,8 @@ export const SPELLS = {
   conjureAnimals: { name: "Conjure Animals", short: "WOLVES", level: 3, classes: ["druid"], kind: "pack", targets: "self", damage: "2d6+2", rounds: 3 },
   // A reaction (Rachel's COUNTER, when a monster starts casting): stops a spell of 3rd level or lower outright; a higher
   // one needs a check (d20 + her INT against 10 + its level). Never cast on your own turn.
+  // Act 4: Robyn's, from the shrine of the Dawn (her pledge): everyone in the party at once.
+  massHealingWord: { name: "Mass Healing Word", short: "MASS", level: 3, classes: ["cleric"], kind: "heal", targets: "party", heal: "1d4", bonusAction: true, upcast: { dice: 1 } },
   counterspell:   { name: "Counterspell", short: "COUNTER", level: 3, classes: ["wizard"], kind: "reaction" },
   fireball:       { name: "Fireball", short: "BLAST", level: 3, classes: ["wizard"], kind: "save", save: "DEX", half: true, targets: "all", damage: "8d6", damageType: "fire", upcast: { dice: 1 } },
 };

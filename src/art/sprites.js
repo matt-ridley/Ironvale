@@ -1821,3 +1821,34 @@ export const SPRITES = {
     "..kkk......kkk..",
   ],
 };
+
+// The pledge banners in the keep's hall (Act 4): one drawing, in each sister's colours ("c" the cloth, "E" her mark).
+const BANNER = [
+  "................",
+  ".......kk.......",
+  ".......yy.......",
+  "..kkkkkkkkkkkk..",
+  "..kbbbbbbbbbbk..",
+  "..kkkkkkkkkkkk..",
+  "...kcccccccck...",
+  "...kcccccccck...",
+  "...kcccEEccck...",
+  "...kccEEEEcck...",
+  "...kccEEEEcck...",
+  "...kcccEEccck...",
+  "...kcccccccck...",
+  "...kcccccccck...",
+  "...kccckkccck...",
+  "...kcck..kcck...",
+  "...kck.bb.kck...",
+  ".......bb.......",
+  ".......bb.......",
+  ".......bb.......",
+  ".......bb.......",
+  ".......bb.......",
+  "......kbbk......",
+  ".....kkkkkk.....",
+];
+for (const [key, cloth, mark] of [["bannerRachel", "U", "S"], ["bannerMegan", "G", "y"], ["bannerRobyn", "t", "y"], ["bannerClaire", "N", "G"]]) {
+  SPRITES[key] = BANNER.map(r => r.replaceAll("c", cloth).replaceAll("E", mark));
+}

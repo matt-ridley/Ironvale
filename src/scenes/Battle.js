@@ -210,8 +210,12 @@ export class Battle extends Phaser.Scene {
       const on = !this.busy && isReacting(b), ward = b.pending?.kind !== "counter";
       return [{ label: ward ? "IRON WARD" : "COUNTER", on, run: () => this.react(true) }, { label: ward ? "TAKE IT" : "LET IT GO", on, run: () => this.react(false) }, null, null, null, null];
     }
-    if (page === "allySpells") {
-      const list = castable(b, k).slice(0, 5).map(c => ({ label: c.spell.short, on: hers, run: () => this.actAlly({ type: "cast", spell: c.id, slotLevel: c.slotLevel }) }));
+    if (page === "allySpells" || page === "allySpells2") { // more than five spells (Robyn, in Act 4): a second page
+      const cast = c => ({ label: c.spell.short, on: hers, run: () => this.actAlly({ type: "cast", spell: c.id, slotLevel: c.slotLevel }) });
+      const all = castable(b, k), two = all.length > 5;
+      if (page === "allySpells2") { const rest = all.slice(4, 9).map(cast); return [...rest, ...Array(5 - rest.length).fill(null), back("allySpells")]; }
+      const list = all.slice(0, two ? 4 : 5).map(cast);
+      if (two) list.push({ label: "MORE", on: hers, run: () => this.showPage("allySpells2") });
       return [...list, ...Array(5 - list.length).fill(null), back("ally")];
     }
     return [
@@ -352,6 +356,7 @@ export class Battle extends Phaser.Scene {
         sfx("sword");
         if (e.roll.hit) { this.slash(foe, e.roll.crit); this.hit(foe, e.roll.damage, e.roll.crit); this.time.delayedCall(90, () => sfx(e.roll.crit ? "crit" : "hit")); }
         else { this.float(foe, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
+        if (e.slaying) this.float(this.spriteOf(e.by || "ally"), "SLAYING!", COLORS.gold);
         break;
       case "wild-shape":
         sfx("crit");

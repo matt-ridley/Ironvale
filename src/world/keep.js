@@ -43,6 +43,11 @@ export const KEEP = {
     { id: "keepGhost", x: 22, y: 22, sprite: "colleen", script: "wardenGhost", ghost: true, shownWhen: "oathDawn" },
     { id: "grubKeep", x: 16, y: 26, sprite: "goblin", script: "grub", shownWhen: ["refugeesHelped", "rockslideOpen"] },
     { id: "matthewKeep", x: 25, y: 26, sprite: "matthew", script: "matthewKeep", shownWhen: "matthewFound" },
+    // Act 4: a banner for each sister who's pledged to stand at the last fight (Rachel's, once the twins are together).
+    { id: "bannerRachel", x: 15, y: 14, sprite: "bannerRachel", script: "pledgeBanner", who: "rachel", shownWhen: "q10Done", still: true },
+    { id: "bannerMegan", x: 17, y: 14, sprite: "bannerMegan", script: "pledgeBanner", who: "megan", shownWhen: "meganPledged", still: true },
+    { id: "bannerRobyn", x: 21, y: 14, sprite: "bannerRobyn", script: "pledgeBanner", who: "robyn", shownWhen: "robynPledged", still: true },
+    { id: "bannerClaire", x: 23, y: 14, sprite: "bannerClaire", script: "pledgeBanner", who: "claire", shownWhen: "clairePledged", still: true },
     { id: "brannocTools", x: 35, y: 29, sprite: "chest", script: "brannocTools", goneWhen: "toolsFound", still: true },
     { id: "chapelChest", x: 3, y: 29, sprite: "chest", script: "chest", goneWhen: "chapelChestOpened", still: true, loot: { gold: 150, items: ["potionGreaterHealing", "scrollFireball"] } },
     { id: "courtyardChest", x: 24, y: 30, sprite: "chest", script: "chest", goneWhen: "courtyardChestOpened", still: true, loot: { gold: 120, items: ["potionGreaterHealing", "potionGreaterHealing"] } },

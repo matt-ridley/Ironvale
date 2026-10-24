@@ -19,8 +19,12 @@ import { roll } from "./dice.js";
 import { baseOf } from "./items.js";
 import { attackMods, addCondition, removeCondition, skipsTurn, hasCondition, CONDITIONS } from "./conditions.js";
 import { shapesLeft, makeForm, FORMS } from "./party.js";
-import { acOf, hurt, tellWoken, say, living, resolveAttack, adjustRoll, rollText, hitText, isAllyTurn, allyTurnKey, endAllyAction, partyKeys, allyKeys, combatant } from "./combat.js";
+import { acOf, battleSave, hurt, tellWoken, say, living, resolveAttack, adjustRoll, rollText, hitText, isAllyTurn, allyTurnKey, endAllyAction, partyKeys, allyKeys, combatant } from "./combat.js";
 import { makeCaster, castSpell, slotsLeft, spendForSpell } from "./magic.js";
+
+export const DRAGON_ARROWS = 3; // Dunstan's gift to Megan (the Mapmaker): SRD Arrows of Slaying, for dragons
+export const DRAGON_ARROW_DC = 17;
+export const DRAGON_ARROW_DAMAGE = "6d10";
 
 /* A companion as a caster (their spell attack bonus and DC at your level), or null if they don't cast. */
 export function allyCaster(battle, key = "ally") {
@@ -70,7 +74,10 @@ export function chooseAllyAction(battle, key = "ally") {
   if (turn && a.tactics !== "save" && untouched.length) return { type: "cast", spell: "turnUndead", slotLevel: turn.slotLevel };
   if (a.tactics === "heal") {
     const who = neediest(battle);
-    const heal = spells.filter(s => s.spell.kind === "heal").sort((x, y) => x.spell.level - y.spell.level)[0];
+    const mass = spells.find(s => s.spell.kind === "heal" && s.spell.targets === "party");
+    const hurting = partyKeys(battle).filter(k => { const c = combatant(battle, k); return c.hp > 0 && c.hp <= c.maxHp / 2; });
+    if (mass && hurting.length > 1) return { type: "cast", spell: mass.id, slotLevel: mass.slotLevel }; // Robyn: everyone at once
+    const heal = spells.filter(s => s.spell.kind === "heal" && s.spell.targets !== "party").sort((x, y) => x.spell.level - y.spell.level)[0];
     if (who && heal) return { type: "cast", spell: heal.id, target: who, slotLevel: heal.slotLevel };
     if (who && potionsLeft(battle)) return { type: "potion", on: who };
   }
@@ -177,8 +184,16 @@ export function quillFlyby(battle) {
 function shoot(battle, target, rng, key = "ally") {
   const a = battle[key], t = battle.monsters.indexOf(target);
   const r = adjustRoll(resolveAttack(a.attack, acOf(battle, t), rng, attackMods(battle, key, t, { melee: false })), target, a.attack);
+  let slaying = "";
+  if (r.hit && target.type === "dragon" && a.src?.dragonArrows > 0) { // Megan's Arrows of Dragon Slaying (Dunstan's gift)
+    a.src.dragonArrows--;
+    const s = battleSave(battle, t, "CON", DRAGON_ARROW_DC, rng), full = roll(DRAGON_ARROW_DAMAGE, rng).total;
+    const extra = s.success ? Math.floor(full / 2) : full;
+    r.damage += extra;
+    slaying = ` An Arrow of Dragon Slaying! (CON save ${s.total} vs DC ${DRAGON_ARROW_DC}${s.success ? ", halved" : ""}: +${extra}) ${a.src.dragonArrows} left.`;
+  }
   const woke = hurt(battle, t, r.damage);
-  say(battle, "ally-attack", `${a.name} attacks ${target.the} with a ${a.attack.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t, by: key });
+  say(battle, "ally-attack", `${a.name} attacks ${target.the} with a ${a.attack.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}${slaying}`, { roll: r, target: t, by: key, slaying: !!slaying });
   tellWoken(battle, t, woke);
   if (target.hp === 0) say(battle, "defeat", `${target.The} falls.`, { target: t });
 }

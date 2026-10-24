@@ -52,6 +52,7 @@ function loadCompanion(c) {
     ...(c.recovered === true && { recovered: true }), // Arcane Recovery, used since the last long rest
     ...(c.volley === true && { volley: true }), // Megan's Volley, taught by her father
     ...(isInt(c.shapesUsed) && c.shapesUsed > 0 && { shapesUsed: Math.min(c.shapesUsed, 2) }), // Claire's Wild Shapes, since a rest
+    ...(isInt(c.dragonArrows) && c.dragonArrows > 0 && { dragonArrows: Math.min(c.dragonArrows, 3) }), // Megan's Arrows of Dragon Slaying
   };
   return { id: c.id, hurt: isInt(c.hurt) && c.hurt > 0 ? c.hurt : 0, gear, ...extra };
 }
@@ -82,6 +83,7 @@ export function deserialize(json) {
     effects: { // saves from before 0.8.0 have none
       speed: isInt(h.effects?.speed) && h.effects.speed > 0 ? h.effects.speed : 0,
       dexterity: h.effects?.dexterity === true,
+      ...(h.effects?.fireResist === true && { fireResist: true }), // Act 4: until the next fight
     },
   };
   if (!hero.companion) delete hero.companion;

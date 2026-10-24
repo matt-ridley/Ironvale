@@ -5,7 +5,7 @@ import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD 
 import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD, WAYSTONE_REWARD, ROAD_REWARD, MATTHEW_REWARD, CHAPEL_REWARD, arrowsFound,
   REFUGEE_REWARD, QUEEN_REWARD, NETTLE_REWARD, GATEHOUSE_REWARD } from "./act3.js";
 import { actOf } from "./hero.js";
-import { Q9_REWARD, Q10_REWARD, Q11_REWARD } from "./act4.js";
+import { Q9_REWARD, Q10_REWARD, Q11_REWARD, PLEDGE_REWARD, VAULT_REWARD } from "./act4.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
 
@@ -189,6 +189,35 @@ export const QUESTS = [
       { text: "Fight through the Cinder Wardens at its gate", done: f => f.cindersBeaten },
       { text: "Hear Matt's story", done: f => f.mattMet },
       { text: "Learn the Breaking Rune, and the Great One's true name", done: f => f.q11Done },
+    ],
+  },
+  // Act 4: the sisters' pledges, and your Oath's vault.
+  {
+    id: "mapmaker", title: "The Mapmaker", kind: "side",
+    known: f => f.q11Done && f.meganJoined,
+    about: "Someone in the kobolds' diggings, over the Wardens' bridge, is singing Megan's da's old surveying song. Take Megan.",
+    reward: reward(PLEDGE_REWARD),
+    steps: [
+      { text: "Go into the diggings with Megan", done: f => f.diggingsCleared },
+      { text: "Megan pledges", done: f => f.meganPledged },
+    ],
+  },
+  {
+    id: "firstLight", title: "The First Light", kind: "side",
+    known: f => f.q11Done && f.robynJoined,
+    about: "The shrine of the Dawn, south-east of Lastwatch: the first shrine, where Robyn's candle was lit. The dead have it now. Take Robyn.",
+    reward: reward(PLEDGE_REWARD),
+    steps: [
+      { text: "Relight the shrine's lamp with Robyn, and hold off the dead", done: f => f.robynPledged },
+    ],
+  },
+  {
+    id: "oathVault", title: "The Oath's Path", kind: "side",
+    known: f => f.q11Done && f.oathSworn,
+    about: "Matt says each Oath had its own road in the Emberreach: Iron over the gorge's broken bridge, Storm across the lava lake in the aeries, Dawn through the cursed gate in Lastwatch's old tower. Yours leads to a Warden vault.",
+    reward: `${VAULT_REWARD.xp} XP, and Oath gear`,
+    steps: [
+      { text: "Follow your Oath's path to its vault", done: f => !!f[`${f.oath}Vault`] },
     ],
   },
   {

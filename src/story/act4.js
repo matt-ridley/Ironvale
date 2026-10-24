@@ -8,15 +8,18 @@
 // Quest 11, Lastwatch: the Cinder Wardens at the gate, then Matt, the sisters' father: his story, a scene for each
 // daughter (at Lastwatch, or from you at the keep), the Breaking Rune and the Great One's true name. After it, his fire
 // is a camp, and his bridge north opens the aeries and the kobolds' diggings.
+// The sisters' pledges: the Mapmaker (Megan finds Dunstan in the kobolds' diggings), the First Light (Robyn relights
+// the shrine of the Dawn), Claire's at Matt's fire, their banners in the keep, and each Oath's path to its vault.
 // The roadmap's Act 4 section has the rest. No Phaser here.
 import { pay, paid } from "./rewards.js";
 import { callName } from "./hero.js";
 import { withRachel } from "./act3.js";
-import { joinParty, COMPANIONS } from "../rules/party.js";
+import { joinParty, COMPANIONS, knownSpells } from "../rules/party.js";
+import { DRAGON_ARROWS } from "../rules/tactics.js";
 import { learnRune } from "../rules/character.js";
 import { makeItem } from "../rules/items.js";
 
-const RACHEL = "RACHEL", HILD = "HILD", PIP = "PIP", KOBOLD = "KOBOLD", CLAIRE = "CLAIRE", MATT = "MATT", MEGAN = "MEGAN", ROBYN = "ROBYN";
+const RACHEL = "RACHEL", HILD = "HILD", PIP = "PIP", KOBOLD = "KOBOLD", CLAIRE = "CLAIRE", MATT = "MATT", MEGAN = "MEGAN", ROBYN = "ROBYN", DUNSTAN = "DUNSTAN";
 export const Q9_REWARD = { gold: 500, xp: 10000 };
 export const Q10_REWARD = { gold: 300, xp: 6000 };
 export const BROOD_FIGHT = ["youngRedDragon", "fireElemental"];
@@ -24,6 +27,34 @@ export const Q11_REWARD = { gold: 400, xp: 8000 };
 export const CINDER_FIGHT = ["cinderWarden", "cinderWarden"];
 const SISTERS = ["rachel", "megan", "robyn"]; // Claire already knows
 /* The first sister who has joined you but hasn't heard Matt's story yet (after quest 11), or null. */
+// The sisters' pledges (step 25): Megan's (the Mapmaker) and Robyn's (the First Light), then Claire's; and the Oath
+// paths, each to a vault of Oath gear.
+export const PLEDGE_REWARD = { gold: 300, xp: 5000 };
+export const VAULT_REWARD = { gold: 0, xp: 3000 };
+export const DIGGINGS_FIGHT = ["salamander", "hellHound"];
+export const SHRINE_FIGHT = ["vampireSpawn", "wraith"];
+export const SHRINE_ROUNDS = 4;
+export const IRON_SPAN_DC = 16;
+const SPAN_SLIP = 10, CURSE_BURN = 8;
+export const VAULTS = { iron: "towerShield", storm: "stormGlass", dawn: "dawnBanner" };
+const VAULT_TEXT = {
+  iron: "Inside, wrapped in oilcloth: the Wardens' tower shield, a tower on its face. (The WARDENS' TOWER SHIELD: +4 AC, and fire does you half while it's on your arm. Equip it from your bag.)",
+  storm: "Inside, in a nest of wool: a rune stone of clear glass with a storm trapped in it. (The STORM-GLASS RUNE STONE: your Chain Lightning leaps once more. It works from your pack.)",
+  dawn: "Inside, folded small: the Wardens' old banner of the Dawn, gold on white. (The DAWN BANNER: your healing light shines twice as bright. It works from your pack.)",
+};
+const withCompanion = (s, id) => s.hero.companion?.id === id;
+/* A companion's record, whether they're with you or waiting on the roster. */
+const recordOf = (hero, id) => (hero.companion?.id === id ? hero.companion : hero.roster?.find(r => r.id === id)) || null;
+/* Opens your Oath's vault: its gear, and the XP. */
+function openVault(s, ctx, oath) {
+  s.flags[`${oath}Vault`] = true;
+  s.hero.inventory.push(makeItem(VAULTS[oath]));
+  pay(s, ctx, VAULT_REWARD);
+}
+const vaultText = (oath, ctx) => `${VAULT_TEXT[oath]} ${paid(ctx, VAULT_REWARD).replace("+0 gold, ", "")} OATH VAULT FOUND.`;
+/* True once every sister who's joined you has pledged (Rachel's came with the charm): then Claire pledges. */
+export const sistersPledged = f => !!f.q10Done && (!f.meganJoined || !!f.meganPledged) && (!f.robynJoined || !!f.robynPledged);
+
 export const untoldSister = s => (s.flags.q11Done && SISTERS.find(id => s.flags[`${id}Joined`] && !s.flags[`${id}Heard`])) || null;
 const withClaire = s => s.hero.companion?.id === "claire";
 
@@ -411,30 +442,221 @@ export const ACT4_SCRIPTS = {
     nodes: { look: { text: "Lastwatch's north gate, barred, and behind it the Wardens' bridge, drawn up across the gorge. Someone has kept its chains oiled." } },
   },
 
-  // The shrine of the Dawn (Robyn's pledge comes in a later part of Act 4).
+  // The First Light (Robyn's pledge): the shrine of the Dawn, its door shut on the dead inside. Robyn relights the
+  // lamp and holds the light while you hold off the dead (a waystone-style trial: survive SHRINE_ROUNDS rounds).
   dawnDoor: {
-    start: s => (s.hero.companion?.id === "robyn" ? "robyn" : "look"),
+    start: s => (withCompanion(s, "robyn") ? "robyn" : "look"),
     nodes: {
       look: {
-        text: "A small stone shrine with a sun carved over the door: the Wardens' first shrine of the Dawn. The door is shut, and cold to the touch in all this heat. Something inside is breathing, slowly, though nothing in there should breathe. (The shrine's part of the story comes in a later part of Act 4.)",
+        text: "A small stone shrine with a sun carved over the door: the Wardens' first shrine of the Dawn. The door is shut, and cold to the touch in all this heat. Something inside is breathing, slowly, though nothing in there should breathe. (This one is Robyn's to open: bring her.)",
       },
       robyn: {
         speaker: ROBYN,
-        text: "\"I know this place.\" Robyn lays her hand flat on the door. \"I've never been here, and I know it.\" (The shrine's part of the story comes in a later part of Act 4.)",
+        text: "\"I know this place.\" Robyn lays her hand flat on the door. \"I've never been here, and I know it.\"",
+        choices: [{ label: "Open the door", to: "inside" }, { label: "Not yet", to: null }],
+      },
+      inside: {
+        text: "The shrine is cold and dark. On the altar stands a great bronze lamp, dry for twenty-five years, and round it the dead of the barrow-fields have made a nest: a vampire spawn, and a wraith coiled in the rafters like smoke. Robyn walks straight past them to the lamp.",
+        to: "light",
+      },
+      light: {
+        speaker: ROBYN,
+        text: `"Keep them off me. I only have to keep it lit." She strikes a light, the lamp catches, and the dead turn on it, screaming. (Hold them off for ${SHRINE_ROUNDS} rounds while Robyn keeps the light.)`,
+        choices: [{ label: "Hold the line", to: "fight" }, { label: "Get out!", to: null }],
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...SHRINE_FIGHT], surviveRounds: SHRINE_ROUNDS, zone: "dawnShrine", afterWin: "firstLight", music: "boss" }) },
+    },
+  },
+  firstLight: {
+    start: "light",
+    nodes: {
+      light: {
+        text: "The lamp blazes up white and gold, and the dead come apart like ash in a wind. Then the light settles, warm as a hearth, into every corner of the shrine.",
+        to: "robyn",
+      },
+      robyn: {
+        speaker: ROBYN,
+        text: "\"It's the same light.\" Robyn is laughing and crying at once. \"The candle on the step, the shrine in Fenwatch, the chapel on the pass. It was always this one. It was always ours.\"",
+        to: "learn",
+      },
+      learn: {
+        enter: s => {
+          const r = recordOf(s.hero, "robyn");
+          if (r) r.spells = [...new Set([...knownSpells(r), "massHealingWord"])];
+        },
+        text: "The light pours into her, and she knows a new prayer: one word, and everyone it reaches is healed. (Robyn learned MASS HEALING WORD! Everyone in your party heals at once. By herself, on HEAL, she says it when two of you are badly hurt.)",
+        to: "pledge",
+      },
+      pledge: {
+        enter: (s, ctx) => { s.flags.robynPledged = true; pay(s, ctx, PLEDGE_REWARD); },
+        speaker: ROBYN,
+        text: (s, ctx) => `"I'll keep the light for the end. Wherever you go to face it, I'll be there, holding it up." (ROBYN PLEDGES to stand at the last fight. Her banner will hang in the keep's hall.) ${paid(ctx, PLEDGE_REWARD)} PLEDGE: The First Light.`,
+      },
+    },
+  },
+  // The shrine's lamp, lit again: a full heal for you and the friend with you.
+  dawnLamp: {
+    start: "look",
+    nodes: {
+      look: {
+        enter: s => { s.hero.hp = s.hero.maxHp; if (s.hero.companion) s.hero.companion.hurt = 0; },
+        text: "The lamp of the Dawn burns steady on the altar. In its light your wounds close, and your friend's too. (You're both healed.)",
       },
     },
   },
 
-  // The mouth of the kobolds' diggings, over the bridge (Megan's pledge comes in a later part of Act 4).
+  // The Mapmaker (Megan's pledge): the kobolds' diggings, over the bridge. Someone down there is singing Corwin's old
+  // surveying song: Dunstan, his partner, taken off the pass ten years ago.
   diggings: {
-    start: s => (s.hero.companion?.id === "megan" ? "megan" : "look"),
+    start: s => (s.flags.meganPledged ? "empty" : withCompanion(s, "megan") ? "megan" : "look"),
     nodes: {
       look: {
-        text: "The mouth of the kobolds' diggings, propped with old Warden beams. Candles gutter far down inside, and somewhere a man is singing, badly. (The diggings' part of the story comes in a later part of Act 4.)",
+        text: "The mouth of the kobolds' diggings, propped with old Warden beams. Candles gutter far down inside, and somewhere a man is singing, badly, a song about a mule. (This one is Megan's to find: bring her.)",
       },
       megan: {
         speaker: MEGAN,
-        text: "Megan goes very still. \"That song. That's Da's old surveying song, about the cartographer's mule.\" She's halfway in before you catch her arm. (The diggings' part of the story comes in a later part of Act 4.)",
+        text: "Megan goes very still. \"That song. That's Da's old surveying song, about the cartographer's mule.\" She's halfway in before you catch her arm.",
+        choices: [{ label: "Go in with her", to: "inside" }, { label: "Not yet", to: null }],
+      },
+      inside: {
+        text: "The tunnel drops into a cavern lit by candle-stubs, and kobolds scatter squealing. Chained to a drawing table in the middle sits a thin man with a grey beard and cracked spectacles. Between you and him stand the Great One's overseers: a salamander, and a hell hound on a chain.",
+        choices: [{ label: "Fight", to: "fight" }, { label: "Back out", to: null }],
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...DIGGINGS_FIGHT], zone: "warrens", winFlag: "diggingsCleared", afterWin: "dunstanFreed", music: "boss" }) },
+      empty: { text: "The diggings are quiet now. The kobolds have gone deeper, towards their Great One, and taken their candles with them." },
+    },
+  },
+  dunstanFreed: {
+    start: "free",
+    nodes: {
+      free: {
+        speaker: DUNSTAN,
+        text: "The man at the table squints at you over his spectacles. \"You're not kobolds. You're far too tall.\" Then he sees Megan, and the pen falls out of his hand. \"...Little Meg? Corwin's Meg?\"",
+        to: "megan",
+      },
+      megan: {
+        speaker: MEGAN,
+        text: "\"Uncle Dunstan?\" She's on her knees beside him, sawing at the chain. \"You went up the pass with Da. He came back. You didn't. We thought...\"",
+        to: "story",
+      },
+      story: {
+        speaker: DUNSTAN,
+        text: "\"The kobolds took me off the pass the night your da and I split up to search. Dragged me through their tunnels to here, and kept me alive because I can draw. Ten years of maps.\" He laughs, a little wildly. \"I've drawn every tunnel in that mountain.\"",
+        to: "letter",
+      },
+      letter: {
+        enter: s => { s.hero.inventory.push(makeItem("corwinsLetter")); },
+        speaker: DUNSTAN,
+        text: "He digs in his coat and brings out a letter, gone soft as cloth with folding. \"Your da gave me this before we went up. In case. I've kept it dry for ten years.\" (Corwin's Letter.)",
+        to: "read",
+      },
+      read: {
+        speaker: MEGAN,
+        text: "Megan reads it twice, then out loud, because she can't keep it in: \"Meg. If you're reading this, I never found where you came from. It doesn't matter. You came from me, and your ma, and our hearth. Whoever had you first loved you: I could tell by how you were wrapped. Shoot straight. Da.\"",
+        to: "gift",
+      },
+      gift: {
+        enter: s => {
+          s.hero.inventory.push(makeItem("dunstansMap"));
+          const m = recordOf(s.hero, "megan");
+          if (m) m.dragonArrows = DRAGON_ARROWS;
+        },
+        speaker: DUNSTAN,
+        text: "\"Now. Two things I took off them.\" He presses a rolled map into your hands: the Emberdeep, every tunnel, one marked in red. \"That one goes round their golems.\" And to Megan, a quiver with three black arrows, their heads etched with a dragon's skull. \"They were saving these for someone. Let's give them someone.\" (Dunstan's Map. Megan has three ARROWS OF DRAGON SLAYING: a dragon she hits makes a CON save or takes 6d10 more.)",
+        to: "pledge",
+      },
+      pledge: {
+        enter: (s, ctx) => { s.flags.meganPledged = true; pay(s, ctx, PLEDGE_REWARD); },
+        speaker: MEGAN,
+        text: (s, ctx) => `Megan slings the quiver over her shoulder and looks up at the mountain, smoking over the aeries. "When you go up there, I'm going with you. For Da. For both of them." (MEGAN PLEDGES to stand at the last fight. Her banner will hang in the keep's hall.) ${paid(ctx, PLEDGE_REWARD)} PLEDGE: The Mapmaker.`,
+      },
+    },
+  },
+  // Dunstan at Lastwatch afterwards, drawing Matt the Emberdeep.
+  dunstan: {
+    start: "hello",
+    nodes: {
+      hello: {
+        speaker: DUNSTAN,
+        enter: s => { s.flags.dunstanVisits = ((s.flags.dunstanVisits ?? -1) + 1) % 2; },
+        text: s => ["\"Matt and I are going over the map. He says the red tunnel's the one. He also says my drawing of the dragon is unkind. It's accurate.\"",
+          "\"Corwin's going to fall over when he sees me. Don't tell him I'm coming. I want to see his face.\""][s.flags.dunstanVisits],
+      },
+    },
+  },
+
+  // Claire's pledge: once every sister with you has pledged (Rachel's came with the charm), at Matt's fire.
+  clairePledge: {
+    start: "fire",
+    nodes: {
+      fire: { text: "Claire is waiting at Matt's fire, the twins' charm in her fist.", to: "claire" },
+      claire: {
+        speaker: CLAIRE,
+        text: "\"Megan's pledged. Robyn's pledged. Rae pledged the night we found each other, she just didn't say it out loud.\" She grins. \"That's all of us. All four. Father says Mother would have cried.\"",
+        to: "matt",
+      },
+      matt: { speaker: MATT, text: "\"She would have. Then she'd have said she had ash in her eye.\"", to: "pledge" },
+      pledge: {
+        enter: s => { s.flags.clairePledged = true; },
+        speaker: CLAIRE,
+        text: "\"So here's mine. When it comes down on us, and it will, I'll get whoever falls back up. Every time.\" (CLAIRE PLEDGES to stand at the last fight: once in each part of it, she'll bring a fallen friend back. Her banner will hang in the keep's hall.)",
+      },
+    },
+  },
+
+  // The pledge banners in the keep's hall.
+  pledgeBanner: {
+    start: "look",
+    nodes: {
+      look: {
+        text: (s, ctx) => ({
+          rachel: "Rachel's banner: a silver moon on deep blue, with the twins' charm stitched under it. She pledged the night the twins found each other, she says, she just didn't make a speech about it.",
+          megan: "Megan's banner: a gold arrow on green, and under it, in Corwin's hand, copied from his letter: SHOOT STRAIGHT.",
+          robyn: "Robyn's banner: a gold sun on white, the lamp of the Dawn. It seems to glow a little, even at night.",
+          claire: "Claire's banner: a green wolf's head on grey. She stitched it herself. The wolf is grinning.",
+        }[ctx.object?.who] || "A banner."),
+      },
+    },
+  },
+
+  // The Oath of Storm's path: a rune stone at the edge of a lava lake, and the vault on its islet.
+  stormStone: {
+    start: s => (s.flags.oath === "storm" && !s.flags.stormVault ? "call" : "look"),
+    nodes: {
+      look: {
+        text: s => (s.flags.stormVault ? "The rune stone hums at you, friendly, like a cat." : "A Warden rune stone at the edge of a lava lake, its rune shaped like a lightning-fork. On an islet in the middle of the lake sits an iron-bound chest. Much too far to jump."),
+      },
+      call: {
+        text: "The rune on the stone sparks as you come near, and your blade sparks back. On an islet in the lava lake sits an iron-bound chest. The runes answer when you call.",
+        choices: [{ label: "Blink across", to: "over" }, { label: "Not now", to: null }],
+      },
+      over: {
+        enter: (s, ctx) => openVault(s, ctx, "storm"),
+        text: (s, ctx) => `You call, and the world folds: one step and you're on the islet with the lake roaring round you, one more and you're back with the chest under your arm. ${vaultText("storm", ctx)}`,
+      },
+    },
+  },
+  // The Oath of Dawn's path: the cursed gate in Lastwatch's old tower, and the vault behind it.
+  cursedGate: {
+    start: s => (s.flags.oath === "dawn" ? "dawn" : "burn"),
+    nodes: {
+      burn: {
+        enter: s => { s.hero.hp = Math.max(1, s.hero.hp - CURSE_BURN); },
+        text: `An iron gate across the door of Lastwatch's old tower, crusted with black runes. You reach for it, and it burns like a forge: -${CURSE_BURN} HP. Behind it, something gleams.`,
+      },
+      dawn: {
+        enter: s => { s.flags.dawnGateOpen = true; },
+        text: "The black runes flinch from you. When you take hold of the gate the fire in it goes out like a blown candle, and it swings open. What is dead shall not pass; what is Dawn may.",
+      },
+    },
+  },
+  // An Oath vault's chest (the Dawn's, behind the cursed gate).
+  oathVault: {
+    start: "open",
+    nodes: {
+      open: {
+        enter: (s, ctx) => openVault(s, ctx, ctx.object?.oath || s.flags.oath),
+        text: (s, ctx) => vaultText(ctx.object?.oath || s.flags.oath, ctx),
       },
     },
   },
@@ -462,12 +684,30 @@ export const ACT4_SCRIPTS = {
     },
   },
 
-  // The end of the road, at the lip of the gorge.
+  // The end of the road, at the lip of the gorge. The Oath of Iron's path: hold up a span of the broken bridge (three
+  // STR checks in a row) while your friends cross, to the vault in the far pier.
   gorgeEdge: {
     start: "look",
     nodes: {
       look: {
-        text: s => `The road ends at the lip of a gorge. Far below, a river of fire. The Wardens' old bridge lies in pieces down there, its broken piers still standing. Across it the land is burned black, all the way north to a mountain that smokes.${s.flags.oath === "iron" ? " The piers are sound. Someone strong enough could hold a span of it up, for a moment." : ""}`,
+        text: s => `The road ends at the lip of a gorge. Far below, a river of fire. The Wardens' old bridge lies in pieces down there, its broken piers still standing. Across it the land is burned black, all the way north to a mountain that smokes.${s.flags.oath === "iron" && !s.flags.ironVault ? " The piers are sound. Someone strong enough could hold a span of it up, for a moment." : ""}`,
+        choices: [{ label: "Hold up the span", if: s => s.flags.oath === "iron" && !s.flags.ironVault, to: "climb" }, { label: "Leave it", to: null }],
+      },
+      climb: {
+        text: "You climb down to the nearest pier, set your shoulder under the fallen span and heave. It comes up groaning. Your friends start across. It slips. It slips again.",
+        to: "lift1",
+      },
+      lift1: { enter: (s, ctx) => { if (!ctx.check("STR", IRON_SPAN_DC, { proficient: true }).success) ctx.goto("slip"); }, text: (s, ctx) => `You hold it. ${ctx.checkText}`, to: "lift2" },
+      lift2: { enter: (s, ctx) => { if (!ctx.check("STR", IRON_SPAN_DC, { proficient: true }).success) ctx.goto("slip"); }, text: (s, ctx) => `You hold it again. ${ctx.checkText}`, to: "lift3" },
+      lift3: { enter: (s, ctx) => { if (!ctx.check("STR", IRON_SPAN_DC, { proficient: true }).success) ctx.goto("slip"); }, text: (s, ctx) => `And again, until the last of them is over. ${ctx.checkText}`, to: "across" },
+      slip: {
+        enter: s => { s.hero.hp = Math.max(1, s.hero.hp - SPAN_SLIP); },
+        text: (s, ctx) => `${ctx.checkText} The span slides off your shoulder into the fire in a shower of sparks, and everyone scrambles back. (-${SPAN_SLIP} HP)`,
+        choices: [{ label: "Try again", to: "climb" }, { label: "Leave it", to: null }],
+      },
+      across: {
+        enter: (s, ctx) => openVault(s, ctx, "iron"),
+        text: (s, ctx) => `The span holds. In the far pier, behind a Warden seal shaped like a tower: a cache. ${vaultText("iron", ctx)}`,
       },
     },
   },
@@ -483,6 +723,7 @@ export function act4Event(state, zoneId) {
     return { script: "lastwatchView" };
   }
   if (zoneId === "courtyard" && untoldSister(state)) return { script: "familyNews" };
+  if (zoneId === "lastwatchHold" && f.q11Done && f.claireJoined && !f.clairePledged && (f.meganPledged || f.robynPledged) && sistersPledged(f)) return { script: "clairePledge" };
   if (zoneId === "threshold" && !f.throughDoor) {
     f.throughDoor = true;
     return { script: "throughDoor" };

@@ -31,7 +31,7 @@ export function describeItem(item) {
   const silver = item.silvered ? " Silvered: wights can't shrug it off." : "";
   if (b.type === "weapon") return `${b.damage} ${b.damageType} damage${props}.${up && ` ${up.trim()} to hit and damage.`}${silver}${item.base === "wardenblade" ? ` ${WARDEN_TEXT}` : item.crest ? ` ${CREST_TEXT}` : ""}`;
   if (b.type === "bow") return `${b.damage} ${b.damageType} damage, for a friend in your party.${up && ` ${up.trim()} to hit and damage.`}${silver}`;
-  if (b.type === "shield") return `+${b.ac} AC.${up && ` ${up.trim()} more AC.`}`;
+  if (b.type === "shield") return `+${b.ac} AC.${up && ` ${up.trim()} more AC.`}${b.fireproof ? " Fire does you half while it's on your arm." : ""}`;
   if (b.type === "armour") {
     const dex = b.category === "light" ? " + DEX" : b.category === "medium" ? " + DEX (max 2)" : "";
     return `${b.category[0].toUpperCase()}${b.category.slice(1)} armour: AC ${b.baseAc}${dex}.${up && ` ${up.trim()} AC.`}`;
@@ -39,6 +39,7 @@ export function describeItem(item) {
   if (b.heal) return `Drink to heal ${b.heal} HP.`;
   if (b.effect === "speed") return `Move faster and meet fewer monsters for ${b.steps} steps.`;
   if (b.effect === "dexterity") return "One extra attack every time you ATTACK, for one fight. Drink it before or during a battle.";
+  if (b.effect === "fireResist") return "Fire does you half in your next fight. Drink it before the fight.";
   if (b.type === "key" || b.type === "trinket" || b.type === "fish") return b.about;
   if (b.type === "scroll") return "Read it in a fight to cast the spell, once. Anyone can.";
   if (b.effect === "homeward") return "Out in the open, it flies you back to the last town you were in. Not indoors or underground.";
@@ -64,6 +65,7 @@ export function cantDrink(char, item, { outdoors = false } = {}) {
   if (b.effect === "homeward" && !outdoors) return "The feather only works out in the open, not indoors or underground.";
   if (b.heal && char.hp >= char.maxHp) return "You're already at full health.";
   if (b.effect === "dexterity" && char.effects?.dexterity) return "You've already drunk one. It lasts until your next fight.";
+  if (b.effect === "fireResist" && char.effects?.fireResist) return "You've already drunk one. It lasts until your next fight.";
   return null;
 }
 
@@ -91,6 +93,7 @@ export function useItem(char, uid, rng = Math.random, { outdoors = false } = {})
 export function drinkText(r) {
   if (r.effect === "speed") return "You feel light on your feet! Fewer monsters can catch you.";
   if (r.effect === "dexterity") return "Your hands feel quick! You'll get an extra attack every time you ATTACK in your next fight.";
+  if (r.effect === "fireResist") return "It tastes of smoke and pepper. Fire will do you half in your next fight.";
   return `You drink the potion and recover ${r.healed} HP.`;
 }
 
