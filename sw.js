@@ -2,7 +2,7 @@
    - Game files (this site): network first, so a new version shows up as soon as there is signal,
      falling back to the saved copy after a few seconds or when offline.
    - Phaser and the pixel font: saved copy first. Phaser's URL includes its version, so it never changes. */
-const VERSION = "0.42.0"; // keep the same as src/config.js (a test checks)
+const VERSION = "0.43.0"; // keep the same as src/config.js (a test checks)
 const SHELL = `ironvale-shell-${VERSION}`;
 const STATIC = "ironvale-static-v1";
 const PHASER = "https://cdnjs.cloudflare.com/ajax/libs/phaser/3.90.0/phaser.min.js";

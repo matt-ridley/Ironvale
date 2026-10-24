@@ -312,10 +312,9 @@ export const ACT4_SCRIPTS = {
         },
       },
       others: {
-        speaker: MATT,
         text: s => (SISTERS.some(id => s.flags[`${id}Joined`])
           ? "You tell him about them: the ones you know. He listens to every word as if it were water. \"Bring them here, if they'll come. Or tell them yourself, if they won't. They should hear it from family.\""
-          : "\"Find them, if you can. Rachel will be with books, if she's anything like she was at a year old. And tell them. They should hear it from family.\""),
+          : "\"Find them, if you can,\" Matt says. \"Rachel will be with books, if she's anything like she was at a year old. And tell them. They should hear it from family.\""),
         to: "rune",
       },
 

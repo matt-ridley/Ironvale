@@ -173,7 +173,7 @@ export const MONSTERS = {
     loot: [{ base: "potionGreaterHealing", chance: 1 }] },
   // Lastwatch (Q11): the Cinder Wardens are Matt's own fallen Wardens, raised by the dragon (custom: wights, burning).
   // Vampire spawn and mummies came with them from the barrow-fields east of the fort.
-  cinderWarden: { name: "Cinder Warden", label: "Cinder Warden", ac: 17, hp: "14d8+42", dexMod: 1,
+  cinderWarden: { name: "Cinder Warden", label: "Cinder", ac: 17, hp: "14d8+42", dexMod: 1,
     attacks: [{ name: "Burning Longsword", bonus: 11, damage: "2d8+5" }, { name: "Burning Longsword", bonus: 11, damage: "2d8+5" }], xp: 1800, gold: "4d10",
     type: "undead", saves: { STR: 4, DEX: 1, CON: 3, WIS: 2 }, weaponResist: "silver", immune: ["fire", "poison"],
     spells: [{ name: "Cinder Burst", breath: true, save: "DEX", dc: 16, damage: "6d6", damageType: "fire", half: true, targets: "all", uses: 1, chance: 0.4 }],

@@ -178,24 +178,27 @@ export const ENCOUNTERS = {
       { weight: 1, foes: ["chimera", "helmedHorror"] },
     ],
   },
-  // Act 4, the Emberreach beyond the ash road: the wildwood's edge (beasts lie down for Claire), the land round
-  // Lastwatch, and the aeries north over the Wardens' bridge.
+  // Act 4, the Emberreach beyond the ash road: the wildwood's edge (beasts lie down for Claire; werewolves don't),
+  // the land round Lastwatch (always two: alone, they're no match for you), and the aeries north over the Wardens'
+  // bridge. Simulated at level 14 with +4 gear and the Breaking Rune: every one won, with 68-95% of your HP left
+  // (Lastwatch's 70-89%, a roc 87%, a young red dragon 67%).
   wildwood: {
     level: 13,
     chance: 0.05,
     table: [
-      { weight: 2, foes: ["giantApe"] },
       { weight: 2, foes: ["werewolf", "werewolf"] },
+      { weight: 1, foes: ["giantApe", "werewolf"] },
+      { weight: 1, foes: ["giantApe"] },
     ],
   },
   lastwatch: {
     level: 14,
     chance: 0.06,
     table: [
-      { weight: 3, foes: ["mummy", "mummy"] },
-      { weight: 2, foes: ["cinderWarden"] },
-      { weight: 2, foes: ["vampireSpawn"] },
-      { weight: 1, foes: ["cinderWarden", "mummy"] },
+      { weight: 3, foes: ["cinderWarden", "mummy"] },
+      { weight: 3, foes: ["vampireSpawn", "mummy"] },
+      { weight: 1, foes: ["vampireSpawn", "vampireSpawn"] },
+      { weight: 1, foes: ["cinderWarden", "vampireSpawn"] },
     ],
   },
   aeries: {
