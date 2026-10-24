@@ -5,6 +5,9 @@
 // Quest 10, Two Halves: the wolf leads you up a trail to Claire's grove. She won't believe Rachel is real (the dragon
 // has used voices before) until the charm, or the scar, proves it; then the dragon's brood attacks, and the twins fight
 // beside you (the first fight with two companions: Rachel comes along as a guest if she isn't with you). Claire joins.
+// Quest 11, Lastwatch: the Cinder Wardens at the gate, then Matt, the sisters' father: his story, a scene for each
+// daughter (at Lastwatch, or from you at the keep), the Breaking Rune and the Great One's true name. After it, his fire
+// is a camp, and his bridge north opens the aeries and the kobolds' diggings.
 // The roadmap's Act 4 section has the rest. No Phaser here.
 import { pay, paid } from "./rewards.js";
 import { callName } from "./hero.js";
