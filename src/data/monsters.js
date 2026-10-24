@@ -151,4 +151,17 @@ export const MONSTERS = {
   motherSallow: { name: "Mother Sallow", proper: true, ac: 17, hp: "9d8+27", dexMod: 1, attack: { name: "Claws", bonus: 6, damage: "2d8+4" }, xp: 700, gold: "6d10",
     type: "fey", saves: { STR: 4, DEX: 1, CON: 3, WIS: 2 },
     loot: [{ base: "scrollSleep", chance: 1 }, { base: "potionHealing", chance: 1 }] },
+  // Act 4, beyond the Door: the Emberreach's ash road. Like Act 3's, they hit harder (+11 or +12) and have about a third
+  // more HP than the SRD's. `immune` damage types do nothing at all (fire, to these): Rachel's Fire Bolt won't help.
+  hellHound:   { name: "Hell Hound",   ac: 15, hp: "10d8+30", dexMod: 1,
+    attack: { name: "Fiery Bite", bonus: 11, damage: "3d8+4" }, xp: 700, gold: "0",
+    type: "fiend", saves: { STR: 3, DEX: 1, CON: 2, WIS: 3 }, immune: ["fire"],
+    spells: [{ name: "Fire Breath", breath: true, save: "DEX", dc: 16, damage: "6d6", damageType: "fire", half: true, targets: "all", uses: 1, chance: 0.4 }] },
+  salamander:  { name: "Salamander",   ac: 15, hp: "14d10+42", dexMod: 2,
+    attacks: [{ name: "Spear", bonus: 12, damage: "3d6+5" }, { name: "Burning Tail", bonus: 12, damage: "4d6+5" }], xp: 1800, gold: "4d10",
+    type: "elemental", saves: { STR: 4, DEX: 2, CON: 2, WIS: 0 }, weaponResist: "magic", immune: ["fire"], vulnerable: ["cold"],
+    loot: [{ base: "potionGreaterHealing", chance: 0.4 }] },
+  fireElemental: { name: "Fire Elemental", label: "Elemental", ac: 13, hp: "16d10+48", dexMod: 3,
+    attacks: [{ name: "Touch", bonus: 11, damage: "3d6+5" }, { name: "Touch", bonus: 11, damage: "3d6+5" }], xp: 1800, gold: "0",
+    type: "elemental", saves: { STR: 0, DEX: 3, CON: 3, WIS: 0 }, weaponResist: "magic", immune: ["fire", "poison"] },
 };

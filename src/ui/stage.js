@@ -20,6 +20,7 @@ const SKY = {
   fen: { sky: 0x3a4a48, far: 0x4a4238, ground: 0x5d7a3e, groundDark: 0x3c6e70 }, // mist, dead trees, marsh and pools
   keep: { sky: 0x1f1d26, far: 0x4a4652, ground: 0x6a6574, groundDark: 0x55505e }, // grey stone, in the dark
   mountain: { sky: 0x7f9ab8, far: 0x5d6a80, ground: 0xe4ebf3, groundDark: 0xb4c2d6 }, // snowy peaks under a cold sky
+  ash: { sky: 0x3a1f1f, far: 0x4a3434, ground: 0x6e6460, groundDark: 0x554c48 }, // the Emberreach: smoke and ash
 };
 SKY.warrens = SKY.cave;
 SKY.throne = SKY.cave;
@@ -27,6 +28,8 @@ SKY.drowned = SKY.keepGrounds = SKY.fenwatch = SKY.fen;
 SKY.pass = SKY.slopes = SKY.snowfield = SKY.heights = SKY.gatehouseApproach = SKY.thorneCamp = SKY.watchtower = SKY.mountain;
 SKY.frozenChapel = SKY.gatehouse = SKY.frozenForge = SKY.barracks = SKY.door = SKY.keep;
 SKY.courtyard = SKY.chapel = SKY.armoury = SKY.tomb = SKY.keep;
+SKY.ashRoad = SKY.threshold = SKY.ash;
+SKY.wildwood = SKY.forest;
 
 /* A zone id the stage knows, or `fallback`. */
 export const stageZone = (zone, fallback = "forest") => (SKY[zone] ? zone : fallback);

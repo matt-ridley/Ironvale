@@ -60,6 +60,11 @@ export const TRAVEL_POINTS = [
     centre: { x: 40, y: 32 }, opensWhen: f => !!f.chapelLit },
   { id: "waystone3", name: "Third Waystone", kind: "camp", map: "pass", zone: "heights", at: { x: 24, y: 18 },
     centre: { x: 22, y: 18 }, opensWhen: f => !!f.waystoneBinding },
+  // Act 4: a camp on each side of the Door (by the Door in the gatehouse, and the Threshold beyond it).
+  { id: "doorCamp", name: "The Door", kind: "camp", map: "gatehouse", zone: "door", at: { x: 18, y: 4 },
+    centre: { x: 17, y: 4 }, opensWhen: f => !!f.act3Complete },
+  { id: "threshold", name: "The Threshold", kind: "camp", map: "beyond", zone: "threshold", at: { x: 32, y: 30 },
+    centre: { x: 31, y: 30 }, opensWhen: f => !!f.doorOpened },
 ];
 export const CAMP_RADIUS = 3;
 export const FIRST_HUB = "oakhollow";
@@ -90,7 +95,8 @@ export const REGIONS = [
         : "Somewhere east, past the marshes.") },
   { id: "pass", name: "The Mountain Pass", tab: "THE PASS", act: 3, map: "pass", reached: f => !!f.seenSlopes, shape: "mountains",
     hint: f => (f.metRachel ? "The old Warden road, behind Thorne's rockslide. Rachel needs three rune-stones to open it." : "High mountains to the north, past Ironvale Keep.") },
-  { id: "beyond", name: "Beyond the Door", act: 4, shape: "door", hint: () => "No one knows." },
+  { id: "beyond", name: "Beyond the Door", tab: "BEYOND", act: 4, map: "beyond", reached: f => !!f.seenThreshold, shape: "door",
+    hint: f => (f.act3Complete ? "The Emberreach, through the Door at the top of the gatehouse. Someone there knows Rachel's name." : "No one knows.") },
 ];
 export const regionOpen = (region, flags = {}) => !!region.map && !!region.reached?.(flags);
 /* The region a map belongs to (every map says, in its `region`). */

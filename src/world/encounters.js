@@ -7,6 +7,20 @@
 // start: the monsters take one look at you and bolt (runsAway), for a few XP. The rest still fight.
 
 export const ENCOUNTERS = {
+  // Beyond the Door (Act 4): the ash road. Hell hounds hunt in pairs; salamanders and fire elementals shrug off fire
+  // and ordinary steel, and come with company (alone, they're no match for you). Simulated, a level 13 hero with +4
+  // gear and any one companion wins 99-100% of these with 77-87% of their HP left.
+  ashRoad: {
+    level: 13,
+    chance: 0.05,
+    table: [
+      { weight: 3, foes: ["hellHound", "hellHound"] },
+      { weight: 2, foes: ["salamander", "hellHound"] },
+      { weight: 2, foes: ["fireElemental", "hellHound"] },
+      { weight: 1, foes: ["salamander", "fireElemental"] },
+      { weight: 1, foes: ["salamander", "salamander"] },
+    ],
+  },
   forest: {
     level: 1, // about the level you'd be on your first visit (for monsters that run away)
     chance: 0.05,

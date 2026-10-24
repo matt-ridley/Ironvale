@@ -35,19 +35,20 @@ export function spawnMonster(id, rng = Math.random) {
   // How the log names it: "the Troll", but a monster with a name of its own (`proper`) is just "Auntie Nettle".
   const the = m.proper ? m.name : `the ${m.name}`;
   return { id, name: m.name, label: m.label || m.name, the, The: the[0].toUpperCase() + the.slice(1), type: m.type, saves: { ...m.saves }, ac: m.ac, hp, maxHp: hp, dexMod: m.dexMod, attack: attacks[0], attacks, xp: m.xp, gold: m.gold,
-    vulnerable: m.vulnerable || [], resistant: m.resistant || [], weaponResist: m.weaponResist || null, ...(m.regen && { regen: { ...m.regen } }),
+    vulnerable: m.vulnerable || [], resistant: m.resistant || [], immune: m.immune || [], weaponResist: m.weaponResist || null, ...(m.regen && { regen: { ...m.regen } }),
     ...(m.spells && { spells: m.spells, spellsLeft: Object.fromEntries(m.spells.map(sp => [sp.name, sp.uses])) }),
     ...(m.guardedBy !== undefined && { guardedBy: m.guardedBy }), ...(m.hesitates && { hesitates: true }) };
 }
 
 export const WEAPON_DAMAGE = ["slashing", "piercing", "bludgeoning"];
-/* Damage after the target's weaknesses and resistances: { damage, note } where note is "weak", "resists" or null.
-   `vulnerable` types do double, `resistant` ones half; `weaponResist: "silver"` (wights) halves weapon damage unless
-   the weapon is silvered, and `weaponResist: "magic"` (gargoyles, elementals) unless it's magic (upgraded, or the
-   Wardenblade). Only monsters have these. Damage of a type that stops a monster's regeneration (a troll's fire) stops
+/* Damage after the target's weaknesses and resistances: { damage, note } where note is "weak", "resists", "immune" or
+   null. `immune` types do nothing (fire, to a hell hound), `vulnerable` ones double, `resistant` ones half;
+   `weaponResist: "silver"` (wights) halves weapon damage unless the weapon is silvered, and `weaponResist: "magic"`
+   (gargoyles, elementals) unless it's magic (upgraded, or the Wardenblade). Only monsters have these. Damage of a type that stops a monster's regeneration (a troll's fire) stops
    it next turn. */
 export function adjustDamage(target, damage, type, { silvered = false, magic = false } = {}) {
   if (!damage || !type) return { damage, note: null };
+  if (target.immune?.includes(type)) return { damage: 0, note: "immune" };
   if (target.regen?.stop?.includes(type)) target.regenBlocked = true;
   if (target.vulnerable?.includes(type)) return { damage: damage * 2, note: "weak" };
   const weaponProof = WEAPON_DAMAGE.includes(type) && ((target.weaponResist === "silver" && !silvered) || (target.weaponResist === "magic" && !magic));
@@ -662,4 +663,4 @@ export function say(battle, type, text, extra = {}) {
 export const rollText = (r, bonus) => `${r.natural} ${bonus < 0 ? "-" : "+"} ${Math.abs(bonus)}${r.extra ? ` + ${r.extra}` : ""} = ${r.total} vs AC ${r.targetAc}.`;
 export const hitText = (r, onYou) =>
   !r.hit ? "Miss." : `${r.crit ? "Critical hit!" : "Hit!"} ${r.damage} damage${onYou ? " to you" : ""}${NOTES[r.note] || ""}.`;
-const NOTES = { weak: " (it's weak to that!)", resists: " (it shrugs off half)" };
+const NOTES = { weak: " (it's weak to that!)", resists: " (it shrugs off half)", immune: " (it doesn't even notice)" };

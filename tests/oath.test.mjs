@@ -136,7 +136,7 @@ test("the end of Act 3: Thorne's last rune cracks the Door, Colleen asks for you
     seenFen: true, fenReported: true, metSallow: true, causewayRaised: true, keepGateOpened: true, tombOpen: true, seenTomb: true, varricDefeated: true,
     signetReturned: true, bladeReforged: true, keepHome: true, heardTremor: true, metRachel: true, rockslideOpen: true, metColleen: true, waystoneIron: true,
     waystoneCall: true, bindingStolen: true, bindingRecovered: true, wardensRoad: true, gatehouseOpen: true, runeDoor3: true, thorneDefeated: true };
-  assert.equal(objective({ ...story, ...flags }), "ACT 3 COMPLETE. Act 4 is coming: beyond the Door");
+  assert.equal(objective({ ...story, ...flags }), "Go home to Ironvale Keep: Hild has news");
   assert.ok(questLog(flags).find(q => q.id === "door").done);
   assert.match(view(startConversation(SCRIPTS.greatDoor, s, { object: obj("gatehouse", "greatDoor") })).text, /dawn-gold/);
 });

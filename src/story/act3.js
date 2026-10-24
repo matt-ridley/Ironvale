@@ -955,8 +955,9 @@ export const ACT3_SCRIPTS = {
   },
 
   // The Door itself. Once Thorne is dealt with, facing it ends Act 3: his last rune, the crack, the eye, and the Oath.
+  // In Act 4, laying the Wardenblade against it opens it (quest 9: then it's a way through, beyond.js).
   greatDoor: {
-    start: s => (s.flags.oathSworn ? "held" : s.flags.gatehouseDone ? "crack" : "look"),
+    start: s => (s.flags.oathSworn ? (s.flags.act3Complete && !s.flags.doorOpened ? "open" : "held") : s.flags.gatehouseDone ? "crack" : "look"),
     nodes: {
       look: { text: "The Door. Black iron, taller than the keep, carved with every rune the Wardens ever knew. It's cold to the touch. And from the other side, very faintly, something is breathing." },
       crack: {
@@ -976,6 +977,14 @@ export const ACT3_SCRIPTS = {
       },
       swear: { enter: (s, ctx) => ctx.emit({ type: "oath" }) },
       held: { text: s => `The Door, whole again, its runes glowing ${{ iron: "steel-grey", storm: "storm-blue", dawn: "dawn-gold" }[s.flags.oath] || "softly"}. It's warm to the touch now. On the other side, something is waiting.` },
+      open: {
+        text: s => `The Door, warm under your hand. Its runes glow ${{ iron: "steel-grey", storm: "storm-blue", dawn: "dawn-gold" }[s.flags.oath] || "softly"}, but they flicker like a fire about to go out. On the other side, something is pacing.`,
+        choices: [{ label: "Lay the Wardenblade on it", to: "swing" }, { label: "Not yet", to: null }],
+      },
+      swing: {
+        enter: s => { s.flags.doorOpened = true; s.flags.q9Started = true; },
+        text: "You lay the blade flat against the iron. Iron, the Call, the Binding: the three runes light along its edge, and the Door's runes answer them, one by one. With a groan you feel in your teeth, the Door swings open. Heat rolls out, and red light, and the smell of ash.",
+      },
     },
   },
 

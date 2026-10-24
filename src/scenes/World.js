@@ -16,6 +16,7 @@ import { rollEncounter, runsAway, RUN_AWAY_XP } from "../world/encounters.js";
 import { actOf } from "../story/hero.js";
 import { remarkFor } from "../story/talks.js";
 import { zoneEvent } from "../story/act3.js";
+import { act4Event } from "../story/act4.js";
 import { COMPANIONS } from "../rules/party.js";
 import { MONSTERS } from "../data/monsters.js";
 import { gainXp, needsFightingStyle } from "../rules/character.js";
@@ -350,7 +351,7 @@ export class World extends Phaser.Scene {
       this.zoneId = zone.id;
       markSeen(state.flags, zone.id); // for the map
       this.say("banner", zone.name, 1800);
-      const event = zoneEvent(state, zone.id);
+      const event = zoneEvent(state, zone.id) || act4Event(state, zone.id);
       if (event?.note) { this.time.delayedCall(900, () => this.say("note", event.note, 3600)); this.syncObjects(); }
       if (event?.script) this.time.delayedCall(700, () => this.openOverlay("Dialogue", { script: event.script }));
       if (!event) {

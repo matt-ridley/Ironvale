@@ -59,6 +59,13 @@ export const TILES = {
   "+": { name: "ropebridge", solid: false },
   "p": { name: "snowpine", solid: true },
   "j": { name: "snowrock", solid: true },
+  // Beyond the Door: the Emberreach (Act 4)
+  "a": { name: "ash", solid: false },
+  "e": { name: "cinders", solid: false }, // still glowing
+  "o": { name: "obsidian", solid: false },
+  "l": { name: "lava", solid: true },
+  "z": { name: "burnttree", solid: true },
+  "W": { name: "wildtree", solid: true }, // the wildwood's giant trees
 };
 
 export const DIRS = {
@@ -86,11 +93,12 @@ export function createMap(def) {
 
 /* Objects on the map now, given the quest flags: `goneWhen` takes one away once its flag is set, `shownWhen` only
    puts one there once its flag is set (the Iron Signet, after the Goblin King falls). Either can be a list of flags,
-   which all have to be set; `goneWhenAny` takes one away once any of its flags is set. */
+   which all have to be set; `goneWhenAny` takes one away once any of its flags is set. An object that's `walkable`
+   is only a picture (the open Door): you walk onto it as if it weren't there. */
 const allSet = (flags, f) => (Array.isArray(f) ? f.every(k => flags[k]) : !!flags[f]);
 export const activeObjects = (map, flags = {}) => map.objects.filter(o => !(o.goneWhen && allSet(flags, o.goneWhen)) && !(o.shownWhen && !allSet(flags, o.shownWhen))
   && !o.goneWhenAny?.some(k => flags[k]));
-export const objectAt = (map, x, y, flags = {}) => activeObjects(map, flags).find(o => o.x === x && o.y === y) || null;
+export const objectAt = (map, x, y, flags = {}) => activeObjects(map, flags).find(o => o.x === x && o.y === y && !o.walkable) || null;
 
 export const inBounds = (map, x, y) => x >= 0 && y >= 0 && x < map.width && y < map.height;
 export const tileAt = (map, x, y) => (inBounds(map, x, y) ? TILES[map.rows[y][x]] : null);

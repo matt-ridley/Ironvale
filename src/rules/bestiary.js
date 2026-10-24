@@ -7,7 +7,7 @@ const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willo
   courtyard: "Ironvale Keep's courtyard", chapel: "Ironvale Keep's chapel", armoury: "Ironvale Keep's armoury",
   slopes: "The pass's slopes", snowfield: "The snowfield", heights: "The heights", watchtower: "The old watchtower", thorneCamp: "Thorne's camp",
   gatehouseApproach: "Below the gatehouse", frozenChapel: "The Frozen Chapel", gatehouse: "The Wardens' Gatehouse",
-  frozenForge: "The Frozen Forge", barracks: "The Wardens' Barracks" };
+  frozenForge: "The Frozen Forge", barracks: "The Wardens' Barracks", ashRoad: "The ash road, beyond the Door" };
 const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall", motherSallow: "Her hut in Greywater Fen", lordVarric: "His tomb, under Ironvale Keep",
   kobold: "Digging in the Deep Warrens", crownedSallow: "The drowned causeway, collecting tolls", nightHag: "A crooked hut on the pass's slopes",
   thorne: "At the Door, at the top of the gatehouse" }; // bosses (and Pip's kobolds) don't roam
@@ -47,6 +47,9 @@ export const LORE = {
   thorne: "Aldric Thorne, scholar of the Wardens' runes, who learned to lift them out of the stone and use them. Something behind the Door has been whispering to him.",
   kobold: "A little rust-red lizard-dog with a pick and a candle on its head. It digs for \"the Great One beyond the mountain\", and won't say who that is.",
   motherSallow: "A marsh hag with weed in her hair and a laugh like a drain. She keeps the causeway under water, and she loves a bargain.",
+  hellHound: "A black hound the size of a pony, smoke curling from its jaws. It hunts in pairs, breathes fire, and fire can't touch it.",
+  salamander: "A long red serpent with a man's arms and a spear, its tail glowing like a poker in the forge. Plain steel only half-bites it; cold bites hard.",
+  fireElemental: "A man-shaped blaze that walks. Everything it touches catches. Fire does nothing to it, and ordinary weapons little more.",
 };
 
 /* Where a monster turns up, from the encounter tables. */
@@ -81,6 +84,7 @@ export function bestiaryEntries(bestiary = {}) {
       stats: [
         `AC ${m.ac}   HP ${m.hp} (about ${average(m.hp)})`,
         ...attacks.map(a => `${a.name}: +${a.bonus} to hit, ${a.damage} damage${a.onHit ? ` (${a.onHit.save} save DC ${a.onHit.dc} or ${a.onHit.condition})` : ""}`),
+        ...(m.immune ? [`Immune to ${m.immune.join(" and ")}`] : []),
         `${m.xp} XP${m.gold !== "0" ? `, ${m.gold} gold` : ""}`,
       ],
     };
