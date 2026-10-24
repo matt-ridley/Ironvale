@@ -874,3 +874,13 @@ MONSTER_ART.fireGiant = { rows: MONSTER_ART.stoneGiant.rows, colours: { ...MONST
 MONSTER_ART.clayGolem = { rows: MONSTER_ART.earthElemental.rows, colours: { ...MONSTER_ART.earthElemental.colours, r: "#a8643c", R: "#7a4a2a", d: "#4a2a18", e: "#ffd060", u: "#ffb040", w: "#fff0c0", i: "#ffd090" } };
 MONSTER_ART.stoneGolem = { rows: MONSTER_ART.shieldGuardian.rows, colours: { ...MONSTER_ART.shieldGuardian.colours, i: "#6e6e74", s: "#9a9aa0", d: "#46464c", u: "#ff9a3a", w: "#ffe0a0" } };
 MONSTER_ART.lostForge = { rows: SPRITES.frozenForge, colours: { ...PALETTE, S: "#ff8a2a", i: "#4a4a55" } };
+
+// Vorthax, the Great One: the young red dragon's drawing half as big again, darker, with gold horns and a molten belly.
+const enlarge = (rows, f) => Array.from({ length: Math.round(rows.length * f) }, (_, j) => {
+  const row = rows[Math.floor(j / f)];
+  return Array.from({ length: Math.round(row.length * f) }, (_, i) => row[Math.floor(i / f)]).join("");
+});
+MONSTER_ART.vorthaxSky = { rows: enlarge(MONSTER_ART.youngRedDragon.rows, 1.5),
+  colours: { ...MONSTER_ART.youngRedDragon.colours, r: "#8e1a12", R: "#5a0e08", w: "#6e140c", W: "#a8301c", y: "#ff8a2a", Y: "#ffd060", h: "#e8b923" } };
+MONSTER_ART.vorthaxGround = MONSTER_ART.vorthaxHoard = MONSTER_ART.vorthaxSky;
+MONSTER_ART.vorthaxBrood = MONSTER_ART.youngRedDragon; // its brood at its side

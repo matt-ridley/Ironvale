@@ -64,7 +64,8 @@ export function attackMods(battle, attacker, target, { melee = true } = {}) {
   const on = active(battle, target), by = active(battle, attacker);
   const mods = {
     advantage: on.some(c => c.attackedWith === "advantage") || by.some(c => c.attacksWith === "advantage"),
-    disadvantage: by.some(c => c.attacksWith === "disadvantage") || on.some(c => c.attackedWith === "disadvantage"),
+    disadvantage: by.some(c => c.attacksWith === "disadvantage") || on.some(c => c.attackedWith === "disadvantage")
+      || (melee && typeof target === "number" && !!battle.monsters?.[target]?.flying), // a flyer is hard to reach with a blade
     critOnHit: melee && on.some(c => c.meleeCrits),
     bonusDice: bonusDice(battle, attacker),
   };

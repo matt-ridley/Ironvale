@@ -90,7 +90,12 @@ export class Dialogue extends Phaser.Scene {
     this.done = true;
     const battle = this.events_.find(e => e.type === "battle");
     const travel = this.events_.find(e => e.type === "travel");
-    if (battle) {
+    const credits = this.events_.find(e => e.type === "credits"); // the ending (Act 4)
+    if (credits) {
+      this.scene.stop("World");
+      this.scene.stop("Hud");
+      this.scene.start("Credits");
+    } else if (battle) {
       this.scene.stop("World");
       this.scene.start("Battle", battle);
     } else if (travel) {

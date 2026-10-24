@@ -12,6 +12,8 @@
 // the shrine of the Dawn), Claire's at Matt's fire, their banners in the keep, and each Oath's path to its vault.
 // Quest 12, the Emberdeep: the dragon's mountain, through the golem hall or round it (Dunstan's red tunnel, Snik's
 // kobold tunnel), the Wardens' lost forge (Brannoc, and the Wardenblade's final form), and the hoard's doors.
+// The ending: Vorthax in three fights in a row (the Sky, the Ground, the Hoard) with tag-in between, Colleen's last
+// appearance, the keep's hall (Warden of Ironvale), the credits, and free play.
 // The roadmap's Act 4 section has the rest. No Phaser here.
 import { pay, paid } from "./rewards.js";
 import { callName } from "./hero.js";
@@ -21,7 +23,7 @@ import { DRAGON_ARROWS } from "../rules/tactics.js";
 import { learnRune } from "../rules/character.js";
 import { makeItem } from "../rules/items.js";
 
-const RACHEL = "RACHEL", HILD = "HILD", PIP = "PIP", KOBOLD = "KOBOLD", CLAIRE = "CLAIRE", MATT = "MATT", MEGAN = "MEGAN", ROBYN = "ROBYN", DUNSTAN = "DUNSTAN", BRANNOC = "BRANNOC";
+const COLLEEN = "WARDEN COLLEEN", RACHEL = "RACHEL", HILD = "HILD", PIP = "PIP", KOBOLD = "KOBOLD", CLAIRE = "CLAIRE", MATT = "MATT", MEGAN = "MEGAN", ROBYN = "ROBYN", DUNSTAN = "DUNSTAN", BRANNOC = "BRANNOC";
 export const Q9_REWARD = { gold: 500, xp: 10000 };
 export const Q10_REWARD = { gold: 300, xp: 6000 };
 export const BROOD_FIGHT = ["youngRedDragon", "fireElemental"];
@@ -66,6 +68,39 @@ const hasItem = (s, base) => s.hero.inventory.some(i => i.base === base);
 export const canReadForge = s => hasItem(s, "twinCharm") || withCompanion(s, "rachel") || withCompanion(s, "claire");
 /* Past the golem hall: through the golems, round by Dunstan's red tunnel, or in by Snik's. */
 export const pastGolems = f => !!(f.golemsBeaten || f.redTunnel || f.snikWay);
+
+// The last fight (step 27): Vorthax in three phases, one battle each, HP carried over, no rest between.
+export const VORTHAX_PHASES = [
+  { id: "sky", foes: ["vorthaxSky"], flag: "vorthaxSky", music: "dragon" },
+  { id: "ground", foes: ["vorthaxGround", "vorthaxBrood"], flag: "vorthaxGround", music: "dragon2" },
+  { id: "hoard", foes: ["vorthaxHoard"], flag: "vorthaxDefeated", music: "dragon3" },
+];
+
+const SISTER_NAMES = { claire: "Claire", rachel: "Rachel", megan: "Megan", robyn: "Robyn" };
+/* Who can stand beside you against Vorthax: the twins, and Megan and Robyn once they've pledged. */
+export const pledgedTeam = f => ["claire", "rachel", "megan", "robyn"].filter(id => (id === "claire" ? f.claireJoined : id === "rachel" ? f.rachelJoined : f[`${id}Pledged`]));
+const PHASE_SCRIPTS = ["vorthaxWing", "vorthaxLast", "vorthaxFalls"];
+const PHASE_NODES = ["sky", "ground", "hoardTeam"];
+/* The nodes that pick who's beside you for phase `n` (one sister, then a second: the screen fits four answers), and
+   start it. Only your pledged team can be picked. */
+function phaseNodes(n, question) {
+  const phase = VORTHAX_PHASES[n], ids = Object.keys(SISTER_NAMES);
+  const inTeam = (s, id) => pledgedTeam(s.flags).includes(id);
+  return {
+    [PHASE_NODES[n]]: {
+      text: question,
+      choices: ids.map(a => ({ label: SISTER_NAMES[a], if: s => inTeam(s, a), to: `${phase.id}_${a}` })),
+    },
+    ...Object.fromEntries(ids.map(a => [`${phase.id}_${a}`, {
+      text: `${SISTER_NAMES[a]}, and who else?`,
+      choices: ids.filter(b => b !== a).map(b => ({ label: SISTER_NAMES[b], if: s => inTeam(s, b), to: `${phase.id}_${a}_${b}` })),
+    }])),
+    ...Object.fromEntries(ids.flatMap(a => ids.filter(b => b !== a).map(b => [`${phase.id}_${a}_${b}`, {
+      enter: (s, ctx) => ctx.emit({ type: "battle", foes: [...phase.foes], party: [a, b], winFlag: phase.flag, afterWin: PHASE_SCRIPTS[n], music: phase.music, zone: "hoardDoors",
+        noFlee: true, trueName: !!s.flags.trueName, rally: !!s.flags.clairePledged, bindFirst: phase.id === "hoard" && !!s.flags.thorneBinding }),
+    }]))),
+  };
+}
 
 export const untoldSister = s => (s.flags.q11Done && SISTERS.find(id => s.flags[`${id}Joined`] && !s.flags[`${id}Heard`])) || null;
 const withClaire = s => s.hero.companion?.id === "claire";
@@ -793,9 +828,10 @@ export const ACT4_SCRIPTS = {
     },
   },
 
-  // The hoard's doors: only the Wardenblade's final form wakes their runes. Opening them ends quest 12.
+  // The hoard's doors: only the Wardenblade's final form wakes their runes. Opening them ends quest 12; going in is the
+  // last fight (Matt holds the door behind you).
   hoardDoor: {
-    start: s => (s.flags.q12Done ? "ajar" : s.hero.bladeForm >= 3 ? "open" : "sealed"),
+    start: s => (s.flags.vorthaxDefeated ? "quiet" : s.flags.q12Done ? "ajar" : s.hero.bladeForm >= 3 ? "open" : "sealed"),
     nodes: {
       sealed: {
         text: "The hoard's doors: two leaves of black iron as tall as the keep's walls, Warden runes down one side and kobold scratchings down the other. You lay the Wardenblade against them, and the runes stir and go dark again. Something the blade needs is missing. (The Wardens' lost forge?)",
@@ -803,10 +839,109 @@ export const ACT4_SCRIPTS = {
       open: {
         enter: (s, ctx) => { s.flags.q12Done = true; pay(s, ctx, Q12_REWARD); },
         text: (s, ctx) => `You lay the Wardenblade against the doors, and every Warden rune on them lights at once. They grind open a hand's width, and the heat that comes out of the gap could melt a sword. In the gold-red dark beyond, something enormous breathes in, and stops. ${paid(ctx, Q12_REWARD)} QUEST COMPLETE: The Emberdeep.`,
-        to: "next",
+        to: "ajar",
       },
-      next: { text: "(The last part of Act 4, the Great One, is coming.)" },
-      ajar: { text: "Through the gap in the hoard's doors: heat, gold-light, and breathing. (The last part of Act 4 is coming.)" },
+      ajar: {
+        text: "Through the gap in the hoard's doors: heat, gold-light, and breathing. Once you go in, there's no coming back out until it's over. (Rest first, and fill your pack.)",
+        choices: [{ label: "Go in", to: "matt" }, { label: "Not yet", to: null }],
+      },
+      matt: {
+        enter: s => { s.flags.vorthaxSky = false; s.flags.vorthaxGround = false; }, // the fight starts again from the sky
+        speaker: MATT,
+        text: s => `Matt limps up beside you with his spear, and the grey wolf, and twenty of its pack at his back.${s.flags.brannocPledged ? " Brannoc comes stamping up behind them with a hammer on each shoulder." : ""} "Go on. Nothing gets in behind you while I'm standing in this door. Colleen held the other one for a hundred years; I can hold this one for an afternoon."`,
+        to: "sky",
+      },
+      ...phaseNodes(0, "Who goes in beside you? (Between each part of the fight, you can tag in whoever's freshest. There's no rest.)"),
+      quiet: { text: "The hoard is quiet: a mountain of gold under a dead dragon, cooling. The Emberreach's fires are out." },
+    },
+  },
+  // After the Sky: a wing tears and Vorthax comes down, with one of its brood.
+  vorthaxWing: {
+    start: "fall",
+    nodes: {
+      fall: {
+        text: "A wing tears with a sound like a sail splitting. Vorthax comes down out of the dark and hits the hoard's floor so hard the gold jumps, and out of the shadows behind it comes one of its brood, scorched and hissing.",
+        to: "ground",
+      },
+      ...phaseNodes(1, "Tag in? Who stands beside you now?"),
+    },
+  },
+  // After the Ground: back to its hoard, where the floor fights for it, and Thorne's binding.
+  vorthaxLast: {
+    start: "hoard",
+    nodes: {
+      hoard: {
+        text: s => `Vorthax drags itself back up onto its hoard, bleeding fire, and the floor round it starts to crack and glow. "WARDEN," it says, in a voice like Colleen's, and then, when that doesn't work, in its own.${s.flags.thorneBinding ? " You remember Thorne's pattern, drawn twice in the dust of his cell." : ""}`,
+        to: "hoardTeam",
+      },
+      ...phaseNodes(2, "Tag in? This is the last of it."),
+    },
+  },
+  // Vorthax falls; the fires go out; Colleen, one last time; and home.
+  vorthaxFalls: {
+    start: "fall",
+    nodes: {
+      fall: {
+        text: "Vorthax tries to rise one last time, and can't. The fire goes out of its eyes, then out of the hoard, and then, far away, out of the whole Emberreach, one fire after another, like candles at the end of a feast.",
+        to: "light",
+      },
+      light: { text: "In the quiet, a light comes up the Emberdeep's stairs behind you: the Door's own light, all the way from the gatehouse. Someone is standing in it.", to: "colleen" },
+      colleen: { speaker: COLLEEN, text: "\"Matt.\" Warden Colleen, the last of the Wardens, steps out of the light. Matt drops his spear.", to: "matt" },
+      matt: { speaker: MATT, text: "\"You're late,\" he says, and his voice cracks right down the middle. \"A hundred years late.\"", to: "girls" },
+      girls: {
+        speaker: COLLEEN,
+        text: "\"I was holding a door.\" She looks at her daughters, all four of them, and they look back. \"Rachel. I knew you at the very first waystone: your father's frown, and my books. I kept quiet so you'd finish what you came to do. Megan. Robyn. Claire.\" She says each name like she's been practising it for a hundred years.",
+        to: "hero",
+      },
+      hero: {
+        speaker: COLLEEN,
+        text: "She turns to you last. \"My blood. I told you to hold it better than I did.\" She smiles. \"You did.\" Then her light goes out, gently, like a candle at dawn, and she's gone for good.",
+        to: "home",
+      },
+      home: {
+        enter: (s, ctx) => ctx.emit({ type: "travel", map: "keep", at: { x: 19, y: 22 } }),
+        text: "The seal isn't needed any more. You all walk out of the Emberdeep together, across the ash, and back through the Door, and it stays open behind you.",
+      },
+    },
+  },
+  // The ending, in the keep's hall: everyone, and the keys.
+  ending: {
+    start: "hall",
+    nodes: {
+      hall: {
+        text: s => {
+          const f = s.flags, who = ["Matt, in Colleen's old chair, with all four of his daughters round him", "Hild", "Brannoc, who has already challenged Matt to an arm wrestle"];
+          if (f.matthewFound) who.push(f.meganPledged ? "Corwin, hugging Dunstan and pretending he isn't crying" : "Corwin, Megan's da");
+          if (f.refugeesHelped) who.push("Grub and Snik, and three more goblins pretending they were invited");
+          who.push(f.pipRewarded ? "and Pip, with a real sword at last (a very small one)" : "and Pip, who got in through the kitchen");
+          return `Everyone is in the keep's hall: ${who.join("; ")}.`;
+        },
+        to: "keys",
+      },
+      keys: {
+        speaker: HILD,
+        enter: s => { s.flags.act4Complete = true; },
+        text: s => `Hild comes forward with the keep's great ring of keys and puts it in your hands. "Ironvale's had a steward long enough, ${callName(s.hero) || "my lord"}. It needs a Warden." The hall roars.`,
+        to: "title",
+      },
+      title: { text: "You are the WARDEN OF IRONVALE. ACT 4 COMPLETE.", to: "credits" },
+      credits: {
+        enter: (s, ctx) => ctx.emit({ type: "credits" }),
+        text: "(And after the credits, the Emberreach is yours: the roads, the bounty boards, the training yards and your friends are all still there.)",
+      },
+    },
+  },
+  // Matt at the keep, after the ending: Colleen's old room is his.
+  mattHome: {
+    start: "hello",
+    nodes: {
+      hello: {
+        speaker: MATT,
+        enter: s => { s.flags.mattHomeVisits = ((s.flags.mattHomeVisits ?? -1) + 1) % 3; },
+        text: s => ["\"Colleen's room. She left her boots under the bed. A hundred years, and they're still there. I've left them.\"",
+          "\"The girls come and go. I sit in the hall and pretend I'm not counting.\"",
+          "\"Brannoc wants a rematch. I'm letting him think he'll win.\""][s.flags.mattHomeVisits],
+      },
     },
   },
 
@@ -843,6 +978,7 @@ export const ACT4_SCRIPTS = {
    at the keep, and the far side of the Door the first time. Returns { script } or null. */
 export function act4Event(state, zoneId) {
   const f = state.flags;
+  if (zoneId === "courtyard" && f.vorthaxDefeated && !f.act4Complete) return { script: "ending" };
   if (zoneId === "courtyard" && f.act3Complete && !f.q9Started) return { script: "doorNews" };
   if (zoneId === "lastwatch" && f.q10Done && !f.seenLastwatch) {
     f.seenLastwatch = true;

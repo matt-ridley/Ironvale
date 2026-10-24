@@ -1244,7 +1244,7 @@ export function sideObjective(flags, state = {}) {
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
    counted until it can be finished. */
 export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported, flags.causewayRaised, flags.signetReturned,
-  flags.rockslideOpen, flags.wardensRoad, flags.gatehouseDone, flags.oathSworn, flags.q9Done, flags.q10Done, flags.q11Done, flags.q12Done].filter(Boolean).length;
+  flags.rockslideOpen, flags.wardensRoad, flags.gatehouseDone, flags.oathSworn, flags.q9Done, flags.q10Done, flags.q11Done, flags.q12Done, flags.act4Complete].filter(Boolean).length;
 
 /* The line under the HP box saying what to do next. */
 export function objective(flags) {
@@ -1302,7 +1302,9 @@ export function objective(flags) {
     if (!flags.bladeFinalForm) return "Have Brannoc finish the Wardenblade at the lost forge";
     if (!flags.hoardGuardsBeaten) return "Beat the hoard's guards, at the top of the Emberdeep";
     if (!flags.q12Done) return "Open the hoard's doors";
-    return "The Great One (the last part of Act 4 is coming)";
+    if (!flags.vorthaxDefeated) return "Go through the hoard's doors, and face the Great One";
+    if (!flags.act4Complete) return "Go home to Ironvale Keep";
+    return "The Emberreach is yours: free play";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";

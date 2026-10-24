@@ -66,6 +66,27 @@ export const TRACKS = {
     bass: "D1 - - - - - - - | D1 - - - - - - - | Bb0 - - - - - - - | A0 - - - - - - - | D1 - - - - - - - | Eb1 - - - - - - - | G0 - - - - - - - | A0 - - - - - - -",
     drums: "k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . . s . . . | k . . . . . . . | k . . s s . h .",
   },
+  // Vorthax, in three parts, one for each phase of the last fight: the Sky (fast and high, the beat never lets up), the
+  // Ground (heavier, a bass that pounds on every other step) and the Hoard (slow, in the Emberdeep's hot key, with the
+  // drums breaking into a gallop at the end of each phrase).
+  dragon: {
+    bpm: 150, lead: "sawtooth", echo: 0.3,
+    melody: "D5 - A4 - D5 - F5 - | E5 - D5 - C5 - A4 - | Bb4 - D5 - F5 - Bb5 - | A5 - - - . . . . | D5 - A4 - D5 - F5 - | G5 - F5 - E5 - D5 - | C5 - E5 - G5 - E5 - | D5 - - - . . . .",
+    bass: "D2 D2 A1 A1 D2 D2 A1 A1 | C2 C2 G1 G1 C2 C2 G1 G1 | Bb1 Bb1 F1 F1 Bb1 Bb1 F1 F1 | A1 A1 E1 E1 A1 A1 E1 E1 | D2 D2 A1 A1 D2 D2 A1 A1 | G1 G1 D2 D2 G1 G1 D2 D2 | C2 C2 G1 G1 C2 C2 G1 G1 | D2 D2 A1 A1 D2 . . .",
+    drums: "k h s h k h s h | k h s h k k s h | k h s h k h s h | k h s s k s s s | k h s h k h s h | k h s h k k s h | k h s h k h s h | k s k s k s k .",
+  },
+  dragon2: {
+    bpm: 120, lead: "square", echo: 0.35,
+    melody: "D4 - - - F4 - E4 - | D4 - C4 - D4 - - - | Bb3 - - - C4 - D4 - | A3 - - - - - . . | D4 - - - F4 - G4 - | A4 - G4 - F4 - E4 - | F4 - E4 - D4 - C#4 - | D4 - - - - - . .",
+    bass: "D1 - D1 - D1 - D1 - | D1 - D1 - D1 - D1 - | Bb0 - Bb0 - Bb0 - Bb0 - | A0 - A0 - A0 - A0 - | D1 - D1 - D1 - D1 - | F1 - F1 - F1 - F1 - | G0 - G0 - A0 - A0 - | D1 - D1 - D1 - D1 -",
+    drums: "k . s . k k s . | k . s . k k s . | k . s . k k s . | k . s . k s s s | k . s . k k s . | k . s . k k s . | k . s . k k s . | k s k s k s k .",
+  },
+  dragon3: {
+    bpm: 96, lead: "sawtooth", echo: 0.5,
+    melody: "D5 - Eb5 - D5 - C5 - | Bb4 - A4 - - - - - | D5 - Eb5 - F5 - Eb5 - | D5 - - - - - . . | A4 - Bb4 - C5 - D5 - | Eb5 - D5 - C5 - Bb4 - | A4 - G4 - A4 - Bb4 - | A4 - - - - - . .",
+    bass: "D1 - - - D1 - - - | Eb1 - - - Eb1 - - - | D1 - - - D1 - - - | A0 - - - A0 - - - | F1 - - - F1 - - - | Eb1 - - - Eb1 - - - | G0 - - - G0 - - - | A0 - - - A0 - - -",
+    drums: "k . . h k . s h | k . . h k . s h | k . . h k . s h | k . k h k s s s | k . . h k . s h | k . . h k . s h | k . . h k . s h | k s k s k s k s",
+  },
   // Aldric Thorne: fast and wrong-footed, the pass's bells turned sour.
   thorne: {
     bpm: 168, lead: "sawtooth", echo: 0.3,

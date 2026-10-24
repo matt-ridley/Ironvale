@@ -35,7 +35,7 @@ export const EMBERDEEP = {
     // The hoard's guards in the antechamber's door, and the hoard's doors.
     { id: "hoardGiant", x: 19, y: 7, sprite: "fireGiant", script: "hoardGuards", goneWhen: "hoardGuardsBeaten" },
     { id: "hoardHound", x: 20, y: 7, sprite: "hellHound", script: "hoardGuards", goneWhen: "hoardGuardsBeaten" },
-    { id: "hoardDoor", x: 19, y: 3, sprite: "greatDoor", script: "hoardDoor", still: true },
+    { id: "hoardDoor", x: 19, y: 3, sprite: "greatDoor", name: "THE HOARD'S DOORS", script: "hoardDoor", still: true },
   ],
   rows: [
   "%%%%%%%%%%%%KKKKKKKKKKKKKKKK%%%%%%%%%%%%",

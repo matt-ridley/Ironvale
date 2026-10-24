@@ -12,7 +12,7 @@
 import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { createBattle, playerAction, isPlayerTurn, isAllyTurn, isReacting, reactAction, allyTurnKey, allyKeys, partyKeys, isAllyKey, combatant } from "../rules/combat.js";
 import { readScroll } from "../rules/magic.js";
-import { allyAction, castable, canFlyby, quillFlyby, canVolley, afflicted } from "../rules/tactics.js";
+import { allyAction, castable, canFlyby, quillFlyby, canVolley, afflicted, canRally } from "../rules/tactics.js";
 import { TACTICS, secondCompanion, partyRecords, shapesLeft } from "../rules/party.js";
 import { MONSTER_SCALE } from "../art/monsters.js";
 import { groupPack, baseOf } from "../rules/items.js";
@@ -48,13 +48,14 @@ export class Battle extends Phaser.Scene {
     this.music = data.music || null; // a boss's own track (Thorne's)
     this.second = data.second || null; // a second companion's id
     this.party = data.party || null; // or the fight's own party (ids)
+    this.dragon = { noFlee: !!data.noFlee, trueName: !!data.trueName, rally: !!data.rally, bindFirst: !!data.bindFirst }; // Vorthax's fights
     this.zone = stageZone(data.zone);
   }
 
   create() {
     uiCamera(this);
     this.battle = createBattle(state.hero, this.foes, Math.random, { surviveRounds: this.surviveRounds, second: this.second && secondCompanion(state.hero, this.second),
-      allies: this.party && partyRecords(state.hero, this.party) });
+      allies: this.party && partyRecords(state.hero, this.party), ...this.dragon });
     // Phaser reuses this scene object for every fight, so reset everything here.
     this.busy = false;
     this.leaving = false;
@@ -186,12 +187,13 @@ export class Battle extends Phaser.Scene {
         a.casting ? { label: "SPELLS", on: hers && castable(b, k).length > 0, run: () => this.showPage("allySpells") }
           : a.src?.volley ? { label: "VOLLEY", on: hers && canVolley(b, k), run: () => this.actAlly({ type: "volley" }) } : null,
         a.id === "rachel" ? { label: "FLYBY", on: hers && canFlyby(b), run: () => this.flyby() }
-          : a.wildShape ? { label: "SHAPE", on: hers && !a.form && (shapesLeft(a.src) > 0 || !!afflicted(b)), run: () => this.showPage("allyShapes") } : null,
+          : a.wildShape ? { label: "SHAPE", on: hers && ((!a.form && (shapesLeft(a.src) > 0 || !!afflicted(b))) || canRally(b, k)), run: () => this.showPage("allyShapes") } : null,
       ];
     }
     if (page === "allyShapes") { // Claire: Wild Shape, or calm a friend who's frightened or held
       const shape = id => ({ label: id === "bear" ? `BEAR x${shapesLeft(a.src)}` : "CAT", on: hers && !a.form && shapesLeft(a.src) > 0, run: () => this.actAlly({ type: "shape", form: id }) });
-      return [shape("bear"), shape("cat"), { label: "CALM", on: hers && !a.form && !!afflicted(b), run: () => this.actAlly({ type: "calm" }) }, null, null, back("ally")];
+      const rally = b.rally ? { label: "RALLY", on: hers && canRally(b, k), run: () => this.actAlly({ type: "rally" }) } : null; // her pledge, against Vorthax
+      return [shape("bear"), shape("cat"), { label: "CALM", on: hers && !a.form && !!afflicted(b), run: () => this.actAlly({ type: "calm" }) }, rally, null, back("ally")];
     }
     if (page === "skills") {
       const surge = { label: "SURGE", on: mine && hasFeature(h, "actionSurge") && h.actionSurge && !b.surging, run: () => this.act({ type: "actionSurge" }) };
@@ -223,7 +225,7 @@ export class Battle extends Phaser.Scene {
       { label: "DEFEND", on: mine, run: () => this.act({ type: "defend" }) },
       { label: `ITEMS x${this.items()}`, on: mine && this.items() > 0, run: () => this.showPage("items") },
       { label: "2ND WIND", on: mine && h.hp < h.maxHp && h.secondWind, run: () => this.act({ type: "secondWind" }) },
-      { label: "FLEE", on: mine, run: () => this.act({ type: "flee" }) },
+      { label: "FLEE", on: mine && !b.noFlee, run: () => this.act({ type: "flee" }) },
       runeSlots(h)
         ? { label: "SKILLS", on: mine, run: () => this.showPage("skills") } // Action Surge and the Warden's runes
         : { label: "SURGE", on: mine && hasFeature(h, "actionSurge") && h.actionSurge && !b.surging, run: () => this.act({ type: "actionSurge" }) },
@@ -332,7 +334,7 @@ export class Battle extends Phaser.Scene {
 
   showEvent(e) {
     const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again", "wild-shape", "pack-summon", "calm",
-      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived", "volley", "counter", "unbroken", "blink", "chain", "breaking", "dawn-light"].includes(e.type);
+      "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived", "volley", "counter", "unbroken", "blink", "chain", "breaking", "dawn-light", "rally", "true-name", "door-binding"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
     const foe = e.target >= 0 ? this.foeViews[e.target].sprite : null;
@@ -513,6 +515,33 @@ export class Battle extends Phaser.Scene {
       case "call-heal":
         if (e.revived && isAllyKey(e.who)) this.revive(e.who);
         if (e.heal) this.float(this.spriteOf(e.who), `+${e.heal}`, COLORS.good);
+        break;
+      // Vorthax's fights (Act 4).
+      case "rally":
+        sfx("crit");
+        this.revive(e.who);
+        this.float(this.spriteOf(e.who), "RALLY!", COLORS.gold);
+        break;
+      case "true-name":
+        sfx("crit");
+        this.float(this.heroSprite, "TRUE NAME!", COLORS.gold);
+        break;
+      case "door-binding":
+        sfx("clang");
+        this.cameras.main.flash(250, 160, 200, 255);
+        this.float(this.foeViews[e.who].sprite, "BOUND!", COLORS.gold);
+        break;
+      case "legendary":
+        sfx("clang");
+        this.float(this.foeViews[e.who].sprite, "LEGENDARY!", COLORS.bad);
+        break;
+      case "recharge":
+        sfx("alert");
+        this.float(this.foeViews[e.who].sprite, "BREATH...", COLORS.bad);
+        break;
+      case "lair":
+        this.cameras.main.shake(200, 0.01);
+        if (e.damage) this.hit(this.spriteOf(e.who), e.damage, false);
         break;
       case "regen":
         sfx("heal");

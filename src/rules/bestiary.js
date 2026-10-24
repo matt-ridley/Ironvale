@@ -12,7 +12,8 @@ const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willo
   tunnels: "The Emberdeep's tunnels", golemHall: "The Emberdeep's golem hall" };
 const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall", motherSallow: "Her hut in Greywater Fen", lordVarric: "His tomb, under Ironvale Keep",
   kobold: "Digging in the Deep Warrens", crownedSallow: "The drowned causeway, collecting tolls", nightHag: "A crooked hut on the pass's slopes",
-  thorne: "At the Door, at the top of the gatehouse", stoneGolem: "The Wardens' golem hall, in the Emberdeep" }; // bosses (and Pip's kobolds) don't roam
+  thorne: "At the Door, at the top of the gatehouse", stoneGolem: "The Wardens' golem hall, in the Emberdeep",
+  vorthaxSky: "The sky over its hoard", vorthaxGround: "The floor of the Emberdeep", vorthaxHoard: "Its hoard, under the mountain", vorthaxBrood: "At the Great One's side, in the Emberdeep" }; // bosses (and Pip's kobolds) don't roam
 
 export const LORE = {
   giantRat: "A rat the size of a dog. Alone it's a nuisance; it's the bite that festers.",
@@ -53,6 +54,10 @@ export const LORE = {
   salamander: "A long red serpent with a man's arms and a spear, its tail glowing like a poker in the forge. Plain steel only half-bites it; cold bites hard.",
   fireElemental: "A man-shaped blaze that walks. Everything it touches catches. Fire does nothing to it, and ordinary weapons little more.",
   youngRedDragon: "One of the Great One's brood: red as a coal, as long as a cart and a horse, and already cruel. It breathes fire, and fire can't touch it.",
+  vorthaxSky: "Vorthax, the Great One, on the wing: the red dragon who burned the Emberreach. Blades can hardly reach it up there; arrows, spells and runes can.",
+  vorthaxGround: "Vorthax with a torn wing, on the ground and furious, with one of its brood beside it. Its breath comes back, again and again.",
+  vorthaxHoard: "Vorthax in its hoard, where the floor itself fights for it. It shrugs off what should have bound it, three times.",
+  vorthaxBrood: "The youngest of the brood, scorched from the fight in the sky, that comes down to stand beside its parent. It would die for it.",
   fireGiant: "A giant with skin like cooling iron and a beard that's actually on fire. They forge for the Great One, and fight for it.",
   clayGolem: "A Warden-built guardian of red clay, made to keep the forge. The dragon took it with the mountain. It doesn't know the difference.",
   stoneGolem: "The Wardens' greatest work: a stone giant without a mind, runes glowing in its chest. It can slow you to a crawl with a look.",

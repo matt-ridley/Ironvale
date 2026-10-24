@@ -48,6 +48,9 @@ export const KEEP = {
     { id: "bannerMegan", x: 17, y: 14, sprite: "bannerMegan", script: "pledgeBanner", who: "megan", shownWhen: "meganPledged", still: true },
     { id: "bannerRobyn", x: 21, y: 14, sprite: "bannerRobyn", script: "pledgeBanner", who: "robyn", shownWhen: "robynPledged", still: true },
     { id: "bannerClaire", x: 23, y: 14, sprite: "bannerClaire", script: "pledgeBanner", who: "claire", shownWhen: "clairePledged", still: true },
+    // After the ending: Matt moves into Colleen's old room, and Brannoc comes home to his forge.
+    { id: "mattKeep", x: 19, y: 26, sprite: "matt", script: "mattHome", shownWhen: "act4Complete" },
+    { id: "keepBrannocHome", x: 22, y: 28, sprite: "brannoc", script: "keepForge", shownWhen: "act4Complete" },
     { id: "bannerBrannoc", x: 25, y: 14, sprite: "bannerBrannoc", script: "pledgeBanner", who: "brannoc", shownWhen: "brannocPledged", still: true },
     { id: "brannocTools", x: 35, y: 29, sprite: "chest", script: "brannocTools", goneWhen: "toolsFound", still: true },
     { id: "chapelChest", x: 3, y: 29, sprite: "chest", script: "chest", goneWhen: "chapelChestOpened", still: true, loot: { gold: 150, items: ["potionGreaterHealing", "scrollFireball"] } },
