@@ -29,6 +29,10 @@ export const CONDITIONS = {
   turned:     { name: "turned", skips: true, wakesOnDamage: true }, // Turn Undead: it flees until it's hurt
   hesitant:   { name: "frozen with doubt", skips: true }, // Thorne, faced with Rachel
   frightened: { name: "frightened", attacksWith: "disadvantage" },
+  // Lingering spells (Claire's): `lingering` ones hurt at the start of each of the target's turns (a save halves it).
+  // Their options carry { damage, damageType, save, dc }.
+  moonlit:    { name: "in the moonbeam", lingering: true, burns: "The moonbeam burns" },
+  stormcalled: { name: "under the storm", lingering: true, burns: "Lightning strikes" },
 };
 
 const of = (battle, key) => (battle.conditions ||= {})[key] ||= {};
@@ -68,11 +72,11 @@ export function attackMods(battle, attacker, target, { melee = true } = {}) {
   return mods;
 }
 
-/* A saving throw for anyone in the fight: d20 + `bonus` (+ Bless), with disadvantage where a condition says so.
-   Returns { ability, dc, rolls, natural, bonus, extra, total, success }. */
-export function conditionSave(battle, key, ability, dc, bonus, rng = Math.random) {
+/* A saving throw for anyone in the fight: d20 + `bonus` (+ Bless), with disadvantage where a condition says so, and
+   advantage if `advantage` (Claire, against a spell). Returns { ability, dc, rolls, natural, bonus, extra, total, success }. */
+export function conditionSave(battle, key, ability, dc, bonus, rng = Math.random, { advantage = false } = {}) {
   const disadvantage = active(battle, key).some(c => c.badSaves?.includes(ability));
-  const { rolls, natural } = d20({ disadvantage }, rng);
+  const { rolls, natural } = d20({ advantage, disadvantage }, rng);
   const dice = bonusDice(battle, key);
   const extra = dice ? roll(dice, rng).total : 0;
   const total = natural + bonus + extra;

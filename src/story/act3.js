@@ -482,12 +482,18 @@ export const ACT3_SCRIPTS = {
       take: {
         enter: (s, ctx) => {
           s.flags.sunCharmFound = true;
+          if (s.flags.claireJoined) { // found after the twins met (Act 4): it goes straight back on the charm
+            s.flags.charmMended = true;
+            s.hero.inventory = [...s.hero.inventory.filter(i => i.base !== "sunCharm"), makeItem("twinCharm")];
+            return ctx.goto("mended");
+          }
           s.hero.inventory.push(makeItem("sunCharm"));
           if (!withRachel(s)) ctx.goto("taken1");
         },
         text: "Rachel goes very quiet. Her hand goes to the half-moon at her throat. \"Can I hold that? Just for a minute.\" She holds it a long time, then gives it back without a word.",
       },
       taken1: { text: "You take the half-charm. It's old, and someone wound it into those bones on purpose." },
+      mended: { text: "Claire's sun, from the charm she snapped in half at twelve. That night by the fire the twins fit the two halves together, and they click, whole. (The Sun-and-Moon Charm.)" },
       taken: { text: "The cairn of bones, stacked with care. Whoever built it knew what they were doing." },
     },
   },

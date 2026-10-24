@@ -2,13 +2,21 @@
 // pour out of the Warrens), opening the Door with the Wardenblade (its nodes are in act3.js's greatDoor), the far side
 // (the Threshold, and Pip climbing out of your pack if he's had his big adventure), the kobold warband on the ash road,
 // the wolves that scatter them (and carry Pip home), and the great grey wolf that leads you to the wildwood's edge.
+// Quest 10, Two Halves: the wolf leads you up a trail to Claire's grove. She won't believe Rachel is real (the dragon
+// has used voices before) until the charm, or the scar, proves it; then the dragon's brood attacks, and the twins fight
+// beside you (the first fight with two companions: Rachel comes along as a guest if she isn't with you). Claire joins.
 // The roadmap's Act 4 section has the rest. No Phaser here.
 import { pay, paid } from "./rewards.js";
 import { callName } from "./hero.js";
 import { withRachel } from "./act3.js";
+import { joinParty, COMPANIONS } from "../rules/party.js";
+import { makeItem } from "../rules/items.js";
 
-const RACHEL = "RACHEL", HILD = "HILD", PIP = "PIP", KOBOLD = "KOBOLD";
+const RACHEL = "RACHEL", HILD = "HILD", PIP = "PIP", KOBOLD = "KOBOLD", CLAIRE = "CLAIRE";
 export const Q9_REWARD = { gold: 500, xp: 10000 };
+export const Q10_REWARD = { gold: 300, xp: 6000 };
+export const BROOD_FIGHT = ["youngRedDragon", "fireElemental"];
+const withClaire = s => s.hero.companion?.id === "claire";
 
 export const ACT4_SCRIPTS = {
   // Back at the keep after Act 3: Hild's news, and how to get through the Door (Rachel's reading, or Hild's report of it).
@@ -110,12 +118,112 @@ export const ACT4_SCRIPTS = {
       },
     },
   },
-  wolfWaiting: {
+  // The grey wolf at the foot of the trail: follow it up to the grove.
+  wolfTrail: {
     start: "look",
     nodes: {
-      look: { text: "The grey wolf sits at the mouth of a trail into the wildwood, waiting for you. Past it the trees are too thick to see through. (The wildwood comes in the next part of Act 4.)" },
+      look: {
+        enter: s => { s.flags.wolfFollowed = true; },
+        text: "The grey wolf gets up as you come and trots up the trail, looking back every few steps. You follow it uphill between the giant trees, into a clearing full of birdsong. Someone is standing by the pool.",
+      },
     },
   },
+
+  // Claire, in her grove (quest 10).
+  claireMeet: {
+    start: s => (s.flags.claireMet ? "again" : "wary"),
+    nodes: {
+      wary: {
+        enter: s => { s.flags.claireMet = true; },
+        speaker: CLAIRE,
+        text: "\"Stop there. I know your tricks, Great One: you've worn my mother's voice before, and my sister's.\" She's barefoot, wrapped in a wolf pelt, a staff in her fist. And she has Rachel's face.",
+        to: "rachel",
+      },
+      rachel: {
+        enter: (s, ctx) => { if (!withRachel(s)) ctx.goto("rachelArrives"); },
+        speaker: RACHEL,
+        text: "Rachel's voice comes out very small. \"...Clary?\"",
+        to: "proof",
+      },
+      rachelArrives: {
+        speaker: RACHEL,
+        text: "Running feet on the trail behind you, and an owl overhead: Rachel, out of breath. She followed you through the Door. \"...Clary?\" (Rachel joins you for this, as a guest.)",
+        to: "proof",
+      },
+      proof: {
+        enter: (s, ctx) => {
+          const sun = s.hero.inventory.find(i => i.base === "sunCharm");
+          if (!sun) return ctx.goto("scar");
+          s.hero.inventory = [...s.hero.inventory.filter(i => i !== sun), makeItem("twinCharm")];
+          s.flags.charmMended = true;
+        },
+        text: "Rachel holds up her half-moon. You hold out the sun half from the cairn on the pass. Claire stares at it. \"I left that on the mountain, so you'd know I was alive.\" The two halves touch, and click together, whole. (The Sun-and-Moon Charm.)",
+        to: "rae",
+      },
+      scar: {
+        speaker: RACHEL,
+        text: "\"You bit me when we were six. Here.\" Rachel pulls up her sleeve: a little white scar, two neat rows of teeth. Claire stares at it, and her staff drops in the grass.",
+        to: "rae",
+      },
+      rae: {
+        speaker: CLAIRE,
+        text: "\"Rae.\" Then the twins are holding on to each other, laughing and crying at once, and wolves come out of the trees to see what all the noise is.",
+        to: "brood",
+      },
+      brood: {
+        text: "Then the wolves scatter. A shadow sweeps over the grove and the treetops burst into flame: a young red dragon, one of the Great One's brood, drops into the clearing, with a living fire walking at its side.",
+        choices: [{ label: "Fight beside the twins", to: "fight" }],
+      },
+      again: {
+        speaker: CLAIRE,
+        text: "\"It's back, and it's angry. Rae's with me.\" Claire's staff is up, and the trees are burning. \"Are you?\"",
+        choices: [{ label: "Fight beside the twins", to: "fight" }, { label: "Not yet", to: null }],
+      },
+      fight: { enter: (s, ctx) => ctx.emit({ type: "battle", foes: BROOD_FIGHT, party: ["rachel", "claire"], winFlag: "broodBeaten", afterWin: "claireJoins", music: "boss", zone: "grove" }) },
+    },
+  },
+  // After the brood: Claire joins (and Rachel goes to wait on the roster, if she was with you).
+  claireJoins: {
+    start: "join",
+    nodes: {
+      join: {
+        enter: (s, ctx) => {
+          s.flags.claireJoined = true;
+          s.flags.q10Done = true;
+          ctx.remember("left", joinParty(s.hero, "claire"));
+          pay(s, ctx, Q10_REWARD);
+        },
+        speaker: CLAIRE,
+        text: "The brood is smoking in the treetops. Claire wipes soot off Rachel's face with her thumb, which Rachel hates, and grins at you. \"You're the Warden. The one the wolves told me about. I'm coming with you.\"",
+        to: "father",
+      },
+      father: {
+        speaker: CLAIRE,
+        text: "She picks up her staff and slings it over her shoulder. \"Come on, both of you. Father will want to see you.\" Rachel stops dead.",
+        to: "done",
+      },
+      done: {
+        text: (s, ctx) => {
+          const left = ctx.recall("left");
+          return `Claire joins your party!${left ? ` ${COMPANIONS[left].name} will wait for you at any inn.` : ""} ${paid(ctx, Q10_REWARD)} QUEST COMPLETE: Two Halves.`;
+        },
+      },
+    },
+  },
+
+  // A raven in the grove: only Claire understands it.
+  raven: {
+    start: s => (withClaire(s) ? "claire" : "look"),
+    nodes: {
+      look: { text: "A raven on a stump. It looks at you, says something that is definitely rude, and goes back to preening." },
+      claire: {
+        speaker: CLAIRE,
+        text: "Claire listens with her head on one side. \"She says there are men's bones in the kobolds' diggings, east past the gorge. And one man who isn't bones yet. He draws maps for them.\"",
+      },
+    },
+  },
+  // The thicket by the grove, before Claire's shown you the way through.
+  thicket: { start: "look", nodes: { look: { text: "A wall of brambles as thick as a castle gate. Something glints on the other side, but there's no way through that you can see." } } },
 
   // The end of the road, at the lip of the gorge.
   gorgeEdge: {

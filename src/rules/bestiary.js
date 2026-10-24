@@ -10,7 +10,7 @@ const AREAS = { forest: "Whispering Wood", rocks: "Goblin Rocks", meadow: "Willo
   frozenForge: "The Frozen Forge", barracks: "The Wardens' Barracks", ashRoad: "The ash road, beyond the Door" };
 const LAIRS = { goblinChief: "The goblin cave", goblinKing: "The Goblin King's Hall", motherSallow: "Her hut in Greywater Fen", lordVarric: "His tomb, under Ironvale Keep",
   kobold: "Digging in the Deep Warrens", crownedSallow: "The drowned causeway, collecting tolls", nightHag: "A crooked hut on the pass's slopes",
-  thorne: "At the Door, at the top of the gatehouse" }; // bosses (and Pip's kobolds) don't roam
+  thorne: "At the Door, at the top of the gatehouse", youngRedDragon: "The skies over the Emberreach (the dragon's brood)" }; // bosses (and Pip's kobolds) don't roam
 
 export const LORE = {
   giantRat: "A rat the size of a dog. Alone it's a nuisance; it's the bite that festers.",
@@ -50,6 +50,7 @@ export const LORE = {
   hellHound: "A black hound the size of a pony, smoke curling from its jaws. It hunts in pairs, breathes fire, and fire can't touch it.",
   salamander: "A long red serpent with a man's arms and a spear, its tail glowing like a poker in the forge. Plain steel only half-bites it; cold bites hard.",
   fireElemental: "A man-shaped blaze that walks. Everything it touches catches. Fire does nothing to it, and ordinary weapons little more.",
+  youngRedDragon: "One of the Great One's brood: red as a coal, as long as a cart and a horse, and already cruel. It breathes fire, and fire can't touch it.",
 };
 
 /* Where a monster turns up, from the encounter tables. */

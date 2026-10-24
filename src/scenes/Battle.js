@@ -7,11 +7,14 @@
 // (surviveRounds), or ask you to keep your companion standing (guardAlly: if they fall, the trial isn't passed).
 // data.second (a companion's id) brings a second companion into the fight: from the roster, or as a guest. Each
 // companion has their own sprite, bar and lead toggle; the ally page is for whichever of them is taking their turn.
+// data.party (companion ids) is the fight's own party instead (Q10's twins). Claire's Wild Shape shows as a beast in her
+// place, with a brown bar for its HP under hers; her SHAPE page has BEAR, CAT and CALM.
 import { WIDTH, HEIGHT, FONT, COLORS } from "../config.js";
 import { createBattle, playerAction, isPlayerTurn, isAllyTurn, isReacting, reactAction, allyTurnKey, allyKeys, partyKeys, isAllyKey, combatant } from "../rules/combat.js";
 import { readScroll } from "../rules/magic.js";
-import { allyAction, castable, canFlyby, quillFlyby, canVolley } from "../rules/tactics.js";
-import { TACTICS, secondCompanion } from "../rules/party.js";
+import { allyAction, castable, canFlyby, quillFlyby, canVolley, afflicted } from "../rules/tactics.js";
+import { TACTICS, secondCompanion, partyRecords, shapesLeft } from "../rules/party.js";
+import { MONSTER_SCALE } from "../art/monsters.js";
 import { groupPack, baseOf } from "../rules/items.js";
 import { SPELLS } from "../data/spells.js";
 import { CONDITIONS } from "../rules/conditions.js";
@@ -44,12 +47,14 @@ export class Battle extends Phaser.Scene {
     this.guardAlly = !!data.guardAlly; // a waystone's trial: keep your companion standing
     this.music = data.music || null; // a boss's own track (Thorne's)
     this.second = data.second || null; // a second companion's id
+    this.party = data.party || null; // or the fight's own party (ids)
     this.zone = stageZone(data.zone);
   }
 
   create() {
     uiCamera(this);
-    this.battle = createBattle(state.hero, this.foes, Math.random, { surviveRounds: this.surviveRounds, second: this.second && secondCompanion(state.hero, this.second) });
+    this.battle = createBattle(state.hero, this.foes, Math.random, { surviveRounds: this.surviveRounds, second: this.second && secondCompanion(state.hero, this.second),
+      allies: this.party && partyRecords(state.hero, this.party) });
     // Phaser reuses this scene object for every fight, so reset everything here.
     this.busy = false;
     this.leaving = false;
@@ -70,6 +75,14 @@ export class Battle extends Phaser.Scene {
       const bar = this.add.rectangle(x - BAR_W / 2, top - 8, BAR_W, 4, 0x7bc96f).setOrigin(0, 0.5);
       this.allyViews[key] = { sprite, name, bar, max: a.maxHp };
       sprite.setInteractive({ useHandCursor: true }).on("pointerup", () => this.toggleLead(key));
+      if (a.wildShape) { // her beasts, hidden until she takes one's shape, and a bar for its HP
+        const v = this.allyViews[key];
+        v.forms = Object.fromEntries(["bear", "cat"].map(id => [id, this.add.image(x, GROUND_Y, `${id}Form`).setOrigin(0.5, 1).setScale(MONSTER_SCALE).setVisible(false)
+          .setInteractive({ useHandCursor: true }).on("pointerup", () => this.toggleLead(key))]));
+        v.formBg = this.add.rectangle(x - BAR_W / 2, top - 3, BAR_W, 3, 0x000000, 0.6).setOrigin(0, 0.5).setVisible(false);
+        v.formBar = this.add.rectangle(x - BAR_W / 2, top - 3, BAR_W, 3, 0xb07a40).setOrigin(0, 0.5).setVisible(false);
+        v.form = null;
+      }
     }
 
     const xs = this.battle.monsters.length === 1 ? [360] : [320, 410];
@@ -86,7 +99,7 @@ export class Battle extends Phaser.Scene {
     this.marker = this.add.triangle(0, 0, 0, 0, 10, 0, 5, 6, 0xe8b923);
     this.tweens.add({ targets: this.marker, y: "+=3", duration: 400, yoyo: true, repeat: -1 });
 
-    breathe(this, [this.heroSprite, ...Object.values(this.allyViews).map(v => v.sprite), ...this.foeViews.map(v => v.sprite)]);
+    breathe(this, [this.heroSprite, ...Object.values(this.allyViews).flatMap(v => [v.sprite, ...Object.values(v.forms || {})]), ...this.foeViews.map(v => v.sprite)]);
 
     this.drawPanel();
     this.applyHp(this.battle.log[0].hp);
@@ -166,14 +179,19 @@ export class Battle extends Phaser.Scene {
     }
     if (page === "ally") {
       return [
-        { label: "SHOOT", on: hers, run: () => this.actAlly({ type: "shoot" }) },
+        { label: a.form ? "MAUL" : "SHOOT", on: hers, run: () => this.actAlly({ type: "shoot" }) },
         { label: "AUTO", on: hers, run: () => this.actAlly({ type: "auto" }) },
         { label: `YOU x${heals}`, on: hers && heals > 0 && h.hp < h.maxHp, run: () => this.actAlly({ type: "potion", on: "player" }) },
         { label: `${a.name.toUpperCase()} x${heals}`, on: hers && heals > 0 && a.hp < a.maxHp, run: () => this.actAlly({ type: "potion", on: k }) },
         a.casting ? { label: "SPELLS", on: hers && castable(b, k).length > 0, run: () => this.showPage("allySpells") }
           : a.src?.volley ? { label: "VOLLEY", on: hers && canVolley(b, k), run: () => this.actAlly({ type: "volley" }) } : null,
-        a.id === "rachel" ? { label: "FLYBY", on: hers && canFlyby(b), run: () => this.flyby() } : null,
+        a.id === "rachel" ? { label: "FLYBY", on: hers && canFlyby(b), run: () => this.flyby() }
+          : a.wildShape ? { label: "SHAPE", on: hers && !a.form && (shapesLeft(a.src) > 0 || !!afflicted(b)), run: () => this.showPage("allyShapes") } : null,
       ];
+    }
+    if (page === "allyShapes") { // Claire: Wild Shape, or calm a friend who's frightened or held
+      const shape = id => ({ label: id === "bear" ? `BEAR x${shapesLeft(a.src)}` : "CAT", on: hers && !a.form && shapesLeft(a.src) > 0, run: () => this.actAlly({ type: "shape", form: id }) });
+      return [shape("bear"), shape("cat"), { label: "CALM", on: hers && !a.form && !!afflicted(b), run: () => this.actAlly({ type: "calm" }) }, null, null, back("ally")];
     }
     if (page === "skills") {
       const surge = { label: "SURGE", on: mine && hasFeature(h, "actionSurge") && h.actionSurge && !b.surging, run: () => this.act({ type: "actionSurge" }) };
@@ -302,7 +320,7 @@ export class Battle extends Phaser.Scene {
   }
 
   showEvent(e) {
-    const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again",
+    const good = ["won", "level-up", "ally-level-up", "potion", "ally-potion", "second-wind", "loot", "quick", "surge", "surge-again", "wild-shape", "pack-summon", "calm",
       "ally-heal", "spell-heal", "spell", "scroll", "indomitable", "flyby", "badge", "ward", "call", "call-heal", "survived", "volley", "counter", "unbroken", "blink", "chain", "dawn-light"].includes(e.type);
     this.addLine(e.text, good ? COLORS.good : e.type === "lost" ? COLORS.bad : COLORS.text);
     this.applyHp(e.hp);
@@ -327,6 +345,25 @@ export class Battle extends Phaser.Scene {
         sfx("sword");
         if (e.roll.hit) { this.slash(foe, e.roll.crit); this.hit(foe, e.roll.damage, e.roll.crit); this.time.delayedCall(90, () => sfx(e.roll.crit ? "crit" : "hit")); }
         else { this.float(foe, "MISS", COLORS.dim); this.time.delayedCall(60, () => sfx("miss")); }
+        break;
+      case "wild-shape":
+        sfx("crit");
+        this.float(this.spriteOf(e.who), `${e.form === "bear" ? "BEAR" : "GREAT CAT"}!`, COLORS.gold);
+        break;
+      case "pack-summon":
+        sfx("alert");
+        this.float(this.spriteOf(e.by), "WOLVES!", COLORS.gold);
+        break;
+      case "pack-bite":
+        if (e.roll.hit) { this.slash(foe, e.roll.crit); this.hit(foe, e.roll.damage, e.roll.crit); this.time.delayedCall(90, () => sfx("hit")); }
+        else this.float(foe, "MISS", COLORS.dim);
+        break;
+      case "linger":
+        if (e.damage > 0) this.hit(foe, e.damage, false);
+        break;
+      case "calm":
+        sfx("heal");
+        this.float(this.spriteOf(e.who), "CALM", COLORS.good);
         break;
       case "volley":
         sfx("sword");
@@ -487,9 +524,11 @@ export class Battle extends Phaser.Scene {
     }
   }
 
-  /* The sprite for a battle key: "player", "ally", "ally2" or a monster's index. */
+  /* The sprite for a battle key: "player", "ally", "ally2" (or the beast she's become) or a monster's index. */
   spriteOf(key) {
-    return key === "player" ? this.heroSprite : isAllyKey(key) ? this.allyViews[key].sprite : this.foeViews[key].sprite;
+    if (key === "player") return this.heroSprite;
+    if (isAllyKey(key)) { const v = this.allyViews[key]; return v.form ? v.forms[v.form] : v.sprite; }
+    return this.foeViews[key].sprite;
   }
 
   /* Rachel's key in this fight (Quill and COUNTER are hers). */
@@ -525,6 +564,13 @@ export class Battle extends Phaser.Scene {
       if (hp[key] === null || hp[key] === undefined) continue;
       v.bar.width = BAR_W * hp[key] / v.max;
       v.bar.fillColor = hpColour(hp[key], v.max);
+      if (!v.forms) continue;
+      const f = hp.forms?.[key] || null; // Wild Shape: show the beast, and its HP under hers
+      v.form = f?.id ?? null;
+      v.sprite.setVisible(!f);
+      for (const [id, s] of Object.entries(v.forms)) s.setVisible(id === v.form);
+      v.formBg.setVisible(!!f); v.formBar.setVisible(!!f);
+      if (f) v.formBar.width = BAR_W * f.hp / f.maxHp;
     }
   }
 
@@ -543,7 +589,7 @@ export class Battle extends Phaser.Scene {
 
   hit(sprite, damage, crit) {
     // Knocked back a little, then settle.
-    const ours = sprite === this.heroSprite || Object.values(this.allyViews).some(v => v.sprite === sprite);
+    const ours = sprite === this.heroSprite || Object.values(this.allyViews).some(v => v.sprite === sprite || Object.values(v.forms || {}).includes(sprite));
     this.tweens.add({ targets: sprite, x: sprite.x + (ours ? -6 : 6), duration: 70, yoyo: true, delay: 90, ease: "Quad.out" });
     this.time.delayedCall(90, () => {
       sprite.setTintFill(0xffffff);

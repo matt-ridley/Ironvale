@@ -10,11 +10,15 @@
 // nothing: by herself she sends him on her first turn; when you lead her, it's the FLYBY button. Megan, once her father
 // has taught her, can VOLLEY once per fight: one shot at every monster (by herself, when there's more than one). A cleric
 // who knows Turn Undead turns the undead first, by herself.
+// Claire (a druid with Wild Shape) calms a friend who's frightened, paralyzed or held first, then heals if she's on
+// HEAL and someone needs it; otherwise she takes a beast form while she has one left (a bear: her own HP stays safe
+// behind its own) and mauls with it; out of forms, she casts (her wolf pack first, if it isn't out already).
 // No Phaser here, so it can be tested.
 import { SPELLS } from "../data/spells.js";
 import { roll } from "./dice.js";
 import { baseOf } from "./items.js";
-import { attackMods, addCondition, skipsTurn } from "./conditions.js";
+import { attackMods, addCondition, removeCondition, skipsTurn, hasCondition, CONDITIONS } from "./conditions.js";
+import { shapesLeft, makeForm, FORMS } from "./party.js";
 import { acOf, hurt, tellWoken, say, living, resolveAttack, adjustRoll, rollText, hitText, isAllyTurn, allyTurnKey, endAllyAction, partyKeys, allyKeys, combatant } from "./combat.js";
 import { makeCaster, castSpell, slotsLeft, spendForSpell } from "./magic.js";
 
@@ -34,7 +38,7 @@ function freeSlot(battle, level, key = "ally") {
 /* Spells a companion knows that they could cast right now, with the slot they'd use (0 for a cantrip). */
 export function castable(battle, key = "ally") {
   const a = battle[key];
-  if (!a?.casting) return [];
+  if (!a?.casting || a.form) return []; // no casting in beast form
   return a.casting.spells.filter(id => SPELLS[id].kind !== "reaction").map(id => ({ id, spell: SPELLS[id], slotLevel: SPELLS[id].level ? freeSlot(battle, SPELLS[id].level, key) : 0 }))
     .filter(s => s.spell.level === 0 || s.slotLevel > 0);
 }
@@ -49,12 +53,18 @@ function neediest(battle) {
   return c.hp <= c.maxHp / 2 ? key : null;
 }
 
+export const CALM_ENDS = ["frightened", "paralyzed", "restrained"]; // what Claire's touch ends
+
+/* The first of you (you, then your companions) who's frightened, paralyzed or held, or null. */
+export const afflicted = battle => partyKeys(battle).find(k => combatant(battle, k).hp > 0 && CALM_ENDS.some(id => hasCondition(battle, k, id))) || null;
+
 /* What a companion does by themselves this turn, as an allyAction action. */
 export function chooseAllyAction(battle, key = "ally") {
   const a = battle[key], focus = battle.monsters[battle.focus];
   const target = focus?.hp > 0 ? battle.focus : battle.monsters.indexOf(living(battle)[0]);
   const spells = castable(battle, key);
   if (canVolley(battle, key) && living(battle).length > 1) return { type: "volley" };
+  if (a.wildShape && !a.form && afflicted(battle)) return { type: "calm", on: afflicted(battle) };
   const turn = spells.find(s => s.id === "turnUndead");
   const untouched = living(battle).filter(m => m.type === "undead" && !battle.conditions?.[battle.monsters.indexOf(m)]?.turned);
   if (turn && a.tactics !== "save" && untouched.length) return { type: "cast", spell: "turnUndead", slotLevel: turn.slotLevel };
@@ -64,6 +74,10 @@ export function chooseAllyAction(battle, key = "ally") {
     if (who && heal) return { type: "cast", spell: heal.id, target: who, slotLevel: heal.slotLevel };
     if (who && potionsLeft(battle)) return { type: "potion", on: who };
   }
+  if (a.form) return { type: "shoot", target }; // the beast mauls
+  if (a.wildShape && shapesLeft(a.src) > 0) return { type: "shape", form: "bear" };
+  const pack = spells.find(s => s.spell.kind === "pack");
+  if (pack && a.tactics === "attack" && !battle.pack) return { type: "cast", spell: pack.id, slotLevel: pack.slotLevel };
   const useSlots = a.tactics === "attack";
   const damage = spells.filter(s => isDamage(s.spell) && (useSlots || s.spell.level === 0));
   if (living(battle).length > 1) {
@@ -83,7 +97,26 @@ function doAllyAction(battle, action, rng, key = "ally") {
   if (action.type === "shoot") {
     const target = battle.monsters[action.target]?.hp > 0 ? battle.monsters[action.target] : living(battle)[0];
     if (!target) return { ok: false, reason: "There's nothing left to shoot." };
-    shoot(battle, target, rng, key);
+    if (a.form) maul(battle, target, rng, key); else shoot(battle, target, rng, key);
+    return { ok: true };
+  }
+  if (action.type === "shape") {
+    if (!a.wildShape) return { ok: false, reason: `${a.name} can't do that.` };
+    if (a.form) return { ok: false, reason: `${a.name} is already a ${a.form.name}.` };
+    if (!shapesLeft(a.src)) return { ok: false, reason: `${a.name} has no Wild Shape left. A rest brings it back.` };
+    if (!FORMS[action.form]) return { ok: false, reason: `Unknown form: ${action.form}` };
+    a.src.shapesUsed = (a.src.shapesUsed || 0) + 1;
+    a.form = makeForm(action.form, a.level);
+    say(battle, "wild-shape", `${a.name} drops to all fours, and where she was there's a ${a.form.name}! (${a.form.hp} HP of its own)`, { who: key, form: action.form });
+    return { ok: true };
+  }
+  if (action.type === "calm") {
+    if (!a.wildShape || a.form) return { ok: false, reason: a.form ? `A ${a.form.name} can't do that.` : `${a.name} can't do that.` };
+    const on = action.on ?? afflicted(battle), c = on !== null && combatant(battle, on);
+    const ends = c ? CALM_ENDS.filter(id => hasCondition(battle, on, id)) : [];
+    if (!ends.length) return { ok: false, reason: "No one needs calming." };
+    for (const id of ends) removeCondition(battle, on, id);
+    say(battle, "calm", `${a.name} lays a hand on ${on === "player" ? "you" : c.name} and hums something old: ${on === "player" ? "you're" : `${c.name} is`} no longer ${ends.map(id => CONDITIONS[id].name).join(" or ")}.`, { who: on });
     return { ok: true };
   }
   if (action.type === "volley") {
@@ -148,6 +181,19 @@ function shoot(battle, target, rng, key = "ally") {
   say(battle, "ally-attack", `${a.name} attacks ${target.the} with a ${a.attack.name}: ${rollText(r, a.attack.bonus)} ${hitText(r)}`, { roll: r, target: t, by: key });
   tellWoken(battle, t, woke);
   if (target.hp === 0) say(battle, "defeat", `${target.The} falls.`, { target: t });
+}
+
+/* A companion in beast form mauls a monster: each of the beast's attacks, in melee. */
+function maul(battle, target, rng, key) {
+  const a = battle[key], t = battle.monsters.indexOf(target);
+  for (const atk of a.form.attacks) {
+    if (target.hp <= 0) break;
+    const r = adjustRoll(resolveAttack(atk, acOf(battle, t), rng, attackMods(battle, key, t)), target, atk);
+    const woke = hurt(battle, t, r.damage);
+    say(battle, "ally-attack", `The ${a.form.name} (${a.name}) ${atk.name === "Bite" ? "bites" : "rakes"} ${target.the}: ${rollText(r, atk.bonus)} ${hitText(r)}`, { roll: r, target: t, by: key });
+    tellWoken(battle, t, woke);
+    if (target.hp === 0) say(battle, "defeat", `${target.The} falls.`, { target: t });
+  }
 }
 
 /* True if this companion can still VOLLEY this fight (Megan, once Corwin has taught her). */

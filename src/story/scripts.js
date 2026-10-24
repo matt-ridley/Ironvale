@@ -1232,7 +1232,7 @@ export function sideObjective(flags, state = {}) {
 /* How many of Elder Maren's quests are done and paid for (the HUD cheers when this goes up). The Iron Signet isn't
    counted until it can be finished. */
 export const questsDone = flags => [flags.questRewarded, flags.kingRewarded, flags.fenReported, flags.causewayRaised, flags.signetReturned,
-  flags.rockslideOpen, flags.wardensRoad, flags.gatehouseDone, flags.oathSworn, flags.q9Done].filter(Boolean).length;
+  flags.rockslideOpen, flags.wardensRoad, flags.gatehouseDone, flags.oathSworn, flags.q9Done, flags.q10Done].filter(Boolean).length;
 
 /* The line under the HP box saying what to do next. */
 export function objective(flags) {
@@ -1272,7 +1272,10 @@ export function objective(flags) {
     if (!flags.seenThreshold) return "Go through the Door";
     if (!flags.warbandFled) return "Follow the footprints up the ash road";
     if (!flags.q9Done) return "Follow the grey wolf to the wildwood, west";
-    return "The wildwood waits (the next part of Act 4 is coming)";
+    if (!flags.wolfFollowed) return "Follow the grey wolf up the trail, north";
+    if (!flags.claireMet) return "Find who sent the wolves, up in the wildwood";
+    if (!flags.q10Done) return "Fight the dragon's brood beside the twins";
+    return "Father will want to see you (the next part of Act 4 is coming)";
   }
   if (flags.kingDefeated) return "Return to Elder Maren";
   if (flags.kingQuestStarted) return "Defeat the Goblin King deep in the cave";

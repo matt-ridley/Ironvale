@@ -8,7 +8,7 @@ export const GROUND_Y = 124;
 export const PANEL_Y = 152;
 export const HERO_X = 110, ALLY_X = 50;
 // With a second companion (some Act 4 fights), everyone shuffles along to make room.
-export const PARTY_OF_THREE = { hero: 132, ally: 84, ally2: 36 };
+export const PARTY_OF_THREE = { hero: 142, ally: 90, ally2: 36 };
 
 const SKY = {
   forest: { sky: 0x1d2b3a, far: 0x1f3a26, ground: 0x3e6a31, groundDark: 0x34592a },
@@ -29,7 +29,7 @@ SKY.pass = SKY.slopes = SKY.snowfield = SKY.heights = SKY.gatehouseApproach = SK
 SKY.frozenChapel = SKY.gatehouse = SKY.frozenForge = SKY.barracks = SKY.door = SKY.keep;
 SKY.courtyard = SKY.chapel = SKY.armoury = SKY.tomb = SKY.keep;
 SKY.ashRoad = SKY.threshold = SKY.ash;
-SKY.wildwood = SKY.forest;
+SKY.wildwood = SKY.grove = SKY.forest;
 
 /* A zone id the stage knows, or `fallback`. */
 export const stageZone = (zone, fallback = "forest") => (SKY[zone] ? zone : fallback);

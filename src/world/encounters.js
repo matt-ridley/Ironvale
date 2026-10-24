@@ -5,6 +5,11 @@
 // `chance`); before 0.15.1 it was about every 18 and 28, which was too often.
 // From Act 3, in an area you're RUN_AWAY_LEVELS or more levels too strong for, about half the fights end before they
 // start: the monsters take one look at you and bolt (runsAway), for a few XP. The rest still fight.
+// With Claire in your party (Act 4), a fight that's only beasts doesn't happen at all (beastsLeave).
+import { MONSTERS } from "../data/monsters.js";
+
+/* With Claire in your party, beasts won't fight you: an encounter that's only beasts ends before it starts. */
+export const beastsLeave = (foes, companionId) => companionId === "claire" && foes.every(id => MONSTERS[id]?.type === "beast");
 
 export const ENCOUNTERS = {
   // Beyond the Door (Act 4): the ash road. Hell hounds hunt in pairs; salamanders and fire elementals shrug off fire

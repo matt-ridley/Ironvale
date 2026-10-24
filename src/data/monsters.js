@@ -164,4 +164,11 @@ export const MONSTERS = {
   fireElemental: { name: "Fire Elemental", label: "Elemental", ac: 13, hp: "16d10+48", dexMod: 3,
     attacks: [{ name: "Touch", bonus: 11, damage: "3d6+5" }, { name: "Touch", bonus: 11, damage: "3d6+5" }], xp: 1800, gold: "0",
     type: "elemental", saves: { STR: 0, DEX: 3, CON: 3, WIS: 0 }, weaponResist: "magic", immune: ["fire", "poison"] },
+  // One of Vorthax's brood, the SRD's young red dragon: it attacks Claire's grove the moment the twins find each other
+  // (Q10, the first fight with two companions), and nests in the aeries later.
+  youngRedDragon: { name: "Young Red Dragon", label: "Young Dragon", ac: 18, hp: "17d10+85", dexMod: 0,
+    attacks: [{ name: "Bite", bonus: 13, damage: "2d10+6" }, { name: "Claw", bonus: 13, damage: "2d6+6" }, { name: "Claw", bonus: 13, damage: "2d6+6" }], xp: 5900, gold: "10d10",
+    type: "dragon", saves: { STR: 6, DEX: 4, CON: 9, WIS: 4 }, immune: ["fire"],
+    spells: [{ name: "Fire Breath", breath: true, save: "DEX", dc: 17, damage: "12d6", damageType: "fire", half: true, targets: "all", uses: 1, chance: 0.5 }],
+    loot: [{ base: "potionGreaterHealing", chance: 1 }] },
 };

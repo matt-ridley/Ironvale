@@ -5,7 +5,7 @@ import { QUEST_REWARD, KING_REWARD, SIGNET_REWARD, CAUSEWAY_REWARD, KEEP_REWARD 
 import { ROCKSLIDE_REWARD, stonesFound, GNASHER_REWARD, WAYSTONE_REWARD, ROAD_REWARD, MATTHEW_REWARD, CHAPEL_REWARD, arrowsFound,
   REFUGEE_REWARD, QUEEN_REWARD, NETTLE_REWARD, GATEHOUSE_REWARD } from "./act3.js";
 import { actOf } from "./hero.js";
-import { Q9_REWARD } from "./act4.js";
+import { Q9_REWARD, Q10_REWARD } from "./act4.js";
 
 const reward = r => `${r.gold} gold, ${r.xp} XP`;
 
@@ -165,6 +165,18 @@ export const QUESTS = [
       { text: "Go through it", done: f => f.seenThreshold },
       { text: "Follow the footprints up the ash road", done: f => f.warbandFled },
       { text: "Follow the grey wolf to the wildwood", done: f => f.q9Done },
+    ],
+  },
+  {
+    id: "twoHalves", title: "Two Halves", kind: "main",
+    known: f => f.q9Done,
+    about: "Someone in the wildwood sent the wolves, and laughed like a girl. Rachel thinks she knows who.",
+    reward: reward(Q10_REWARD),
+    steps: [
+      { text: "Follow the grey wolf up the trail", done: f => f.wolfFollowed },
+      { text: "Find who sent the wolves", done: f => f.claireMet },
+      { text: "Fight the dragon's brood beside the twins", done: f => f.broodBeaten },
+      { text: "Claire joins you", done: f => f.q10Done },
     ],
   },
   {

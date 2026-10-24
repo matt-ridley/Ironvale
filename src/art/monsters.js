@@ -6,6 +6,78 @@ export const MONSTER_SCALE = 1.25; // on the battle and meeting stage; the hero 
 
 export const MONSTER_ART = {
   // Beyond the Door (Act 4): drawn from simple shapes, like Act 3's.
+  // Claire's Wild Shape: a big brown bear (a form, not a monster), facing right (24 x 17).
+  bearForm: {
+    colours: { k: "#1a0f08", b: "#7a4a26", B: "#5a3418", l: "#9a6436", n: "#2a1a10", e: "#f4d03f", t: "#efe6cf" },
+    rows: [
+      "..................kkk...",
+      ".................klbbk..",
+      "..kk............kbbbbbk.",
+      ".kbbk..........kbbbbebbk",
+      ".kbbbkkkkkkkkkkbbbbbbbnk",
+      "kbbbbbbbbllllbbbbbbbbbkk",
+      "kbbbbbbbllllllbbbbbbtk..",
+      "kbbbbbbbbllllbbbbbbbk...",
+      "kbbbbbbbbbbbbbbbbbbbk...",
+      "kbbBBBBBBBbbbbbbbBBbk...",
+      "kbBBBBBBBBBbbbbbBBBbk...",
+      ".kBBBBBBBBBBBBBBBBBk....",
+      ".kbbBkkkkkkkkkkkBbbk....",
+      ".kbbbk.........kbbbk....",
+      ".kbbbk.........kbbbk....",
+      "kbbbbk........kbbbbk....",
+      "knnnk.........knnnk.....",
+    ],
+  },
+  // Claire's other form: a great tawny cat with a ringed tail, facing right (27 x 16).
+  catForm: {
+    colours: { k: "#1a120a", c: "#c8903a", C: "#9a6a24", l: "#e8c070", s: "#5a3a1a", e: "#7bc96f", t: "#efe6cf" },
+    rows: [
+      "....................kk..k..",
+      "...................kcck.kc.",
+      "..................kccccckk.",
+      ".kk..............kcccecccck",
+      "kcck............kccccccccck",
+      "kcsck...........kcccccctkk.",
+      ".kcck.kkkkkkkkkkcccccccck..",
+      "..kcskccccccccscccccclk....",
+      "...kcccccsccccccccscclk....",
+      "....kcccccccccccsccllk.....",
+      "....kcCCCCCCccccCCCClk.....",
+      "....kCCCCCCCCCCCCCCk.......",
+      "....kcckkkkkkkkkkcck.......",
+      "....kcck........kcck.......",
+      "...kccck.......kccck.......",
+      "...kkkk........kkkk........",
+    ],
+  },
+  // A young red dragon of Vorthax's brood: red scales, a golden belly and eyes, wings half spread (28 x 21).
+  youngRedDragon: {
+    colours: { k: "#1a0604", r: "#b0281c", R: "#7a180e", o: "#e0592a", y: "#e8b923", Y: "#ffe28a", w: "#8a2014", W: "#c0402a", t: "#efe6cf", h: "#d8c8a8" },
+    rows: [
+      "...........kWk..............",
+      "..........kWWk.......kk.....",
+      ".........kWwWk......khhk....",
+      "........kWwwWk.....krrrhk...",
+      ".......kWwwwWk....krrrrrrk..",
+      "......kWwwwwWk...krrYrrrrrk.",
+      ".....kWwwwwwWkk..krrrrrrrrrk",
+      "....kWwwwwwwwWrk.krrrrtktkkk",
+      "...kWwwwwwwwWrrkkrrrrk......",
+      "...kwwwwwwwWrrrrrrrrk.......",
+      "..kwwwwwwWrrrrrrrrrk........",
+      "..kkkkkkkrrrrryyyrrk........",
+      ".......krrrrryyyyyrrk.......",
+      ".....kkrrrrryyyyyyrrk.......",
+      "...kkrrrrrrryyyyyyrrk.......",
+      "..krrrkrrrrrryyyyrrrk.......",
+      ".krrk.krRRRRRRRRRRRRk.......",
+      "krrk..kRRkkkkkkkkRRRk.......",
+      "krk...kRRk......kRRk........",
+      "kk...kRRRk.....kRRRk........",
+      ".....khhhk.....khhhk........",
+    ],
+  },
   // A hell hound: a black hound with smoke and fire at its jaws, embers in its coat (25 x 18).
   hellHound: {
     colours: { k: "#0c0808", b: "#2e2428", B: "#1a1418", g: "#4a3c40", f: "#e0592a", F: "#ffb347", e: "#ffe28a", t: "#efe6cf" },

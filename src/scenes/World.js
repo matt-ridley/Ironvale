@@ -12,7 +12,7 @@ import { moveBody, velocity, facingFor, tileOf, tileAhead, feetAt, WALK_SPEED, S
 import { MAPS } from "../world/maps.js";
 import { markSeen, safePlace } from "../world/travel.js";
 import { state, autosave } from "../state/game.js";
-import { rollEncounter, runsAway, RUN_AWAY_XP } from "../world/encounters.js";
+import { rollEncounter, runsAway, RUN_AWAY_XP, beastsLeave } from "../world/encounters.js";
 import { actOf } from "../story/hero.js";
 import { remarkFor } from "../story/talks.js";
 import { zoneEvent } from "../story/act3.js";
@@ -325,6 +325,11 @@ export class World extends Phaser.Scene {
     const safe = !!zone?.safe || !!safePlace(state); // no monsters in a town, indoors or near a camp
     const foes = rollEncounter(zone?.id, tileAt(this.map, t.x, t.y).name, state.stepsSinceFight, Math.random, { fast, safe });
     if (!foes) return;
+    if (beastsLeave(foes, state.hero.companion?.id)) { // Claire: beasts won't fight you
+      state.stepsSinceFight = 0;
+      const name = MONSTERS[foes[0]].name;
+      return this.say("note", `${foes.length > 1 ? `${foes.length} ${name === "Wolf" ? "Wolves" : `${name}s`}` : `A ${name}`} ${foes.length > 1 ? "come" : "comes"} out of the trees, see${foes.length > 1 ? "" : "s"} Claire, and ${foes.length > 1 ? "lie" : "lies"} down.`, 2400);
+    }
     if (runsAway(zone.id, state.hero.level, actOf(state.flags))) return this.scareOff(foes);
     this.startBattle(foes, zone.id);
   }

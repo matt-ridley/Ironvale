@@ -10,7 +10,7 @@ const world = MAPS.overworld;
 
 test("every travel point is open ground in its own zone, reachable from where you arrive on its map", () => {
   for (const p of TRAVEL_POINTS) {
-    const map = MAPS[p.map], from = reachable(map, map.spawn, { logCleared: true, causewayRaised: true, runeDoor1: true, runeDoor2: true, runeDoor3: true, thorneDefeated: true });
+    const map = MAPS[p.map], from = reachable(map, map.spawn, { logCleared: true, causewayRaised: true, runeDoor1: true, runeDoor2: true, runeDoor3: true, thorneDefeated: true, warbandFled: true, wolfFollowed: true });
     assert.ok(isWalkable(map, p.at.x, p.at.y), `${p.name} lands you in a wall`);
     assert.equal(zoneAt(map, p.at.x, p.at.y).id, p.zone, p.name);
     assert.ok(from.has(`${p.at.x},${p.at.y}`), `${p.name} can't be walked to`);
